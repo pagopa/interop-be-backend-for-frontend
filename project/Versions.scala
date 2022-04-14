@@ -15,5 +15,5 @@ object Versions {
 }
 
 object PagopaVersions {
-  lazy val commonsVersion                 = "addSessioToken-SNAPSHOT"
+  lazy val commonsVersion                 = "0.1.x-SNAPSHOT"
 }
