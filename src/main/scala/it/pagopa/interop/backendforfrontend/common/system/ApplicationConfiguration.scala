@@ -11,7 +11,7 @@ object ApplicationConfiguration {
   lazy val jwtAudience: Set[String] = config.getStringList("backend-for-frontend.jwt.audience").asScala.toSet
 
   lazy val rsaPrivatePath: String       = config.getString("backend-for-frontend.rsa-private-path")
-  lazy val interopIdIssuer: String      = config.getString("backend-for-frontend.issuer")
+  lazy val interopIdIssuer: String      = config.getString("backend-for-frontend.jwt.issuer")
   lazy val interopAudience: Set[String] = config.getStringList("backend-for-frontend.jwt.audience").asScala.toSet
   lazy val interopTokenDuration: Long   = config.getLong("backend-for-frontend.jwt.duration-seconds")
 
