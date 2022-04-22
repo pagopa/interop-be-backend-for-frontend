@@ -4,8 +4,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import com.typesafe.config.{Config, ConfigFactory}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
-import it.pagopa.interop.backendforfrontend.model.{Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.api.impl._
+import it.pagopa.interop.backendforfrontend.model.{Problem, SessionToken}
 import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol

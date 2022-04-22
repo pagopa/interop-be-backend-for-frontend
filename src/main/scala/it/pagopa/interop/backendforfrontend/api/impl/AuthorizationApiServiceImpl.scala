@@ -10,6 +10,7 @@ import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, Sessi
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.CreateSessionTokenRequestError
 import it.pagopa.interop.commons.jwt.model.RSA
+import it.pagopa.interop.commons.utils.{UID, ORGANIZATION}
 import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import org.slf4j.LoggerFactory
@@ -22,13 +23,14 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
 
   private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
-  private final val admittedSessionClaims: Set[String]         = Set("uid", "organization")
+
+  private val admittedSessionClaims: Set[String] = Set(UID, ORGANIZATION)
 
   /**
-    * Code: 200, Message: Session token requested, DataType: SessionToken
-    * Code: 400, Message: Bad Request, DataType: Problem
-    * Code: 401, Message: Not authorized, DataType: Problem
-    */
+   * Code: 200, Message: Session token requested, DataType: SessionToken
+   * Code: 400, Message: Bad Request, DataType: Problem
+   * Code: 401, Message: Not authorized, DataType: Problem
+   */
   override def getSessionToken(identityToken: IdentityToken)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken],
@@ -50,7 +52,7 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
       case Success(value) => getSessionToken200(value)
       case Failure(ex)    =>
         logger.error(s"Error while creating a session token for this request - ${ex.getMessage}")
-        getSessionToken400(problemOf(StatusCodes.BadRequest, CreateSessionTokenRequestError(ex.getMessage)))
+        getSessionToken400(problemOf(StatusCodes.BadRequest, CreateSessionTokenRequestError))
     }
   }
 
