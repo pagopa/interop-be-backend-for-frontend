@@ -50,7 +50,7 @@ pipeline {
         }
       }
     }
-    stage('Publish Client on Nexus and Docker Image on ECR') {
+    stage('Publish Docker Image on ECR') {
       when {
         anyOf {
           branch pattern: "[0-9]+\\.[0-9]+\\.x", comparator: "REGEXP"
@@ -61,7 +61,7 @@ pipeline {
         container('sbt-container') {
           script {
             ecrLogin()
-            sbtAction 'docker:publish "project client" publish'
+            sbtAction 'docker:publish'
           }
         }
       }
