@@ -4,9 +4,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.nimbusds.jwt.JWTClaimsSet
 import it.pagopa.interop.backendforfrontend.api.impl.AuthorizationApiMarshallerImpl._
-import it.pagopa.interop.backendforfrontend.api.impl.problemOf
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.CreateSessionTokenRequestError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.commons.jwt.model.{JWTAlgorithmType, RSA}
 import org.scalatest.matchers.should.Matchers._
@@ -65,15 +63,12 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Failure(new RuntimeException("JWT reading fails")))
 
-      val expectedError: Problem = problemOf(StatusCodes.BadRequest, CreateSessionTokenRequestError)
-
       Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken,
         toEntityMarshallerProblem
       ) ~> check {
-        status shouldEqual StatusCodes.BadRequest
-        responseAs[Problem] shouldEqual expectedError
+        responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0001")
       }
     }
 
@@ -104,15 +99,12 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Failure(new RuntimeException("Session token generator fails")))
 
-      val expectedError: Problem = problemOf(StatusCodes.BadRequest, CreateSessionTokenRequestError)
-
       Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken,
         toEntityMarshallerProblem
       ) ~> check {
-        status shouldEqual StatusCodes.BadRequest
-        responseAs[Problem] shouldEqual expectedError
+        responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0001")
       }
     }
 
