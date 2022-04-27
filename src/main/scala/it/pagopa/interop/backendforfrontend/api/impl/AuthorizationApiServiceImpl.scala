@@ -42,9 +42,9 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
       token         <- sessionTokenGenerator.generate(
         RSA,
         sessionClaims,
-        ApplicationConfiguration.interopAudience,
-        ApplicationConfiguration.interopIdIssuer,
-        ApplicationConfiguration.interopTokenDuration
+        ApplicationConfiguration.generatedJwtAudience,
+        ApplicationConfiguration.generatedJwtIssuer,
+        ApplicationConfiguration.generatedJwtDuration
       )
     } yield SessionToken(token)
 

@@ -2,17 +2,19 @@ package it.pagopa.interop.backendforfrontend.common.system
 
 import com.typesafe.config.{Config, ConfigFactory}
 
-import scala.jdk.CollectionConverters._
-
 object ApplicationConfiguration {
-  lazy val config: Config = ConfigFactory.load()
+  val config: Config = ConfigFactory.load()
 
-  lazy val serverPort: Int          = config.getInt("backend-for-frontend.port")
-  lazy val jwtAudience: Set[String] = config.getStringList("backend-for-frontend.jwt.audience").asScala.toSet
+  val serverPort: Int          = config.getInt("backend-for-frontend.port")
+  val jwtAudience: Set[String] =
+    config.getString("backend-for-frontend.jwt.audience").split(",").toSet.filter(_.nonEmpty)
 
-  lazy val rsaPrivatePath: String       = config.getString("backend-for-frontend.rsa-private-path")
-  lazy val interopIdIssuer: String      = config.getString("backend-for-frontend.jwt.issuer")
-  lazy val interopAudience: Set[String] = config.getStringList("backend-for-frontend.jwt.audience").asScala.toSet
-  lazy val interopTokenDuration: Long   = config.getLong("backend-for-frontend.jwt.duration-seconds")
+  val rsaPrivatePath: String            = config.getString("backend-for-frontend.rsa-private-path")
+  val generatedJwtIssuer: String        = config.getString("backend-for-frontend.generated-jwt.issuer")
+  val generatedJwtAudience: Set[String] =
+    config.getString("backend-for-frontend.generated-jwt.audience").split(",").toSet.filter(_.nonEmpty)
+  val generatedJwtDuration: Long        = config.getLong("backend-for-frontend.generated-jwt.duration-seconds")
 
+  require(jwtAudience.nonEmpty, "Audience cannot be empty")
+  require(generatedJwtAudience.nonEmpty, "Generated JWT audience cannot be empty")
 }
