@@ -38,9 +38,9 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .expects(
           RSA,
           claimSet,
-          ApplicationConfiguration.interopAudience,
-          ApplicationConfiguration.interopIdIssuer,
-          ApplicationConfiguration.interopTokenDuration
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          ApplicationConfiguration.generatedJwtDuration
         )
         .once()
         .returns(Success("sessionToken"))
@@ -92,9 +92,9 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .expects(
           RSA,
           claimSet,
-          ApplicationConfiguration.interopAudience,
-          ApplicationConfiguration.interopIdIssuer,
-          ApplicationConfiguration.interopTokenDuration
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          ApplicationConfiguration.generatedJwtDuration
         )
         .once()
         .returns(Failure(new RuntimeException("Session token generator fails")))
