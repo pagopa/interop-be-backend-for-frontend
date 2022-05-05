@@ -22,4 +22,8 @@ object ApplicationConfiguration {
 
   require(jwtAudience.nonEmpty, "Audience cannot be empty")
   require(generatedJwtAudience.nonEmpty, "Generated JWT audience cannot be empty")
+  require(
+    rsaKeysIdentifiers.nonEmpty || ecKeysIdentifiers.nonEmpty,
+    "You MUST provide at least one signing key (either RSA or EC)"
+  )
 }
