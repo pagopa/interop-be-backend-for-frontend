@@ -2,24 +2,28 @@ package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
-import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.CreateSessionTokenRequestError
-import it.pagopa.interop.commons.jwt.model.RSA
-import it.pagopa.interop.commons.utils.{UID, ORGANIZATION}
+import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
+import it.pagopa.interop.commons.jwt.model.EC
 import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.TypeConversions.TryOps
+import it.pagopa.interop.commons.utils.{ORGANIZATION, UID}
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
 import scala.util.{Failure, Success, Try}
 
-final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenGenerator: SessionTokenGenerator)
-    extends AuthorizationApiService {
+final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenGenerator: SessionTokenGenerator)(
+  implicit ec: ExecutionContext
+) extends AuthorizationApiService {
 
   private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
@@ -36,11 +40,11 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
     toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val sessionToken: Try[SessionToken] = for {
-      claims        <- jwtReader.getClaims(identityToken.identity_token)
-      sessionClaims <- extractSessionClaims(claims)
+    val result: Future[SessionToken] = for {
+      claims        <- jwtReader.getClaims(identityToken.identity_token).toFuture
+      sessionClaims <- extractSessionClaims(claims).toFuture
       token         <- sessionTokenGenerator.generate(
-        RSA,
+        EC,
         sessionClaims,
         ApplicationConfiguration.generatedJwtAudience,
         ApplicationConfiguration.generatedJwtIssuer,
@@ -48,8 +52,8 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
       )
     } yield SessionToken(token)
 
-    sessionToken match {
-      case Success(value) => getSessionToken200(value)
+    onComplete(result) {
+      case Success(token) => getSessionToken200(token)
       case Failure(ex)    =>
         logger.error(s"Error while creating a session token for this request - ${ex.getMessage}")
         getSessionToken400(problemOf(StatusCodes.BadRequest, CreateSessionTokenRequestError))
