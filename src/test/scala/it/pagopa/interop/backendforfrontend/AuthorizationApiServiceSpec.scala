@@ -6,11 +6,12 @@ import com.nimbusds.jwt.JWTClaimsSet
 import it.pagopa.interop.backendforfrontend.api.impl.AuthorizationApiMarshallerImpl._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
-import it.pagopa.interop.commons.jwt.model.{JWTAlgorithmType, RSA}
+import it.pagopa.interop.commons.jwt.model.{EC, JWTAlgorithmType}
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.util.UUID
+import scala.concurrent.Future
 import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.util.{Failure, Success}
 
@@ -36,14 +37,14 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       (mockSessionTokenGenerator
         .generate(_: JWTAlgorithmType, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
-          RSA,
+          EC,
           claimSet,
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.generatedJwtDuration
         )
         .once()
-        .returns(Success("sessionToken"))
+        .returns(Future.successful("sessionToken"))
 
       Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
@@ -90,14 +91,14 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       (mockSessionTokenGenerator
         .generate(_: JWTAlgorithmType, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
-          RSA,
+          EC,
           claimSet,
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.generatedJwtDuration
         )
         .once()
-        .returns(Failure(new RuntimeException("Session token generator fails")))
+        .returns(Future.failed(new RuntimeException("Session token generator fails")))
 
       Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,

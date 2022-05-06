@@ -9,6 +9,7 @@ import it.pagopa.interop.backendforfrontend.model.{Problem, SessionToken}
 import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol
+import scala.concurrent.ExecutionContext.Implicits.global
 
 trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFactory {
 
