@@ -29,6 +29,15 @@ object Dependencies {
     lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
     lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
     lazy val vault   = namespace %% "interop-commons-vault" % commonsVersion
+
+    lazy val partyManagementClient =
+      namespace %% "interop-selfcare-party-management-client" % selfcarePartyManagementClientVersion
+
+    lazy val partyProcessClient =
+      namespace %% "interop-selfcare-party-process-client" % selfcarePartyProcessClientVersion
+
+    lazy val userRegistryClient =
+      namespace %% "interop-selfcare-user-registry-client" % selfcareUserRegistryVersion
   }
 
   private[this] object cats {
@@ -79,30 +88,33 @@ object Dependencies {
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
     lazy val `server`: Seq[ModuleID]  = Seq(
       // For making Java 12 happy
-      "javax.annotation"       % "javax.annotation-api" % "1.3.2" % "compile",
+      "javax.annotation"           % "javax.annotation-api" % "1.3.2" % "compile",
       //
-      akka.actor               % Compile,
-      akka.actorTyped          % Compile,
-      akka.http                % Compile,
-      akka.httpJson            % Compile,
-      akka.management          % Compile,
-      akka.managementLogLevels % Compile,
-      akka.persistence         % Compile,
-      akka.slf4j               % Compile,
-      akka.stream              % Compile,
-      cats.core                % Compile,
-      kamon.bundle             % Compile,
-      kamon.prometheus         % Compile,
-      logback.classic          % Compile,
-      mustache.mustache        % Compile,
-      pagopa.commons           % Compile,
-      pagopa.jwt               % Compile,
-      pagopa.vault             % Compile,
-      akka.httpTestkit         % Test,
-      akka.testkit             % Test,
-      akka.untypedTestkit      % Test,
-      scalamock.core           % Test,
-      scalatest.core           % Test
+      akka.actor                   % Compile,
+      akka.actorTyped              % Compile,
+      akka.http                    % Compile,
+      akka.httpJson                % Compile,
+      akka.management              % Compile,
+      akka.managementLogLevels     % Compile,
+      akka.persistence             % Compile,
+      akka.slf4j                   % Compile,
+      akka.stream                  % Compile,
+      cats.core                    % Compile,
+      kamon.bundle                 % Compile,
+      kamon.prometheus             % Compile,
+      logback.classic              % Compile,
+      mustache.mustache            % Compile,
+      pagopa.commons               % Compile,
+      pagopa.jwt                   % Compile,
+      pagopa.partyProcessClient    % Compile,
+      pagopa.partyManagementClient % Compile,
+      pagopa.userRegistryClient    % Compile,
+      pagopa.vault                 % Compile,
+      akka.httpTestkit             % Test,
+      akka.testkit                 % Test,
+      akka.untypedTestkit          % Test,
+      scalamock.core               % Test,
+      scalatest.core               % Test
     )
     lazy val client: Seq[ModuleID]    = Seq(
       akka.stream     % Compile,
