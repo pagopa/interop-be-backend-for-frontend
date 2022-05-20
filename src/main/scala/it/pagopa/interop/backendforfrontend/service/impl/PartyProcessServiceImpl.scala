@@ -7,20 +7,22 @@ import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTyp
   PartyProcessRelationshipInfo
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.AkkaUtils.getUidFuture
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
   GenericClientError,
   ResourceNotFoundError,
   ThirdPartyCallError
 }
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
-import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError, ApiKeyValue}
+import it.pagopa.interop.selfcare.partyprocess.client.invoker.ApiError
 import it.pagopa.interop.selfcare.partyprocess.client.model.{PartyRole, RelationshipState}
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi: ProcessApi)
-    extends PartyProcessService {
+final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi: ProcessApi)(implicit
+  partyProcessApiKeyValue: PartyProcessApiKeyValue
+) extends PartyProcessService {
 
   private val replacementEntityId: String = "NoIdentifier"
   private val serviceName: String         = "party-process"
@@ -28,17 +30,17 @@ final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi:
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getRelationship(relationshipId: UUID)(xSelfCareUID: String)(implicit
-    partyProcessApiKeyValue: PartyProcessApiKeyValue,
-    contexts: Seq[(String, String)]
-  ): Future[PartyProcessRelationshipInfo] = {
-    val request = partyApi.getRelationship(relationshipId)(xSelfCareUID)
-    invoker.invoke(
+  override def getRelationship(
+    relationshipId: UUID
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[PartyProcessRelationshipInfo] = for {
+    uid <- getUidFuture(contexts)
+    request = partyApi.getRelationship(relationshipId)(uid)
+    result <- invoker.invoke(
       request,
       s"Retrieving relationship $relationshipId",
       invocationRecovery(Some(relationshipId.toString))
     )
-  }
+  } yield result
 
   override def getUserInstitutionRelationships(
     institutionId: UUID,
@@ -47,16 +49,16 @@ final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi:
     states: Seq[RelationshipState],
     products: Seq[String],
     productRoles: Seq[String]
-  )(xSelfCareUID: String)(implicit
-    partyProcessApiKeyValue: ApiKeyValue,
-    contexts: Seq[(String, String)]
-  ): Future[Seq[PartyProcessRelationshipInfo]] = {
-    val request =
-      partyApi.getUserInstitutionRelationships(institutionId, personId, roles, states, products, productRoles)(
-        xSelfCareUID
-      )
-    invoker.invoke(request, s"Relationships for institution ${institutionId.toString}", invocationRecovery(None))
-  }
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Seq[PartyProcessRelationshipInfo]] = for {
+    uid <- getUidFuture(contexts)
+    request =
+      partyApi.getUserInstitutionRelationships(institutionId, personId, roles, states, products, productRoles)(uid)
+    result <- invoker.invoke(
+      request,
+      s"Relationships for institution ${institutionId.toString}",
+      invocationRecovery(None)
+    )
+  } yield result
 
   private def invocationRecovery[T](
     entityId: Option[String]

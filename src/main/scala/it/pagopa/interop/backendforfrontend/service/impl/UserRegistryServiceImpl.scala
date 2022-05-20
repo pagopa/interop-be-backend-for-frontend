@@ -20,17 +20,16 @@ import it.pagopa.interop.selfcare.userregistry.client.model.Field
 import java.util.UUID
 import scala.concurrent.Future
 
-final case class UserRegistryServiceImpl(invoker: UserRegistryInvoker, userApi: UserApi) extends UserRegistryService {
+final case class UserRegistryServiceImpl(invoker: UserRegistryInvoker, userApi: UserApi)(implicit
+  userRegistryApiKeyValue: UserRegistryApiKeyValue
+) extends UserRegistryService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   private val serviceName: String = "user-registry"
 
-  def findById(userId: UUID)(implicit
-    userRegistryApiKeyValue: UserRegistryApiKeyValue,
-    contexts: Seq[(String, String)]
-  ): Future[UserResource] = {
+  def findById(userId: UUID)(implicit contexts: Seq[(String, String)]): Future[UserResource] = {
     val request = userApi.findByIdUsingGET(userId, Seq(Field.name, Field.familyName))()
     invoker.invoke(request, s"Retrieving user ${userId.toString}", invocationRecovery(userId.toString))
   }

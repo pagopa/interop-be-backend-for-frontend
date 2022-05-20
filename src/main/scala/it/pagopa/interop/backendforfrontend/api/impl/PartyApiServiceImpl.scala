@@ -10,11 +10,8 @@ import it.pagopa.interop.backendforfrontend.api.PartyApiService
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.CreateSessionTokenRequestError
 import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
-import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.PartyProcessApiKeyValue
-import it.pagopa.interop.backendforfrontend.service.types.UserRegistryServiceTypes.UserRegistryApiKeyValue
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, UserRegistryService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils._
 import it.pagopa.interop.commons.utils.TypeConversions._
 import org.slf4j.LoggerFactory
@@ -25,11 +22,8 @@ import scala.util.{Failure, Success}
 final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
   userRegistryService: UserRegistryService
-)(implicit
-  ec: ExecutionContext,
-  partyProcessApiKeyValue: PartyProcessApiKeyValue,
-  userRegistryApiKeyValue: UserRegistryApiKeyValue
-) extends PartyApiService {
+)(implicit ec: ExecutionContext)
+    extends PartyApiService {
 
   private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
@@ -46,9 +40,8 @@ final case class PartyApiServiceImpl(
   ): Route = {
     logger.info(s"Retrieving relationship $relationshipId")
     val result: Future[RelationshipInfo] = for {
-      uid              <- getUidFuture(contexts)
       uuid             <- relationshipId.toFutureUUID
-      relationship     <- partyProcessService.getRelationship(uuid)(uid)
+      relationship     <- partyProcessService.getRelationship(uuid)
       user             <- userRegistryService.findById(relationship.from)
       relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
     } yield relationshipInfo
@@ -81,7 +74,6 @@ final case class PartyApiServiceImpl(
     logger.info(s"Retrieving relationships for institutions $institutionId")
 
     val result: Future[Seq[RelationshipInfo]] = for {
-      uid               <- getUidFuture(contexts)
       institutionIdUUID <- institutionId.toFutureUUID
       personIdUUID      <- personId.traverse(_.toFutureUUID)
       rolesParams       <- parseArrayParameters(roles).traverse(PartyProcessConverter.toPartyRole).toFuture
@@ -95,7 +87,7 @@ final case class PartyApiServiceImpl(
         statesParams,
         productsParams,
         productRolesParams
-      )(uid)
+      )
       relationshipsInfo <- relationships.traverse { relationship =>
         for {
           user             <- userRegistryService.findById(relationship.from)

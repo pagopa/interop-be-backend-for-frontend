@@ -117,12 +117,7 @@ trait Dependencies {
       SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
     )
 
-  def partyApi(jwtReader: JWTReader)(implicit
-    actorSystem: ActorSystem[_],
-    ec: ExecutionContext,
-    partyProcessApiKeyValue: PartyProcessApiKeyValue,
-    userRegistryApiKeyValue: UserRegistryApiKeyValue
-  ): PartyApi =
+  def partyApi(jwtReader: JWTReader)(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): PartyApi =
     new PartyApi(
       PartyApiServiceImpl(partyProcess, userRegistry),
       PartyApiMarshallerImpl,

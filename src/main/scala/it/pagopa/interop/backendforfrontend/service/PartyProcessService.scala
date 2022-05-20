@@ -1,19 +1,15 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.{
-  PartyProcessApiKeyValue,
-  PartyProcessRelationshipInfo
-}
+import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.PartyProcessRelationshipInfo
 import it.pagopa.interop.selfcare.partyprocess.client.model.{PartyRole, RelationshipState}
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait PartyProcessService {
-  def getRelationship(relationshipId: UUID)(xSelfCareUID: String)(implicit
-    partyProcessApiKeyValue: PartyProcessApiKeyValue,
-    contexts: Seq[(String, String)]
-  ): Future[PartyProcessRelationshipInfo]
+  def getRelationship(
+    relationshipId: UUID
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[PartyProcessRelationshipInfo]
 
   def getUserInstitutionRelationships(
     institutionId: UUID,
@@ -22,8 +18,5 @@ trait PartyProcessService {
     states: Seq[RelationshipState],
     products: Seq[String],
     productRoles: Seq[String]
-  )(xSelfCareUID: String)(implicit
-    partyProcessApiKeyValue: PartyProcessApiKeyValue,
-    contexts: Seq[(String, String)]
-  ): Future[Seq[PartyProcessRelationshipInfo]]
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Seq[PartyProcessRelationshipInfo]]
 }
