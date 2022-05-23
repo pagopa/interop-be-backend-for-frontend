@@ -55,12 +55,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionToken'
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
   /institutions/{institutionId}/relationships:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -128,12 +122,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelationshipsResponse'
-        '400':
-          description: Invalid institution id supplied
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
   /relationships/{relationshipId}:
     get:
       tags:
@@ -156,12 +144,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelationshipInfo'
-        '400':
-          description: Invalid id supplied
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
         '404':
           description: Not found
           content:

@@ -14,24 +14,11 @@ import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
 import scala.concurrent.Future
 
 object PartyProcessConverter {
-  def toPartyRole(role: String): Either[Throwable, PartyProcessPartyRole] = role match {
-    case "MANAGER"      => Right(partyprocess.client.model.PartyRole.MANAGER)
-    case "DELEGATE"     => Right(partyprocess.client.model.PartyRole.DELEGATE)
-    case "SUB_DELEGATE" => Right(partyprocess.client.model.PartyRole.SUB_DELEGATE)
-    case "OPERATOR"     => Right(partyprocess.client.model.PartyRole.OPERATOR)
-    case _              => Left(new RuntimeException)
+  def toPartyRole(role: String): Either[Throwable, PartyProcessPartyRole] =
+    partyprocess.client.model.PartyRole.fromValue(role)
 
-  }
-
-  def toRelationshipState(role: String): Either[Throwable, PartyProcessRelationshipState] = role match {
-    case "PENDING"   => Right(partyprocess.client.model.RelationshipState.PENDING)
-    case "ACTIVE"    => Right(partyprocess.client.model.RelationshipState.ACTIVE)
-    case "SUSPENDED" => Right(partyprocess.client.model.RelationshipState.SUSPENDED)
-    case "DELETED"   => Right(partyprocess.client.model.RelationshipState.DELETED)
-    case "REJECTED"  => Right(partyprocess.client.model.RelationshipState.REJECTED)
-    case _           => Left(new RuntimeException)
-
-  }
+  def toRelationshipState(role: String): Either[Throwable, PartyProcessRelationshipState] =
+    partyprocess.client.model.RelationshipState.fromValue(role)
 
   def toApiRelationshipInfo(
     user: UserResource,

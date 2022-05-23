@@ -2,18 +2,20 @@ package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import cats.implicits.toTraverseOps
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PartyApiService
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.CreateSessionTokenRequestError
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.RelationshipNotFound
 import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, UserRegistryService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ResourceNotFoundError
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +32,6 @@ final case class PartyApiServiceImpl(
 
   /**
    * Code: 200, Message: successful operation, DataType: RelationshipInfo
-   * Code: 400, Message: Invalid id supplied, DataType: Problem
    * Code: 404, Message: Not found, DataType: Problem
    */
   override def getRelationship(relationshipId: String)(implicit
@@ -47,17 +48,25 @@ final case class PartyApiServiceImpl(
     } yield relationshipInfo
 
     onComplete(result) {
-      case Success(relationshipInfo) => getRelationship200(relationshipInfo)
-      case Failure(ex)               =>
+      case Success(relationshipInfo)          => getRelationship200(relationshipInfo)
+      case Failure(ex: ResourceNotFoundError) =>
         logger.error(s"Error while retrieving relationship $relationshipId - ${ex.getMessage}")
-        getUserInstitutionRelationships400(problemOf(StatusCodes.BadRequest, CreateSessionTokenRequestError))
+        getRelationship404(problemOf(StatusCodes.NotFound, RelationshipNotFound(relationshipId)))
+      case Failure(ex)                        =>
+        logger.error(s"Error while retrieving relationship $relationshipId - ${ex.getMessage}")
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(s"Something went wrong trying to get relationship $relationshipId - ${ex.getMessage}")
+          )
+        )
     }
 
   }
 
   /**
    * Code: 200, Message: successful operation, DataType: Seq[RelationshipInfo]
-   * Code: 400, Message: Invalid institution id supplied, DataType: Problem
    */
   override def getUserInstitutionRelationships(
     personId: Option[String],
@@ -68,7 +77,6 @@ final case class PartyApiServiceImpl(
     institutionId: String
   )(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerRelationshipInfoarray: ToEntityMarshaller[Seq[RelationshipInfo]]
   ): Route = {
     logger.info(s"Retrieving relationships for institutions $institutionId")
@@ -100,7 +108,15 @@ final case class PartyApiServiceImpl(
       case Success(relationshipsInfo) => getUserInstitutionRelationships200(relationshipsInfo)
       case Failure(ex)                =>
         logger.error(s"Error while retrieving relationships for institutions $institutionId - ${ex.getMessage}")
-        getUserInstitutionRelationships400(problemOf(StatusCodes.BadRequest, CreateSessionTokenRequestError))
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(
+              s"Something went wrong trying to get relationship info for institution $institutionId - ${ex.getMessage}"
+            )
+          )
+        )
     }
 
   }
