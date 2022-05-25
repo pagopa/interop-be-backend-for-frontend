@@ -140,5 +140,3 @@ trait Dependencies {
   }
 
 }
-
-object Dependencies extends Dependencies
