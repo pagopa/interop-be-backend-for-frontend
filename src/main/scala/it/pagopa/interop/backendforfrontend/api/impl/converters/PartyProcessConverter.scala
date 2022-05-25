@@ -1,5 +1,6 @@
 package it.pagopa.interop.backendforfrontend.api.impl.converters
 
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.MissingUserFields
 import it.pagopa.interop.backendforfrontend.model.{PartyRole, ProductInfo, RelationshipInfo, RelationshipState}
 import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.{
   PartyProcessPartyRole,
@@ -42,7 +43,15 @@ object PartyProcessConverter {
       updatedAt = partyProcessRelationshipInfo.updatedAt
     )
 
-    relationshipInfo.toFuture(new RuntimeException)
+    relationshipInfo.toFuture {
+      val missingUserFields: String = List(
+        user.name.fold(Option("name"))(_ => Option.empty[String]),
+        user.familyName.fold(Option("familyName"))(_ => Option.empty[String]),
+        user.fiscalCode.fold(Option("fiscalCode"))(_ => Option.empty[String])
+      ).flatten
+        .mkString(", ")
+      MissingUserFields(user.id.toString, missingUserFields)
+    }
   }
 
   def toApiPartyRole(role: PartyProcessPartyRole): PartyRole = role match {
