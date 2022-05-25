@@ -30,7 +30,7 @@ final case class UserRegistryServiceImpl(invoker: UserRegistryInvoker, userApi: 
   private val serviceName: String = "user-registry"
 
   def findById(userId: UUID)(implicit contexts: Seq[(String, String)]): Future[UserResource] = {
-    val request = userApi.findByIdUsingGET(userId, Seq(Field.name, Field.familyName))()
+    val request = userApi.findByIdUsingGET(userId, Seq(Field.name, Field.familyName, Field.fiscalCode))()
     invoker.invoke(request, s"Retrieving user ${userId.toString}", invocationRecovery(userId.toString))
   }
 
