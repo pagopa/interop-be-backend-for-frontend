@@ -48,8 +48,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
       Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
-        toEntityMarshallerSessionToken,
-        toEntityMarshallerProblem
+        toEntityMarshallerSessionToken
       ) ~> check {
         status shouldEqual StatusCodes.OK
         responseAs[SessionToken] shouldEqual SessionToken("sessionToken")
@@ -66,8 +65,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
       Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
-        toEntityMarshallerSessionToken,
-        toEntityMarshallerProblem
+        toEntityMarshallerSessionToken
       ) ~> check {
         responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0001")
       }
@@ -102,8 +100,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
       Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
-        toEntityMarshallerSessionToken,
-        toEntityMarshallerProblem
+        toEntityMarshallerSessionToken
       ) ~> check {
         responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0001")
       }

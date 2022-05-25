@@ -26,4 +26,11 @@ object ApplicationConfiguration {
     rsaKeysIdentifiers.nonEmpty || ecKeysIdentifiers.nonEmpty,
     "You MUST provide at least one signing key (either RSA or EC)"
   )
+
+  val partyProcessURL: String    = config.getString("backend-for-frontend.services.party-process")
+  val partyProcessApiKey: String = config.getString("backend-for-frontend.api-keys.party-process")
+
+  val userRegistryURL: String    = config.getString("backend-for-frontend.services.user-registry")
+  val userRegistryApiKey: String = config.getString("backend-for-frontend.api-keys.user-registry")
+
 }
