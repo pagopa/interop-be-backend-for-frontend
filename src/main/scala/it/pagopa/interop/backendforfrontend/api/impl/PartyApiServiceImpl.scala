@@ -13,10 +13,8 @@ import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, UserRegistryService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ResourceNotFoundError
-import org.slf4j.LoggerFactory
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -28,7 +26,7 @@ final case class PartyApiServiceImpl(
     extends PartyApiService {
 
   private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
-    Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   /**
    * Code: 200, Message: successful operation, DataType: RelationshipInfo
