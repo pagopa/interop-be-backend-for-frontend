@@ -37,7 +37,9 @@ object Main extends App with CORSSupport with Dependencies {
         jwtReader <- getJwtValidator
         authorization = authorizationApi(jwtReader)
         party         = partyApi(jwtReader)
+        attributes    = attributeApi(jwtReader)
         controller    = new Controller(
+          attributes = attributes,
           authorization = authorization,
           party = party,
           health = healthApi,

@@ -26,6 +26,11 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: attributes
+    description: Attribute Module
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'
   - name: health
     description: Verify service status
     externalDocs:
@@ -150,6 +155,34 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/attributes':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      summary: 'returns the list of attributes available on the registry'
+      tags:
+        - attributes
+      operationId: getAttributes
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: array of currently available attributes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributesResponse'
+        '404':
+          description: Attributes not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      description: Returns the list of currently available attributes
   /status:
     get:
       tags:
@@ -271,6 +304,54 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RelationshipInfo'
+    Attribute:
+      title: Attribute
+      type: object
+      x-tags:
+        - attribute
+      description: Models the attribute registry entry as payload response
+      properties:
+        id:
+          type: string
+          description: uniquely identifies the attribute on the registry
+        code:
+          type: string
+          description: identifies the unique code of this attribute on the origin registry
+        kind:
+          description: Kind of the attribute. It's one of CERTIFIED, VERIFIED, DECLARED.
+          $ref: '#/components/schemas/AttributeKind'
+        description:
+          type: string
+        origin:
+          type: string
+          description: 'represents the origin of this attribute (e.g.: IPA, Normattiva, etc.)'
+        name:
+          type: string
+        creationTime:
+          type: string
+          format: date-time
+      required:
+        - id
+        - description
+        - kind
+        - name
+        - creationTime
+    AttributeKind:
+      type: string
+      enum:
+        - CERTIFIED
+        - DECLARED
+        - VERIFIED
+    AttributesResponse:
+      title: AttributesResponse
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attribute'
+      required:
+        - attributes
     Problem:
       properties:
         type:

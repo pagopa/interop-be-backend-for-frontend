@@ -33,4 +33,5 @@ object ApplicationConfiguration {
   val userRegistryURL: String    = config.getString("backend-for-frontend.services.user-registry")
   val userRegistryApiKey: String = config.getString("backend-for-frontend.api-keys.user-registry")
 
+  val attributeRegistryManagementURL = config.getString("backend-for-frontend.services.attribute-registry-management")
 }
