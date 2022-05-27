@@ -30,10 +30,7 @@ final case class AttributesApiServiceImpl(attributeRegistryManagementApiService:
     toEntityMarshallerAttributesResponse: ToEntityMarshaller[AttributesResponse],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[AttributesResponse] = for {
-      response <- attributeRegistryManagementApiService.getAttributes(search)(contexts)
-      converted = response.toResponse
-    } yield converted
+    val result: Future[AttributesResponse] = attributeRegistryManagementApiService.getAttributes(search)(contexts).map(_.toResponse)
 
     onComplete(result) {
       case Success(attributes) =>
