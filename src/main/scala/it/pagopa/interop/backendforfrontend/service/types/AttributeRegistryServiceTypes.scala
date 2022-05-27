@@ -10,11 +10,15 @@ object AttributeRegistryServiceTypes {
   type MgmtAttributesResponse             = attributeregistrymanagement.client.model.AttributesResponse
   type MgmtAttributeKind                  = attributeregistrymanagement.client.model.AttributeKind
 
-  implicit class Converter(private val mgmtAttributesResponse: MgmtAttributesResponse) extends AnyVal {
+  implicit class AttributesResponseConverter(private val mgmtAttributesResponse: MgmtAttributesResponse)
+      extends AnyVal {
     def toResponse: AttributesResponse =
-      AttributesResponse(attributes = mgmtAttributesResponse.attributes.map(toAttribute))
+      AttributesResponse(attributes = mgmtAttributesResponse.attributes.map(_.toAttribute))
 
-    private def toAttribute(attribute: MgmtAttribute) = Attribute(
+  }
+
+  implicit class AttributeConverter(private val attribute: MgmtAttribute) extends AnyVal {
+    def toAttribute = Attribute(
       id = attribute.id,
       code = attribute.code,
       kind = toModel(attribute.kind),
