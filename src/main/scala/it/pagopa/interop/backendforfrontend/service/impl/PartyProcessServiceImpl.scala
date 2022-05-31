@@ -15,7 +15,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
 }
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.ApiError
-import it.pagopa.interop.selfcare.partyprocess.client.model.{PartyRole, RelationshipState}
+import it.pagopa.interop.selfcare.partyprocess.client.model.{Institution, PartyRole, RelationshipState}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,6 +58,15 @@ final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi:
       s"Relationships for institution ${institutionId.toString}",
       invocationRecovery(None)
     )
+  } yield result
+
+  override def getInstitution(
+    institutionId: UUID
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution] = for {
+    uid <- getUidFuture(contexts)
+    request =
+      partyApi.getInstitution(institutionId)(uid)
+    result <- invoker.invoke(request, s"Institution ${institutionId.toString}", invocationRecovery(None))
   } yield result
 
   private def invocationRecovery[T](

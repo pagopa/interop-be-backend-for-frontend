@@ -16,8 +16,12 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val sessionTokenFormat: RootJsonFormat[SessionToken]         = jsonFormat1(SessionToken)
   implicit val productInfoFormat: RootJsonFormat[ProductInfo]           = jsonFormat3(ProductInfo)
   implicit val relationshipInfoFormat: RootJsonFormat[RelationshipInfo] = jsonFormat11(RelationshipInfo)
-  implicit val problemErrorFormat: RootJsonFormat[ProblemError]         = jsonFormat2(ProblemError)
-  implicit val problemFormat: RootJsonFormat[Problem]                   = jsonFormat5(Problem)
+
+  implicit val attributeFormat: RootJsonFormat[Attribute]     = jsonFormat3(Attribute)
+  implicit val institutionFormat: RootJsonFormat[Institution] = jsonFormat11(Institution)
+
+  implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
+  implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)
 
   def problemOf(httpError: StatusCode, error: ComponentError, defaultMessage: String = "Unknown error"): Problem =
     Problem(

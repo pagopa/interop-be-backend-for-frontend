@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service
 
 import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.PartyProcessRelationshipInfo
-import it.pagopa.interop.selfcare.partyprocess.client.model.{PartyRole, RelationshipState}
+import it.pagopa.interop.selfcare.partyprocess.client.model.{Institution, PartyRole, RelationshipState}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,4 +19,8 @@ trait PartyProcessService {
     products: Seq[String],
     productRoles: Seq[String]
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Seq[PartyProcessRelationshipInfo]]
+
+  def getInstitution(
+    institutionId: UUID
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution]
 }
