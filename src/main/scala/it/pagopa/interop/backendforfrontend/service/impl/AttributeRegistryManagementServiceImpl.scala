@@ -20,8 +20,8 @@ import it.pagopa.interop.commons.utils.extractHeaders
 
 import scala.concurrent.{ExecutionContext, Future}
 
-final case class AttributesApiServiceImpl(invoker: AttributeRegistryManagementInvoker, api: AttributeApi)(implicit
-  ec: ExecutionContext
+final case class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagementInvoker, api: AttributeApi)(
+  implicit ec: ExecutionContext
 ) extends AttributeRegistryManagementService {
 
   implicit val logger = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
