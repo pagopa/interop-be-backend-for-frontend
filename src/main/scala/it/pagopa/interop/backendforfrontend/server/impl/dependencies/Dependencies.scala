@@ -9,7 +9,11 @@ import akka.http.scaladsl.server.directives.SecurityDirectives
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import it.pagopa.interop.attributeregistrymanagement
+import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.interop.backendforfrontend.api.impl.{
+  AttributesApiMarshallerImpl,
+  AttributesApiServiceImpl,
   AuthorizationApiMarshallerImpl,
   AuthorizationApiServiceImpl,
   HealthApiMarshallerImpl,
@@ -18,9 +22,14 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   PartyApiServiceImpl,
   problemOf
 }
-import it.pagopa.interop.backendforfrontend.api.{AuthorizationApi, HealthApi, PartyApi}
+import it.pagopa.interop.backendforfrontend.api.{AttributesApi, AuthorizationApi, HealthApi, PartyApi}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.service.impl.{PartyProcessServiceImpl, UserRegistryServiceImpl}
+import it.pagopa.interop.backendforfrontend.service.impl.{
+  AttributeRegistryManagementServiceImpl,
+  PartyProcessServiceImpl,
+  UserRegistryServiceImpl
+}
+import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeRegistryManagementInvoker
 import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.{
   PartyProcessApiKeyValue,
   PartyProcessInvoker
@@ -29,7 +38,11 @@ import it.pagopa.interop.backendforfrontend.service.types.UserRegistryServiceTyp
   UserRegistryApiKeyValue,
   UserRegistryInvoker
 }
-import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, UserRegistryService}
+import it.pagopa.interop.backendforfrontend.service.{
+  AttributeRegistryManagementService,
+  PartyProcessService,
+  UserRegistryService
+}
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSessionTokenGenerator, getClaimsVerifier}
@@ -67,6 +80,26 @@ trait Dependencies {
   object PartyProcessApi {
     def apply(baseUrl: String): ProcessApi = ProcessApi(baseUrl)
   }
+
+  object AttributeRegistryManagementInvoker {
+    def apply()(implicit actorSystem: ClassicActorSystem): AttributeRegistryManagementInvoker =
+      attributeregistrymanagement.client.invoker.ApiInvoker(
+        attributeregistrymanagement.client.api.EnumsSerializers.all
+      )(actorSystem.classicSystem)
+  }
+
+  val attributeRegistryManagementApi: AttributeApi = AttributeApi(
+    ApplicationConfiguration.attributeRegistryManagementURL
+  )
+
+  def attributeRegistry(implicit
+    actorSystem: ActorSystem[_],
+    executionContext: ExecutionContext
+  ): AttributeRegistryManagementService =
+    AttributeRegistryManagementServiceImpl(
+      AttributeRegistryManagementInvoker()(actorSystem.classicSystem),
+      attributeRegistryManagementApi
+    )
 
   def userRegistry(implicit actorSystem: ActorSystem[_]): UserRegistryService =
     UserRegistryServiceImpl(
@@ -121,6 +154,13 @@ trait Dependencies {
     new PartyApi(
       PartyApiServiceImpl(partyProcess, userRegistry),
       PartyApiMarshallerImpl,
+      jwtReader.OAuth2JWTValidatorAsContexts
+    )
+
+  def attributeApi(jwtReader: JWTReader)(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): AttributesApi =
+    new AttributesApi(
+      AttributesApiServiceImpl(attributeRegistry),
+      AttributesApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts
     )
 

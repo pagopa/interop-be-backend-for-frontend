@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.commons.utils.SprayCommonFormats.{uuidFormat, offsetDateTimeFormat}
+import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
@@ -17,8 +17,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val productInfoFormat: RootJsonFormat[ProductInfo]           = jsonFormat3(ProductInfo)
   implicit val relationshipInfoFormat: RootJsonFormat[RelationshipInfo] = jsonFormat11(RelationshipInfo)
 
-  implicit val attributeFormat: RootJsonFormat[Attribute]     = jsonFormat3(Attribute)
-  implicit val institutionFormat: RootJsonFormat[Institution] = jsonFormat11(Institution)
+  implicit val institutionAttributeFormat: RootJsonFormat[InstitutionAttribute] = jsonFormat3(InstitutionAttribute)
+  implicit val institutionFormat: RootJsonFormat[Institution]                   = jsonFormat11(Institution)
+
+  implicit val attributeFormat: RootJsonFormat[Attribute]                   = jsonFormat7(Attribute)
+  implicit val attributesResponseFormat: RootJsonFormat[AttributesResponse] = jsonFormat1(AttributesResponse)
 
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)
