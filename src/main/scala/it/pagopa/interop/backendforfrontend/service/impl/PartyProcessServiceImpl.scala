@@ -51,8 +51,9 @@ final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi:
     productRoles: Seq[String]
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Seq[PartyProcessRelationshipInfo]] = for {
     uid <- getUidFuture(contexts)
-    request =
-      partyApi.getUserInstitutionRelationships(institutionId, personId, roles, states, products, productRoles)(uid)
+    request = partyApi.getUserInstitutionRelationships(institutionId, personId, roles, states, products, productRoles)(
+      uid
+    )
     result <- invoker.invoke(
       request,
       s"Relationships for institution ${institutionId.toString}",
@@ -64,8 +65,7 @@ final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi:
     institutionId: UUID
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution] = for {
     uid <- getUidFuture(contexts)
-    request =
-      partyApi.getInstitution(institutionId)(uid)
+    request = partyApi.getInstitution(institutionId)(uid)
     result <- invoker.invoke(request, s"Institution ${institutionId.toString}", invocationRecovery(None))
   } yield result
 
