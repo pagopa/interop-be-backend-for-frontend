@@ -8,15 +8,13 @@ import cats.implicits.toTraverseOps
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PartyApiService
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.RelationshipNotFound
-import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{InstitutionNotFound, RelationshipNotFound}
+import it.pagopa.interop.backendforfrontend.model.{Institution, Problem, RelationshipInfo}
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, UserRegistryService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ResourceNotFoundError
-import org.slf4j.LoggerFactory
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -28,7 +26,7 @@ final case class PartyApiServiceImpl(
     extends PartyApiService {
 
   private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
-    Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   /**
    * Code: 200, Message: successful operation, DataType: RelationshipInfo
@@ -74,6 +72,7 @@ final case class PartyApiServiceImpl(
     states: String,
     products: String,
     productRoles: String,
+    query: Option[String],
     institutionId: String
   )(implicit
     contexts: Seq[(String, String)],
@@ -102,7 +101,7 @@ final case class PartyApiServiceImpl(
           relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
         } yield relationshipInfo
       }
-    } yield relationshipsInfo
+    } yield filterByUserName(relationshipsInfo, query)
 
     onComplete(result) {
       case Success(relationshipsInfo) => getUserInstitutionRelationships200(relationshipsInfo)
@@ -115,6 +114,50 @@ final case class PartyApiServiceImpl(
             GenericError(
               s"Something went wrong trying to get relationship info for institution $institutionId - ${ex.getMessage}"
             )
+          )
+        )
+    }
+
+  }
+
+  private def filterByUserName(relationships: Seq[RelationshipInfo], query: Option[String]): Seq[RelationshipInfo] = {
+    query.fold(relationships)(q =>
+      relationships.filter(relationship =>
+        relationship.name.toLowerCase.contains(q.toLowerCase) || relationship.familyName.toLowerCase.contains(
+          q.toLowerCase
+        )
+      )
+    )
+  }
+
+  /**
+   * Code: 200, Message: successful operation, DataType: Institution
+   * Code: 400, Message: Invalid id supplied, DataType: Problem
+   * Code: 404, Message: Not found, DataType: Problem
+   */
+  override def getInstitution(institutionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerInstitution: ToEntityMarshaller[Institution],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Retrieving institution $institutionId")
+    val result: Future[Institution] = for {
+      uuid        <- institutionId.toFutureUUID
+      institution <- partyProcessService.getInstitution(uuid)
+    } yield PartyProcessConverter.toApiInstitution(institution)
+
+    onComplete(result) {
+      case Success(institution)               => getInstitution200(institution)
+      case Failure(ex: ResourceNotFoundError) =>
+        logger.error(s"Error while retrieving institution $institutionId - ${ex.getMessage}")
+        getInstitution404(problemOf(StatusCodes.NotFound, InstitutionNotFound(institutionId)))
+      case Failure(ex)                        =>
+        logger.error(s"Error while retrieving institution $institutionId - ${ex.getMessage}")
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(s"Something went wrong trying to get institution $institutionId - ${ex.getMessage}")
           )
         )
     }

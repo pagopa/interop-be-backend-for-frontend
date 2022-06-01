@@ -15,7 +15,6 @@ import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.{ORGANIZATION, UID}
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
@@ -25,10 +24,14 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
   implicit ec: ExecutionContext
 ) extends AuthorizationApiService {
 
-  private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
-    Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
+  private val NAME: String        = "name"
+  private val FAMILY_NAME: String = "family_name"
+  private val EMAIL: String       = "email"
 
-  private val admittedSessionClaims: Set[String] = Set(UID, ORGANIZATION)
+  private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+
+  private val admittedSessionClaims: Set[String] = Set(UID, ORGANIZATION, NAME, FAMILY_NAME, EMAIL)
 
   /**
    * Code: 200, Message: Session token requested, DataType: SessionToken

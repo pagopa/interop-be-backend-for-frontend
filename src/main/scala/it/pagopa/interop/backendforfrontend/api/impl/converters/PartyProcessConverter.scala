@@ -1,13 +1,8 @@
 package it.pagopa.interop.backendforfrontend.api.impl.converters
 
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.MissingUserFields
-import it.pagopa.interop.backendforfrontend.model.{PartyRole, ProductInfo, RelationshipInfo, RelationshipState}
-import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.{
-  PartyProcessPartyRole,
-  PartyProcessProductInfo,
-  PartyProcessRelationshipInfo,
-  PartyProcessRelationshipState
-}
+import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes._
 import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
 import it.pagopa.interop.selfcare.partyprocess
 import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
@@ -71,4 +66,22 @@ object PartyProcessConverter {
 
   def toApiProductInfo(productInfo: PartyProcessProductInfo): ProductInfo =
     ProductInfo(id = productInfo.id, role = productInfo.role, createdAt = productInfo.createdAt)
+
+  def toApiInstitutionAttribute(attribute: PartyProcessAttribute): InstitutionAttribute =
+    InstitutionAttribute(origin = attribute.origin, code = attribute.code, description = attribute.description)
+
+  def toApiInstitution(institution: PartyProcessInstitution): Institution =
+    Institution(
+      id = institution.id,
+      externalId = institution.externalId,
+      originId = institution.originId,
+      description = institution.description,
+      digitalAddress = institution.digitalAddress,
+      address = institution.address,
+      zipCode = institution.zipCode,
+      taxCode = institution.taxCode,
+      origin = institution.origin,
+      institutionType = institution.institutionType,
+      attributes = institution.attributes.map(toApiInstitutionAttribute)
+    )
 }

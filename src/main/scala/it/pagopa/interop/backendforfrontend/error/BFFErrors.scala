@@ -13,4 +13,7 @@ object BFFErrors {
   final case class MissingUserFields(userId: String, missingUserFields: String)
       extends ComponentError("0003", s"Missing some fields for user $userId - $missingUserFields")
 
+  final case class InstitutionNotFound(institutionId: String)
+      extends ComponentError("0004", s"Institution $institutionId not found")
+
 }
