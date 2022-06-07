@@ -14,7 +14,7 @@ servers:
   - url: '/backend-for-frontend/{{version}}'
     description: This service is the Interop BFF
 security:
-  - bearerAuth: [ ]
+  - bearerAuth: []
 tags:
   - name: authorization
     description: Implements authorization
@@ -42,7 +42,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     post:
-      security: [ { } ]
+      security: [{}]
       tags:
         - authorization
       operationId: getSessionToken
@@ -91,7 +91,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/PartyRole'
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: states
@@ -100,7 +100,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/RelationshipState'
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: products
@@ -109,7 +109,7 @@ paths:
             type: array
             items:
               type: string
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: productRoles
@@ -118,7 +118,7 @@ paths:
             type: array
             items:
               type: string
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: query
@@ -217,6 +217,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
       description: Returns the list of currently available attributes
+    post:
+      summary: Creates attribute
+      tags:
+        - attributes
+      operationId: createAttribute
+      responses:
+        '201':
+          description: Attribute created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attribute'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      description: Creates the attribute passed as payload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeSeed'
+        description: Contains the attribute data to save.
   '/attributes/origin/{origin}/code/{code}':
     get:
       summary: Get Attribute by origin and code
@@ -374,6 +406,28 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RelationshipInfo'
+    AttributeSeed:
+      title: AttributeSeed
+      type: object
+      description: Models the attribute registry entry as payload response
+      properties:
+        code:
+          type: string
+          description: identifies the unique code of this attribute on the registry
+        kind:
+          description: Kind of the attribute. It's one of CERTIFIED, VERIFIED, DECLARED.
+          $ref: '#/components/schemas/AttributeKind'
+        description:
+          type: string
+        origin:
+          type: string
+          description: 'represents the origin of this attribute (e.g.: IPA for the certified ones, etc.)'
+        name:
+          type: string
+      required:
+        - description
+        - name
+        - kind
     Attribute:
       title: Attribute
       type: object

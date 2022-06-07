@@ -7,13 +7,15 @@ import it.pagopa.interop.attributeregistrymanagement.client.model.AttributesResp
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementService
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{
   AttributeRegistryManagementInvoker,
-  MgmtAttribute
+  MgmtAttribute,
+  MgmtAttributeSeed
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
   GenericClientError,
   ResourceNotFoundError,
+  ResourceConflictError,
   ThirdPartyCallError
 }
 import it.pagopa.interop.commons.utils.extractHeaders
@@ -54,18 +56,34 @@ final case class AttributeRegistryManagementServiceImpl(invoker: AttributeRegist
       )
     } yield result
 
+  override def createAttribute(
+    seed: MgmtAttributeSeed
+  )(implicit contexts: Seq[(String, String)]): Future[MgmtAttribute] = {
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.createAttribute(xCorrelationId = correlationId, attributeSeed = seed, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      result <- invoker.invoke(request, s"Creating attribute with seed $seed", invocationRecovery(Some(seed.name)))
+    } yield result
+  }
+
   private def invocationRecovery[T](
     entityId: Option[String]
   ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] =
     (context, logger, msg) => {
-      case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-        logger.error(s"$msg. code > $code - message > $message", ex)(context)
+      case ex @ ApiError(404, message, _, _, _)  =>
+        logger.error(s"$msg. code > 404 - message > $message", ex)(context)
         Future.failed[T](ResourceNotFoundError(entityId.getOrElse(replacementEntityId)))
-      case ex @ ApiError(code, message, _, _, _)                =>
+      case ex @ ApiError(409, message, _, _, _)  =>
+        logger.error(s"$msg. code > 409 - message > $message", ex)(context)
+        Future.failed[T](ResourceConflictError(entityId.getOrElse(replacementEntityId)))
+      case ex @ ApiError(code, message, _, _, _) =>
         logger.error(s"$msg. code > $code - message > $message", ex)(context)
         Future.failed[T](ThirdPartyCallError(serviceName, ex.getMessage))
-      case ex                                                   =>
+      case ex                                    =>
         logger.error(s"$msg. Error: ${ex.getMessage}", ex)(context)
         Future.failed[T](GenericClientError(ex.getMessage))
     }
+
 }
