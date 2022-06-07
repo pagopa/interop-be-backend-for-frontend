@@ -10,10 +10,15 @@ import it.pagopa.interop.backendforfrontend.model.{Attribute, AttributesResponse
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementService
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
+  GenericError,
+  ResourceNotFoundError,
+  ResourceConflictError
+}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import it.pagopa.interop.backendforfrontend.model.AttributeSeed
 
 final case class AttributesApiServiceImpl(attributeRegistryManagementApiService: AttributeRegistryManagementService)(
   implicit ec: ExecutionContext
@@ -85,4 +90,35 @@ final case class AttributesApiServiceImpl(attributeRegistryManagementApiService:
         )
     }
   }
+
+  override def createAttribute(attributeSeed: AttributeSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Attribute] = for {
+      result <- attributeRegistryManagementApiService.createAttribute(attributeSeed.toSeed)
+    } yield result.toAttribute
+
+    onComplete(result) {
+      case Success(attribute)                =>
+        createAttribute201(attribute)
+      case Failure(e: ResourceConflictError) =>
+        val errorMessage: String = s"Attribute with name ${e.resourceId} already existing"
+        logger.error(s"Error while creating attribute with seed $attributeSeed - $errorMessage")
+        createAttribute409(problemOf(StatusCodes.Conflict, ResourceConflictError(errorMessage)))
+      case Failure(e)                        =>
+        logger.error(s"Error while creating attribute with seed $attributeSeed", e)
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(
+              s"Something went wrong trying to create an attribute with seed $attributeSeed - ${e.getMessage}"
+            )
+          )
+        )
+    }
+  }
+
 }
