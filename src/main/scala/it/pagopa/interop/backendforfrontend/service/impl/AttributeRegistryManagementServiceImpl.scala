@@ -52,7 +52,7 @@ final case class AttributeRegistryManagementServiceImpl(invoker: AttributeRegist
       result <- invoker.invoke(
         request,
         s"Getting attribute by origin = $origin and code = $code",
-        invocationRecovery(Some(s"$origin/$code"))
+        invocationRecovery(Some(s"Attribute $origin/$code"))
       )
     } yield result
 

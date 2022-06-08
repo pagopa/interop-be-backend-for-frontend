@@ -189,6 +189,35 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/institutions/{institutionId}/certifiedAttributes':
+    get:
+      security: []
+      tags:
+        - party
+      summary: Gets the certified attributes of an institution using internal institution id
+      description: Gets certified attributes for institution using internal institution id
+      operationId: getCertifiedAttributes
+      parameters:
+        - name: institutionId
+          in: path
+          description: The internal identifier of the institution
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertifiedAttributesResponse'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/attributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -415,7 +444,6 @@ components:
           type: string
           description: identifies the unique code of this attribute on the registry
         kind:
-          description: Kind of the attribute. It's one of CERTIFIED, VERIFIED, DECLARED.
           $ref: '#/components/schemas/AttributeKind'
         description:
           type: string
@@ -458,6 +486,36 @@ components:
         - kind
         - name
         - creationTime
+    CertifiedAttribute:
+      title: CertifiedAttribute
+      type: object
+      description: Models a certified attribute registry entry as payload response
+      properties:
+        id:
+          type: string
+          description: uniquely identifies the attribute on the registry
+        description:
+          type: string
+        name:
+          type: string
+        creationTime:
+          type: string
+          format: date-time
+      required:
+        - id
+        - description
+        - name
+        - creationTime
+    CertifiedAttributesResponse:
+      title: CertifiedAttributesResponse
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CertifiedAttribute'
+      required:
+        - attributes
     AttributeKind:
       type: string
       enum:

@@ -4,8 +4,9 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
-import cats.implicits.toTraverseOps
+import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.selfcare.partyprocess.client.model.{Attribute => PartyAttribute}
 import it.pagopa.interop.backendforfrontend.api.PartyApiService
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{InstitutionNotFound, RelationshipNotFound}
@@ -18,10 +19,16 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericErr
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementService
+import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeConverter
+import it.pagopa.interop.backendforfrontend.model.CertifiedAttributesResponse
+import it.pagopa.interop.attributeregistrymanagement.client.model.AttributeKind
+import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 
 final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
-  userRegistryService: UserRegistryService
+  userRegistryService: UserRegistryService,
+  attributeRegistryService: AttributeRegistryManagementService
 )(implicit ec: ExecutionContext)
     extends PartyApiService {
 
@@ -95,7 +102,7 @@ final case class PartyApiServiceImpl(
         productsParams,
         productRolesParams
       )
-      relationshipsInfo <- relationships.traverse { relationship =>
+      relationshipsInfo <- Future.traverse(relationships) { relationship =>
         for {
           user             <- userRegistryService.findById(relationship.from)
           relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
@@ -161,6 +168,47 @@ final case class PartyApiServiceImpl(
           )
         )
     }
-
   }
+
+  override def getCertifiedAttributes(institutionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse]
+  ): Route = {
+
+    def getAttributeSafe(partyAttribute: PartyAttribute): Future[Option[Attribute]] = attributeRegistryService
+      .getAttributeByOriginAndCode(partyAttribute.origin, partyAttribute.code)
+      .redeem(
+        e => {
+          logger.error(s"Unable to find attribute ${partyAttribute.origin}/${partyAttribute.code}", e)
+          Option.empty[Attribute]
+        },
+        Option(_)
+      )
+
+    val result: Future[CertifiedAttributesResponse] = for {
+      institutionUUID <- institutionId.toFutureUUID
+      institution     <- partyProcessService.getInstitution(institutionUUID)
+      attributes      <- Future.traverse(institution.attributes)(getAttributeSafe).map(_.flatten)
+      certifiedAttributes = attributes.filter(_.kind == AttributeKind.CERTIFIED)
+    } yield CertifiedAttributesResponse(certifiedAttributes.map(_.toCertifiedAttribute))
+
+    onComplete(result) {
+      case Success(attributes)               =>
+        getCertifiedAttributes200(attributes)
+      case Failure(e: ResourceNotFoundError) =>
+        logger.error(s"Error while retrieving  certified attributes for $institutionId", e)
+        getInstitution404(problemOf(StatusCodes.NotFound, e))
+      case Failure(e)                        =>
+        logger.error(s"Error while retrieving certified attributes for $institutionId", e)
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(s"Error while retrieving certified attributes for $institutionId - ${e.getMessage}")
+          )
+        )
+    }
+  }
+
 }

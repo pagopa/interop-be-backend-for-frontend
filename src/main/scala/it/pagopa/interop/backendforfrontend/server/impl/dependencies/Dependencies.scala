@@ -150,7 +150,7 @@ trait Dependencies {
 
   def partyApi(jwtReader: JWTReader)(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): PartyApi =
     new PartyApi(
-      PartyApiServiceImpl(partyProcess, userRegistry),
+      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry),
       PartyApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts
     )
