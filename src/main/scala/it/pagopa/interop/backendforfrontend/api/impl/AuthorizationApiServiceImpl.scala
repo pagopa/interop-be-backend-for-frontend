@@ -10,9 +10,9 @@ import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.CreateSessionTokenRequestError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
-import it.pagopa.interop.commons.jwt.model.EC
 import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.{ORGANIZATION, UID}
 
@@ -44,7 +44,7 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
       claims        <- jwtReader.getClaims(identityToken.identity_token).toFuture
       sessionClaims <- extractSessionClaims(claims).toFuture
       token         <- sessionTokenGenerator.generate(
-        EC,
+        SignatureAlgorithm.RSAPkcs1Sha256,
         sessionClaims,
         ApplicationConfiguration.generatedJwtAudience,
         ApplicationConfiguration.generatedJwtIssuer,

@@ -26,9 +26,9 @@ object Dependencies {
   private[this] object pagopa {
     lazy val namespace = "it.pagopa"
 
-    lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
-    lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
-    lazy val vault   = namespace %% "interop-commons-vault" % commonsVersion
+    lazy val commons = namespace %% "interop-commons-utils"  % commonsVersion
+    lazy val jwt     = namespace %% "interop-commons-jwt"    % commonsVersion
+    lazy val vault   = namespace %% "interop-commons-signer" % commonsVersion
 
     lazy val partyManagementClient =
       namespace %% "interop-selfcare-party-management-client" % partyManagementVersion
