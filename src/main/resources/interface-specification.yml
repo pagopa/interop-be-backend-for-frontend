@@ -444,7 +444,6 @@ components:
           type: string
           description: identifies the unique code of this attribute on the registry
         kind:
-          description: Kind of the attribute. It's one of CERTIFIED, VERIFIED, DECLARED.
           $ref: '#/components/schemas/AttributeKind'
         description:
           type: string

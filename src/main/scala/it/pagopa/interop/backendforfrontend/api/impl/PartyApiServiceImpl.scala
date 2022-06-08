@@ -4,8 +4,9 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
-import cats.implicits.toTraverseOps
+import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.selfcare.partyprocess.client.model.{Attribute => PartyAttribute}
 import it.pagopa.interop.backendforfrontend.api.PartyApiService
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{InstitutionNotFound, RelationshipNotFound}
@@ -22,6 +23,7 @@ import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementS
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeConverter
 import it.pagopa.interop.backendforfrontend.model.CertifiedAttributesResponse
 import it.pagopa.interop.attributeregistrymanagement.client.model.AttributeKind
+import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 
 final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
@@ -173,13 +175,21 @@ final case class PartyApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse]
   ): Route = {
-    val result = for {
+
+    def getAttributeSafe(partyAttribute: PartyAttribute): Future[Option[Attribute]] = attributeRegistryService
+      .getAttributeByOriginAndCode(partyAttribute.origin, partyAttribute.code)
+      .redeem(
+        e => {
+          logger.error(s"Unable to find attribute ${partyAttribute.origin}/${partyAttribute.code}", e)
+          Option.empty[Attribute]
+        },
+        Option(_)
+      )
+
+    val result: Future[CertifiedAttributesResponse] = for {
       institutionUUID <- institutionId.toFutureUUID
       institution     <- partyProcessService.getInstitution(institutionUUID)
-      attributesOriginsAndCodes = institution.attributes.map(a => (a.code, a.origin))
-      attributes <- Future.traverse(attributesOriginsAndCodes) { case (origin, code) =>
-        attributeRegistryService.getAttributeByOriginAndCode(origin, code)
-      }
+      attributes      <- institution.attributes.traverse(getAttributeSafe).map(_.flatten)
       certifiedAttributes = attributes.filter(_.kind == AttributeKind.CERTIFIED)
     } yield CertifiedAttributesResponse(certifiedAttributes.map(_.toCertifiedAttribute))
 
