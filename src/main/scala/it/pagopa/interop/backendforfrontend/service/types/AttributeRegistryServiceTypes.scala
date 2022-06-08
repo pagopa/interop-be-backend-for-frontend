@@ -2,7 +2,13 @@ package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.attributeregistrymanagement
 import it.pagopa.interop.backendforfrontend.model.AttributeKind.{CERTIFIED, DECLARED, VERIFIED}
-import it.pagopa.interop.backendforfrontend.model.{Attribute, AttributeKind, AttributesResponse, AttributeSeed}
+import it.pagopa.interop.backendforfrontend.model.{
+  Attribute,
+  AttributeKind,
+  AttributesResponse,
+  AttributeSeed,
+  CertifiedAttribute
+}
 
 object AttributeRegistryServiceTypes {
   type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
@@ -39,6 +45,9 @@ object AttributeRegistryServiceTypes {
       name = attribute.name,
       creationTime = attribute.creationTime
     )
+
+    def toCertifiedAttribute: CertifiedAttribute =
+      CertifiedAttribute(attribute.id, attribute.description, attribute.name, attribute.creationTime)
   }
 
   implicit class AttributeSeedConverter(private val seed: AttributeSeed) extends AnyVal {
@@ -49,6 +58,6 @@ object AttributeRegistryServiceTypes {
       origin = seed.origin,
       name = seed.name
     )
-
   }
+
 }

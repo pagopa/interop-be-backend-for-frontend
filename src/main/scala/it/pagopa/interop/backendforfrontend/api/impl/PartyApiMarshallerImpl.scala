@@ -3,10 +3,13 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import it.pagopa.interop.backendforfrontend.api.PartyApiMarshaller
-import it.pagopa.interop.backendforfrontend.model.{Institution, Problem, RelationshipInfo}
+import it.pagopa.interop.backendforfrontend.model._
 import spray.json._
 
 object PartyApiMarshallerImpl extends PartyApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
+
+  override implicit def toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse] =
+    sprayJsonMarshaller[CertifiedAttributesResponse]
 
   override implicit def toEntityMarshallerInstitution: ToEntityMarshaller[Institution] =
     sprayJsonMarshaller[Institution]

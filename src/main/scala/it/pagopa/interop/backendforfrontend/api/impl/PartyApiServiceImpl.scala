@@ -18,10 +18,15 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericErr
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementService
+import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeConverter
+import it.pagopa.interop.backendforfrontend.model.CertifiedAttributesResponse
+import it.pagopa.interop.attributeregistrymanagement.client.model.AttributeKind
 
 final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
-  userRegistryService: UserRegistryService
+  userRegistryService: UserRegistryService,
+  attributeRegistryService: AttributeRegistryManagementService
 )(implicit ec: ExecutionContext)
     extends PartyApiService {
 
@@ -161,6 +166,39 @@ final case class PartyApiServiceImpl(
           )
         )
     }
-
   }
+
+  override def getCertifiedAttributes(institutionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse]
+  ): Route = {
+    val result = for {
+      institutionUUID <- institutionId.toFutureUUID
+      institution     <- partyProcessService.getInstitution(institutionUUID)
+      attributesOriginsAndCodes = institution.attributes.map(a => (a.code, a.origin))
+      attributes <- Future.traverse(attributesOriginsAndCodes) { case (origin, code) =>
+        attributeRegistryService.getAttributeByOriginAndCode(origin, code)
+      }
+      certifiedAttributes = attributes.filter(_.kind == AttributeKind.CERTIFIED)
+    } yield CertifiedAttributesResponse(certifiedAttributes.map(_.toCertifiedAttribute))
+
+    onComplete(result) {
+      case Success(attributes)               =>
+        getCertifiedAttributes200(attributes)
+      case Failure(e: ResourceNotFoundError) =>
+        logger.error(s"Error while retrieving  certified attributes for $institutionId", e)
+        getInstitution404(problemOf(StatusCodes.NotFound, e))
+      case Failure(e)                        =>
+        logger.error(s"Error while retrieving certified attributes for $institutionId", e)
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(s"Error while retrieving certified attributes for $institutionId - ${e.getMessage}")
+          )
+        )
+    }
+  }
+
 }
