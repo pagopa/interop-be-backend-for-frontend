@@ -6,7 +6,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import it.pagopa.interop.backendforfrontend.api.impl.AuthorizationApiMarshallerImpl._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
-import it.pagopa.interop.commons.jwt.model.{EC, JWTAlgorithmType}
+import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -35,9 +35,9 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .returns(Success(jwtClaimsSet))
 
       (mockSessionTokenGenerator
-        .generate(_: JWTAlgorithmType, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
-          EC,
+          SignatureAlgorithm.RSAPkcs1Sha256,
           claimSet,
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
@@ -87,9 +87,9 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .returns(Success(jwtClaimsSet))
 
       (mockSessionTokenGenerator
-        .generate(_: JWTAlgorithmType, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
-          EC,
+          SignatureAlgorithm.RSAPkcs1Sha256,
           claimSet,
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,

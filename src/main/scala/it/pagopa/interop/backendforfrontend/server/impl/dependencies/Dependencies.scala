@@ -46,12 +46,11 @@ import it.pagopa.interop.backendforfrontend.service.{
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSessionTokenGenerator, getClaimsVerifier}
+import it.pagopa.interop.commons.signer.service.SignerService
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
-import it.pagopa.interop.commons.vault.VaultClientConfiguration
-import it.pagopa.interop.commons.vault.service.VaultTransitService
-import it.pagopa.interop.commons.vault.service.impl.VaultTransitServiceImpl
+import it.pagopa.interop.commons.signer.service.impl.KMSSignerServiceImpl
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
 import it.pagopa.interop.selfcare.userregistry.client.api.UserApi
 import it.pagopa.interop.selfcare.{partyprocess, userregistry}
@@ -130,16 +129,15 @@ trait Dependencies {
 
   def sessionTokenGenerator(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
     new DefaultSessionTokenGenerator(
-      vaultService,
+      signerService(),
       new PrivateKeysKidHolder {
         override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
         override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers
       }
     )
 
-  private def vaultService(implicit actorSystem: ActorSystem[_]): VaultTransitService = new VaultTransitServiceImpl(
-    VaultClientConfiguration.vaultConfig
-  )(actorSystem.classicSystem)
+  private def signerService()(implicit actorSystem: ActorSystem[_]): SignerService =
+    KMSSignerServiceImpl()(actorSystem.classicSystem)
 
   def authorizationApi(
     jwtReader: JWTReader
