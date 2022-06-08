@@ -102,7 +102,7 @@ final case class PartyApiServiceImpl(
         productsParams,
         productRolesParams
       )
-      relationshipsInfo <- relationships.traverse { relationship =>
+      relationshipsInfo <- Future.traverse(relationships) { relationship =>
         for {
           user             <- userRegistryService.findById(relationship.from)
           relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
@@ -189,7 +189,7 @@ final case class PartyApiServiceImpl(
     val result: Future[CertifiedAttributesResponse] = for {
       institutionUUID <- institutionId.toFutureUUID
       institution     <- partyProcessService.getInstitution(institutionUUID)
-      attributes      <- institution.attributes.traverse(getAttributeSafe).map(_.flatten)
+      attributes      <- Future.traverse(institution.attributes)(getAttributeSafe).map(_.flatten)
       certifiedAttributes = attributes.filter(_.kind == AttributeKind.CERTIFIED)
     } yield CertifiedAttributesResponse(certifiedAttributes.map(_.toCertifiedAttribute))
 
