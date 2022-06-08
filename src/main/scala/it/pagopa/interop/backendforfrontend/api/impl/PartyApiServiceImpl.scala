@@ -95,7 +95,7 @@ final case class PartyApiServiceImpl(
         productsParams,
         productRolesParams
       )
-      relationshipsInfo <- relationships.traverse { relationship =>
+      relationshipsInfo <- Future.traverse(relationships) { relationship =>
         for {
           user             <- userRegistryService.findById(relationship.from)
           relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
