@@ -28,7 +28,7 @@ object Dependencies {
 
     lazy val commons = namespace %% "interop-commons-utils"  % commonsVersion
     lazy val jwt     = namespace %% "interop-commons-jwt"    % commonsVersion
-    lazy val vault   = namespace %% "interop-commons-signer" % commonsVersion
+    lazy val signer  = namespace %% "interop-commons-signer" % commonsVersion
 
     lazy val partyManagementClient =
       namespace %% "interop-selfcare-party-management-client" % partyManagementVersion
@@ -113,7 +113,7 @@ object Dependencies {
       pagopa.partyManagementClient   % Compile,
       pagopa.userRegistryClient      % Compile,
       pagopa.attributeRegistryClient % Compile,
-      pagopa.vault                   % Compile,
+      pagopa.signer                  % Compile,
       akka.httpTestkit               % Test,
       akka.testkit                   % Test,
       akka.untypedTestkit            % Test,
