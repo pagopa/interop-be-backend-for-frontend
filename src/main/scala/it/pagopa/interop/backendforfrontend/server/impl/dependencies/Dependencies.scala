@@ -129,12 +129,12 @@ trait Dependencies {
 
   def sessionTokenGenerator(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext) =
     new DefaultSessionTokenGenerator(
-      signerService()(actorSystem, blockingEc),
+      signerService(),
       new PrivateKeysKidHolder {
         override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
         override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers
       }
-    )(blockingEc)
+    )
 
   private def signerService()(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext): SignerService =
     KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(actorSystem.classicSystem, blockingEc)
