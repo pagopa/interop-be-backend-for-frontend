@@ -127,21 +127,21 @@ trait Dependencies {
       }
     )
 
-  def sessionTokenGenerator(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
+  def sessionTokenGenerator(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext) =
     new DefaultSessionTokenGenerator(
-      signerService(),
+      signerService()(actorSystem, blockingEc),
       new PrivateKeysKidHolder {
         override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
         override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers
       }
-    )
+    )(blockingEc)
 
-  private def signerService()(implicit actorSystem: ActorSystem[_]): SignerService =
-    KMSSignerServiceImpl()(actorSystem.classicSystem)
+  private def signerService()(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext): SignerService =
+    KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(actorSystem.classicSystem, blockingEc)
 
   def authorizationApi(
     jwtReader: JWTReader
-  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): AuthorizationApi =
+  )(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext): AuthorizationApi =
     new AuthorizationApi(
       AuthorizationApiServiceImpl(jwtReader, sessionTokenGenerator),
       AuthorizationApiMarshallerImpl,
