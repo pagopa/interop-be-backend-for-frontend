@@ -26,6 +26,7 @@ object Main extends App with CORSSupport with Dependencies {
   val system = ActorSystem[Nothing](
     Behaviors.setup[Nothing] { context =>
       implicit val actorSystem: ActorSystem[_]        = context.system
+      // TODO use a different EC for blocking operations
       implicit val executionContext: ExecutionContext = actorSystem.executionContext
 
       Kamon.init()
