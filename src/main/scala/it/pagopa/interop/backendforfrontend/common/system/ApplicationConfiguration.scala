@@ -20,6 +20,8 @@ object ApplicationConfiguration {
   val ecKeysIdentifiers: Set[String] =
     config.getString("backend-for-frontend.ec-keys-identifiers").split(",").toSet.filter(_.nonEmpty)
 
+  val signerMaxConnections: Int = config.getInt("backend-for-frontend.signer-max-connections")
+
   require(jwtAudience.nonEmpty, "Audience cannot be empty")
   require(generatedJwtAudience.nonEmpty, "Generated JWT audience cannot be empty")
   require(
@@ -33,5 +35,6 @@ object ApplicationConfiguration {
   val userRegistryURL: String    = config.getString("backend-for-frontend.services.user-registry")
   val userRegistryApiKey: String = config.getString("backend-for-frontend.api-keys.user-registry")
 
-  val attributeRegistryManagementURL = config.getString("backend-for-frontend.services.attribute-registry-management")
+  val attributeRegistryManagementURL: String =
+    config.getString("backend-for-frontend.services.attribute-registry-management")
 }
