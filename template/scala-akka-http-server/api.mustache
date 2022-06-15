@@ -37,7 +37,7 @@ import akka.http.scaladsl.server.directives.FileInfo
     {{classVarName}}Service: {{classname}}Service{{#hasMarshalling}},
     {{classVarName}}Marshaller: {{classname}}Marshaller{{/hasMarshalling}},
     wrappingDirective: Directive1[Seq[(String, String)]],
-    loggingEnabled: Boolean
+    loggingEnabled: Boolean = true
     ) {{#hasMultipart}} extends MultipartDirectives with StringDirectives {{/hasMultipart}}{
     {{#pathMatcherPatterns}}import {{classname}}Patterns.{{pathMatcherVarName}}
     {{/pathMatcherPatterns}}
