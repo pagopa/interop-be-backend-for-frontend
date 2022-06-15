@@ -24,6 +24,7 @@ import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServi
 import it.pagopa.interop.backendforfrontend.model.CertifiedAttributesResponse
 import it.pagopa.interop.attributeregistrymanagement.client.model.AttributeKind
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
+import it.pagopa.interop.commons.utils.INTEROP_PRODUCT_NAME
 
 final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
@@ -77,7 +78,6 @@ final case class PartyApiServiceImpl(
     personId: Option[String],
     roles: String,
     states: String,
-    products: String,
     productRoles: String,
     query: Option[String],
     institutionId: String
@@ -92,14 +92,13 @@ final case class PartyApiServiceImpl(
       personIdUUID      <- personId.traverse(_.toFutureUUID)
       rolesParams       <- parseArrayParameters(roles).traverse(PartyProcessConverter.toPartyRole).toFuture
       statesParams      <- parseArrayParameters(states).traverse(PartyProcessConverter.toRelationshipState).toFuture
-      productsParams     = parseArrayParameters(products)
       productRolesParams = parseArrayParameters(productRoles)
       relationships     <- partyProcessService.getUserInstitutionRelationships(
         institutionIdUUID,
         personIdUUID,
         rolesParams,
         statesParams,
-        productsParams,
+        List(INTEROP_PRODUCT_NAME),
         productRolesParams
       )
       relationshipsInfo <- Future.traverse(relationships) { relationship =>
