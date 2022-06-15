@@ -145,27 +145,31 @@ trait Dependencies {
     new AuthorizationApi(
       AuthorizationApiServiceImpl(jwtReader, sessionTokenGenerator),
       AuthorizationApiMarshallerImpl,
-      SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
+      SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator),
+      loggingEnabled = true
     )
 
   def partyApi(jwtReader: JWTReader)(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): PartyApi =
     new PartyApi(
       PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry),
       PartyApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
+      jwtReader.OAuth2JWTValidatorAsContexts,
+      loggingEnabled = true
     )
 
   def attributeApi(jwtReader: JWTReader)(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): AttributesApi =
     new AttributesApi(
       AttributesApiServiceImpl(attributeRegistry),
       AttributesApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
+      jwtReader.OAuth2JWTValidatorAsContexts,
+      loggingEnabled = true
     )
 
   val healthApi: HealthApi = new HealthApi(
     new HealthServiceApiImpl(),
     HealthApiMarshallerImpl,
-    SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
+    SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator),
+    loggingEnabled = false
   )
 
   val validationExceptionToRoute: ValidationReport => Route = report => {
