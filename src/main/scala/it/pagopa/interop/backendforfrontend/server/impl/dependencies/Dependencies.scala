@@ -127,7 +127,7 @@ trait Dependencies {
       }
     )
 
-  def sessionTokenGenerator(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext) =
+  def sessionTokenGenerator(implicit blockingEc: ExecutionContext) =
     new DefaultSessionTokenGenerator(
       signerService(),
       new PrivateKeysKidHolder {
@@ -136,12 +136,10 @@ trait Dependencies {
       }
     )
 
-  private def signerService()(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext): SignerService =
-    KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(actorSystem.classicSystem, blockingEc)
+  private def signerService()(implicit blockingEc: ExecutionContext): SignerService =
+    KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(blockingEc)
 
-  def authorizationApi(
-    jwtReader: JWTReader
-  )(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext): AuthorizationApi =
+  def authorizationApi(jwtReader: JWTReader)(implicit blockingEc: ExecutionContext): AuthorizationApi =
     new AuthorizationApi(
       AuthorizationApiServiceImpl(jwtReader, sessionTokenGenerator),
       AuthorizationApiMarshallerImpl,
