@@ -50,12 +50,13 @@ import it.pagopa.interop.commons.signer.service.SignerService
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
-import it.pagopa.interop.commons.signer.service.impl.KMSSignerServiceImpl
+import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
 import it.pagopa.interop.selfcare.userregistry.client.api.UserApi
 import it.pagopa.interop.selfcare.{partyprocess, userregistry}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContextExecutor
 
 trait Dependencies {
 
@@ -81,22 +82,22 @@ trait Dependencies {
   }
 
   object AttributeRegistryManagementInvoker {
-    def apply()(implicit actorSystem: ClassicActorSystem): AttributeRegistryManagementInvoker =
-      attributeregistrymanagement.client.invoker.ApiInvoker(
-        attributeregistrymanagement.client.api.EnumsSerializers.all
-      )(actorSystem.classicSystem)
+    def apply(
+      blockingEc: ExecutionContextExecutor
+    )(implicit actorSystem: ClassicActorSystem): AttributeRegistryManagementInvoker =
+      attributeregistrymanagement.client.invoker
+        .ApiInvoker(attributeregistrymanagement.client.api.EnumsSerializers.all, blockingEc)(actorSystem.classicSystem)
   }
 
   val attributeRegistryManagementApi: AttributeApi = AttributeApi(
     ApplicationConfiguration.attributeRegistryManagementURL
   )
 
-  def attributeRegistry(implicit
-    actorSystem: ActorSystem[_],
-    executionContext: ExecutionContext
-  ): AttributeRegistryManagementService =
+  def attributeRegistry(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], executionContext: ExecutionContext): AttributeRegistryManagementService =
     AttributeRegistryManagementServiceImpl(
-      AttributeRegistryManagementInvoker()(actorSystem.classicSystem),
+      AttributeRegistryManagementInvoker(blockingEc)(actorSystem.classicSystem),
       attributeRegistryManagementApi
     )
 
@@ -127,35 +128,42 @@ trait Dependencies {
       }
     )
 
-  def sessionTokenGenerator(implicit blockingEc: ExecutionContext) =
+  def sessionTokenGenerator(blockingEc: ExecutionContextExecutor)(implicit ec: ExecutionContext) =
     new DefaultSessionTokenGenerator(
-      signerService(),
+      signerService(blockingEc),
       new PrivateKeysKidHolder {
         override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
         override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers
       }
     )
 
-  private def signerService()(implicit blockingEc: ExecutionContext): SignerService =
-    KMSSignerServiceImpl(ApplicationConfiguration.signerMaxConnections)(blockingEc)
+  private def signerService(blockingEc: ExecutionContextExecutor): SignerService = new KMSSignerService(blockingEc)
 
-  def authorizationApi(jwtReader: JWTReader)(implicit blockingEc: ExecutionContext): AuthorizationApi =
+  def authorizationApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
+    ec: ExecutionContext
+  ): AuthorizationApi =
     new AuthorizationApi(
-      AuthorizationApiServiceImpl(jwtReader, sessionTokenGenerator),
+      AuthorizationApiServiceImpl(jwtReader, sessionTokenGenerator(blockingEc)),
       AuthorizationApiMarshallerImpl,
       SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
     )
 
-  def partyApi(jwtReader: JWTReader)(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): PartyApi =
+  def partyApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
+    actorSystem: ActorSystem[_],
+    ec: ExecutionContext
+  ): PartyApi =
     new PartyApi(
-      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry),
+      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry(blockingEc)),
       PartyApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts
     )
 
-  def attributeApi(jwtReader: JWTReader)(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): AttributesApi =
+  def attributeApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
+    actorSystem: ActorSystem[_],
+    ec: ExecutionContext
+  ): AttributesApi =
     new AttributesApi(
-      AttributesApiServiceImpl(attributeRegistry),
+      AttributesApiServiceImpl(attributeRegistry(blockingEc)),
       AttributesApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts
     )
