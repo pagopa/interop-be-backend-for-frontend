@@ -16,6 +16,8 @@ import kamon.Kamon
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
+import akka.actor.typed.DispatcherSelector
+import scala.concurrent.ExecutionContextExecutor
 
 object Main extends App with CORSSupport with Dependencies {
 
@@ -26,8 +28,10 @@ object Main extends App with CORSSupport with Dependencies {
   val system = ActorSystem[Nothing](
     Behaviors.setup[Nothing] { context =>
       implicit val actorSystem: ActorSystem[_]        = context.system
-      // TODO use a different EC for blocking operations
       implicit val executionContext: ExecutionContext = actorSystem.executionContext
+
+      val selector: DispatcherSelector         = DispatcherSelector.fromConfig("futures-dispatcher")
+      val blockingEc: ExecutionContextExecutor = actorSystem.dispatchers.lookup(selector)
 
       Kamon.init()
       AkkaManagement.get(actorSystem.classicSystem).start()
@@ -36,9 +40,9 @@ object Main extends App with CORSSupport with Dependencies {
 
       val serverBinding = for {
         jwtReader <- getJwtValidator
-        authorization = authorizationApi(jwtReader)
-        party         = partyApi(jwtReader)
-        attributes    = attributeApi(jwtReader)
+        authorization = authorizationApi(jwtReader, blockingEc)
+        party         = partyApi(jwtReader, blockingEc)
+        attributes    = attributeApi(jwtReader, blockingEc)
         controller    = new Controller(
           attributes = attributes,
           authorization = authorization,
