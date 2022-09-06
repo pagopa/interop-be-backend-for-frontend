@@ -20,6 +20,7 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   HealthServiceApiImpl,
   PartyApiMarshallerImpl,
   PartyApiServiceImpl,
+  entityMarshallerProblem,
   problemOf
 }
 import it.pagopa.interop.backendforfrontend.api.{AttributesApi, AuthorizationApi, HealthApi, PartyApi}
@@ -47,16 +48,14 @@ import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSessionTokenGenerator, getClaimsVerifier}
 import it.pagopa.interop.commons.signer.service.SignerService
-import it.pagopa.interop.commons.utils.TypeConversions.TryOps
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
+import it.pagopa.interop.commons.utils.TypeConversions.TryOps
+import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
 import it.pagopa.interop.selfcare.userregistry.client.api.UserApi
 import it.pagopa.interop.selfcare.{partyprocess, userregistry}
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait Dependencies {
 
@@ -176,12 +175,8 @@ trait Dependencies {
   )
 
   val validationExceptionToRoute: ValidationReport => Route = report => {
-    val error =
-      problemOf(
-        StatusCodes.BadRequest,
-        GenericComponentErrors.ValidationRequestError(OpenapiUtils.errorFromRequestValidationReport(report))
-      )
-    complete(error.status, error)(HealthApiMarshallerImpl.toEntityMarshallerProblem)
+    val error = problemOf(StatusCodes.BadRequest, OpenapiUtils.errorFromRequestValidationReport(report))
+    complete(error.status, error)(entityMarshallerProblem)
   }
 
 }

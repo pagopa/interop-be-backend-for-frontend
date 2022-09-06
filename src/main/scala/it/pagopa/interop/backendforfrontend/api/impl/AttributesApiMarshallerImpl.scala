@@ -13,7 +13,7 @@ object AttributesApiMarshallerImpl extends AttributesApiMarshaller with SprayJso
   override implicit def toEntityMarshallerAttributesResponse: ToEntityMarshaller[AttributesResponse] =
     sprayJsonMarshaller[AttributesResponse]
 
-  override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
+  override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
 
   override implicit def toEntityMarshallerAttribute: ToEntityMarshaller[Attribute] = sprayJsonMarshaller[Attribute]
 
