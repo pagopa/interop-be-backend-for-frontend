@@ -2,7 +2,15 @@ package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop._
 import it.pagopa.interop.backendforfrontend.model.AttributeKind.{CERTIFIED, DECLARED, VERIFIED}
-import it.pagopa.interop.backendforfrontend.model.{Attribute, AttributeKind, AttributeSeed, AttributesResponse, CertifiedAttribute, DeclaredAttribute, VerifiedAttribute}
+import it.pagopa.interop.backendforfrontend.model.{
+  Attribute,
+  AttributeKind,
+  AttributeSeed,
+  AttributesResponse,
+  CertifiedAttribute,
+  DeclaredAttribute,
+  VerifiedAttribute
+}
 
 object AttributeRegistryServiceTypes {
   type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
