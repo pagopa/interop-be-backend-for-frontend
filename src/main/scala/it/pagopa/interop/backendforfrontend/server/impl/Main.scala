@@ -38,9 +38,11 @@ object Main extends App with CORSSupport with Dependencies {
         authorization = authorizationApi(jwtReader, blockingEc)
         party         = partyApi(jwtReader, blockingEc)
         attributes    = attributeApi(jwtReader, blockingEc)
+        agreements    = agreementApi(jwtReader, blockingEc)
         controller    = new Controller(
           attributes = attributes,
           authorization = authorization,
+          agreements = agreements,
           party = party,
           health = healthApi,
           validationExceptionToRoute = validationExceptionToRoute.some

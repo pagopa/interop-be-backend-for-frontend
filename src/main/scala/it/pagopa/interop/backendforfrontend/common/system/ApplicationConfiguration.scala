@@ -37,4 +37,7 @@ object ApplicationConfiguration {
 
   val attributeRegistryManagementURL: String =
     config.getString("backend-for-frontend.services.attribute-registry-management")
+
+  val agreementProcessURL: String = config.getString("backend-for-frontend.services.agreement-process")
+
 }

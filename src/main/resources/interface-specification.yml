@@ -31,12 +31,47 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: agreements
+    description: Attribute Module
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'
   - name: health
     description: Verify service status
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
 paths:
+  /agreements:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      summary: Agreement Creation
+      operationId: createAgreement
+      responses:
+        '200':
+          description: Agreement created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedResource'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      tags:
+        - agreements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementPayload'
+        description: payload for agreement creation
+        required: true
+      description: creates the agreement between the involved parties.
   '/session/tokens':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -333,6 +368,19 @@ components:
       schema:
         type: string
   schemas:
+    AgreementPayload:
+      type: object
+      description: contains the information for agreement creation.
+      properties:
+        eserviceId:
+          type: string
+          format: uuid
+        descriptorId:
+          type: string
+          format: uuid
+      required:
+        - eserviceId
+        - descriptorId
     IdentityToken:
       type: object
       required:
@@ -426,6 +474,15 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RelationshipInfo'
+    CreatedResource:
+      type: object
+      description: contains the id of the created resource
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+        - id
     AttributeSeed:
       title: AttributeSeed
       type: object

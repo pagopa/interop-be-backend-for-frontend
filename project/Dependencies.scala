@@ -29,6 +29,9 @@ object Dependencies {
     lazy val jwt     = namespace %% "interop-commons-jwt"    % commonsVersion
     lazy val vault   = namespace %% "interop-commons-signer" % commonsVersion
 
+    lazy val agreementProcessClient =
+      namespace %% "interop-be-agreement-process-client" % agreementProcessVersion
+
     lazy val partyManagementClient =
       namespace %% "interop-selfcare-party-management-client" % partyManagementVersion
 
@@ -100,6 +103,7 @@ object Dependencies {
       mustache.mustache              % Compile,
       pagopa.commons                 % Compile,
       pagopa.jwt                     % Compile,
+      pagopa.agreementProcessClient  % Compile,
       pagopa.partyProcessClient      % Compile,
       pagopa.partyManagementClient   % Compile,
       pagopa.userRegistryClient      % Compile,
