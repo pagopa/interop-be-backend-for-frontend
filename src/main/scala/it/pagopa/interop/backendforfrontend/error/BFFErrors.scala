@@ -19,6 +19,6 @@ object BFFErrors {
       extends ComponentError("0004", s"Institution $institutionId not found")
 
   final case class AgreementDescriptorNotFound(agreementId: UUID)
-    extends ComponentError("0005", s"Descriptor of agreement $agreementId not found")
+      extends ComponentError("0005", s"Descriptor of agreement $agreementId not found")
 
 }
