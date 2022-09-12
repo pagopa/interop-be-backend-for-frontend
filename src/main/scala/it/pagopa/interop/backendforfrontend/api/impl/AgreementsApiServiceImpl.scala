@@ -25,7 +25,7 @@ import it.pagopa.interop.backendforfrontend.service.{
 }
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.AgreementPayloadConverter
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
@@ -84,8 +84,11 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      case Success(agreement) => getAgreementById200(agreement)
-      case Failure(e)         =>
+      case Success(agreement)                 => getAgreementById200(agreement)
+      case Failure(ex: ResourceNotFoundError) =>
+        logger.error(s"Error while retrieving agreement  $agreementId", ex)
+        getAgreementById404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(e)                         =>
         val message = s"Error while retrieving agreement $agreementId"
         logger.error(message, e)
         internalServerError(message)
