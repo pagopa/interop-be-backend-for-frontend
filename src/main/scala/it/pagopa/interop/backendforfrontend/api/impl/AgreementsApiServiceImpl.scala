@@ -118,7 +118,7 @@ final case class AgreementsApiServiceImpl(
     agreementDeclaredAttrs  = filterAttributes(attributes, agreement.declaredAttributes.map(_.id))
       .map(_.toDeclaredAttribute)
 
-    tenantAttributes = consumerTenant.attributes.map(asd(attributes, _))
+    tenantAttributes = consumerTenant.attributes.map(enhanceTenantAttribute(attributes, _))
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
@@ -163,7 +163,7 @@ final case class AgreementsApiServiceImpl(
   ): Seq[AttributeRegistry.Attribute] =
     filterIds.flatMap(id => registryAttributes.attributes.find(_.id == id))
 
-  def asd(
+  def enhanceTenantAttribute(
     registryAttributes: MgmtAttributesResponse,
     tenantAttribute: TenantManagement.TenantAttribute
   ): TenantAttribute = {
