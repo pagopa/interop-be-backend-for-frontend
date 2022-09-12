@@ -96,6 +96,29 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  override def activateAgreement(agreementId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
+  ): Route = {
+    val agreement: Future[Agreement] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      agreement     <- agreementProcessService.activateAgreement(agreementUuid)
+      apiAgreement  <- enhanceAgreement(agreement)
+    } yield apiAgreement
+
+    onComplete(agreement) {
+      case Success(agreement)                 => getAgreementById200(agreement)
+      case Failure(ex: ResourceNotFoundError) =>
+        logger.error(s"Error while activating agreement  $agreementId", ex)
+        activateAgreement404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(e)                         =>
+        val message = s"Error while activating agreement $agreementId"
+        logger.error(message, e)
+        internalServerError(message)
+    }
+  }
+
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement
   )(implicit contexts: Seq[(String, String)]): Future[Agreement] = for {
