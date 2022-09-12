@@ -1,11 +1,8 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementprocess.client.api.AgreementApi
-import it.pagopa.interop.agreementprocess.client.invoker.{ApiError, BearerToken}
-import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayload}
-import it.pagopa.interop.backendforfrontend.service.AgreementProcessService
-import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AgreementProcessInvoker
+import it.pagopa.interop.backendforfrontend.service.TenantManagementService
+import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.TenantManagementInvoker
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
@@ -14,42 +11,30 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
   ThirdPartyCallError
 }
 import it.pagopa.interop.commons.utils.extractHeaders
+import it.pagopa.interop.tenantmanagement.client.api.TenantApi
+import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError, BearerToken}
+import it.pagopa.interop.tenantmanagement.client.model.Tenant
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, api: AgreementApi)(implicit
+final case class TenantManagementServiceImpl(invoker: TenantManagementInvoker, api: TenantApi)(implicit
   ec: ExecutionContext
-) extends AgreementProcessService {
+) extends TenantManagementService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  private val serviceName: String     = "attribute-registry"
+  private val serviceName: String     = "tenant-management"
   private val missingEntityId: String = "NoIdentifier"
 
-  override def createAgreement(seed: AgreementPayload)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
+  override def getTenant(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.createAgreement(xCorrelationId = correlationId, agreementPayload = seed, xForwardedFor = ip)(
+      request = api.getTenant(xCorrelationId = correlationId, tenantId = tenantId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(request, s"Creating agreement with seed $seed", invocationRecovery(None))
-    } yield result
-
-  override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getAgreementById(
-        xCorrelationId = correlationId,
-        agreementId = agreementId.toString,
-        xForwardedFor = ip
-      )(BearerToken(bearerToken))
-      result <- invoker.invoke(
-        request,
-        s"Retrieving agreement $agreementId",
-        invocationRecovery(Some(agreementId.toString))
-      )
+      result <- invoker.invoke(request, s"Retrieving Tenant $tenantId", invocationRecovery(Some(tenantId.toString)))
     } yield result
 
   private def invocationRecovery[T](

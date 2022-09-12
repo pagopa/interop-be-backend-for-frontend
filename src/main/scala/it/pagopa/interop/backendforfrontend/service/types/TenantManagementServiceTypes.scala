@@ -1,6 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
-import it.pagopa.interop._
+import it.pagopa.interop.backendforfrontend.model.VerificationRenewal.{AUTOMATIC_RENEWAL, REVOKE_ON_EXPIRATION}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
@@ -38,4 +38,29 @@ object TenantManagementServiceTypes {
     )
   }
 
+  implicit class VerificationRenewalConverter(private val v: TenantManagement.VerificationRenewal) extends AnyVal {
+    def toApi: VerificationRenewal = v match {
+      case TenantManagement.VerificationRenewal.REVOKE_ON_EXPIRATION => REVOKE_ON_EXPIRATION
+      case TenantManagement.VerificationRenewal.AUTOMATIC_RENEWAL    => AUTOMATIC_RENEWAL
+    }
+  }
+
+  implicit class TenantVerifierConverter(private val v: TenantManagement.TenantVerifier) extends AnyVal {
+    def toApi: TenantVerifier = TenantVerifier(
+      id = v.id,
+      verificationDate = v.verificationDate,
+      expirationDate = v.expirationDate,
+      extentionDate = v.extentionDate
+    )
+  }
+
+  implicit class TenantRevokerConverter(private val v: TenantManagement.TenantRevoker) extends AnyVal {
+    def toApi: TenantRevoker = TenantRevoker(
+      id = v.id,
+      verificationDate = v.verificationDate,
+      expirationDate = v.expirationDate,
+      extentionDate = v.extentionDate,
+      revocationDate = v.revocationDate
+    )
+  }
 }

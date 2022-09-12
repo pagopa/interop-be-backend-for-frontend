@@ -138,14 +138,13 @@ final case class AgreementsApiServiceImpl(
     updatedAt = agreement.updatedAt
   )
 
-  import cats.implicits._
   def eServiceAttributesIds(eService: CatalogManagement.EService): Seq[UUID] =
-      eService.attributes.verified.flatMap(_.single.map(_.id)) ++
-      eService.attributes.verified.flatMap(_.group.flatMap(_.map(_.id))) ++
+    eService.attributes.verified.flatMap(_.single.map(_.id)) ++
+      eService.attributes.verified.flatMap(_.group).flatten.map(_.id) ++
       eService.attributes.declared.flatMap(_.single.map(_.id)) ++
-      eService.attributes.declared.flatMap(_.group.flatMap(_.map(_.id))) ++
+      eService.attributes.declared.flatMap(_.group).flatten.map(_.id) ++
       eService.attributes.certified.flatMap(_.single.map(_.id)) ++
-      eService.attributes.certified.flatMap(_.group.flatMap(_.map(_.id)))
+      eService.attributes.certified.flatMap(_.group).flatten.map(_.id)
 
   def tenantAttributesIds(tenant: TenantManagement.Tenant): Seq[UUID] =
     tenant.attributes.flatMap(_.verified.map(_.id)) ++

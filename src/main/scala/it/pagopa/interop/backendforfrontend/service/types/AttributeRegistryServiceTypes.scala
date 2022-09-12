@@ -15,6 +15,8 @@ import it.pagopa.interop.backendforfrontend.model.{
 object AttributeRegistryServiceTypes {
   type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
   type AgreementProcessInvoker            = agreementprocess.client.invoker.ApiInvoker
+  type CatalogManagementInvoker           = catalogmanagement.client.invoker.ApiInvoker
+  type TenantManagementInvoker            = tenantmanagement.client.invoker.ApiInvoker
   type MgmtAttribute                      = attributeregistrymanagement.client.model.Attribute
   type MgmtAttributesResponse             = attributeregistrymanagement.client.model.AttributesResponse
   type MgmtAttributeKind                  = attributeregistrymanagement.client.model.AttributeKind
