@@ -78,6 +78,19 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       )
     } yield result
 
+  override def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.upgradeAgreementById(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      result <- invoker.invoke(
+        request,
+        s"Upgrading agreement $agreementId",
+        invocationRecovery(Some(agreementId.toString))
+      )
+    } yield result
+
   private def invocationRecovery[T](
     entityId: Option[String]
   ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] =
