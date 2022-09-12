@@ -31,6 +31,7 @@ import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.AgreementDescriptorNotFound
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
@@ -102,7 +103,9 @@ final case class AgreementsApiServiceImpl(
     consumer          <- partyProcessService.getInstitution(agreement.consumerId)
     consumerTenant    <- tenantManagementService.getTenant(agreement.consumerId)
     eService          <- catalogManagementService.getEService(agreement.eserviceId)
-    currentDescriptor <- eService.descriptors.find(_.id == agreement.descriptorId).toFuture(new Exception(""))
+    currentDescriptor <- eService.descriptors
+      .find(_.id == agreement.descriptorId)
+      .toFuture(AgreementDescriptorNotFound(agreement.id))
     activeDescriptor = eService.descriptors.sortBy(_.version.toInt).lastOption
 
     allAttributesIds = (eServiceAttributesIds(eService) ++ tenantAttributesIds(consumerTenant)).distinct
