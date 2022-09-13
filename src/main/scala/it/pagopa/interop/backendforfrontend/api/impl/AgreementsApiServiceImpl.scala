@@ -4,39 +4,23 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.{Route, StandardRoute}
+import cats.implicits._
 import com.typesafe.scalalogging.Logger
-import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
-import it.pagopa.interop.backendforfrontend.model.{
-  Agreement,
-  AgreementPayload,
-  CreatedResource,
-  EService,
-  Problem,
-  Tenant,
-  TenantAttribute,
-  TenantWithAttributes
-}
-import it.pagopa.interop.backendforfrontend.service.{
-  AgreementProcessService,
-  AttributeRegistryManagementService,
-  CatalogManagementService,
-  PartyProcessService,
-  TenantManagementService
-}
-import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.AgreementPayloadConverter
-import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
-import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
-import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
-import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.AgreementDescriptorNotFound
+import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.{AgreementPayloadConverter, _}
+import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{MgmtAttributesResponse, _}
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.MgmtAttributesResponse
+import it.pagopa.interop.backendforfrontend.service._
+import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
+import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -144,18 +128,25 @@ final case class AgreementsApiServiceImpl(
     updatedAt = agreement.updatedAt
   )
 
-  def eServiceAttributesIds(eService: CatalogManagement.EService): Seq[UUID] =
-    eService.attributes.verified.flatMap(_.single.map(_.id)) ++
-      eService.attributes.verified.flatMap(_.group).flatten.map(_.id) ++
-      eService.attributes.declared.flatMap(_.single.map(_.id)) ++
-      eService.attributes.declared.flatMap(_.group).flatten.map(_.id) ++
-      eService.attributes.certified.flatMap(_.single.map(_.id)) ++
-      eService.attributes.certified.flatMap(_.group).flatten.map(_.id)
+  def eServiceAttributesIds(eService: CatalogManagement.EService): Seq[UUID] = {
+    val attrs: Seq[CatalogManagement.Attribute] =
+      eService.attributes.verified ++ eService.attributes.declared ++ eService.attributes.certified
+    attrs
+      .mapFilter(a =>
+        (a.single, a.group) match {
+          case (Some(s), Some(g)) => Some(s :: g.toList)
+          case (Some(s), None)    => Some(s :: Nil)
+          case (None, g)          => g
+        }
+      )
+      .flatten
+      .map(_.id)
+  }
 
   def tenantAttributesIds(tenant: TenantManagement.Tenant): Seq[UUID] =
-    tenant.attributes.flatMap(_.verified.map(_.id)) ++
-      tenant.attributes.flatMap(_.certified.map(_.id)) ++
-      tenant.attributes.flatMap(_.declared.map(_.id))
+    tenant.attributes.mapFilter(_.verified.map(_.id)) ++
+      tenant.attributes.mapFilter(_.certified.map(_.id)) ++
+      tenant.attributes.mapFilter(_.declared.map(_.id))
 
   def filterAttributes(
     registryAttributes: MgmtAttributesResponse,
