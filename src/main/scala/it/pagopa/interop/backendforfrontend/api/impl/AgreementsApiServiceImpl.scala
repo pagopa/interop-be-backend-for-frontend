@@ -103,6 +103,29 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  override def submitAgreement(agreementId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
+  ): Route = {
+    val agreement: Future[Agreement] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      agreement     <- agreementProcessService.submitAgreement(agreementUuid)
+      apiAgreement  <- enhanceAgreement(agreement)
+    } yield apiAgreement
+
+    onComplete(agreement) {
+      case Success(agreement)                 => submitAgreement200(agreement)
+      case Failure(ex: ResourceNotFoundError) =>
+        logger.error(s"Error while submitting agreement $agreementId", ex)
+        submitAgreement404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(e)                         =>
+        val message = s"Error while submitting agreement $agreementId"
+        logger.error(message, e)
+        internalServerError(message)
+    }
+  }
+
   override def suspendAgreement(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -117,7 +140,7 @@ final case class AgreementsApiServiceImpl(
     onComplete(agreement) {
       case Success(agreement)                 => suspendAgreement200(agreement)
       case Failure(ex: ResourceNotFoundError) =>
-        logger.error(s"Error while suspending agreement  $agreementId", ex)
+        logger.error(s"Error while suspending agreement $agreementId", ex)
         suspendAgreement404(problemOf(StatusCodes.NotFound, ex))
       case Failure(e)                         =>
         val message = s"Error while suspending agreement $agreementId"

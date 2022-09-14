@@ -65,6 +65,19 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       )
     } yield result
 
+  override def submitAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.submitAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      result <- invoker.invoke(
+        request,
+        s"Submitting agreement $agreementId",
+        invocationRecovery(Some(agreementId.toString))
+      )
+    } yield result
+
   override def suspendAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
