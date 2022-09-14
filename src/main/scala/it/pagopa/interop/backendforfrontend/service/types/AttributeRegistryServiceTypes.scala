@@ -1,17 +1,22 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
-import it.pagopa.interop.attributeregistrymanagement
+import it.pagopa.interop._
 import it.pagopa.interop.backendforfrontend.model.AttributeKind.{CERTIFIED, DECLARED, VERIFIED}
 import it.pagopa.interop.backendforfrontend.model.{
   Attribute,
   AttributeKind,
-  AttributesResponse,
   AttributeSeed,
-  CertifiedAttribute
+  AttributesResponse,
+  CertifiedAttribute,
+  DeclaredAttribute,
+  VerifiedAttribute
 }
 
 object AttributeRegistryServiceTypes {
   type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
+  type AgreementProcessInvoker            = agreementprocess.client.invoker.ApiInvoker
+  type CatalogManagementInvoker           = catalogmanagement.client.invoker.ApiInvoker
+  type TenantManagementInvoker            = tenantmanagement.client.invoker.ApiInvoker
   type MgmtAttribute                      = attributeregistrymanagement.client.model.Attribute
   type MgmtAttributesResponse             = attributeregistrymanagement.client.model.AttributesResponse
   type MgmtAttributeKind                  = attributeregistrymanagement.client.model.AttributeKind
@@ -48,6 +53,12 @@ object AttributeRegistryServiceTypes {
 
     def toCertifiedAttribute: CertifiedAttribute =
       CertifiedAttribute(attribute.id, attribute.description, attribute.name, attribute.creationTime)
+
+    def toDeclaredAttribute: DeclaredAttribute =
+      DeclaredAttribute(attribute.id, attribute.description, attribute.name, attribute.creationTime)
+
+    def toVerifiedAttribute: VerifiedAttribute =
+      VerifiedAttribute(attribute.id, attribute.description, attribute.name, attribute.creationTime)
   }
 
   implicit class AttributeSeedConverter(private val seed: AttributeSeed) extends AnyVal {
