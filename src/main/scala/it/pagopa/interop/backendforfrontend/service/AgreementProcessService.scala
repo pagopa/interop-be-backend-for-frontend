@@ -1,6 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayload}
+import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayload, AgreementState}
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -13,5 +13,14 @@ trait AgreementProcessService {
   def submitAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
   def suspendAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
   def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
+
+  def getAgreements(
+    producerId: Option[String] = None,
+    consumerId: Option[String] = None,
+    eServiceId: Option[String] = None,
+    descriptorId: Option[String] = None,
+    states: Seq[AgreementState],
+    latest: Option[Boolean] = None
+  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]]
 
 }

@@ -22,6 +22,17 @@ object AgreementProcessServiceTypes {
     }
   }
 
+  implicit class AgreementStateObjectConverter(private val s: AgreementProcess.AgreementState.type) extends AnyVal {
+    def fromApi(s: AgreementState): AgreementProcess.AgreementState = s match {
+      case DRAFT                        => AgreementProcess.AgreementState.DRAFT
+      case ACTIVE                       => AgreementProcess.AgreementState.ACTIVE
+      case ARCHIVED                     => AgreementProcess.AgreementState.ARCHIVED
+      case PENDING                      => AgreementProcess.AgreementState.PENDING
+      case SUSPENDED                    => AgreementProcess.AgreementState.SUSPENDED
+      case MISSING_CERTIFIED_ATTRIBUTES => AgreementProcess.AgreementState.MISSING_CERTIFIED_ATTRIBUTES
+    }
+  }
+
   implicit class DocumentConverter(private val doc: AgreementProcess.Document) extends AnyVal {
     def toApi: Document =
       Document(

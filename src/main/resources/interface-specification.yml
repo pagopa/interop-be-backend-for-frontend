@@ -46,6 +46,55 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - agreements
+      summary: retrieves a list of agreements
+      description: retrieves a list of agreements
+      operationId: getAgreements
+      parameters:
+        - in: query
+          name: producerId
+          schema:
+            type: string
+        - in: query
+          name: consumerId
+          schema:
+            type: string
+        - in: query
+          name: eserviceId
+          schema:
+            type: string
+        - in: query
+          name: descriptorId
+          schema:
+            type: string
+        - in: query
+          name: states
+          description: comma separated sequence of agreement states to filter the response with
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/AgreementState'
+            default: []
+          explode: false
+        - in: query
+          name: latest
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Agreement found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreements'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
     post:
       summary: Agreement Creation
       operationId: createAgreement
@@ -641,6 +690,10 @@ components:
         - declaredAttributes
         - consumerDocuments
         - createdAt
+    Agreements:
+      type: array
+      items:
+        $ref: '#/components/schemas/Agreement'
     AgreementPayload:
       type: object
       description: contains the information for agreement creation.

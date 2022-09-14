@@ -18,6 +18,7 @@ import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServic
 import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
@@ -75,6 +76,40 @@ final case class AgreementsApiServiceImpl(
         getAgreementById404(problemOf(StatusCodes.NotFound, ex))
       case Failure(e)                         =>
         val message = s"Error while retrieving agreement $agreementId"
+        logger.error(message, e)
+        internalServerError(message)
+    }
+  }
+
+  override def getAgreements(
+    producerId: Option[String],
+    consumerId: Option[String],
+    eServiceId: Option[String],
+    descriptorId: Option[String],
+    states: String,
+    latest: Option[Boolean]
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAgreementarray: ToEntityMarshaller[Seq[Agreement]],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val agreements: Future[Seq[Agreement]] = for {
+      statesEnums   <- parseArrayParameters(states).traverse(AgreementState.fromValue).toFuture
+      agreements    <- agreementProcessService.getAgreements(
+        producerId = producerId,
+        consumerId = consumerId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        states = statesEnums.map(AgreementProcess.AgreementState.fromApi),
+        latest = latest
+      )
+      apiAgreements <- Future.traverse(agreements)(enhanceAgreement)
+    } yield apiAgreements
+
+    onComplete(agreements) {
+      case Success(agreements) => getAgreements200(agreements)
+      case Failure(e)          =>
+        val message = s"Error while retrieving agreements"
         logger.error(message, e)
         internalServerError(message)
     }
