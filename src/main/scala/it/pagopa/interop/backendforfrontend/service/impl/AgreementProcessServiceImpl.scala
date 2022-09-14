@@ -3,7 +3,7 @@ package it.pagopa.interop.backendforfrontend.service.impl
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.api.AgreementApi
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError, BearerToken}
-import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayload}
+import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayload, AgreementState}
 import it.pagopa.interop.backendforfrontend.service.AgreementProcessService
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AgreementProcessInvoker
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -52,6 +52,29 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       )
     } yield result
 
+  override def getAgreements(
+    producerId: Option[String] = None,
+    consumerId: Option[String] = None,
+    eServiceId: Option[String] = None,
+    descriptorId: Option[String] = None,
+    states: Seq[AgreementState],
+    latest: Option[Boolean] = None
+  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] =
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.getAgreements(
+        xCorrelationId = correlationId,
+        producerId = producerId,
+        consumerId = consumerId,
+        eserviceId = eServiceId,
+        descriptorId = descriptorId,
+        states = states,
+        latest = latest,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+      result <- invoker.invoke(request, s"Retrieving agreements", invocationRecovery(None))
+    } yield result
+
   override def activateAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
@@ -61,6 +84,19 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       result <- invoker.invoke(
         request,
         s"Activating agreement $agreementId",
+        invocationRecovery(Some(agreementId.toString))
+      )
+    } yield result
+
+  override def submitAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.submitAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      result <- invoker.invoke(
+        request,
+        s"Submitting agreement $agreementId",
         invocationRecovery(Some(agreementId.toString))
       )
     } yield result

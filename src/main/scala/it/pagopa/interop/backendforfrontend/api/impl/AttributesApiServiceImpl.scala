@@ -10,6 +10,7 @@ import it.pagopa.interop.backendforfrontend.model.{Attribute, AttributesResponse
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementService
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
   GenericError,
   ResourceNotFoundError,
@@ -51,6 +52,35 @@ final case class AttributesApiServiceImpl(attributeRegistryManagementApiService:
             GenericError(
               s"Something went wrong trying to search attributes containing string $search - ${ex.getMessage}"
             )
+          )
+        )
+    }
+  }
+
+  override def getAttributeById(attributeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Attribute] = for {
+      attributeUuid <- attributeId.toFutureUUID
+      response      <- attributeRegistryManagementApiService.getAttributeById(attributeUuid)(contexts)
+      converted = response.toAttribute
+    } yield converted
+
+    onComplete(result) {
+      case Success(attribute)                 =>
+        getAttributeById200(attribute)
+      case Failure(ex: ResourceNotFoundError) =>
+        logger.error(s"Error while getting attribute with id $attributeId", ex)
+        getAttributes404(problemOf(StatusCodes.NotFound, ResourceNotFoundError(s"Attribute with id $attributeId")))
+      case Failure(ex)                        =>
+        logger.error(s"Error while getting attribute with id $attributeId", ex)
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(s"Something went wrong trying to get attribute with id $attributeId - ${ex.getMessage}")
           )
         )
     }
