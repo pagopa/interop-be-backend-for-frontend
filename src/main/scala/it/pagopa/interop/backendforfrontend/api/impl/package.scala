@@ -6,9 +6,33 @@ import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import spray.json.{DefaultJsonProtocol, RootJsonFormat}
+import spray.json._
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
+
+  implicit val tenantFormat: RootJsonFormat[Tenant] = jsonFormat2(Tenant)
+
+  implicit val declaredTenantAttributeFormat: RootJsonFormat[DeclaredTenantAttribute]   =
+    jsonFormat4(DeclaredTenantAttribute)
+  implicit val certifiedTenantAttributeFormat: RootJsonFormat[CertifiedTenantAttribute] =
+    jsonFormat4(CertifiedTenantAttribute)
+  implicit val tenantVerifiedFormat: RootJsonFormat[TenantVerifier]                     = jsonFormat4(TenantVerifier)
+  implicit val tenantRevokerFormat: RootJsonFormat[TenantRevoker]                       = jsonFormat5(TenantRevoker)
+  implicit val verifiedTenantAttributeFormat: RootJsonFormat[VerifiedTenantAttribute]   =
+    jsonFormat6(VerifiedTenantAttribute)
+  implicit val tenantAttributeFormat: RootJsonFormat[TenantAttribute]                   = jsonFormat3(TenantAttribute)
+
+  implicit val tenantWithAttributesFormat: RootJsonFormat[TenantWithAttributes] = jsonFormat3(TenantWithAttributes)
+  implicit val activeDescriptorFormat: RootJsonFormat[ActiveDescriptor]         = jsonFormat3(ActiveDescriptor)
+  implicit val eServiceFormat: RootJsonFormat[EService]                         = jsonFormat4(EService)
+
+  implicit val documentFormat: RootJsonFormat[Document] = jsonFormat5(Document)
+
+  implicit val certifiedAttributeFormat: RootJsonFormat[CertifiedAttribute] = jsonFormat4(CertifiedAttribute)
+  implicit val declaredAttributeFormat: RootJsonFormat[DeclaredAttribute]   = jsonFormat4(DeclaredAttribute)
+  implicit val verifiedAttributeFormat: RootJsonFormat[VerifiedAttribute]   = jsonFormat4(VerifiedAttribute)
+
+  implicit val agreementFormat: RootJsonFormat[Agreement] = jsonFormat16(Agreement)
 
   implicit val agreementPayloadFormat: RootJsonFormat[AgreementPayload] = jsonFormat2(AgreementPayload)
   implicit val createdResourceFormat: RootJsonFormat[CreatedResource]   = jsonFormat1(CreatedResource)
@@ -21,7 +45,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val institutionAttributeFormat: RootJsonFormat[InstitutionAttribute] = jsonFormat3(InstitutionAttribute)
   implicit val institutionFormat: RootJsonFormat[Institution]                   = jsonFormat11(Institution)
 
-  implicit val certifiedAttributeFormat: RootJsonFormat[CertifiedAttribute] = jsonFormat4(CertifiedAttribute)
   implicit val certifiedAttributesResponseFormat: RootJsonFormat[CertifiedAttributesResponse] = jsonFormat1(
     CertifiedAttributesResponse
   )
