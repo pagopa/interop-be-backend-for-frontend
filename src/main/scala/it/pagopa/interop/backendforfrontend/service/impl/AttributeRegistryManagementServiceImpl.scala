@@ -45,6 +45,19 @@ final case class AttributeRegistryManagementServiceImpl(invoker: AttributeRegist
     } yield result
   }
 
+  override def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[MgmtAttribute] =
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      result <- invoker.invoke(
+        request,
+        s"Getting attribute by id $attributeId",
+        invocationRecovery(Some(s"Attribute $attributeId"))
+      )
+    } yield result
+
   override def getAttributeByOriginAndCode(origin: String, code: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[MgmtAttribute] =

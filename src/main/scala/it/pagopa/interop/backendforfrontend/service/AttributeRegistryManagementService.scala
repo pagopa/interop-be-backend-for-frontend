@@ -14,6 +14,8 @@ trait AttributeRegistryManagementService {
     contexts: Seq[(String, String)]
   ): Future[MgmtAttribute]
 
+  def getAttributeById(id: UUID)(implicit contexts: Seq[(String, String)]): Future[MgmtAttribute]
+
   def getAttributes(search: Option[String])(implicit contexts: Seq[(String, String)]): Future[MgmtAttributesResponse]
 
   def getBulkAttributes(ids: Seq[UUID])(implicit contexts: Seq[(String, String)]): Future[MgmtAttributesResponse]
