@@ -31,12 +31,191 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: agreements
+    description: Attribute Module
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'
   - name: health
     description: Verify service status
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
 paths:
+  /agreements:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      summary: Agreement Creation
+      operationId: createAgreement
+      responses:
+        '200':
+          description: Agreement created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedResource'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      tags:
+        - agreements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementPayload'
+        description: payload for agreement creation
+        required: true
+      description: creates the agreement between the involved parties.
+  '/agreements/{agreementId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - agreements
+      summary: retrieves an agreement
+      description: returns an agreement for a given agreementId
+      operationId: getAgreementById
+      parameters:
+        - name: agreementId
+          in: path
+          description: The identifier of the agreement
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agreement found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreement'
+        '404':
+          description: Agreement not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/activate':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - agreements
+      summary: Activate an agreement
+      description: returns the updated agreement
+      operationId: activateAgreement
+      parameters:
+        - name: agreementId
+          in: path
+          description: The identifier of the agreement
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agreement flagged as activated. It could still be Suspended if other parties have suspended the agreement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreement'
+        '404':
+          description: Agreement not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/suspend':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - agreements
+      summary: Suspend an agreement
+      description: returns the updated agreement
+      operationId: suspendAgreement
+      parameters:
+        - name: agreementId
+          in: path
+          description: The identifier of the agreement
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agreement suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreement'
+        '404':
+          description: Agreement not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/upgrade':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - agreements
+      summary: Upgrade an agreement
+      description: returns the updated agreement
+      operationId: upgradeAgreement
+      parameters:
+        - name: agreementId
+          in: path
+          description: The identifier of the agreement
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: New Agreement created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreement'
+        '404':
+          description: Agreement not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/session/tokens':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -333,6 +512,92 @@ components:
       schema:
         type: string
   schemas:
+    Agreement:
+      properties:
+        id:
+          type: string
+          format: uuid
+        descriptorId:
+          type: string
+          format: uuid
+        producer:
+          $ref: '#/components/schemas/Tenant'
+        consumer:
+          $ref: '#/components/schemas/TenantWithAttributes'
+        eservice:
+          $ref: '#/components/schemas/EService'
+        state:
+          $ref: '#/components/schemas/AgreementState'
+        verifiedAttributes:
+          type: array
+          description: 'set of the verified attributes belonging to this agreement, if any.'
+          items:
+            $ref: '#/components/schemas/VerifiedAttribute'
+        certifiedAttributes:
+          type: array
+          description: 'set of the certified attributes belonging to this agreement, if any.'
+          items:
+            $ref: '#/components/schemas/CertifiedAttribute'
+        declaredAttributes:
+          type: array
+          description: 'set of the declared attributes belonging to this agreement, if any.'
+          items:
+            $ref: '#/components/schemas/DeclaredAttribute'
+        suspendedByConsumer:
+          type: boolean
+        suspendedByProducer:
+          type: boolean
+        suspendedByPlatform:
+          type: boolean
+        consumerNotes:
+          type: string
+        consumerDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+        - id
+        - producer
+        - consumer
+        - descriptorId
+        - eservice
+        - attributes
+        - state
+        - verifiedAttributes
+        - certifiedAttributes
+        - declaredAttributes
+        - consumerDocuments
+        - createdAt
+    AgreementPayload:
+      type: object
+      description: contains the information for agreement creation.
+      properties:
+        eserviceId:
+          type: string
+          format: uuid
+        descriptorId:
+          type: string
+          format: uuid
+      required:
+        - eserviceId
+        - descriptorId
+    AgreementState:
+      type: string
+      description: Agreement State
+      enum:
+        - DRAFT
+        - ACTIVE
+        - ARCHIVED
+        - PENDING
+        - SUSPENDED
+        - MISSING_CERTIFIED_ATTRIBUTES
     IdentityToken:
       type: object
       required:
@@ -426,6 +691,75 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RelationshipInfo'
+    CreatedResource:
+      type: object
+      description: contains the id of the created resource
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+        - id
+    Document:
+      type: object
+      required:
+        - id
+        - name
+        - prettyName
+        - contentType
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        prettyName:
+          type: string
+        contentType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    EService:
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        version:
+          type: string
+        activeDescriptor:
+          $ref: '#/components/schemas/ActiveDescriptor'
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - version
+    ActiveDescriptor:
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          $ref: '#/components/schemas/EServiceDescriptorState'
+        version:
+          type: string
+      additionalProperties: false
+      required:
+        - id
+        - state
+        - version
+    EServiceDescriptorState:
+      type: string
+      description: EService Descriptor State
+      enum:
+        - DRAFT
+        - PUBLISHED
+        - DEPRECATED
+        - SUSPENDED
+        - ARCHIVED
     AttributeSeed:
       title: AttributeSeed
       type: object
@@ -476,6 +810,48 @@ components:
         - id
         - description
         - kind
+        - name
+        - creationTime
+    VerifiedAttribute:
+      title: VerifiedAttribute
+      type: object
+      description: represents the details of a verified attribute bound to the agreement.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: uniquely identifies the attribute on the registry
+        description:
+          type: string
+        name:
+          type: string
+        creationTime:
+          type: string
+          format: date-time
+      required:
+        - id
+        - description
+        - name
+        - creationTime
+    DeclaredAttribute:
+      title: DeclaredAttribute
+      type: object
+      description: represents the details of a declared attribute bound to the agreement.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: uniquely identifies the attribute on the registry
+        description:
+          type: string
+        name:
+          type: string
+        creationTime:
+          type: string
+          format: date-time
+      required:
+        - id
+        - description
         - name
         - creationTime
     CertifiedAttribute:
@@ -595,6 +971,149 @@ components:
         - attributes
         - origin
       additionalProperties: false
+    Tenant:
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+        - id
+        - name
+    TenantWithAttributes:
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantAttribute'
+      required:
+        - id
+        - name
+        - attributes
+    TenantAttribute:
+      type: object
+      properties:
+        declared:
+          $ref: '#/components/schemas/DeclaredTenantAttribute'
+        certified:
+          $ref: '#/components/schemas/CertifiedTenantAttribute'
+        verified:
+          $ref: '#/components/schemas/VerifiedTenantAttribute'
+    DeclaredTenantAttribute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        assignmentTimestamp:
+          type: string
+          format: date-time
+        revocationTimestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - assignmentTimestamp
+    CertifiedTenantAttribute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        assignmentTimestamp:
+          type: string
+          format: date-time
+        revocationTimestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - assignmentTimestamp
+    VerifiedTenantAttribute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        assignmentTimestamp:
+          type: string
+          format: date-time
+        renewal:
+          $ref: '#/components/schemas/VerificationRenewal'
+        verifiedBy:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantVerifier'
+        revokedBy:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantRevoker'
+      required:
+        - id
+        - name
+        - assignmentTimestamp
+        - renewal
+        - verifiedBy
+        - revokedBy
+    VerificationRenewal:
+      type: string
+      enum:
+        - REVOKE_ON_EXPIRATION
+        - AUTOMATIC_RENEWAL
+    TenantVerifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        verificationDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        extentionDate:
+          type: string
+          format: date-time
+      required:
+        - id
+        - verificationDate
+    TenantRevoker:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        verificationDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        extentionDate:
+          type: string
+          format: date-time
+        revocationDate:
+          type: string
+          format: date-time
+      required:
+        - id
+        - verificationDate
+        - revocationDate
     Problem:
       properties:
         type:

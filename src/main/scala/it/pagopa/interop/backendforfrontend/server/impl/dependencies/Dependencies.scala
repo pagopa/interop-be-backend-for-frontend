@@ -9,9 +9,13 @@ import akka.http.scaladsl.server.directives.SecurityDirectives
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
-import it.pagopa.interop.attributeregistrymanagement
+import it.pagopa.interop._
+import it.pagopa.interop.agreementprocess.client.api.AgreementApi
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
+import it.pagopa.interop.backendforfrontend.api._
 import it.pagopa.interop.backendforfrontend.api.impl.{
+  AgreementsApiMarshallerImpl,
+  AgreementsApiServiceImpl,
   AttributesApiMarshallerImpl,
   AttributesApiServiceImpl,
   AuthorizationApiMarshallerImpl,
@@ -23,14 +27,21 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   entityMarshallerProblem,
   problemOf
 }
-import it.pagopa.interop.backendforfrontend.api.{AttributesApi, AuthorizationApi, HealthApi, PartyApi}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.service.impl.{
+  AgreementProcessServiceImpl,
   AttributeRegistryManagementServiceImpl,
+  CatalogManagementServiceImpl,
   PartyProcessServiceImpl,
+  TenantManagementServiceImpl,
   UserRegistryServiceImpl
 }
-import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeRegistryManagementInvoker
+import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{
+  AgreementProcessInvoker,
+  AttributeRegistryManagementInvoker,
+  CatalogManagementInvoker,
+  TenantManagementInvoker
+}
 import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.{
   PartyProcessApiKeyValue,
   PartyProcessInvoker
@@ -40,10 +51,14 @@ import it.pagopa.interop.backendforfrontend.service.types.UserRegistryServiceTyp
   UserRegistryInvoker
 }
 import it.pagopa.interop.backendforfrontend.service.{
+  AgreementProcessService,
   AttributeRegistryManagementService,
+  CatalogManagementService,
   PartyProcessService,
+  TenantManagementService,
   UserRegistryService
 }
+import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSessionTokenGenerator, getClaimsVerifier}
@@ -54,6 +69,7 @@ import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
 import it.pagopa.interop.selfcare.userregistry.client.api.UserApi
 import it.pagopa.interop.selfcare.{partyprocess, userregistry}
+import it.pagopa.interop.tenantmanagement.client.api.TenantApi
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
@@ -88,9 +104,33 @@ trait Dependencies {
         .ApiInvoker(attributeregistrymanagement.client.api.EnumsSerializers.all, blockingEc)(actorSystem.classicSystem)
   }
 
+  object AgreementProcessInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ClassicActorSystem): AgreementProcessInvoker =
+      agreementprocess.client.invoker
+        .ApiInvoker(agreementprocess.client.api.EnumsSerializers.all, blockingEc)(actorSystem.classicSystem)
+  }
+
+  object CatalogManagementInvoker {
+    def apply(
+      blockingEc: ExecutionContextExecutor
+    )(implicit actorSystem: ClassicActorSystem): CatalogManagementInvoker =
+      catalogmanagement.client.invoker
+        .ApiInvoker(catalogmanagement.client.api.EnumsSerializers.all, blockingEc)(actorSystem.classicSystem)
+  }
+
+  object TenantManagementInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ClassicActorSystem): TenantManagementInvoker =
+      tenantmanagement.client.invoker
+        .ApiInvoker(tenantmanagement.client.api.EnumsSerializers.all, blockingEc)(actorSystem.classicSystem)
+  }
+
   val attributeRegistryManagementApi: AttributeApi = AttributeApi(
     ApplicationConfiguration.attributeRegistryManagementURL
   )
+
+  val agreementProcessApi: AgreementApi = AgreementApi(ApplicationConfiguration.agreementProcessURL)
+  val catalogManagementApi: EServiceApi = EServiceApi(ApplicationConfiguration.catalogManagementURL)
+  val tenantManagementApi: TenantApi    = TenantApi(ApplicationConfiguration.tenantManagementURL)
 
   def attributeRegistry(
     blockingEc: ExecutionContextExecutor
@@ -99,6 +139,21 @@ trait Dependencies {
       AttributeRegistryManagementInvoker(blockingEc)(actorSystem.classicSystem),
       attributeRegistryManagementApi
     )
+
+  def agreementProcess(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], executionContext: ExecutionContext): AgreementProcessService =
+    AgreementProcessServiceImpl(AgreementProcessInvoker(blockingEc)(actorSystem.classicSystem), agreementProcessApi)
+
+  def catalogManagement(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], executionContext: ExecutionContext): CatalogManagementService =
+    CatalogManagementServiceImpl(CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem), catalogManagementApi)
+
+  def tenantManagement(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], executionContext: ExecutionContext): TenantManagementService =
+    TenantManagementServiceImpl(TenantManagementInvoker(blockingEc)(actorSystem.classicSystem), tenantManagementApi)
 
   def userRegistry(implicit actorSystem: ActorSystem[_]): UserRegistryService =
     UserRegistryServiceImpl(
@@ -164,6 +219,22 @@ trait Dependencies {
     new AttributesApi(
       AttributesApiServiceImpl(attributeRegistry(blockingEc)),
       AttributesApiMarshallerImpl,
+      jwtReader.OAuth2JWTValidatorAsContexts
+    )
+
+  def agreementApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
+    actorSystem: ActorSystem[_],
+    ec: ExecutionContext
+  ): AgreementsApi =
+    new AgreementsApi(
+      AgreementsApiServiceImpl(
+        agreementProcess(blockingEc),
+        attributeRegistry(blockingEc),
+        catalogManagement(blockingEc),
+        partyProcess,
+        tenantManagement(blockingEc)
+      ),
+      AgreementsApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts
     )
 

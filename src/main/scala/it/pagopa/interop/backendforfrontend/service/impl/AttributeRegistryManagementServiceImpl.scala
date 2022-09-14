@@ -1,5 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
+import cats.implicits.catsSyntaxOptionId
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, BearerToken}
@@ -8,25 +9,28 @@ import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementS
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{
   AttributeRegistryManagementInvoker,
   MgmtAttribute,
-  MgmtAttributeSeed
+  MgmtAttributeSeed,
+  MgmtAttributesResponse
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
   GenericClientError,
-  ResourceNotFoundError,
   ResourceConflictError,
+  ResourceNotFoundError,
   ThirdPartyCallError
 }
 import it.pagopa.interop.commons.utils.extractHeaders
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 final case class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagementInvoker, api: AttributeApi)(
   implicit ec: ExecutionContext
 ) extends AttributeRegistryManagementService {
 
-  implicit val logger = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+  private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   private val replacementEntityId: String = "NoIdentifier"
   private val serviceName: String         = "attribute-registry"
@@ -58,7 +62,7 @@ final case class AttributeRegistryManagementServiceImpl(invoker: AttributeRegist
 
   override def createAttribute(
     seed: MgmtAttributeSeed
-  )(implicit contexts: Seq[(String, String)]): Future[MgmtAttribute] = {
+  )(implicit contexts: Seq[(String, String)]): Future[MgmtAttribute] =
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.createAttribute(xCorrelationId = correlationId, attributeSeed = seed, xForwardedFor = ip)(
@@ -66,7 +70,23 @@ final case class AttributeRegistryManagementServiceImpl(invoker: AttributeRegist
       )
       result <- invoker.invoke(request, s"Creating attribute with seed $seed", invocationRecovery(Some(seed.name)))
     } yield result
-  }
+
+  override def getBulkAttributes(
+    ids: Seq[UUID]
+  )(implicit contexts: Seq[(String, String)]): Future[MgmtAttributesResponse] =
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.getBulkedAttributes(
+        xCorrelationId = correlationId,
+        ids = ids.mkString(",").some,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+      result <- invoker.invoke(
+        request,
+        s"Retrieving attribute in bulk. IDs: ${ids.mkString("[", ",", "]")}",
+        invocationRecovery(None)
+      )
+    } yield result
 
   private def invocationRecovery[T](
     entityId: Option[String]
