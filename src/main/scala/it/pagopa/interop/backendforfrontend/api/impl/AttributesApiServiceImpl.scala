@@ -70,7 +70,7 @@ final case class AttributesApiServiceImpl(attributeRegistryManagementApiService:
 
     onComplete(result) {
       case Success(attribute)                 =>
-        getAttributeByOriginAndCode200(attribute)
+        getAttributeById200(attribute)
       case Failure(ex: ResourceNotFoundError) =>
         logger.error(s"Error while getting attribute with id $attributeId", ex)
         getAttributes404(problemOf(StatusCodes.NotFound, ResourceNotFoundError(s"Attribute with id $attributeId")))
