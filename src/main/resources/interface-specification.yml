@@ -165,7 +165,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
-    get:
+    post:
       tags:
         - agreements
       summary: Activate an agreement
@@ -201,7 +201,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
-    get:
+    post:
       tags:
         - agreements
       summary: Submit an agreement
@@ -238,7 +238,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
-    get:
+    post:
       tags:
         - agreements
       summary: Suspend an agreement
@@ -274,7 +274,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
-    get:
+    post:
       tags:
         - agreements
       summary: Upgrade an agreement
