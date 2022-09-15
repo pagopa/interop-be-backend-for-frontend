@@ -10,11 +10,13 @@ import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.CreateSessionTokenRequestError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
+import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
 import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
-import it.pagopa.interop.commons.utils.TypeConversions.TryOps
-import it.pagopa.interop.commons.utils.{ORGANIZATION, UID}
+import it.pagopa.interop.commons.utils.TypeConversions.{OptionOps, TryOps}
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
+import it.pagopa.interop.commons.utils.{ORGANIZATION, ORGANIZATION_ID_CLAIM, UID, USER_ROLES}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
@@ -43,9 +45,11 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
     val result: Future[SessionToken] = for {
       claims        <- jwtReader.getClaims(identityToken.identity_token).toFuture
       sessionClaims <- extractSessionClaims(claims).toFuture
-      token         <- sessionTokenGenerator.generate(
+      roles = getUserRoles(claims).mkString(",")
+      organizationId <- getOrganizationId(claims).toFuture
+      token          <- sessionTokenGenerator.generate(
         SignatureAlgorithm.RSAPkcs1Sha256,
-        sessionClaims,
+        sessionClaims ++ Map[String, AnyRef](USER_ROLES -> roles, ORGANIZATION_ID_CLAIM -> organizationId),
         ApplicationConfiguration.generatedJwtAudience,
         ApplicationConfiguration.generatedJwtIssuer,
         ApplicationConfiguration.generatedJwtDuration
@@ -66,4 +70,12 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
   private def extractSessionClaims(claims: JWTClaimsSet): Try[Map[String, AnyRef]] = Try {
     claims.getClaims.asScala.view.filterKeys(admittedSessionClaims.contains).toMap
   }
+
+  private def getOrganizationId(claims: JWTClaimsSet): Try[AnyRef] = for {
+    nullableOrgClaimsMap <- Try(claims.getJSONObjectClaim(organizationClaim)).as(MissingClaim(organizationClaim))
+    orgClaims            <- Option(nullableOrgClaimsMap).toTry(MissingClaim(organizationClaim))
+    orgClaimsMap = orgClaims.asScala.toMap
+    organizationId <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization"))
+  } yield organizationId
+
 }
