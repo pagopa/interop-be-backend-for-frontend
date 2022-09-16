@@ -1,6 +1,6 @@
 package it.pagopa.interop.backendforfrontend.server.impl
 
-import akka.actor.typed.ActorSystem
+import akka.actor.typed.{ActorSystem, DispatcherSelector}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.management.scaladsl.AkkaManagement
@@ -12,10 +12,9 @@ import it.pagopa.interop.backendforfrontend.server.Controller
 import it.pagopa.interop.backendforfrontend.server.impl.dependencies.Dependencies
 import it.pagopa.interop.commons.logging.renderBuildInfo
 import it.pagopa.interop.commons.utils.CORSSupport
-import scala.concurrent.ExecutionContext
+
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.util.{Failure, Success}
-import akka.actor.typed.DispatcherSelector
-import scala.concurrent.ExecutionContextExecutor
 
 object Main extends App with CORSSupport with Dependencies {
 
@@ -39,10 +38,12 @@ object Main extends App with CORSSupport with Dependencies {
         party         = partyApi(jwtReader, blockingEc)
         attributes    = attributeApi(jwtReader, blockingEc)
         agreements    = agreementApi(jwtReader, blockingEc)
+        tenants       = tenantApi(jwtReader, blockingEc)
         controller    = new Controller(
           attributes = attributes,
           authorization = authorization,
           agreements = agreements,
+          tenants = tenants,
           party = party,
           health = healthApi,
           validationExceptionToRoute = validationExceptionToRoute.some

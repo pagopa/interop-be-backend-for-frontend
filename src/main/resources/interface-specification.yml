@@ -36,6 +36,11 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: tenants
+    description: Tenant Module
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'
   - name: health
     description: Verify service status
     externalDocs:
@@ -453,7 +458,7 @@ paths:
     get:
       security: []
       tags:
-        - party
+        - tenants
       summary: Gets the certified attributes of an institution using internal institution id
       description: Gets certified attributes for institution using internal institution id
       operationId: getCertifiedAttributes
