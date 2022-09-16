@@ -52,11 +52,11 @@ object Handlers {
     complete(problem.status, problem)
   }
 
-  private def responseToProblem(
-    problemBody: String
-  )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Problem =
+  private def responseToProblem(problemBody: String): Problem =
+    // Note: the body is actually a Problem of the below service, but the model is the same,
+    //   so we can convert directly to our model for convenience
     Try(problemBody.parseJson.convertTo[Problem])
-      .getOrElse(problemOf(StatusCodes.InternalServerError, GenericError("errorMessage"))) // TODO message
+      .getOrElse(problemOf(StatusCodes.InternalServerError, GenericError("Unexpected error")))
 
   private def internalServerError(
     errorMessage: String
