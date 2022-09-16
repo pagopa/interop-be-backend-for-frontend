@@ -25,7 +25,7 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  private val serviceName: String     = "attribute-registry"
+  private val serviceName: String     = "agreement-process"
   private val missingEntityId: String = "NoIdentifier"
 
   override def createAgreement(seed: AgreementPayload)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
