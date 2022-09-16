@@ -1,0 +1,67 @@
+package it.pagopa.interop.backendforfrontend.error
+
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives.complete
+import akka.http.scaladsl.server.StandardRoute
+import com.typesafe.scalalogging.LoggerTakingImplicit
+import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
+import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
+import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf}
+import it.pagopa.interop.backendforfrontend.model.Problem
+import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
+import it.pagopa.interop.commons.logging.ContextFieldsToLog
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
+import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
+import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
+import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
+import spray.json._
+
+import scala.util.{Failure, Try}
+
+object Handlers {
+
+  def handleError(logMessage: String)(implicit
+    contexts: Seq[(String, String)],
+    logger: LoggerTakingImplicit[ContextFieldsToLog],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): PartialFunction[Try[_], StandardRoute] = log(logMessage) andThen {
+    case Failure(err: AgreementProcessError[_])  => completeWithError(err.message)
+    case Failure(err: AttributeRegistryError[_]) => completeWithError(err.message)
+    case Failure(err: CatalogManagementError[_]) => completeWithError(err.message)
+    case Failure(err: TenantManagementError[_])  => completeWithError(err.message)
+    case Failure(err: PartyProcessError[_])      => completeWithError(err.message)
+    case Failure(err: UserRegistryError[_])      => completeWithError(err.message)
+    case Failure(_)                              => internalServerError(logMessage)
+  }
+
+  private def log(logMessage: String)(implicit
+    contexts: Seq[(String, String)],
+    logger: LoggerTakingImplicit[ContextFieldsToLog]
+  ): PartialFunction[Try[_], Try[_]] = {
+    case res @ Failure(ex) =>
+      logger.error(logMessage, ex)
+      res
+    case other             => other
+  }
+
+  private def completeWithError(
+    problemBody: String
+  )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): StandardRoute = {
+    val problem = responseToProblem(problemBody)
+    complete(problem.status, problem)
+  }
+
+  private def responseToProblem(
+    problemBody: String
+  )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Problem =
+    Try(problemBody.parseJson.convertTo[Problem])
+      .getOrElse(problemOf(StatusCodes.InternalServerError, GenericError("errorMessage"))) // TODO message
+
+  private def internalServerError(
+    errorMessage: String
+  )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): StandardRoute = {
+    val statusCode = StatusCodes.InternalServerError
+    complete(statusCode.intValue, problemOf(statusCode, GenericError(errorMessage)))
+  }
+}
