@@ -10,6 +10,12 @@ import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol
 import scala.concurrent.ExecutionContext.Implicits.global
+import com.nimbusds.jose.util.JSONObjectUtils
+import com.nimbusds.jose.util.JSONArrayUtils
+import java.{util => ju}
+import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jose.Payload
+import com.nimbusds.jose.util.Base64URL
 
 trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFactory {
 
@@ -45,5 +51,37 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
 
   implicit def fromEntityUnmarshallerProblem: FromEntityUnmarshaller[Problem] =
     sprayJsonUnmarshaller[Problem]
+}
+
+object SpecHelper {
+  implicit class MapConverter(private val map: Map[String, Object]) extends AnyVal {
+    def toJSONObject: ju.Map[String, Object] = {
+      val obj = JSONObjectUtils.newJSONObject()
+      map.toList.foreach {
+        case (k, v: List[_])   => obj.put(k, v.asInstanceOf[List[Object]].toJsonArray)
+        case (k, v: Map[_, _]) => obj.put(k, v.asInstanceOf[Map[String, Object]].toJSONObject)
+        case (k, v)            => obj.put(k, v)
+      }
+      obj
+    }
+
+    def asClaimSet: JWTClaimsSet = {
+      val asBase64Url: Base64URL                    = new Payload(toJSONObject).toBase64URL()
+      val asJsonObjectAgain: ju.Map[String, Object] = new Payload(asBase64Url).toJSONObject()
+      JWTClaimsSet.parse(asJsonObjectAgain)
+    }
+  }
+
+  implicit class ListConverter(private val list: List[Object]) extends AnyVal {
+    def toJsonArray: ju.List[Object] = {
+      val obj = JSONArrayUtils.newJSONArray()
+      list.foreach {
+        case x: Map[_, _] => obj.add(x.asInstanceOf[Map[String, Object]].toJSONObject)
+        case x: List[_]   => obj.add(x.asInstanceOf[List[Object]].toJsonArray)
+        case x            => obj.add(x)
+      }
+      obj
+    }
+  }
 
 }
