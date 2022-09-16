@@ -34,7 +34,7 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       request = api.createAgreement(xCorrelationId = correlationId, agreementPayload = seed, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(request, s"Creating agreement with seed $seed", invocationRecovery(None))
+      result <- invoker.invoke(request, s"Creating agreement with seed $seed")
     } yield result
 
   override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
@@ -48,7 +48,6 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       result <- invoker.invoke(
         request,
         s"Retrieving agreement $agreementId",
-        invocationRecovery(Some(agreementId.toString))
       )
     } yield result
 
@@ -72,7 +71,7 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
         latest = latest,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-      result <- invoker.invoke(request, s"Retrieving agreements", invocationRecovery(None))
+      result <- invoker.invoke(request, s"Retrieving agreements")
     } yield result
 
   override def activateAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
@@ -84,7 +83,6 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       result <- invoker.invoke(
         request,
         s"Activating agreement $agreementId",
-        invocationRecovery(Some(agreementId.toString))
       )
     } yield result
 
@@ -97,7 +95,6 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       result <- invoker.invoke(
         request,
         s"Submitting agreement $agreementId",
-        invocationRecovery(Some(agreementId.toString))
       )
     } yield result
 
@@ -110,7 +107,6 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       result <- invoker.invoke(
         request,
         s"Suspending agreement $agreementId",
-        invocationRecovery(Some(agreementId.toString))
       )
     } yield result
 
@@ -120,26 +116,7 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       request = api.upgradeAgreementById(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(
-        request,
-        s"Upgrading agreement $agreementId",
-        invocationRecovery(Some(agreementId.toString))
-      )
+      result <- invoker.invoke(request, s"Upgrading agreement $agreementId")
     } yield result
-
-  private def invocationRecovery[T](
-    entityId: Option[String]
-  ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] =
-    (context, logger, msg) => {
-      case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-        logger.error(s"$msg. code > $code - message > $message", ex)(context)
-        Future.failed[T](ResourceNotFoundError(entityId.getOrElse(missingEntityId)))
-      case ex @ ApiError(code, message, _, _, _)                =>
-        logger.error(s"$msg. code > $code - message > $message", ex)(context)
-        Future.failed[T](ThirdPartyCallError(serviceName, ex.getMessage))
-      case ex                                                   =>
-        logger.error(s"$msg. Error: ${ex.getMessage}", ex)(context)
-        Future.failed[T](GenericClientError(ex.getMessage))
-    }
 
 }
