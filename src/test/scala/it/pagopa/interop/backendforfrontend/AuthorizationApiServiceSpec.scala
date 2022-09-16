@@ -23,7 +23,11 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val uid: String = UUID.randomUUID().toString
 
       val jwtClaimsSet = Map(
-        "organization" -> Map("id" -> "id", "fiscalCode" -> "fiscalCode", "roles" -> List(Map("role" -> "admin"))),
+        "organization" -> Map(
+          "id"         -> "id",
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
         "uid"          -> uid
       ).asClaimSet
 
@@ -35,12 +39,12 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
-        "user-roles"     -> "admin",
+        "user-roles"     -> "admin,anotherRole",
         "organizationId" -> "id",
         "organization"   -> Map(
           "id"         -> "id",
           "fiscalCode" -> "fiscalCode",
-          "roles"      -> List(Map("role" -> "admin"))
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ).toJSONObject
       )
 
