@@ -24,6 +24,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   HealthServiceApiImpl,
   PartyApiMarshallerImpl,
   PartyApiServiceImpl,
+  TenantsApiMarshallerImpl,
+  TenantsApiServiceImpl,
   entityMarshallerProblem,
   problemOf
 }
@@ -235,6 +237,16 @@ trait Dependencies {
         tenantManagement(blockingEc)
       ),
       AgreementsApiMarshallerImpl,
+      jwtReader.OAuth2JWTValidatorAsContexts
+    )
+
+  def tenantApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
+    actorSystem: ActorSystem[_],
+    ec: ExecutionContext
+  ): TenantsApi =
+    new TenantsApi(
+      TenantsApiServiceImpl(attributeRegistry(blockingEc), tenantManagement(blockingEc)),
+      TenantsApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts
     )
 
