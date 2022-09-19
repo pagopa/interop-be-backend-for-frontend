@@ -1,17 +1,16 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.{complete, onComplete}
+import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.CreateSessionTokenRequestError
+import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
-import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
 import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
+import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions.{OptionOps, TryOps}
@@ -20,7 +19,7 @@ import it.pagopa.interop.commons.utils.{ORGANIZATION, ORGANIZATION_ID_CLAIM, UID
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
 final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenGenerator: SessionTokenGenerator)(
   implicit ec: ExecutionContext
@@ -30,7 +29,7 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
   private val FAMILY_NAME: String = "family_name"
   private val EMAIL: String       = "email"
 
-  private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+  private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   private val admittedSessionClaims: Set[String] = Set(UID, ORGANIZATION, NAME, FAMILY_NAME, EMAIL)
@@ -57,13 +56,9 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
     } yield SessionToken(token)
 
     onComplete(result) {
-      case Success(token) => getSessionToken200(token)
-      case Failure(ex)    =>
-        logger.error(s"Error while creating a session token for this request - ${ex.getMessage}")
-        complete(
-          StatusCodes.InternalServerError,
-          problemOf(StatusCodes.InternalServerError, CreateSessionTokenRequestError)
-        )
+      handleError(s"Error creating a session token") orElse { case Success(token) =>
+        getSessionToken200(token)
+      }
     }
   }
 

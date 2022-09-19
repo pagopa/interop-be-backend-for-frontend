@@ -1,31 +1,30 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.{complete, onComplete}
-import akka.http.scaladsl.server.{Route, StandardRoute}
+import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.server.Route
 import cats.implicits._
-import com.typesafe.scalalogging.Logger
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.AgreementDescriptorNotFound
+import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.{AgreementPayloadConverter, _}
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{MgmtAttributesResponse, _}
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -36,7 +35,8 @@ final case class AgreementsApiServiceImpl(
 )(implicit ec: ExecutionContext)
     extends AgreementsApiService {
 
-  private val logger = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+  private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def createAgreement(payload: AgreementPayload)(implicit
     contexts: Seq[(String, String)],
@@ -48,13 +48,12 @@ final case class AgreementsApiServiceImpl(
     } yield CreatedResource(result.id)
 
     onComplete(result) {
-      case Success(resource) =>
+      handleError(
+        s"Error creating agreement for EService ${payload.eserviceId} and Descriptor ${payload.descriptorId}"
+      ) orElse { case Success(resource) =>
         createAgreement200(resource)
-      case Failure(e)        =>
-        val message =
-          s"Error while creating agreement for EService ${payload.eserviceId} and Descriptor ${payload.descriptorId}"
-        logger.error(message, e)
-        internalServerError(message)
+
+      }
     }
   }
 
@@ -70,14 +69,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      case Success(agreement)                 => getAgreementById200(agreement)
-      case Failure(ex: ResourceNotFoundError) =>
-        logger.error(s"Error while retrieving agreement  $agreementId", ex)
-        getAgreementById404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(e)                         =>
-        val message = s"Error while retrieving agreement $agreementId"
-        logger.error(message, e)
-        internalServerError(message)
+      handleError(s"Error retrieving agreement $agreementId") orElse { case Success(agreement) =>
+        getAgreementById200(agreement)
+      }
     }
   }
 
@@ -107,11 +101,7 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreements
 
     onComplete(agreements) {
-      case Success(agreements) => getAgreements200(agreements)
-      case Failure(e)          =>
-        val message = s"Error while retrieving agreements"
-        logger.error(message, e)
-        internalServerError(message)
+      handleError(s"Error retrieving agreements") orElse { case Success(agreements) => getAgreements200(agreements) }
     }
   }
 
@@ -127,14 +117,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      case Success(agreement)                 => activateAgreement200(agreement)
-      case Failure(ex: ResourceNotFoundError) =>
-        logger.error(s"Error while activating agreement  $agreementId", ex)
-        activateAgreement404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(e)                         =>
-        val message = s"Error while activating agreement $agreementId"
-        logger.error(message, e)
-        internalServerError(message)
+      handleError(s"Error activating agreement $agreementId") orElse { case Success(agreement) =>
+        activateAgreement200(agreement)
+      }
     }
   }
 
@@ -150,14 +135,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      case Success(agreement)                 => submitAgreement200(agreement)
-      case Failure(ex: ResourceNotFoundError) =>
-        logger.error(s"Error while submitting agreement $agreementId", ex)
-        submitAgreement404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(e)                         =>
-        val message = s"Error while submitting agreement $agreementId"
-        logger.error(message, e)
-        internalServerError(message)
+      handleError(s"Error submitting agreement $agreementId") orElse { case Success(agreement) =>
+        submitAgreement200(agreement)
+      }
     }
   }
 
@@ -173,14 +153,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      case Success(agreement)                 => suspendAgreement200(agreement)
-      case Failure(ex: ResourceNotFoundError) =>
-        logger.error(s"Error while suspending agreement $agreementId", ex)
-        suspendAgreement404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(e)                         =>
-        val message = s"Error while suspending agreement $agreementId"
-        logger.error(message, e)
-        internalServerError(message)
+      handleError(s"Error suspending agreement $agreementId") orElse { case Success(agreement) =>
+        suspendAgreement200(agreement)
+      }
     }
   }
 
@@ -196,14 +171,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      case Success(agreement)                 => upgradeAgreement200(agreement)
-      case Failure(ex: ResourceNotFoundError) =>
-        logger.error(s"Error while upgrading agreement  $agreementId", ex)
-        upgradeAgreement404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(e)                         =>
-        val message = s"Error while upgrading agreement $agreementId"
-        logger.error(message, e)
-        internalServerError(message)
+      handleError(s"Error upgrading agreement $agreementId") orElse { case Success(agreement) =>
+        upgradeAgreement200(agreement)
+      }
     }
   }
 
@@ -296,13 +266,6 @@ final case class AgreementsApiServiceImpl(
     }
 
     TenantAttribute(declared = declared, certified = certified, verified = verified)
-  }
-
-  private def internalServerError(
-    errorMessage: String
-  )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): StandardRoute = {
-    val statusCode = StatusCodes.InternalServerError
-    complete(statusCode.intValue, problemOf(statusCode, GenericError(errorMessage)))
   }
 
 }
