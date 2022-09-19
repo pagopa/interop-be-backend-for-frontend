@@ -53,7 +53,7 @@ object Handlers {
   }
 
   private def responseToProblem(problemBody: String): Problem =
-    // Note: the body is actually a Problem of the below service, but the model is the same,
+    // Note: the body is actually a Problem of the below service, but the schema is the same,
     //   so we can convert directly to our model for convenience
     Try(problemBody.parseJson.convertTo[Problem])
       .getOrElse(problemOf(StatusCodes.InternalServerError, GenericError("Unexpected error")))
