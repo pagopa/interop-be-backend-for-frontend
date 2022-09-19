@@ -1,23 +1,22 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.{complete, onComplete}
+import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
+import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{CertifiedAttributesResponse, Problem}
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeConverter
 import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryManagementService, TenantManagementService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
 import it.pagopa.interop.tenantmanagement.client.model.CertifiedTenantAttribute
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 final case class TenantsApiServiceImpl(
   attributeRegistryService: AttributeRegistryManagementService,
@@ -25,10 +24,10 @@ final case class TenantsApiServiceImpl(
 )(implicit ec: ExecutionContext)
     extends TenantsApiService {
 
-  private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+  private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getCertifiedAttributes(institutionId: String)(implicit
+  override def getCertifiedAttributes(tenantId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse]
@@ -46,26 +45,15 @@ final case class TenantsApiServiceImpl(
         )
 
     val result: Future[CertifiedAttributesResponse] = for {
-      institutionUUID <- institutionId.toFutureUUID
-      tenant          <- tenantManagementService.getTenant(institutionUUID)
-      attributes      <- Future.traverse(tenant.attributes.mapFilter(_.certified))(getAttributeSafe).map(_.flatten)
+      tenantUUID <- tenantId.toFutureUUID
+      tenant     <- tenantManagementService.getTenant(tenantUUID)
+      attributes <- Future.traverse(tenant.attributes.mapFilter(_.certified))(getAttributeSafe).map(_.flatten)
     } yield CertifiedAttributesResponse(attributes.map(_.toCertifiedAttribute))
 
     onComplete(result) {
-      case Success(attributes)               =>
+      handleError(s"Error retrieving certified attributes for tenant $tenantId") orElse { case Success(attributes) =>
         getCertifiedAttributes200(attributes)
-      case Failure(e: ResourceNotFoundError) =>
-        logger.error(s"Error while retrieving certified attributes for $institutionId", e)
-        getCertifiedAttributes404(problemOf(StatusCodes.NotFound, e))
-      case Failure(e)                        =>
-        logger.error(s"Error while retrieving certified attributes for $institutionId", e)
-        complete(
-          StatusCodes.InternalServerError,
-          problemOf(
-            StatusCodes.InternalServerError,
-            GenericError(s"Error while retrieving certified attributes for $institutionId")
-          )
-        )
+      }
     }
   }
 

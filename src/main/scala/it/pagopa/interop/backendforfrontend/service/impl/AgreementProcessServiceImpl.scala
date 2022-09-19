@@ -2,17 +2,12 @@ package it.pagopa.interop.backendforfrontend.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.api.AgreementApi
-import it.pagopa.interop.agreementprocess.client.invoker.{ApiError, BearerToken}
+import it.pagopa.interop.agreementprocess.client.invoker.BearerToken
 import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayload, AgreementState}
 import it.pagopa.interop.backendforfrontend.service.AgreementProcessService
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AgreementProcessInvoker
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
-  GenericClientError,
-  ResourceNotFoundError,
-  ThirdPartyCallError
-}
 import it.pagopa.interop.commons.utils.extractHeaders
 
 import java.util.UUID
@@ -24,9 +19,6 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
-
-  private val serviceName: String     = "agreement-process"
-  private val missingEntityId: String = "NoIdentifier"
 
   override def createAgreement(seed: AgreementPayload)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
     for {
@@ -45,10 +37,7 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
         agreementId = agreementId.toString,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-      result <- invoker.invoke(
-        request,
-        s"Retrieving agreement $agreementId",
-      )
+      result <- invoker.invoke(request, s"Retrieving agreement $agreementId")
     } yield result
 
   override def getAgreements(
@@ -80,10 +69,7 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       request = api.activateAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(
-        request,
-        s"Activating agreement $agreementId",
-      )
+      result <- invoker.invoke(request, s"Activating agreement $agreementId")
     } yield result
 
   override def submitAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
@@ -92,10 +78,7 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       request = api.submitAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(
-        request,
-        s"Submitting agreement $agreementId",
-      )
+      result <- invoker.invoke(request, s"Submitting agreement $agreementId")
     } yield result
 
   override def suspendAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
@@ -104,10 +87,7 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
       request = api.suspendAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(
-        request,
-        s"Suspending agreement $agreementId",
-      )
+      result <- invoker.invoke(request, s"Suspending agreement $agreementId")
     } yield result
 
   override def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
