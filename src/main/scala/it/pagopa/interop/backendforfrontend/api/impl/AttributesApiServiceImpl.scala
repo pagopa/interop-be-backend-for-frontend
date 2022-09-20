@@ -60,10 +60,8 @@ final case class AttributesApiServiceImpl(attributeRegistryManagementApiService:
     toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Attribute] = for {
-      response <- attributeRegistryManagementApiService.getAttributeByOriginAndCode(origin, code)(contexts)
-      converted = response.toAttribute
-    } yield converted
+    val result: Future[Attribute] =
+      attributeRegistryManagementApiService.getAttributeByOriginAndCode(origin, code)(contexts).map(_.toAttribute)
 
     onComplete(result) {
       handleError(s"Error retrieving attribute with origin = $origin and code = $code") orElse {
@@ -77,9 +75,8 @@ final case class AttributesApiServiceImpl(attributeRegistryManagementApiService:
     toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Attribute] = for {
-      result <- attributeRegistryManagementApiService.createAttribute(attributeSeed.toSeed)
-    } yield result.toAttribute
+    val result: Future[Attribute] =
+      attributeRegistryManagementApiService.createAttribute(attributeSeed.toSeed).map(_.toAttribute)
 
     onComplete(result) {
       handleError(s"Error creating attribute with seed $attributeSeed") orElse { case Success(attribute) =>
