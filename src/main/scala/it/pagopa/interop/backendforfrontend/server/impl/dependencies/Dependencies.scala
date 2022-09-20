@@ -136,25 +136,24 @@ trait Dependencies {
 
   def attributeRegistry(
     blockingEc: ExecutionContextExecutor
-  )(implicit actorSystem: ActorSystem[_], executionContext: ExecutionContext): AttributeRegistryManagementService =
-    AttributeRegistryManagementServiceImpl(
-      AttributeRegistryManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      attributeRegistryManagementApi
-    )
+  )(implicit actorSystem: ActorSystem[_]): AttributeRegistryManagementService = AttributeRegistryManagementServiceImpl(
+    AttributeRegistryManagementInvoker(blockingEc)(actorSystem.classicSystem),
+    attributeRegistryManagementApi
+  )
 
-  def agreementProcess(
-    blockingEc: ExecutionContextExecutor
-  )(implicit actorSystem: ActorSystem[_], executionContext: ExecutionContext): AgreementProcessService =
+  def agreementProcess(blockingEc: ExecutionContextExecutor)(implicit
+    actorSystem: ActorSystem[_]
+  ): AgreementProcessService =
     AgreementProcessServiceImpl(AgreementProcessInvoker(blockingEc)(actorSystem.classicSystem), agreementProcessApi)
 
-  def catalogManagement(
-    blockingEc: ExecutionContextExecutor
-  )(implicit actorSystem: ActorSystem[_], executionContext: ExecutionContext): CatalogManagementService =
+  def catalogManagement(blockingEc: ExecutionContextExecutor)(implicit
+    actorSystem: ActorSystem[_]
+  ): CatalogManagementService =
     CatalogManagementServiceImpl(CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem), catalogManagementApi)
 
-  def tenantManagement(
-    blockingEc: ExecutionContextExecutor
-  )(implicit actorSystem: ActorSystem[_], executionContext: ExecutionContext): TenantManagementService =
+  def tenantManagement(blockingEc: ExecutionContextExecutor)(implicit
+    actorSystem: ActorSystem[_]
+  ): TenantManagementService =
     TenantManagementServiceImpl(TenantManagementInvoker(blockingEc)(actorSystem.classicSystem), tenantManagementApi)
 
   def userRegistry(implicit actorSystem: ActorSystem[_]): UserRegistryService =

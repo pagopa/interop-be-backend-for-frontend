@@ -7,38 +7,31 @@ import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayl
 import it.pagopa.interop.backendforfrontend.service.AgreementProcessService
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AgreementProcessInvoker
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
-import it.pagopa.interop.commons.utils.extractHeaders
-
 import java.util.UUID
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, api: AgreementApi)(implicit
-  ec: ExecutionContext
-) extends AgreementProcessService {
+final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, api: AgreementApi)
+    extends AgreementProcessService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def createAgreement(seed: AgreementPayload)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.createAgreement(xCorrelationId = correlationId, agreementPayload = seed, xForwardedFor = ip)(
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request = api.createAgreement(xCorrelationId = correlationId, agreementPayload = seed, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(request, s"Creating agreement with seed $seed")
-    } yield result
+      invoker.invoke(request, s"Creating agreement with seed $seed")
+    }
 
   override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getAgreementById(
-        xCorrelationId = correlationId,
-        agreementId = agreementId.toString,
-        xForwardedFor = ip
-      )(BearerToken(bearerToken))
-      result <- invoker.invoke(request, s"Retrieving agreement $agreementId")
-    } yield result
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.getAgreementById(xCorrelationId = correlationId, agreementId = agreementId.toString, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Retrieving agreement $agreementId")
+    }
 
   override def getAgreements(
     producerId: Option[String] = None,
@@ -47,10 +40,9 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
     descriptorId: Option[String] = None,
     states: Seq[AgreementState],
     latest: Option[Boolean] = None
-  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] =
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getAgreements(
+  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] = withHeaders[Seq[Agreement]] {
+    (bearerToken, correlationId, ip) =>
+      val request = api.getAgreements(
         xCorrelationId = correlationId,
         producerId = producerId,
         consumerId = consumerId,
@@ -60,43 +52,41 @@ final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, a
         latest = latest,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-      result <- invoker.invoke(request, s"Retrieving agreements")
-    } yield result
+      invoker.invoke(request, s"Retrieving agreements")
+  }
 
   override def activateAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.activateAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
-      result <- invoker.invoke(request, s"Activating agreement $agreementId")
-    } yield result
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.activateAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Activating agreement $agreementId")
+    }
 
   override def submitAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.submitAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request = api.submitAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(request, s"Submitting agreement $agreementId")
-    } yield result
+      invoker.invoke(request, s"Submitting agreement $agreementId")
+    }
 
   override def suspendAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.suspendAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request = api.suspendAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      result <- invoker.invoke(request, s"Suspending agreement $agreementId")
-    } yield result
+      invoker.invoke(request, s"Suspending agreement $agreementId")
+    }
 
   override def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.upgradeAgreementById(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
-      result <- invoker.invoke(request, s"Upgrading agreement $agreementId")
-    } yield result
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.upgradeAgreementById(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Upgrading agreement $agreementId")
+    }
 
 }

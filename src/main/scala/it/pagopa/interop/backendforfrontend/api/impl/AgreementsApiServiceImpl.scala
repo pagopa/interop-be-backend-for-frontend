@@ -25,6 +25,7 @@ import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
+import it.pagopa.interop.selfcare.partyprocess.client.model
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -177,14 +178,21 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  def parallelGet(agreement: AgreementProcess.Agreement)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[(model.Institution, model.Institution, TenantManagement.Tenant, CatalogManagement.EService)] =
+    partyProcessService
+      .getInstitution(agreement.producerId)
+      .zip(partyProcessService.getInstitution(agreement.consumerId))
+      .zip(tenantManagementService.getTenant(agreement.consumerId))
+      .zip(catalogManagementService.getEService(agreement.eserviceId))
+      .map { case (((a, b), c), d) => (a, b, c, d) }
+
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement
   )(implicit contexts: Seq[(String, String)]): Future[Agreement] = for {
-    producer          <- partyProcessService.getInstitution(agreement.producerId)
-    consumer          <- partyProcessService.getInstitution(agreement.consumerId)
-    consumerTenant    <- tenantManagementService.getTenant(agreement.consumerId)
-    eService          <- catalogManagementService.getEService(agreement.eserviceId)
-    currentDescriptor <- eService.descriptors
+    (producer, consumer, consumerTenant, eService) <- parallelGet(agreement)
+    currentDescriptor                              <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(AgreementDescriptorNotFound(agreement.id))
     activeDescriptor = eService.descriptors.sortBy(_.version.toInt).lastOption
