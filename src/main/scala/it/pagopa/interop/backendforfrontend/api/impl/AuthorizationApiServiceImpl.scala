@@ -34,19 +34,13 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
 
   private val admittedSessionClaims: Set[String] = Set(UID, ORGANIZATION, NAME, FAMILY_NAME, EMAIL)
 
-  /**
-   * Code: 200, Message: Session token requested, DataType: SessionToken
-   */
   override def getSessionToken(identityToken: IdentityToken)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken]
   ): Route = {
     val result: Future[SessionToken] = for {
-      claims        <- jwtReader.getClaims(identityToken.identity_token).toFuture
-      sessionClaims <- extractSessionClaims(claims).toFuture
-      roles = getUserRoles(claims).mkString(",")
-      organizationId <- getOrganizationId(claims).toFuture
-      token          <- sessionTokenGenerator.generate(
+      (sessionClaims, roles, organizationId) <- readJwt(identityToken).toFuture
+      token                                  <- sessionTokenGenerator.generate(
         SignatureAlgorithm.RSAPkcs1Sha256,
         sessionClaims ++ Map[String, AnyRef](USER_ROLES -> roles, ORGANIZATION_ID_CLAIM -> organizationId),
         ApplicationConfiguration.generatedJwtAudience,
@@ -56,11 +50,15 @@ final case class AuthorizationApiServiceImpl(jwtReader: JWTReader, sessionTokenG
     } yield SessionToken(token)
 
     onComplete(result) {
-      handleError(s"Error creating a session token") orElse { case Success(token) =>
-        getSessionToken200(token)
-      }
+      handleError(s"Error creating a session token") orElse { case Success(token) => getSessionToken200(token) }
     }
   }
+
+  def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, AnyRef)] = for {
+    claims         <- jwtReader.getClaims(identityToken.identity_token)
+    sessionClaims  <- extractSessionClaims(claims)
+    organizationId <- getOrganizationId(claims)
+  } yield (sessionClaims, getUserRoles(claims).mkString(","), organizationId)
 
   private def extractSessionClaims(claims: JWTClaimsSet): Try[Map[String, AnyRef]] = Try {
     claims.getClaims.asScala.view.filterKeys(admittedSessionClaims.contains).toMap
