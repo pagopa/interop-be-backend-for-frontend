@@ -58,7 +58,7 @@ ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 lazy val generated = project
   .in(file("generated"))
-  .settings(scalacOptions := Seq(), scalafmtOnCompile := true, libraryDependencies := Dependencies.Jars.`server`, dependencyOverrides += "it.pagopa" %% "interop-commons-utils"   % "pin-1858-SNAPSHOT")
+  .settings(scalacOptions := Seq(), scalafmtOnCompile := true, libraryDependencies := Dependencies.Jars.`server`)
   .setupBuildInfo
 
 lazy val root = (project in file("."))
