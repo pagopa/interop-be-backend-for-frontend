@@ -104,6 +104,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
     post:
       summary: Agreement Creation
       operationId: createAgreement
@@ -116,6 +122,12 @@ paths:
                 $ref: '#/components/schemas/CreatedResource'
         '400':
           description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -154,14 +166,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -190,14 +208,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -227,14 +251,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -263,14 +293,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -299,14 +335,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -397,6 +439,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelationshipsResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/relationships/{relationshipId}':
     get:
       tags:
@@ -421,6 +469,12 @@ paths:
                 $ref: '#/components/schemas/RelationshipInfo'
         '404':
           description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -454,6 +508,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/institutions/{institutionId}/certifiedAttributes':
     get:
       security: []
@@ -479,6 +539,12 @@ paths:
                 $ref: '#/components/schemas/CertifiedAttributesResponse'
         '404':
           description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -510,6 +576,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       description: Returns the list of currently available attributes
     post:
       summary: Creates attribute
@@ -531,6 +603,12 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '409':
           description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -571,6 +649,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       operationId: getAttributeById
       description: 'returns the attribute with given ID, if any.'
   '/attributes/origin/{origin}/code/{code}':
@@ -587,6 +671,12 @@ paths:
                 $ref: '#/components/schemas/Attribute'
         '404':
           description: Attribute not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:

@@ -4,11 +4,13 @@ import akka.actor.typed.ActorSystem
 import akka.actor.{ActorSystem => ClassicActorSystem}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.SecurityDirectives
+import akka.http.scaladsl.server.{Directive1, Route}
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import it.pagopa.commons.ratelimiter.RateLimiter
+import it.pagopa.commons.ratelimiter.akka.RateLimiterDirective
 import it.pagopa.interop._
 import it.pagopa.interop.agreementprocess.client.api.AgreementApi
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
@@ -30,14 +32,7 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   problemOf
 }
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.service.impl.{
-  AgreementProcessServiceImpl,
-  AttributeRegistryManagementServiceImpl,
-  CatalogManagementServiceImpl,
-  PartyProcessServiceImpl,
-  TenantManagementServiceImpl,
-  UserRegistryServiceImpl
-}
+import it.pagopa.interop.backendforfrontend.service.impl._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{
   AgreementProcessInvoker,
   AttributeRegistryManagementInvoker,
@@ -52,14 +47,7 @@ import it.pagopa.interop.backendforfrontend.service.types.UserRegistryServiceTyp
   UserRegistryApiKeyValue,
   UserRegistryInvoker
 }
-import it.pagopa.interop.backendforfrontend.service.{
-  AgreementProcessService,
-  AttributeRegistryManagementService,
-  CatalogManagementService,
-  PartyProcessService,
-  TenantManagementService,
-  UserRegistryService
-}
+import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
@@ -67,6 +55,8 @@ import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSess
 import it.pagopa.interop.commons.signer.service.SignerService
 import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
+import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors}
+import it.pagopa.interop.commons.utils.service.impl.OffsetDateTimeSupplierImpl
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
 import it.pagopa.interop.selfcare.userregistry.client.api.UserApi
@@ -82,6 +72,17 @@ trait Dependencies {
 
   implicit val userRegistryApiKeyValue: UserRegistryApiKeyValue =
     userregistry.client.invoker.ApiKeyValue(ApplicationConfiguration.userRegistryApiKey)
+
+  val rateLimiter: RateLimiter = RateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplierImpl)
+
+  def rateLimiterDirective(
+    contexts: Seq[(String, String)]
+  )(implicit ec: ExecutionContext): Directive1[Seq[(String, String)]] = {
+    RateLimiterDirective.rateLimiterDirective(
+      rateLimiter,
+      problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
+    )(contexts)(ec, entityMarshallerProblem)
+  }
 
   def partyProcess(implicit actorSystem: ActorSystem[_]): PartyProcessService =
     PartyProcessServiceImpl(
@@ -211,7 +212,7 @@ trait Dependencies {
     new PartyApi(
       PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry(blockingEc)),
       PartyApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
     )
 
   def attributeApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
@@ -221,7 +222,7 @@ trait Dependencies {
     new AttributesApi(
       AttributesApiServiceImpl(attributeRegistry(blockingEc)),
       AttributesApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
     )
 
   def agreementApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
@@ -237,7 +238,7 @@ trait Dependencies {
         tenantManagement(blockingEc)
       ),
       AgreementsApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
     )
 
   def tenantApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
@@ -247,7 +248,7 @@ trait Dependencies {
     new TenantsApi(
       TenantsApiServiceImpl(attributeRegistry(blockingEc), tenantManagement(blockingEc)),
       TenantsApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
     )
 
   val healthApi: HealthApi = new HealthApi(
