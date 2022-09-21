@@ -55,7 +55,7 @@ import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSess
 import it.pagopa.interop.commons.signer.service.SignerService
 import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
-import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors}
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.service.impl.OffsetDateTimeSupplierImpl
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
