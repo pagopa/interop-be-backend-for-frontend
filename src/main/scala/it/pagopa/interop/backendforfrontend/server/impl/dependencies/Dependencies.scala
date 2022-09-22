@@ -79,16 +79,6 @@ trait Dependencies {
   val rateLimiter: RateLimiter =
     RedisRateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplierImpl)
 
-//  def rateLimiterDirective(
-//    contexts: Seq[(String, String)]
-//  )(implicit ec: ExecutionContext): Directive1[Seq[(String, String)]] = {
-//    val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
-//    RateLimiterDirective.rateLimiterDirective(
-//      rateLimiter,
-//      problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
-//    )(contexts)(ec, entityMarshallerProblem, logger)
-//  }
-
   val rateLimiterDirective: ExecutionContext => Seq[(String, String)] => Directive1[Seq[(String, String)]] = {
     ec => contexts =>
       {
