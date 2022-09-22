@@ -54,7 +54,7 @@ object Handlers {
     complete(problem.status, problem)
   }
 
-  private def tooManyRequests(): StandardRoute =
+  private def tooManyRequests()(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): StandardRoute =
     complete(StatusCodes.TooManyRequests, problemOf(StatusCodes.TooManyRequests, TooManyRequests))
 
   private def responseToProblem(problemBody: String): Problem =

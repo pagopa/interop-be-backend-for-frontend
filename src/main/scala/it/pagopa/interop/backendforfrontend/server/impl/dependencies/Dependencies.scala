@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.{Directive1, Route}
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop._
 import it.pagopa.interop.agreementprocess.client.api.AgreementApi
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
@@ -50,8 +51,10 @@ import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSessionTokenGenerator, getClaimsVerifier}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
-import it.pagopa.interop.commons.ratelimiter.akka.RateLimiterDirective
+import it.pagopa.interop.commons.ratelimiter.akkahttp.RateLimiterDirective
+import it.pagopa.interop.commons.ratelimiter.impl.RedisRateLimiter
 import it.pagopa.interop.commons.signer.service.SignerService
 import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
@@ -73,15 +76,28 @@ trait Dependencies {
   implicit val userRegistryApiKeyValue: UserRegistryApiKeyValue =
     userregistry.client.invoker.ApiKeyValue(ApplicationConfiguration.userRegistryApiKey)
 
-  val rateLimiter: RateLimiter = RateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplierImpl)
+  val rateLimiter: RateLimiter =
+    RedisRateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplierImpl)
 
-  def rateLimiterDirective(
-    contexts: Seq[(String, String)]
-  )(implicit ec: ExecutionContext): Directive1[Seq[(String, String)]] = {
-    RateLimiterDirective.rateLimiterDirective(
-      rateLimiter,
-      problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
-    )(contexts)(ec, entityMarshallerProblem)
+//  def rateLimiterDirective(
+//    contexts: Seq[(String, String)]
+//  )(implicit ec: ExecutionContext): Directive1[Seq[(String, String)]] = {
+//    val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+//    RateLimiterDirective.rateLimiterDirective(
+//      rateLimiter,
+//      problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
+//    )(contexts)(ec, entityMarshallerProblem, logger)
+//  }
+
+  val rateLimiterDirective: ExecutionContext => Seq[(String, String)] => Directive1[Seq[(String, String)]] = {
+    ec => contexts =>
+      {
+        val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+        RateLimiterDirective.rateLimiterDirective(
+          rateLimiter,
+          problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
+        )(contexts)(ec, entityMarshallerProblem, logger)
+      }
   }
 
   def partyProcess(implicit actorSystem: ActorSystem[_]): PartyProcessService =
@@ -211,7 +227,7 @@ trait Dependencies {
     new PartyApi(
       PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry(blockingEc)),
       PartyApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
     )
 
   def attributeApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
@@ -221,7 +237,7 @@ trait Dependencies {
     new AttributesApi(
       AttributesApiServiceImpl(attributeRegistry(blockingEc)),
       AttributesApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
     )
 
   def agreementApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
@@ -237,7 +253,7 @@ trait Dependencies {
         tenantManagement(blockingEc)
       ),
       AgreementsApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
     )
 
   def tenantApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
@@ -247,7 +263,7 @@ trait Dependencies {
     new TenantsApi(
       TenantsApiServiceImpl(attributeRegistry(blockingEc), tenantManagement(blockingEc)),
       TenantsApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
     )
 
   val healthApi: HealthApi = new HealthApi(
