@@ -9,8 +9,6 @@ import akka.http.scaladsl.server.{Directive1, Route}
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
-import it.pagopa.commons.ratelimiter.RateLimiter
-import it.pagopa.commons.ratelimiter.akka.RateLimiterDirective
 import it.pagopa.interop._
 import it.pagopa.interop.agreementprocess.client.api.AgreementApi
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
@@ -32,6 +30,7 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   problemOf
 }
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.impl._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{
   AgreementProcessInvoker,
@@ -47,11 +46,12 @@ import it.pagopa.interop.backendforfrontend.service.types.UserRegistryServiceTyp
   UserRegistryApiKeyValue,
   UserRegistryInvoker
 }
-import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSessionTokenGenerator, getClaimsVerifier}
+import it.pagopa.interop.commons.ratelimiter.RateLimiter
+import it.pagopa.interop.commons.ratelimiter.akka.RateLimiterDirective
 import it.pagopa.interop.commons.signer.service.SignerService
 import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
@@ -199,7 +199,7 @@ trait Dependencies {
     ec: ExecutionContext
   ): AuthorizationApi =
     new AuthorizationApi(
-      AuthorizationApiServiceImpl(jwtReader, sessionTokenGenerator(blockingEc)),
+      AuthorizationApiServiceImpl(jwtReader, sessionTokenGenerator(blockingEc), rateLimiter),
       AuthorizationApiMarshallerImpl,
       SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
     )
