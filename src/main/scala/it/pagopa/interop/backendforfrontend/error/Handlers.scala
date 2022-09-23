@@ -26,12 +26,12 @@ object Handlers {
     logger: LoggerTakingImplicit[ContextFieldsToLog],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): PartialFunction[Try[_], StandardRoute] = log(logMessage) andThen {
-    case Failure(err: AgreementProcessError[_])  => completeWithError(err.message)
-    case Failure(err: AttributeRegistryError[_]) => completeWithError(err.message)
-    case Failure(err: CatalogManagementError[_]) => completeWithError(err.message)
-    case Failure(err: TenantManagementError[_])  => completeWithError(err.message)
-    case Failure(err: PartyProcessError[_])      => completeWithError(err.message)
-    case Failure(err: UserRegistryError[_])      => completeWithError(err.message)
+    case Failure(err: AgreementProcessError[_])  => completeWithError(err.responseContent)
+    case Failure(err: AttributeRegistryError[_]) => completeWithError(err.responseContent)
+    case Failure(err: CatalogManagementError[_]) => completeWithError(err.responseContent)
+    case Failure(err: TenantManagementError[_])  => completeWithError(err.responseContent)
+    case Failure(err: PartyProcessError[_])      => completeWithError(err.responseContent)
+    case Failure(err: UserRegistryError[_])      => completeWithError(err.responseContent)
     case Failure(_)                              => internalServerError(logMessage)
   }
 
@@ -45,18 +45,25 @@ object Handlers {
     case other             => other
   }
 
-  private def completeWithError(
-    problemBody: String
+  private val unexpectedErrorProblem: Problem =
+    problemOf(StatusCodes.InternalServerError, GenericError("Unexpected error"))
+
+  private def completeWithError[T](
+    response: Option[T]
   )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): StandardRoute = {
-    val problem = responseToProblem(problemBody)
+    val problem = response match {
+      case Some(problemBody: String) => responseToProblem(problemBody)
+      case Some(problem: Problem)    => problem
+      case Some(other)               => responseToProblem(other.toString)
+      case None                      => unexpectedErrorProblem
+    }
     complete(problem.status, problem)
   }
 
   private def responseToProblem(problemBody: String): Problem =
-    // Note: the body is actually a Problem of the below service, but the schema is the same,
-    //   so we can convert directly to our model for convenience
-    Try(problemBody.parseJson.convertTo[Problem])
-      .getOrElse(problemOf(StatusCodes.InternalServerError, GenericError("Unexpected error")))
+    // Note: the body should actually be Problem of the below service, but having the same schema,
+    //   for convenience we can convert it directly to our model
+    Try(problemBody.parseJson.convertTo[Problem]).getOrElse(unexpectedErrorProblem)
 
   private def internalServerError(
     errorMessage: String
