@@ -37,7 +37,7 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
 
   "Error Handler" should {
     "handle Agreement Process error" in {
-      val error = AgreementProcessError(404, problem.toJson.compactPrint, None)
+      val error = AgreementProcessError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger, problemMarshaller)(Failure(error)) ~> check {
         status.intValue shouldBe error.code
@@ -46,7 +46,7 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
     }
 
     "handle Attribute Registry error" in {
-      val error = AttributeRegistryError(404, problem.toJson.compactPrint, None)
+      val error = AttributeRegistryError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger, problemMarshaller)(Failure(error)) ~> check {
         status.intValue shouldBe error.code
@@ -55,7 +55,7 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
     }
 
     "handle Catalog Management error" in {
-      val error = CatalogManagementError(404, problem.toJson.compactPrint, None)
+      val error = CatalogManagementError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger, problemMarshaller)(Failure(error)) ~> check {
         status.intValue shouldBe error.code
@@ -64,7 +64,7 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
     }
 
     "handle Party Process error" in {
-      val error = PartyProcessError(404, problem.toJson.compactPrint, None)
+      val error = PartyProcessError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger, problemMarshaller)(Failure(error)) ~> check {
         status.intValue shouldBe error.code
@@ -73,7 +73,7 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
     }
 
     "handle Tenant Management error" in {
-      val error = TenantManagementError(404, problem.toJson.compactPrint, None)
+      val error = TenantManagementError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger, problemMarshaller)(Failure(error)) ~> check {
         status.intValue shouldBe error.code
@@ -82,7 +82,7 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
     }
 
     "handle User Registry error" in {
-      val error = UserRegistryError(404, problem.toJson.compactPrint, None)
+      val error = UserRegistryError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger, problemMarshaller)(Failure(error)) ~> check {
         status.intValue shouldBe error.code
