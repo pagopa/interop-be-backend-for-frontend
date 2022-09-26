@@ -47,7 +47,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin,anotherRole",
-        "organizationId" -> orgId,
+        "organizationId" -> orgIdStr,
         "organization"   -> Map(
           "id"         -> orgIdStr,
           "fiscalCode" -> "fiscalCode",
@@ -122,7 +122,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin",
-        "organizationId" -> orgId,
+        "organizationId" -> orgIdStr,
         "organization"   -> Map(
           "id"         -> orgIdStr,
           "fiscalCode" -> "fiscalCode",
