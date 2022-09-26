@@ -26,12 +26,12 @@ object Handlers {
     logger: LoggerTakingImplicit[ContextFieldsToLog],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): PartialFunction[Try[_], StandardRoute] = log(logMessage) andThen {
-    case Failure(err: AgreementProcessError[_])  => completeWithError(err.message)
-    case Failure(err: AttributeRegistryError[_]) => completeWithError(err.message)
-    case Failure(err: CatalogManagementError[_]) => completeWithError(err.message)
-    case Failure(err: TenantManagementError[_])  => completeWithError(err.message)
-    case Failure(err: PartyProcessError[_])      => completeWithError(err.message)
-    case Failure(err: UserRegistryError[_])      => completeWithError(err.message)
+    case Failure(err: AgreementProcessError[_])  => completeWithError(err.responseContent, logMessage)
+    case Failure(err: AttributeRegistryError[_]) => completeWithError(err.responseContent, logMessage)
+    case Failure(err: CatalogManagementError[_]) => completeWithError(err.responseContent, logMessage)
+    case Failure(err: TenantManagementError[_])  => completeWithError(err.responseContent, logMessage)
+    case Failure(err: PartyProcessError[_])      => completeWithError(err.responseContent, logMessage)
+    case Failure(err: UserRegistryError[_])      => completeWithError(err.responseContent, logMessage)
     case Failure(_)                              => internalServerError(logMessage)
   }
 
@@ -45,23 +45,31 @@ object Handlers {
     case other             => other
   }
 
-  private def completeWithError(
-    problemBody: String
-  )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): StandardRoute = {
-    val problem = responseToProblem(problemBody)
+  private def completeWithError[T](response: Option[T], defaultMessage: String)(implicit
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): StandardRoute = {
+    val problem = response match {
+      case Some(problemBody: String) => responseToProblem(problemBody, defaultMessage)
+      case Some(problem: Problem)    => problem
+      case Some(other)               => responseToProblem(other.toString, defaultMessage)
+      case None                      => unexpectedErrorProblem(defaultMessage)
+    }
     complete(problem.status, problem)
   }
 
-  private def responseToProblem(problemBody: String): Problem =
-    // Note: the body is actually a Problem of the below service, but the schema is the same,
-    //   so we can convert directly to our model for convenience
-    Try(problemBody.parseJson.convertTo[Problem])
-      .getOrElse(problemOf(StatusCodes.InternalServerError, GenericError("Unexpected error")))
+  private def responseToProblem(problemBody: String, defaultMessage: String): Problem =
+    // Note: the body should actually be Problem of the below service, but having the same schema,
+    //   for convenience we can convert it directly to our model
+    Try(problemBody.parseJson.convertTo[Problem]).getOrElse(unexpectedErrorProblem(defaultMessage))
 
   private def internalServerError(
     errorMessage: String
   )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): StandardRoute = {
-    val statusCode = StatusCodes.InternalServerError
-    complete(statusCode.intValue, problemOf(statusCode, GenericError(errorMessage)))
+    val problem = unexpectedErrorProblem(errorMessage)
+    complete(problem.status, problem)
   }
+
+  private def unexpectedErrorProblem(message: String): Problem =
+    problemOf(StatusCodes.InternalServerError, GenericError(message))
+
 }
