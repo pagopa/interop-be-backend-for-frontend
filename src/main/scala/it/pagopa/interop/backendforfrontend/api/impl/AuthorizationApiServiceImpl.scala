@@ -16,7 +16,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
 import it.pagopa.interop.commons.ratelimiter.model.{Headers, RateLimitStatus}
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
-import it.pagopa.interop.commons.utils.TypeConversions.{TryOps, _}
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.{ORGANIZATION, ORGANIZATION_ID_CLAIM, UID, USER_ROLES}
 
