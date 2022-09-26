@@ -15,6 +15,9 @@ import scala.util.{Failure, Success}
 import SpecHelper._
 import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
+import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
+
+import scala.concurrent.duration.DurationInt
 
 class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with ScalatestRouteTest {
 
@@ -60,7 +63,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         ))
         .expects(*, *, *, *)
         .once()
-        .returns(Future.unit)
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
 
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
@@ -135,7 +138,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         ))
         .expects(*, *, *, *)
         .once()
-        .returns(Future.unit)
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
 
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))

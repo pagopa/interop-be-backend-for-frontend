@@ -1,7 +1,8 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
@@ -13,6 +14,7 @@ import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
+import it.pagopa.interop.commons.ratelimiter.model.{Headers, RateLimitStatus}
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions.{TryOps, _}
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
@@ -43,9 +45,9 @@ final case class AuthorizationApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken]
   ): Route = {
-    val result: Future[SessionToken] = for {
+    val result: Future[(SessionToken, RateLimitStatus)] = for {
       (sessionClaims, roles, organizationId) <- readJwt(identityToken).toFuture
-      _                                      <- rateLimiter.rateLimiting(organizationId)
+      rateLimitStatus                        <- rateLimiter.rateLimiting(organizationId)
       token                                  <- sessionTokenGenerator.generate(
         SignatureAlgorithm.RSAPkcs1Sha256,
         sessionClaims ++ Map[String, AnyRef](USER_ROLES -> roles, ORGANIZATION_ID_CLAIM -> organizationId),
@@ -53,10 +55,12 @@ final case class AuthorizationApiServiceImpl(
         ApplicationConfiguration.generatedJwtIssuer,
         ApplicationConfiguration.generatedJwtDuration
       )
-    } yield SessionToken(token)
+    } yield (SessionToken(token), rateLimitStatus)
 
     onComplete(result) {
-      handleError(s"Error creating a session token") orElse { case Success(token) => getSessionToken200(token) }
+      handleError(s"Error creating a session token") orElse { case Success((token, rateLimitStatus)) =>
+        complete(StatusCodes.OK, Headers.headersFromStatus(rateLimitStatus), token)
+      }
     }
   }
 
