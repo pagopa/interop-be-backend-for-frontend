@@ -1,6 +1,10 @@
 package it.pagopa.interop.backendforfrontend.common.system
 
 import com.typesafe.config.{Config, ConfigFactory}
+import it.pagopa.interop.commons.ratelimiter.model.LimiterConfig
+
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.FiniteDuration
 
 object ApplicationConfiguration {
   val config: Config = ConfigFactory.load()
@@ -21,6 +25,21 @@ object ApplicationConfiguration {
     config.getString("backend-for-frontend.ec-keys-identifiers").split(",").toSet.filter(_.nonEmpty)
 
   val signerMaxConnections: Int = config.getInt("backend-for-frontend.signer-max-connections")
+
+  val rateLimiterConfigs: LimiterConfig = {
+    val rateInterval = config.getDuration("backend-for-frontend.rate-limiter.rate-interval")
+    val timeout      = config.getDuration("backend-for-frontend.rate-limiter.timeout")
+
+    LimiterConfig(
+      limiterGroup = config.getString("backend-for-frontend.rate-limiter.limiter-group"),
+      maxRequests = config.getInt("backend-for-frontend.rate-limiter.max-requests"),
+      burstPercentage = config.getDouble("backend-for-frontend.rate-limiter.burst-percentage"),
+      rateInterval = FiniteDuration(rateInterval.toMillis, TimeUnit.MILLISECONDS),
+      redisHost = config.getString("backend-for-frontend.rate-limiter.redis-host"),
+      redisPort = config.getInt("backend-for-frontend.rate-limiter.redis-port"),
+      timeout = FiniteDuration(timeout.toMillis, TimeUnit.MILLISECONDS)
+    )
+  }
 
   require(jwtAudience.nonEmpty, "Audience cannot be empty")
   require(generatedJwtAudience.nonEmpty, "Generated JWT audience cannot be empty")

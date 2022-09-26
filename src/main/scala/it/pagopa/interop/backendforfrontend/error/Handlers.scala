@@ -11,7 +11,9 @@ import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf}
 import it.pagopa.interop.backendforfrontend.model.Problem
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
+import it.pagopa.interop.commons.ratelimiter
+import it.pagopa.interop.commons.ratelimiter.model.{Headers, RateLimitStatus}
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, TooManyRequests}
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
@@ -26,13 +28,14 @@ object Handlers {
     logger: LoggerTakingImplicit[ContextFieldsToLog],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): PartialFunction[Try[_], StandardRoute] = log(logMessage) andThen {
-    case Failure(err: AgreementProcessError[_])  => completeWithError(err.responseContent, logMessage)
-    case Failure(err: AttributeRegistryError[_]) => completeWithError(err.responseContent, logMessage)
-    case Failure(err: CatalogManagementError[_]) => completeWithError(err.responseContent, logMessage)
-    case Failure(err: TenantManagementError[_])  => completeWithError(err.responseContent, logMessage)
-    case Failure(err: PartyProcessError[_])      => completeWithError(err.responseContent, logMessage)
-    case Failure(err: UserRegistryError[_])      => completeWithError(err.responseContent, logMessage)
-    case Failure(_)                              => internalServerError(logMessage)
+    case Failure(err: AgreementProcessError[_])                 => completeWithError(err.responseContent, logMessage)
+    case Failure(err: AttributeRegistryError[_])                => completeWithError(err.responseContent, logMessage)
+    case Failure(err: CatalogManagementError[_])                => completeWithError(err.responseContent, logMessage)
+    case Failure(err: TenantManagementError[_])                 => completeWithError(err.responseContent, logMessage)
+    case Failure(err: PartyProcessError[_])                     => completeWithError(err.responseContent, logMessage)
+    case Failure(err: UserRegistryError[_])                     => completeWithError(err.responseContent, logMessage)
+    case Failure(tmr: ratelimiter.error.Errors.TooManyRequests) => tooManyRequests(tmr.status)
+    case Failure(_)                                             => internalServerError(logMessage)
   }
 
   private def log(logMessage: String)(implicit
@@ -56,6 +59,15 @@ object Handlers {
     }
     complete(problem.status, problem)
   }
+
+  private def tooManyRequests(
+    rateLimitStatus: RateLimitStatus
+  )(implicit toEntityMarshallerProblem: ToEntityMarshaller[Problem]): StandardRoute =
+    complete(
+      StatusCodes.TooManyRequests,
+      Headers.headersFromStatus(rateLimitStatus),
+      problemOf(StatusCodes.TooManyRequests, TooManyRequests)
+    )
 
   private def responseToProblem(problemBody: String, defaultMessage: String): Problem =
     // Note: the body should actually be Problem of the below service, but having the same schema,

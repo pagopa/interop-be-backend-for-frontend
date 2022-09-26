@@ -9,13 +9,16 @@ import it.pagopa.interop.backendforfrontend.model.{Problem, SessionToken}
 import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.nimbusds.jose.util.JSONObjectUtils
 import com.nimbusds.jose.util.JSONArrayUtils
+
 import java.{util => ju}
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.util.Base64URL
+import it.pagopa.interop.commons.ratelimiter.RateLimiter
 
 trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFactory {
 
@@ -42,9 +45,10 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
 
   val mockJwtReader: JWTReader                         = mock[JWTReader]
   val mockSessionTokenGenerator: SessionTokenGenerator = mock[SessionTokenGenerator]
+  val mockRateLimiter: RateLimiter                     = mock[RateLimiter]
   final val bearerToken: String                        = "token"
   val service: AuthorizationApiService                 =
-    AuthorizationApiServiceImpl(mockJwtReader, mockSessionTokenGenerator)
+    AuthorizationApiServiceImpl(mockJwtReader, mockSessionTokenGenerator, mockRateLimiter)
 
   implicit def fromEntityUnmarshallerIdentityToken: FromEntityUnmarshaller[SessionToken] =
     sprayJsonUnmarshaller[SessionToken]

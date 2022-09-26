@@ -104,6 +104,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
     post:
       summary: Agreement Creation
       operationId: createAgreement
@@ -116,6 +122,12 @@ paths:
                 $ref: '#/components/schemas/CreatedResource'
         '400':
           description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -154,14 +166,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -190,14 +208,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -227,14 +251,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -263,14 +293,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -299,14 +335,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Agreement not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -330,6 +372,19 @@ paths:
       responses:
         '200':
           description: Session token requested
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
           content:
             application/json:
               schema:
@@ -397,6 +452,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelationshipsResponse'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/relationships/{relationshipId}':
     get:
       tags:
@@ -419,12 +506,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelationshipInfo'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/institutions/{institutionId}':
     get:
       security: []
@@ -448,12 +580,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Institution'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/institutions/{institutionId}/certifiedAttributes':
     get:
       security: []
@@ -477,12 +654,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CertifiedAttributesResponse'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/attributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -504,12 +726,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttributesResponse'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Attributes not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
       description: Returns the list of currently available attributes
     post:
       summary: Creates attribute
@@ -523,18 +790,76 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Attribute'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '400':
           description: Bad Request
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '409':
           description: Conflict
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
       description: Creates the attribute passed as payload
       requestBody:
         required: true
@@ -565,12 +890,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Attribute'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Attribute not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
       operationId: getAttributeById
       description: 'returns the attribute with given ID, if any.'
   '/attributes/origin/{origin}/code/{code}':
@@ -585,12 +955,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Attribute'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Attribute not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
       operationId: getAttributeByOriginAndCode
       description: 'returns the attribute in the registry corresponding to origin and code, if any.'
     parameters:

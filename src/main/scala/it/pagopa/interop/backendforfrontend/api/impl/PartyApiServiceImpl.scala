@@ -81,6 +81,7 @@ final case class PartyApiServiceImpl(
     institutionId: String
   )(implicit
     contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerRelationshipInfoarray: ToEntityMarshaller[Seq[RelationshipInfo]]
   ): Route = {
     logger.info(s"Retrieving relationships for institutions $institutionId")

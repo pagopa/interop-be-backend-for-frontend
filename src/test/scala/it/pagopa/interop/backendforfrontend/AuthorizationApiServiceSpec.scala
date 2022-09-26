@@ -10,9 +10,14 @@ import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import SpecHelper._
+import com.typesafe.scalalogging.LoggerTakingImplicit
+import it.pagopa.interop.commons.logging.ContextFieldsToLog
+import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
+
+import scala.concurrent.duration.DurationInt
 
 class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with ScalatestRouteTest {
 
@@ -20,11 +25,13 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
     "succeed" in {
 
-      val uid: String = UUID.randomUUID().toString
+      val uid: String      = UUID.randomUUID().toString
+      val orgId: UUID      = UUID.randomUUID()
+      val orgIdStr: String = orgId.toString
 
       val jwtClaimsSet = Map(
         "organization" -> Map(
-          "id"         -> "id",
+          "id"         -> orgIdStr,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ),
@@ -40,13 +47,23 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin,anotherRole",
-        "organizationId" -> "id",
+        "organizationId" -> orgId,
         "organization"   -> Map(
-          "id"         -> "id",
+          "id"         -> orgIdStr,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ).toJSONObject
       )
+
+      (mockRateLimiter
+        .rateLimiting(_: UUID)(
+          _: ExecutionContext,
+          _: LoggerTakingImplicit[ContextFieldsToLog],
+          _: Seq[(String, String)]
+        ))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
 
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
@@ -87,10 +104,12 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
     "fail on SessionTokenGenerator failure" in {
 
-      val uid: String = UUID.randomUUID().toString
+      val uid: String      = UUID.randomUUID().toString
+      val orgId: UUID      = UUID.randomUUID()
+      val orgIdStr: String = orgId.toString
 
       val jwtClaimsSet = Map(
-        "organization" -> Map("id" -> "id", "fiscalCode" -> "fiscalCode", "roles" -> List(Map("role" -> "admin"))),
+        "organization" -> Map("id" -> orgIdStr, "fiscalCode" -> "fiscalCode", "roles" -> List(Map("role" -> "admin"))),
         "uid"          -> uid
       ).asClaimSet
 
@@ -103,13 +122,23 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin",
-        "organizationId" -> "id",
+        "organizationId" -> orgId,
         "organization"   -> Map(
-          "id"         -> "id",
+          "id"         -> orgIdStr,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"))
         ).toJSONObject
       )
+
+      (mockRateLimiter
+        .rateLimiting(_: UUID)(
+          _: ExecutionContext,
+          _: LoggerTakingImplicit[ContextFieldsToLog],
+          _: Seq[(String, String)]
+        ))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
 
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))

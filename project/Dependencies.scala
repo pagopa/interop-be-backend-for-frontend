@@ -25,9 +25,10 @@ object Dependencies {
   private[this] object pagopa {
     lazy val namespace = "it.pagopa"
 
-    lazy val commons = namespace %% "interop-commons-utils"  % commonsVersion
-    lazy val jwt     = namespace %% "interop-commons-jwt"    % commonsVersion
-    lazy val vault   = namespace %% "interop-commons-signer" % commonsVersion
+    lazy val commonsUtils = namespace %% "interop-commons-utils"        % commonsVersion
+    lazy val jwt          = namespace %% "interop-commons-jwt"          % commonsVersion
+    lazy val rateLimiter  = namespace %% "interop-commons-rate-limiter" % commonsVersion
+    lazy val vault        = namespace %% "interop-commons-signer"       % commonsVersion
 
     lazy val agreementProcessClient =
       namespace %% "interop-be-agreement-process-client" % agreementProcessVersion
@@ -107,8 +108,9 @@ object Dependencies {
       cats.core                      % Compile,
       logback.classic                % Compile,
       mustache.mustache              % Compile,
-      pagopa.commons                 % Compile,
+      pagopa.commonsUtils            % Compile,
       pagopa.jwt                     % Compile,
+      pagopa.rateLimiter             % Compile,
       pagopa.agreementProcessClient  % Compile,
       pagopa.catalogManagementClient % Compile,
       pagopa.partyProcessClient      % Compile,
