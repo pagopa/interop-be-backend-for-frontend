@@ -50,7 +50,7 @@ final case class AuthorizationApiServiceImpl(
       rateLimitStatus                        <- rateLimiter.rateLimiting(organizationId)
       token                                  <- sessionTokenGenerator.generate(
         SignatureAlgorithm.RSAPkcs1Sha256,
-        sessionClaims ++ Map[String, AnyRef](USER_ROLES -> roles, ORGANIZATION_ID_CLAIM -> organizationId),
+        sessionClaims ++ Map[String, AnyRef](USER_ROLES -> roles, ORGANIZATION_ID_CLAIM -> organizationId.toString),
         ApplicationConfiguration.generatedJwtAudience,
         ApplicationConfiguration.generatedJwtIssuer,
         ApplicationConfiguration.generatedJwtDuration
