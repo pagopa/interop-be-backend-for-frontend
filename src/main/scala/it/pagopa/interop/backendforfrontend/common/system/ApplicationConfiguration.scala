@@ -60,5 +60,6 @@ object ApplicationConfiguration {
   val agreementProcessURL: String  = config.getString("backend-for-frontend.services.agreement-process")
   val catalogManagementURL: String = config.getString("backend-for-frontend.services.catalog-management")
   val tenantManagementURL: String  = config.getString("backend-for-frontend.services.tenant-management")
+  val tenantProcessURL: String     = config.getString("backend-for-frontend.services.tenant-process")
 
 }

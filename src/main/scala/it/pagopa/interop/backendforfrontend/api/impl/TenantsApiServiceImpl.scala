@@ -8,9 +8,14 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
-import it.pagopa.interop.backendforfrontend.model.{CertifiedAttributesResponse, Problem}
+import it.pagopa.interop.backendforfrontend.model.{CertifiedAttributesResponse, DeclaredTenantAttributeSeed, Problem}
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeConverter
-import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryManagementService, TenantManagementService}
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.{
+  AttributeRegistryManagementService,
+  TenantManagementService,
+  TenantProcessService
+}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.tenantmanagement.client.model.CertifiedTenantAttribute
@@ -20,7 +25,8 @@ import scala.util.Success
 
 final case class TenantsApiServiceImpl(
   attributeRegistryService: AttributeRegistryManagementService,
-  tenantManagementService: TenantManagementService
+  tenantManagementService: TenantManagementService,
+  tenantProcessService: TenantProcessService
 )(implicit ec: ExecutionContext)
     extends TenantsApiService {
 
@@ -57,4 +63,31 @@ final case class TenantsApiServiceImpl(
     }
   }
 
+  override def addDeclaredAttribute(
+    seed: DeclaredTenantAttributeSeed
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] = tenantProcessService.addDeclaredAttribute(seed.toSeed).as(())
+
+    onComplete(result) {
+      handleError(s"Error adding declared attribute ${seed.id} to requester tenant") orElse { case Success(_) =>
+        addDeclaredAttribute204
+      }
+    }
+  }
+
+  override def revokeDeclaredAttribute(
+    attributeId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] =
+      for {
+        attributeUuid <- attributeId.toFutureUUID
+        _             <- tenantProcessService.revokeDeclaredAttribute(attributeUuid).as(())
+      } yield ()
+
+    onComplete(result) {
+      handleError(s"Error revoking declared attribute $attributeId to requester tenant") orElse { case Success(_) =>
+        revokeDeclaredAttribute204
+      }
+    }
+  }
 }
