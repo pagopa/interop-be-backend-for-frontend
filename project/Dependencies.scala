@@ -45,6 +45,9 @@ object Dependencies {
     lazy val tenantManagementClient =
       namespace %% "interop-be-tenant-management-client" % tenantManagementVersion
 
+    lazy val tenantProcessClient =
+      namespace %% "interop-be-tenant-process-client" % tenantProcessVersion
+
     lazy val userRegistryClient =
       namespace %% "interop-selfcare-user-registry-client" % userRegistryVersion
 
@@ -116,6 +119,7 @@ object Dependencies {
       pagopa.partyProcessClient      % Compile,
       pagopa.partyManagementClient   % Compile,
       pagopa.tenantManagementClient  % Compile,
+      pagopa.tenantProcessClient     % Compile,
       pagopa.userRegistryClient      % Compile,
       pagopa.attributeRegistryClient % Compile,
       pagopa.vault                   % Compile,

@@ -37,7 +37,8 @@ import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServi
   AgreementProcessInvoker,
   AttributeRegistryManagementInvoker,
   CatalogManagementInvoker,
-  TenantManagementInvoker
+  TenantManagementInvoker,
+  TenantProcessInvoker
 }
 import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.{
   PartyProcessApiKeyValue,
@@ -64,7 +65,8 @@ import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
 import it.pagopa.interop.selfcare.userregistry.client.api.UserApi
 import it.pagopa.interop.selfcare.{partyprocess, userregistry}
-import it.pagopa.interop.tenantmanagement.client.api.TenantApi
+import it.pagopa.interop.tenantmanagement.client.api.{TenantApi => TenantManagementApi}
+import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
@@ -133,13 +135,20 @@ trait Dependencies {
         .ApiInvoker(tenantmanagement.client.api.EnumsSerializers.all, blockingEc)(actorSystem.classicSystem)
   }
 
+  object TenantProcessInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ClassicActorSystem): TenantProcessInvoker =
+      tenantprocess.client.invoker
+        .ApiInvoker(tenantprocess.client.api.EnumsSerializers.all, blockingEc)(actorSystem.classicSystem)
+  }
+
   val attributeRegistryManagementApi: AttributeApi = AttributeApi(
     ApplicationConfiguration.attributeRegistryManagementURL
   )
 
-  val agreementProcessApi: AgreementApi = AgreementApi(ApplicationConfiguration.agreementProcessURL)
-  val catalogManagementApi: EServiceApi = EServiceApi(ApplicationConfiguration.catalogManagementURL)
-  val tenantManagementApi: TenantApi    = TenantApi(ApplicationConfiguration.tenantManagementURL)
+  val agreementProcessApi: AgreementApi        = AgreementApi(ApplicationConfiguration.agreementProcessURL)
+  val catalogManagementApi: EServiceApi        = EServiceApi(ApplicationConfiguration.catalogManagementURL)
+  val tenantManagementApi: TenantManagementApi = TenantManagementApi(ApplicationConfiguration.tenantManagementURL)
+  val tenantProcessApi: TenantProcessApi       = TenantProcessApi(ApplicationConfiguration.tenantProcessURL)
 
   def attributeRegistry(
     blockingEc: ExecutionContextExecutor
@@ -162,6 +171,9 @@ trait Dependencies {
     actorSystem: ActorSystem[_]
   ): TenantManagementService =
     TenantManagementServiceImpl(TenantManagementInvoker(blockingEc)(actorSystem.classicSystem), tenantManagementApi)
+
+  def tenantProcess(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem[_]): TenantProcessService =
+    TenantProcessServiceImpl(TenantProcessInvoker(blockingEc)(actorSystem.classicSystem), tenantProcessApi)
 
   def userRegistry(implicit actorSystem: ActorSystem[_]): UserRegistryService =
     UserRegistryServiceImpl(
@@ -251,7 +263,7 @@ trait Dependencies {
     ec: ExecutionContext
   ): TenantsApi =
     new TenantsApi(
-      TenantsApiServiceImpl(attributeRegistry(blockingEc), tenantManagement(blockingEc)),
+      TenantsApiServiceImpl(attributeRegistry(blockingEc), tenantManagement(blockingEc), tenantProcess(blockingEc)),
       TenantsApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
     )
