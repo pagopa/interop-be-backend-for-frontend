@@ -129,7 +129,8 @@ object Dependencies {
       scalamock.core                 % Test,
       scalatest.core                 % Test
     )
-    lazy val client: Seq[ModuleID]    = Seq(
+
+    lazy val client: Seq[ModuleID] = Seq(
       akka.stream     % Compile,
       akka.http       % Compile,
       akka.httpJson4s % Compile,

@@ -19,6 +19,9 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.util.Base64URL
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
+import it.pagopa.interop.backendforfrontend.service.TenantManagementService
+import it.pagopa.interop.backendforfrontend.service.TenantProcessService
+import it.pagopa.interop.backendforfrontend.service.PartyProcessService
 
 trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFactory {
 
@@ -46,9 +49,18 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   val mockJwtReader: JWTReader                         = mock[JWTReader]
   val mockSessionTokenGenerator: SessionTokenGenerator = mock[SessionTokenGenerator]
   val mockRateLimiter: RateLimiter                     = mock[RateLimiter]
+  val mockTenantManagement: TenantManagementService    = mock[TenantManagementService]
+  val mockTenantProcess: TenantProcessService          = mock[TenantProcessService]
+  val mockPartyProcess: PartyProcessService            = mock[PartyProcessService]
   final val bearerToken: String                        = "token"
-  val service: AuthorizationApiService                 =
-    AuthorizationApiServiceImpl(mockJwtReader, mockSessionTokenGenerator, mockRateLimiter)
+  val service: AuthorizationApiService                 = AuthorizationApiServiceImpl(
+    mockJwtReader,
+    mockSessionTokenGenerator,
+    mockTenantManagement,
+    mockTenantProcess,
+    mockPartyProcess,
+    mockRateLimiter
+  )
 
   implicit def fromEntityUnmarshallerIdentityToken: FromEntityUnmarshaller[SessionToken] =
     sprayJsonUnmarshaller[SessionToken]

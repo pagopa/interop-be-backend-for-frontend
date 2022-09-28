@@ -1,11 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.PartyProcessService
-import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.{
-  PartyProcessApiKeyValue,
-  PartyProcessInvoker,
-  PartyProcessRelationshipInfo
-}
+import it.pagopa.interop.backendforfrontend.service.types.PartyProcessServiceTypes.PartyProcessRelationshipInfo
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils.getUidFuture
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
@@ -13,16 +9,22 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{
   ResourceNotFoundError,
   ThirdPartyCallError
 }
-import it.pagopa.interop.selfcare.partyprocess.client.api.ProcessApi
+import it.pagopa.interop.selfcare.partyprocess.client.invoker.ApiInvoker
+import it.pagopa.interop.selfcare.partyprocess.client.invoker.ApiKeyValue
+import it.pagopa.interop.selfcare.partyprocess.client.api.{ProcessApi, EnumsSerializers}
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.ApiError
 import it.pagopa.interop.selfcare.partyprocess.client.model.{Institution, PartyRole, RelationshipState}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
+import akka.actor.typed.ActorSystem
 
-final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi: ProcessApi)(implicit
-  partyProcessApiKeyValue: PartyProcessApiKeyValue
-) extends PartyProcessService {
+class PartyProcessServiceImpl(partyProcessUrl: String, partyProcessApiKey: String)(implicit system: ActorSystem[_])
+    extends PartyProcessService {
+
+  implicit val userRegistryApiKeyValue: ApiKeyValue = ApiKeyValue(partyProcessApiKey)
+  val invoker: ApiInvoker                           = ApiInvoker(EnumsSerializers.all)(system.classicSystem)
+  val api: ProcessApi                               = ProcessApi(partyProcessUrl)
 
   private val replacementEntityId: String = "NoIdentifier"
   private val serviceName: String         = "party-process"
@@ -34,7 +36,7 @@ final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi:
     relationshipId: UUID
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[PartyProcessRelationshipInfo] = for {
     uid <- getUidFuture(contexts)
-    request = partyApi.getRelationship(relationshipId)(uid)
+    request = api.getRelationship(relationshipId)(uid)
     result <- invoker.invoke(
       request,
       s"Retrieving relationship $relationshipId",
@@ -51,9 +53,7 @@ final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi:
     productRoles: Seq[String]
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Seq[PartyProcessRelationshipInfo]] = for {
     uid <- getUidFuture(contexts)
-    request = partyApi.getUserInstitutionRelationships(institutionId, personId, roles, states, products, productRoles)(
-      uid
-    )
+    request = api.getUserInstitutionRelationships(institutionId, personId, roles, states, products, productRoles)(uid)
     result <- invoker.invoke(
       request,
       s"Relationships for institution ${institutionId.toString}",
@@ -65,7 +65,7 @@ final case class PartyProcessServiceImpl(invoker: PartyProcessInvoker, partyApi:
     institutionId: UUID
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution] = for {
     uid <- getUidFuture(contexts)
-    request = partyApi.getInstitution(institutionId)(uid)
+    request = api.getInstitution(institutionId)(uid)
     result <- invoker.invoke(request, s"Institution ${institutionId.toString}", invocationRecovery(None))
   } yield result
 

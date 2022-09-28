@@ -1,5 +1,6 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
+import cats.implicits._
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
@@ -24,10 +25,15 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
 import scala.util.{Success, Try}
+import it.pagopa.interop.backendforfrontend.service.{TenantManagementService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.PartyProcessService
 
 final case class AuthorizationApiServiceImpl(
   jwtReader: JWTReader,
   sessionTokenGenerator: SessionTokenGenerator,
+  tenantManagement: TenantManagementService,
+  tenantProcess: TenantProcessService,
+  partyProcess: PartyProcessService,
   rateLimiter: RateLimiter
 )(implicit ec: ExecutionContext)
     extends AuthorizationApiService {
@@ -41,16 +47,25 @@ final case class AuthorizationApiServiceImpl(
 
   private val admittedSessionClaims: Set[String] = Set(UID, ORGANIZATION, NAME, FAMILY_NAME, EMAIL)
 
+  // TODO move me in commons
+  private val SELFCARE_ID_CLAIM = "selfcareId"
+
   override def getSessionToken(identityToken: IdentityToken)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken]
   ): Route = {
     val result: Future[(SessionToken, RateLimitStatus)] = for {
-      (sessionClaims, roles, organizationId) <- readJwt(identityToken).toFuture
-      rateLimitStatus                        <- rateLimiter.rateLimiting(organizationId)
-      token                                  <- sessionTokenGenerator.generate(
+      (sessionClaims, roles, selfcareId) <- readJwt(identityToken).toFuture
+      tenantId                           <- getTenantIdOr(selfcareId)(upsertTenantBySelfcareId(selfcareId))
+      rateLimitStatus                    <- rateLimiter.rateLimiting(tenantId)
+      customClaims: Map[String, String] = Map(
+        USER_ROLES            -> roles.toString(),
+        ORGANIZATION_ID_CLAIM -> tenantId.toString(),
+        SELFCARE_ID_CLAIM     -> selfcareId.toString()
+      )
+      token <- sessionTokenGenerator.generate(
         SignatureAlgorithm.RSAPkcs1Sha256,
-        sessionClaims ++ Map[String, AnyRef](USER_ROLES -> roles, ORGANIZATION_ID_CLAIM -> organizationId.toString),
+        sessionClaims ++ customClaims.widen[AnyRef],
         ApplicationConfiguration.generatedJwtAudience,
         ApplicationConfiguration.generatedJwtIssuer,
         ApplicationConfiguration.generatedJwtDuration
@@ -64,11 +79,25 @@ final case class AuthorizationApiServiceImpl(
     }
   }
 
+  private def getTenantIdOr(
+    selfcareId: UUID
+  )(alternative: => Future[UUID])(implicit contexts: Seq[(String, String)]): Future[UUID] =
+    tenantManagement.getBySelfcareId(selfcareId).map(_.id).recoverWith {
+      case ex if TenantManagementService.is404(ex) => alternative
+    }
+
+  private def upsertTenantBySelfcareId(selfcareId: UUID)(implicit contexts: Seq[(String, String)]): Future[UUID] = for {
+    partyInstitution <- partyProcess.getInstitution(selfcareId)
+    tenantId         <- tenantProcess
+      .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId)(partyInstitution.id)
+      .map(_.id)
+  } yield tenantId
+
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, UUID)] = for {
-    claims         <- jwtReader.getClaims(identityToken.identity_token)
-    sessionClaims  <- extractSessionClaims(claims)
-    organizationId <- getOrganizationId(claims)
-  } yield (sessionClaims, getUserRoles(claims).mkString(","), organizationId)
+    claims        <- jwtReader.getClaims(identityToken.identity_token)
+    sessionClaims <- extractSessionClaims(claims)
+    selfcareId    <- getOrganizationId(claims)
+  } yield (sessionClaims, getUserRoles(claims).mkString(","), selfcareId)
 
   private def extractSessionClaims(claims: JWTClaimsSet): Try[Map[String, AnyRef]] = Try {
     claims.getClaims.asScala.view.filterKeys(admittedSessionClaims.contains).toMap
@@ -76,11 +105,13 @@ final case class AuthorizationApiServiceImpl(
 
   private def getOrganizationId(claims: JWTClaimsSet): Try[UUID] = for {
     nullableOrgClaimsMap <- Try(claims.getJSONObjectClaim(organizationClaim))
-      .leftMap(_ => MissingClaim(organizationClaim))
-    orgClaims            <- Option(nullableOrgClaimsMap).toTry(MissingClaim(organizationClaim))
+      .leftMap(_ => MissingClaim(s"$organizationClaim in selfcare token"))
+    orgClaims            <- Option(nullableOrgClaimsMap).toTry(MissingClaim(s"$organizationClaim in selfcare token"))
     orgClaimsMap = orgClaims.asScala.toMap
-    organizationId   <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization"))
-    organizationUUID <- organizationId.toString.toUUID.leftMap(_ => MissingClaim(s"$organizationClaim wrong format"))
+    organizationId   <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization in selfcare token"))
+    organizationUUID <- organizationId.toString.toUUID.leftMap(_ =>
+      MissingClaim(s"$organizationClaim wrong format in selfcare token")
+    )
   } yield organizationUUID
 
 }

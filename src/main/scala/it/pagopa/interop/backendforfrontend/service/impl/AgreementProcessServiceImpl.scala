@@ -1,17 +1,23 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.agreementprocess.client.invoker.ApiInvoker
+import it.pagopa.interop.agreementprocess.client.api.EnumsSerializers
 import it.pagopa.interop.agreementprocess.client.api.AgreementApi
 import it.pagopa.interop.agreementprocess.client.invoker.BearerToken
 import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayload, AgreementState}
 import it.pagopa.interop.backendforfrontend.service.AgreementProcessService
-import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AgreementProcessInvoker
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{Future, ExecutionContextExecutor}
+import akka.actor.typed.ActorSystem
 
-final case class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, api: AgreementApi)
-    extends AgreementProcessService {
+class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: ExecutionContextExecutor)(implicit
+  system: ActorSystem[_]
+) extends AgreementProcessService {
+
+  val invoker: ApiInvoker = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
+  val api: AgreementApi   = AgreementApi(agreementProcessURL)
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
