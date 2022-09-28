@@ -19,7 +19,7 @@ import it.pagopa.interop.commons.ratelimiter.model.{Headers, RateLimitStatus}
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
-import it.pagopa.interop.commons.utils.{ORGANIZATION, ORGANIZATION_ID_CLAIM, UID, USER_ROLES}
+import it.pagopa.interop.commons.utils.{ORGANIZATION, ORGANIZATION_ID_CLAIM, UID, USER_ROLES, SELFCARE_ID_CLAIM}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -46,9 +46,6 @@ final case class AuthorizationApiServiceImpl(
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   private val admittedSessionClaims: Set[String] = Set(UID, ORGANIZATION, NAME, FAMILY_NAME, EMAIL)
-
-  // TODO move me in commons
-  private val SELFCARE_ID_CLAIM = "selfcareId"
 
   override def getSessionToken(identityToken: IdentityToken)(implicit
     contexts: Seq[(String, String)],

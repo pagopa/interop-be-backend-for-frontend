@@ -21,7 +21,7 @@ import cats.syntax.all._
 import it.pagopa.interop.tenantprocess
 import scala.concurrent.duration.DurationInt
 import it.pagopa.interop.tenantmanagement.client.model.Tenant
-import it.pagopa.interop.commons.utils.service.impl.OffsetDateTimeSupplierImpl
+import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.tenantmanagement.client.model.ExternalId
 import it.pagopa.interop.tenantmanagement.client.invoker.ApiError
 import it.pagopa.interop.selfcare.partyprocess.client.model.Institution
@@ -63,7 +63,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               externalId = ExternalId("origin", "externalId"),
               features = Nil,
               attributes = Nil,
-              createdAt = OffsetDateTimeSupplierImpl.get,
+              createdAt = OffsetDateTimeSupplier.get(),
               updatedAt = None
             )
           )
@@ -173,7 +173,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               externalId = tenantprocess.client.model.ExternalId("IPA", "IPACode"),
               features = Nil,
               attributes = Nil,
-              createdAt = OffsetDateTimeSupplierImpl.get,
+              createdAt = OffsetDateTimeSupplier.get(),
               updatedAt = None
             )
           )
@@ -271,7 +271,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               externalId = ExternalId("origin", "externalId"),
               features = Nil,
               attributes = Nil,
-              createdAt = OffsetDateTimeSupplierImpl.get,
+              createdAt = OffsetDateTimeSupplier.get(),
               updatedAt = None
             )
           )
