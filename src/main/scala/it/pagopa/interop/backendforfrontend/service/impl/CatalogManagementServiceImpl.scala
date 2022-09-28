@@ -13,6 +13,7 @@ import java.util.UUID
 import scala.concurrent.Future
 import akka.actor.typed.ActorSystem
 import scala.concurrent.ExecutionContextExecutor
+import it.pagopa.interop.commons.utils.withHeaders
 
 class CatalogManagementServiceImpl(catalogManagementUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]

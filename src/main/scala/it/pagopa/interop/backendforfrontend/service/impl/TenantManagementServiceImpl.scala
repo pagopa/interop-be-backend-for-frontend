@@ -12,6 +12,7 @@ import java.util.UUID
 import scala.concurrent.{Future, ExecutionContextExecutor}
 import it.pagopa.interop.tenantmanagement.client.invoker.ApiRequest
 import akka.actor.typed.ActorSystem
+import it.pagopa.interop.commons.utils.withHeaders
 
 class TenantManagementServiceImpl(tenantManagementUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]

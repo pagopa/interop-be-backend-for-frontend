@@ -14,6 +14,7 @@ import scala.concurrent.{Future, ExecutionContextExecutor}
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import akka.actor.typed.ActorSystem
 import it.pagopa.interop.tenantprocess.client.model.{SelfcareTenantSeed, ExternalId, DeclaredTenantAttributeSeed}
+import it.pagopa.interop.commons.utils.withHeaders
 
 class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]

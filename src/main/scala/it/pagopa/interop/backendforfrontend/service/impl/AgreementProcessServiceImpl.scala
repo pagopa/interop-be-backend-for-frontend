@@ -11,6 +11,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import java.util.UUID
 import scala.concurrent.{Future, ExecutionContextExecutor}
 import akka.actor.typed.ActorSystem
+import it.pagopa.interop.commons.utils.withHeaders
 
 class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
