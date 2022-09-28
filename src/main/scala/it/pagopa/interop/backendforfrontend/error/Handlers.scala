@@ -17,6 +17,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericErr
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
+import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
 import spray.json._
 
 import scala.util.{Failure, Try}
@@ -32,6 +33,7 @@ object Handlers {
     case Failure(err: AttributeRegistryError[_])                => completeWithError(err.responseContent, logMessage)
     case Failure(err: CatalogManagementError[_])                => completeWithError(err.responseContent, logMessage)
     case Failure(err: TenantManagementError[_])                 => completeWithError(err.responseContent, logMessage)
+    case Failure(err: TenantProcessError[_])                    => completeWithError(err.responseContent, logMessage)
     case Failure(err: PartyProcessError[_])                     => completeWithError(err.responseContent, logMessage)
     case Failure(err: UserRegistryError[_])                     => completeWithError(err.responseContent, logMessage)
     case Failure(tmr: ratelimiter.error.Errors.TooManyRequests) => tooManyRequests(tmr.status)
