@@ -77,20 +77,21 @@ final case class AuthorizationApiServiceImpl(
   }
 
   private def getTenantIdOr(
-    selfcareId: UUID
+    selfcareId: String
   )(alternative: => Future[UUID])(implicit contexts: Seq[(String, String)]): Future[UUID] =
     tenantManagement.getBySelfcareId(selfcareId).map(_.id).recoverWith {
       case ex if TenantManagementService.is404(ex) => alternative
     }
 
-  private def upsertTenantBySelfcareId(selfcareId: UUID)(implicit contexts: Seq[(String, String)]): Future[UUID] = for {
-    partyInstitution <- partyProcess.getInstitution(selfcareId)
-    tenantId         <- tenantProcess
-      .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId)(partyInstitution.id)
-      .map(_.id)
-  } yield tenantId
+  private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] =
+    for {
+      partyInstitution <- partyProcess.getInstitution(selfcareId)
+      tenantId         <- tenantProcess
+        .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId)(partyInstitution.id.toString)
+        .map(_.id)
+    } yield tenantId
 
-  def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, UUID)] = for {
+  def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
     claims        <- jwtReader.getClaims(identityToken.identity_token)
     sessionClaims <- extractSessionClaims(claims)
     selfcareId    <- getOrganizationId(claims)
@@ -100,15 +101,12 @@ final case class AuthorizationApiServiceImpl(
     claims.getClaims.asScala.view.filterKeys(admittedSessionClaims.contains).toMap
   }
 
-  private def getOrganizationId(claims: JWTClaimsSet): Try[UUID] = for {
+  private def getOrganizationId(claims: JWTClaimsSet): Try[String] = for {
     nullableOrgClaimsMap <- Try(claims.getJSONObjectClaim(organizationClaim))
       .leftMap(_ => MissingClaim(s"$organizationClaim in selfcare token"))
     orgClaims            <- Option(nullableOrgClaimsMap).toTry(MissingClaim(s"$organizationClaim in selfcare token"))
     orgClaimsMap = orgClaims.asScala.toMap
-    organizationId   <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization in selfcare token"))
-    organizationUUID <- organizationId.toString.toUUID.leftMap(_ =>
-      MissingClaim(s"$organizationClaim wrong format in selfcare token")
-    )
-  } yield organizationUUID
+    organizationId <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization in selfcare token"))
+  } yield organizationId.toString()
 
 }

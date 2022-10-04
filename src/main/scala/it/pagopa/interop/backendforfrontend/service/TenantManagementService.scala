@@ -10,7 +10,7 @@ trait TenantManagementService {
 
   def getTenant(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant]
 
-  def getBySelfcareId(getBySelfcareId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant]
+  def getBySelfcareId(getBySelfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant]
 
 }
 

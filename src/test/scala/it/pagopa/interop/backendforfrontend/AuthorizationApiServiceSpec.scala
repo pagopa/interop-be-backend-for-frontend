@@ -32,9 +32,9 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
     "succeed when the tenant is present" in {
 
-      val uid: String      = UUID.randomUUID().toString
-      val selfcareId: UUID = UUID.randomUUID()
-      val tenantId: UUID   = UUID.randomUUID()
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString()
+      val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet = Map(
         "organization" -> Map(
@@ -52,7 +52,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .returns(Success(jwtClaimsSet))
 
       (mockTenantManagement
-        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
         .expects(selfcareId, *)
         .once()
         .returns(
@@ -114,9 +114,9 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
     "succeed even if the tenant needs to be upserted" in {
 
-      val uid: String      = UUID.randomUUID().toString
-      val selfcareId: UUID = UUID.randomUUID()
-      val tenantId: UUID   = UUID.randomUUID()
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString()
+      val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet = Map(
         "organization" -> Map(
@@ -134,19 +134,19 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .returns(Success(jwtClaimsSet))
 
       (mockTenantManagement
-        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
         .expects(selfcareId, *)
         .once()
         .returns(Future.failed(ApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
 
       (mockPartyProcess
-        .getInstitution(_: UUID)(_: Seq[(String, String)], _: ExecutionContext))
+        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
         .expects(selfcareId, *, *)
         .once()
         .returns(
           Future.successful(
             Institution(
-              id = selfcareId,
+              id = UUID.fromString(selfcareId),
               externalId = "whatever",
               originId = "IPACode",
               description = "foo",
@@ -162,7 +162,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(_: String, _: String)(_: UUID)(_: Seq[(String, String)]))
+        .selfcareUpsertTenant(_: String, _: String)(_: String)(_: Seq[(String, String)]))
         .expects("IPA", "IPACode", selfcareId, *)
         .once()
         .returns(
@@ -240,9 +240,9 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
     "fail on SessionTokenGenerator failure" in {
 
-      val uid: String      = UUID.randomUUID().toString
-      val selfcareId: UUID = UUID.randomUUID()
-      val tenantId: UUID   = UUID.randomUUID()
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString()
+      val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet = Map(
         "organization" -> Map(
@@ -260,7 +260,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .returns(Success(jwtClaimsSet))
 
       (mockTenantManagement
-        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
         .expects(selfcareId, *)
         .once()
         .returns(

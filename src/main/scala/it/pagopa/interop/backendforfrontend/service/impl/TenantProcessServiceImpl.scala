@@ -48,16 +48,15 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       invoker.invoke(request, s"Revoking declared attribute $attributeId to requester Tenant")
     }
 
-  def selfcareUpsertTenant(origin: String, externalId: String)(selfcareId: UUID)(implicit
+  def selfcareUpsertTenant(origin: String, externalId: String)(selfcareId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenant] = withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
-    val request: ApiRequest[Tenant] =
-      api.selfcareUpsertTenant(
-        xCorrelationId = correlationId,
-        selfcareTenantSeed = SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId.toString()),
-        xForwardedFor = ip
-      )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Upserting Tenant ($origin, $externalId) with SelfcareId ${selfcareId.toString()}")
+    val request: ApiRequest[Tenant] = api.selfcareUpsertTenant(
+      xCorrelationId = correlationId,
+      selfcareTenantSeed = SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId),
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Upserting Tenant ($origin, $externalId) with SelfcareId ${selfcareId}")
   }
 
 }

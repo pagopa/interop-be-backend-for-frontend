@@ -18,4 +18,6 @@ object BFFErrors {
   final case class AgreementDescriptorNotFound(agreementId: UUID)
       extends ComponentError("0005", s"Descriptor of agreement $agreementId not found")
 
+  final case class MissingSelfcareId(tenantId: UUID)
+      extends ComponentError("0006", s"SelfcareId in Tenant ${tenantId.toString()} not found")
 }
