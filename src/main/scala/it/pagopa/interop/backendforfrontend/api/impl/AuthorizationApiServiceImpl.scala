@@ -94,14 +94,14 @@ final case class AuthorizationApiServiceImpl(
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
     claims        <- jwtReader.getClaims(identityToken.identity_token)
     sessionClaims <- extractSessionClaims(claims)
-    selfcareId    <- getOrganizationId(claims)
+    selfcareId    <- getSelfcareId(claims)
   } yield (sessionClaims, getUserRoles(claims).mkString(","), selfcareId)
 
   private def extractSessionClaims(claims: JWTClaimsSet): Try[Map[String, AnyRef]] = Try {
     claims.getClaims.asScala.view.filterKeys(admittedSessionClaims.contains).toMap
   }
 
-  private def getOrganizationId(claims: JWTClaimsSet): Try[String] = for {
+  private def getSelfcareId(claims: JWTClaimsSet): Try[String] = for {
     nullableOrgClaimsMap <- Try(claims.getJSONObjectClaim(organizationClaim))
       .leftMap(_ => MissingClaim(s"$organizationClaim in selfcare token"))
     orgClaims            <- Option(nullableOrgClaimsMap).toTry(MissingClaim(s"$organizationClaim in selfcare token"))

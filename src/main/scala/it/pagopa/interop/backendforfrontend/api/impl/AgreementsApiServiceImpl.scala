@@ -26,6 +26,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import it.pagopa.interop.selfcare.partyprocess.client.model
+import it.pagopa.interop.backendforfrontend.error.BFFErrors
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -187,8 +188,8 @@ final case class AgreementsApiServiceImpl(
         .zip(tenantManagementService.getTenant(agreement.producerId))
 
       (consumerSelfcareId, producerSelfcareId) <- consumerTenant.selfcareId
-        .toFuture(new Exception)
-        .zip(producerTenant.selfcareId.toFuture(new Exception))
+        .toFuture(BFFErrors.MissingSelfcareId(consumerTenant.id))
+        .zip(producerTenant.selfcareId.toFuture(BFFErrors.MissingSelfcareId(producerTenant.id)))
 
       ((consumerInstitution, producerInstitution), eService) <- partyProcessService
         .getInstitution(consumerSelfcareId)
