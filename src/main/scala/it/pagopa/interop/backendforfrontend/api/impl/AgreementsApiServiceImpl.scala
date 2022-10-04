@@ -181,12 +181,20 @@ final case class AgreementsApiServiceImpl(
   def parallelGet(agreement: AgreementProcess.Agreement)(implicit
     contexts: Seq[(String, String)]
   ): Future[(model.Institution, model.Institution, TenantManagement.Tenant, CatalogManagement.EService)] =
-    partyProcessService
-      .getInstitution(agreement.producerId)
-      .zip(partyProcessService.getInstitution(agreement.consumerId))
-      .zip(tenantManagementService.getTenant(agreement.consumerId))
-      .zip(catalogManagementService.getEService(agreement.eserviceId))
-      .map { case (((a, b), c), d) => (a, b, c, d) }
+    for {
+      (consumerTenant, producerTenant) <- tenantManagementService
+        .getTenant(agreement.consumerId)
+        .zip(tenantManagementService.getTenant(agreement.producerId))
+
+      (consumerSelfcareId, producerSelfcareId) <- consumerTenant.selfcareId
+        .toFuture(new Exception)
+        .zip(producerTenant.selfcareId.toFuture(new Exception))
+
+      ((consumerInstitution, producerInstitution), eService) <- partyProcessService
+        .getInstitution(consumerSelfcareId)
+        .zip(partyProcessService.getInstitution(producerSelfcareId))
+        .zip(catalogManagementService.getEService(agreement.eserviceId))
+    } yield (producerInstitution, consumerInstitution, consumerTenant, eService)
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement

@@ -109,7 +109,8 @@ trait Dependencies {
       new TenantManagementServiceImpl(ApplicationConfiguration.tenantManagementURL, blockingEc)
     val userRegistry: UserRegistryService                     =
       new UserRegistryServiceImpl(ApplicationConfiguration.userRegistryURL, ApplicationConfiguration.userRegistryApiKey)
-    val tenantProcess: TenantProcessService                   = new TenantProcessServiceImpl(null, null)
+    val tenantProcess: TenantProcessService                   =
+      new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
 
@@ -135,7 +136,7 @@ trait Dependencies {
     )
 
     val partyApi: PartyApi = new PartyApi(
-      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry),
+      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry, tenantManagement),
       PartyApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )

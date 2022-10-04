@@ -16,6 +16,7 @@ import it.pagopa.interop.backendforfrontend.service.{
   UserRegistryService
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.commons.utils.INTEROP_PRODUCT_NAME
 import it.pagopa.interop.commons.utils.OpenapiUtils._
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -23,21 +24,19 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericErr
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import it.pagopa.interop.backendforfrontend.service.TenantManagementService
 
 final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
   userRegistryService: UserRegistryService,
-  attributeRegistryService: AttributeRegistryManagementService
+  attributeRegistryService: AttributeRegistryManagementService,
+  tenantManagementService: TenantManagementService
 )(implicit ec: ExecutionContext)
     extends PartyApiService {
 
   private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  /**
-   * Code: 200, Message: successful operation, DataType: RelationshipInfo
-   * Code: 404, Message: Not found, DataType: Problem
-   */
   override def getRelationship(relationshipId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerRelationshipInfo: ToEntityMarshaller[RelationshipInfo],
@@ -69,31 +68,29 @@ final case class PartyApiServiceImpl(
 
   }
 
-  /**
-   * Code: 200, Message: successful operation, DataType: Seq[RelationshipInfo]
-   */
   override def getUserInstitutionRelationships(
     personId: Option[String],
     roles: String,
     states: String,
     productRoles: String,
     query: Option[String],
-    institutionId: String
+    tenantId: String
   )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerRelationshipInfoarray: ToEntityMarshaller[Seq[RelationshipInfo]]
   ): Route = {
-    logger.info(s"Retrieving relationships for institutions $institutionId")
+    logger.info(s"Retrieving relationships for institutions $tenantId")
 
     val result: Future[Seq[RelationshipInfo]] = for {
-      institutionIdUUID <- institutionId.toFutureUUID
-      personIdUUID      <- personId.traverse(_.toFutureUUID)
-      rolesParams       <- parseArrayParameters(roles).traverse(PartyProcessConverter.toPartyRole).toFuture
-      statesParams      <- parseArrayParameters(states).traverse(PartyProcessConverter.toRelationshipState).toFuture
+      personIdUUID <- personId.traverse(_.toFutureUUID)
+      rolesParams  <- parseArrayParameters(roles).traverse(PartyProcessConverter.toPartyRole).toFuture
+      statesParams <- parseArrayParameters(states).traverse(PartyProcessConverter.toRelationshipState).toFuture
       productRolesParams = parseArrayParameters(productRoles)
+      tenant            <- tenantId.toFutureUUID >>= tenantManagementService.getTenant
+      selfcareId        <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       relationships     <- partyProcessService.getUserInstitutionRelationships(
-        institutionIdUUID,
+        selfcareId,
         personIdUUID,
         rolesParams,
         statesParams,
@@ -111,13 +108,15 @@ final case class PartyApiServiceImpl(
     onComplete(result) {
       case Success(relationshipsInfo) => getUserInstitutionRelationships200(relationshipsInfo)
       case Failure(ex)                =>
-        logger.error(s"Error while retrieving relationships for institutions $institutionId - ${ex.getMessage}")
+        logger.error(
+          s"Error while retrieving relationships for institutions corresponding to tenant $tenantId - ${ex.getMessage}"
+        )
         complete(
           StatusCodes.InternalServerError,
           problemOf(
             StatusCodes.InternalServerError,
             GenericError(
-              s"Something went wrong trying to get relationship info for institution $institutionId - ${ex.getMessage}"
+              s"Something went wrong trying to get relationship info for institution corresponding to tenant $tenantId - ${ex.getMessage}"
             )
           )
         )
@@ -135,34 +134,32 @@ final case class PartyApiServiceImpl(
     )
   }
 
-  /**
-   * Code: 200, Message: successful operation, DataType: Institution
-   * Code: 400, Message: Invalid id supplied, DataType: Problem
-   * Code: 404, Message: Not found, DataType: Problem
-   */
-  override def getInstitution(institutionId: String)(implicit
+  override def getInstitution(tenantId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerInstitution: ToEntityMarshaller[Institution],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    logger.info(s"Retrieving institution $institutionId")
+    logger.info(s"Retrieving tenant $tenantId")
     val result: Future[Institution] = for {
-      uuid        <- institutionId.toFutureUUID
-      institution <- partyProcessService.getInstitution(uuid)
+      tenantUUID  <- tenantId.toFutureUUID
+      selfcareId  <- tenantManagementService
+        .getTenant(tenantUUID)
+        .flatMap(_.selfcareId.toFuture(MissingSelfcareId(tenantUUID)))
+      institution <- partyProcessService.getInstitution(selfcareId)
     } yield PartyProcessConverter.toApiInstitution(institution)
 
     onComplete(result) {
       case Success(institution)               => getInstitution200(institution)
       case Failure(ex: ResourceNotFoundError) =>
-        logger.error(s"Error while retrieving institution $institutionId - ${ex.getMessage}")
-        getInstitution404(problemOf(StatusCodes.NotFound, InstitutionNotFound(institutionId)))
+        logger.error(s"Error while retrieving institution $tenantId - ${ex.getMessage}")
+        getInstitution404(problemOf(StatusCodes.NotFound, InstitutionNotFound(s"corresponding to tenantId $tenantId")))
       case Failure(ex)                        =>
-        logger.error(s"Error while retrieving institution $institutionId - ${ex.getMessage}")
+        logger.error(s"Error while retrieving institution $tenantId - ${ex.getMessage}")
         complete(
           StatusCodes.InternalServerError,
           problemOf(
             StatusCodes.InternalServerError,
-            GenericError(s"Something went wrong trying to get institution $institutionId - ${ex.getMessage}")
+            GenericError(s"Something went wrong trying to get institution $tenantId - ${ex.getMessage}")
           )
         )
     }

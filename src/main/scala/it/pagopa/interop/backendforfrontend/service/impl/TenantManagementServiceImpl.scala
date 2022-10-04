@@ -7,6 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.tenantmanagement.client.api.{TenantApi, EnumsSerializers}
 import it.pagopa.interop.tenantmanagement.client.invoker.BearerToken
 import it.pagopa.interop.tenantmanagement.client.model.Tenant
+import it.pagopa.interop.commons.utils.TypeConversions._
 
 import java.util.UUID
 import scala.concurrent.{Future, ExecutionContextExecutor}
@@ -31,13 +32,15 @@ class TenantManagementServiceImpl(tenantManagementUrl: String, blockingEc: Execu
       invoker.invoke(request, s"Retrieving Tenant $tenantId")
     }
 
-  override def getBySelfcareId(selfcareId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
+  override def getBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
-      val request: ApiRequest[Tenant] =
-        api.getTenantBySelfcareId(xCorrelationId = correlationId, selfcareId = selfcareId, xForwardedFor = ip)(
-          BearerToken(bearerToken)
-        )
-      invoker.invoke(request, s"Retrieving Tenant with selfcareId ${selfcareId.toString()}}")
+      selfcareId.toFutureUUID.flatMap { selfcareUUID =>
+        val request: ApiRequest[Tenant] =
+          api.getTenantBySelfcareId(xCorrelationId = correlationId, selfcareId = selfcareUUID, xForwardedFor = ip)(
+            BearerToken(bearerToken)
+          )
+        invoker.invoke(request, s"Retrieving Tenant with selfcareId ${selfcareId.toString()}}")
+      }(blockingEc)
     }
 
 }
