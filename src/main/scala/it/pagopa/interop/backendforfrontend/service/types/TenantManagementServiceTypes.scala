@@ -32,7 +32,6 @@ object TenantManagementServiceTypes {
       id = attribute.id,
       name = name,
       assignmentTimestamp = attribute.assignmentTimestamp,
-      renewal = attribute.renewal.toApi,
       verifiedBy = attribute.verifiedBy.map(_.toApi),
       revokedBy = attribute.revokedBy.map(_.toApi)
     )
@@ -49,8 +48,9 @@ object TenantManagementServiceTypes {
     def toApi: TenantVerifier = TenantVerifier(
       id = v.id,
       verificationDate = v.verificationDate,
+      renewal = v.renewal.toApi,
       expirationDate = v.expirationDate,
-      extentionDate = v.extentionDate
+      extensionDate = v.extensionDate
     )
   }
 
@@ -59,7 +59,8 @@ object TenantManagementServiceTypes {
       id = v.id,
       verificationDate = v.verificationDate,
       expirationDate = v.expirationDate,
-      extentionDate = v.extentionDate,
+      renewal = v.renewal.toApi,
+      extensionDate = v.extensionDate,
       revocationDate = v.revocationDate
     )
   }
