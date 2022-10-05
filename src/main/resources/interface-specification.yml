@@ -1738,8 +1738,6 @@ components:
         assignmentTimestamp:
           type: string
           format: date-time
-        renewal:
-          $ref: '#/components/schemas/VerificationRenewal'
         verifiedBy:
           type: array
           items:
