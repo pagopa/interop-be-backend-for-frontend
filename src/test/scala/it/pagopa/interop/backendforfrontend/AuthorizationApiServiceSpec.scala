@@ -33,7 +33,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
     "succeed when the tenant is present" in {
 
       val uid: String        = UUID.randomUUID().toString
-      val selfcareId: String = "stringThatWillMakeGalalaesHappy"
+      val selfcareId: String = UUID.randomUUID().toString()
       val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet = Map(
@@ -115,7 +115,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
     "succeed even if the tenant needs to be upserted" in {
 
       val uid: String        = UUID.randomUUID().toString
-      val selfcareId: String = "stringThatWillMakeGalalaesHappy"
+      val selfcareId: String = UUID.randomUUID().toString()
       val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet = Map(
@@ -241,7 +241,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
     "fail on SessionTokenGenerator failure" in {
 
       val uid: String        = UUID.randomUUID().toString
-      val selfcareId: String = "stringThatWillMakeGalalaesHappy"
+      val selfcareId: String = UUID.randomUUID().toString()
       val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet = Map(
