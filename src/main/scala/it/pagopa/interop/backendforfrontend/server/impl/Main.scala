@@ -5,10 +5,8 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.management.scaladsl.AkkaManagement
 import buildinfo.BuildInfo
-import cats.syntax.all._
 import com.typesafe.scalalogging.Logger
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.server.Controller
 import it.pagopa.interop.backendforfrontend.server.impl.dependencies.Dependencies
 import it.pagopa.interop.commons.logging.renderBuildInfo
 import it.pagopa.interop.commons.utils.CORSSupport
@@ -33,22 +31,8 @@ object Main extends App with CORSSupport with Dependencies {
       logger.info(renderBuildInfo(BuildInfo))
 
       val serverBinding = for {
-        jwtReader <- getJwtValidator
-        authorization = authorizationApi(jwtReader, blockingEc)
-        party         = partyApi(jwtReader, blockingEc)
-        attributes    = attributeApi(jwtReader, blockingEc)
-        agreements    = agreementApi(jwtReader, blockingEc)
-        tenants       = tenantApi(jwtReader, blockingEc)
-        controller    = new Controller(
-          attributes = attributes,
-          authorization = authorization,
-          agreements = agreements,
-          tenants = tenants,
-          party = party,
-          health = healthApi,
-          validationExceptionToRoute = validationExceptionToRoute.some
-        )(actorSystem.classicSystem)
-        binding <- Http()(actorSystem.classicSystem)
+        controller <- getJwtValidator.map(makeController(_, blockingEc))
+        binding    <- Http()(actorSystem.classicSystem)
           .newServerAt("0.0.0.0", ApplicationConfiguration.serverPort)
           .bind(corsHandler(controller.routes))
       } yield binding

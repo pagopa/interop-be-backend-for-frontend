@@ -1,18 +1,26 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+
 import it.pagopa.interop.backendforfrontend.service.CatalogManagementService
-import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.CatalogManagementInvoker
-import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
+import it.pagopa.interop.catalogmanagement.client.invoker.ApiInvoker
+import it.pagopa.interop.catalogmanagement.client.api.{EServiceApi, EnumsSerializers}
 import it.pagopa.interop.catalogmanagement.client.invoker.BearerToken
 import it.pagopa.interop.catalogmanagement.client.model.EService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 import java.util.UUID
 import scala.concurrent.Future
+import akka.actor.typed.ActorSystem
+import scala.concurrent.ExecutionContextExecutor
+import it.pagopa.interop.commons.utils.withHeaders
 
-final case class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServiceApi)
-    extends CatalogManagementService {
+class CatalogManagementServiceImpl(catalogManagementUrl: String, blockingEc: ExecutionContextExecutor)(implicit
+  system: ActorSystem[_]
+) extends CatalogManagementService {
+
+  val invoker: ApiInvoker = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
+  val api: EServiceApi    = EServiceApi(catalogManagementUrl)
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)

@@ -26,6 +26,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import it.pagopa.interop.selfcare.partyprocess.client.model
+import it.pagopa.interop.backendforfrontend.error.BFFErrors
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -181,12 +182,20 @@ final case class AgreementsApiServiceImpl(
   def parallelGet(agreement: AgreementProcess.Agreement)(implicit
     contexts: Seq[(String, String)]
   ): Future[(model.Institution, model.Institution, TenantManagement.Tenant, CatalogManagement.EService)] =
-    partyProcessService
-      .getInstitution(agreement.producerId)
-      .zip(partyProcessService.getInstitution(agreement.consumerId))
-      .zip(tenantManagementService.getTenant(agreement.consumerId))
-      .zip(catalogManagementService.getEService(agreement.eserviceId))
-      .map { case (((a, b), c), d) => (a, b, c, d) }
+    for {
+      (consumerTenant, producerTenant) <- tenantManagementService
+        .getTenant(agreement.consumerId)
+        .zip(tenantManagementService.getTenant(agreement.producerId))
+
+      (consumerSelfcareId, producerSelfcareId) <- consumerTenant.selfcareId
+        .toFuture(BFFErrors.MissingSelfcareId(consumerTenant.id))
+        .zip(producerTenant.selfcareId.toFuture(BFFErrors.MissingSelfcareId(producerTenant.id)))
+
+      ((consumerInstitution, producerInstitution), eService) <- partyProcessService
+        .getInstitution(consumerSelfcareId)
+        .zip(partyProcessService.getInstitution(producerSelfcareId))
+        .zip(catalogManagementService.getEService(agreement.eserviceId))
+    } yield (producerInstitution, consumerInstitution, consumerTenant, eService)
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement

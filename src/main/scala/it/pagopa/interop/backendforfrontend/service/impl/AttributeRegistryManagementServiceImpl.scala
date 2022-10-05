@@ -2,12 +2,13 @@ package it.pagopa.interop.backendforfrontend.service.impl
 
 import cats.implicits.catsSyntaxOptionId
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.attributeregistrymanagement.client.invoker.ApiInvoker
+import it.pagopa.interop.agreementprocess.client.api.EnumsSerializers
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.BearerToken
 import it.pagopa.interop.attributeregistrymanagement.client.model.AttributesResponse
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementService
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{
-  AttributeRegistryManagementInvoker,
   MgmtAttribute,
   MgmtAttributeSeed,
   MgmtAttributesResponse
@@ -16,9 +17,16 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 
 import java.util.UUID
 import scala.concurrent.Future
+import akka.actor.typed.ActorSystem
+import scala.concurrent.ExecutionContextExecutor
+import it.pagopa.interop.commons.utils.withHeaders
 
-final case class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagementInvoker, api: AttributeApi)
-    extends AttributeRegistryManagementService {
+class AttributeRegistryManagementServiceImpl(attributeRegistryURL: String, blockingEc: ExecutionContextExecutor)(
+  implicit system: ActorSystem[_]
+) extends AttributeRegistryManagementService {
+
+  val invoker: ApiInvoker = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
+  val api: AttributeApi   = AttributeApi(attributeRegistryURL)
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)

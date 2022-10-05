@@ -389,7 +389,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionToken'
-  '/institutions/{institutionId}/relationships':
+  '/institutions/{tenantId}/relationships':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
@@ -401,8 +401,8 @@ paths:
       operationId: getUserInstitutionRelationships
       parameters:
         - in: path
-          name: institutionId
-          description: The internal identifier of the institution
+          name: tenantId
+          description: The internal identifier of the tenant
           required: true
           schema:
             type: string
@@ -557,7 +557,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/{institutionId}':
+  '/institutions/{tenantId}':
     get:
       tags:
         - party
@@ -565,9 +565,9 @@ paths:
       description: Gets institution using internal institution id
       operationId: getInstitution
       parameters:
-        - name: institutionId
+        - name: tenantId
           in: path
-          description: The internal identifier of the institution
+          description: The internal identifier of the tenant
           required: true
           schema:
             type: string
@@ -630,7 +630,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/{institutionId}/certifiedAttributes':
+  '/institutions/{tenantId}/certifiedAttributes':
     get:
       tags:
         - tenants
@@ -638,9 +638,9 @@ paths:
       description: Gets certified attributes for institution using internal institution id
       operationId: getCertifiedAttributes
       parameters:
-        - name: institutionId
+        - name: tenantId
           in: path
-          description: The internal identifier of the institution
+          description: The internal identifier of the tenant
           required: true
           schema:
             type: string

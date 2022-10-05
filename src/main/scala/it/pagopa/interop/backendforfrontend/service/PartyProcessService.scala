@@ -12,7 +12,7 @@ trait PartyProcessService {
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[PartyProcessRelationshipInfo]
 
   def getUserInstitutionRelationships(
-    institutionId: UUID,
+    institutionId: String,
     personId: Option[UUID],
     roles: Seq[PartyRole],
     states: Seq[RelationshipState],
@@ -21,6 +21,6 @@ trait PartyProcessService {
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Seq[PartyProcessRelationshipInfo]]
 
   def getInstitution(
-    institutionId: UUID
+    selfcareId: String
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution]
 }

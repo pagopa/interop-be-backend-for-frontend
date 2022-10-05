@@ -17,21 +17,28 @@ import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
 import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
 
+import cats.syntax.all._
+import it.pagopa.interop.tenantprocess
 import scala.concurrent.duration.DurationInt
+import it.pagopa.interop.tenantmanagement.client.model.Tenant
+import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.tenantmanagement.client.model.ExternalId
+import it.pagopa.interop.tenantmanagement.client.invoker.ApiError
+import it.pagopa.interop.selfcare.partyprocess.client.model.Institution
 
 class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with ScalatestRouteTest {
 
   "Generating a session token" should {
 
-    "succeed" in {
+    "succeed when the tenant is present" in {
 
-      val uid: String      = UUID.randomUUID().toString
-      val orgId: UUID      = UUID.randomUUID()
-      val orgIdStr: String = orgId.toString
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString()
+      val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet = Map(
         "organization" -> Map(
-          "id"         -> orgIdStr,
+          "id"         -> selfcareId.toString(),
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ),
@@ -44,12 +51,141 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Success(jwtClaimsSet))
 
+      (mockTenantManagement
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
+        .expects(selfcareId, *)
+        .once()
+        .returns(
+          Future.successful(
+            Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.toString.some,
+              externalId = ExternalId("origin", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None
+            )
+          )
+        )
+
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin,anotherRole",
-        "organizationId" -> orgIdStr,
+        "organizationId" -> tenantId.toString(),
+        "selfcareId"     -> selfcareId.toString(),
         "organization"   -> Map(
-          "id"         -> orgIdStr,
+          "id"         -> selfcareId.toString(),
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ).toJSONObject
+      )
+
+      (mockRateLimiter
+        .rateLimiting(_: UUID)(
+          _: ExecutionContext,
+          _: LoggerTakingImplicit[ContextFieldsToLog],
+          _: Seq[(String, String)]
+        ))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
+
+      (mockSessionTokenGenerator
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .expects(
+          SignatureAlgorithm.RSAPkcs1Sha256,
+          desiredClaimSet,
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          ApplicationConfiguration.generatedJwtDuration
+        )
+        .once()
+        .returns(Future.successful("sessionToken"))
+
+      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+        Seq.empty,
+        toEntityMarshallerSessionToken
+      ) ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[SessionToken] shouldEqual SessionToken("sessionToken")
+      }
+    }
+
+    "succeed even if the tenant needs to be upserted" in {
+
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString()
+      val tenantId: UUID     = UUID.randomUUID()
+
+      val jwtClaimsSet = Map(
+        "organization" -> Map(
+          "id"         -> selfcareId.toString(),
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
+        "uid"          -> uid
+      ).asClaimSet
+
+      (mockJwtReader
+        .getClaims(_: String))
+        .expects(*)
+        .once()
+        .returns(Success(jwtClaimsSet))
+
+      (mockTenantManagement
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
+        .expects(selfcareId, *)
+        .once()
+        .returns(Future.failed(ApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+
+      (mockPartyProcess
+        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(selfcareId, *, *)
+        .once()
+        .returns(
+          Future.successful(
+            Institution(
+              id = UUID.fromString(selfcareId),
+              externalId = "whatever",
+              originId = "IPACode",
+              description = "foo",
+              digitalAddress = "of a digital home?",
+              address = "of an actual home?",
+              zipCode = "winzip",
+              taxCode = "not mine please",
+              origin = "IPA",
+              institutionType = None,
+              attributes = Nil
+            )
+          )
+        )
+
+      (mockTenantProcess
+        .selfcareUpsertTenant(_: String, _: String)(_: String)(_: Seq[(String, String)]))
+        .expects("IPA", "IPACode", selfcareId, *)
+        .once()
+        .returns(
+          Future.successful(
+            tenantprocess.client.model.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.toString.some,
+              externalId = tenantprocess.client.model.ExternalId("IPA", "IPACode"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None
+            )
+          )
+        )
+
+      val desiredClaimSet: Map[String, AnyRef] = Map(
+        "uid"            -> uid,
+        "user-roles"     -> "admin,anotherRole",
+        "organizationId" -> tenantId.toString(),
+        "selfcareId"     -> selfcareId.toString(),
+        "organization"   -> Map(
+          "id"         -> selfcareId.toString(),
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ).toJSONObject
@@ -104,12 +240,16 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
     "fail on SessionTokenGenerator failure" in {
 
-      val uid: String      = UUID.randomUUID().toString
-      val orgId: UUID      = UUID.randomUUID()
-      val orgIdStr: String = orgId.toString
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString()
+      val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet = Map(
-        "organization" -> Map("id" -> orgIdStr, "fiscalCode" -> "fiscalCode", "roles" -> List(Map("role" -> "admin"))),
+        "organization" -> Map(
+          "id"         -> selfcareId.toString(),
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"))
+        ),
         "uid"          -> uid
       ).asClaimSet
 
@@ -119,12 +259,31 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Success(jwtClaimsSet))
 
+      (mockTenantManagement
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
+        .expects(selfcareId, *)
+        .once()
+        .returns(
+          Future.successful(
+            Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.toString.some,
+              externalId = ExternalId("origin", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None
+            )
+          )
+        )
+
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin",
-        "organizationId" -> orgIdStr,
+        "organizationId" -> tenantId.toString(),
+        "selfcareId"     -> selfcareId.toString(),
         "organization"   -> Map(
-          "id"         -> orgIdStr,
+          "id"         -> selfcareId.toString(),
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"))
         ).toJSONObject
