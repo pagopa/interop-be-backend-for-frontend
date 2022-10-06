@@ -6,11 +6,11 @@ import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
-import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
+import it.pagopa.interop.commons.utils.{BEARER, UID}
 import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
+import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
-import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -21,6 +21,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
+  implicit val verifiedTenantAttributeSeedFormat: RootJsonFormat[VerifiedTenantAttributeSeed] =
+    jsonFormat3(VerifiedTenantAttributeSeed)
 
   implicit val declaredTenantAttributeFormat: RootJsonFormat[DeclaredTenantAttribute]   =
     jsonFormat4(DeclaredTenantAttribute)

@@ -9,4 +9,18 @@ object TenantProcessServiceTypes {
     def toSeed: TenantProcess.DeclaredTenantAttributeSeed = TenantProcess.DeclaredTenantAttributeSeed(id = seed.id)
   }
 
+  implicit class VerifiedTenantAttributeSeedConverter(private val seed: VerifiedTenantAttributeSeed) extends AnyVal {
+    def toSeed: TenantProcess.VerifiedTenantAttributeSeed = TenantProcess.VerifiedTenantAttributeSeed(
+      id = seed.id,
+      renewal = seed.renewal.toSeed,
+      expirationDate = seed.expirationDate
+    )
+  }
+
+  implicit class VerificationRenewalConverter(private val v: VerificationRenewal) extends AnyVal {
+    def toSeed: TenantProcess.VerificationRenewal = v match {
+      case VerificationRenewal.REVOKE_ON_EXPIRATION => TenantProcess.VerificationRenewal.REVOKE_ON_EXPIRATION
+      case VerificationRenewal.AUTOMATIC_RENEWAL    => TenantProcess.VerificationRenewal.AUTOMATIC_RENEWAL
+    }
+  }
 }

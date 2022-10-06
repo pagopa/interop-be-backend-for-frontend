@@ -4,7 +4,12 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import it.pagopa.interop.backendforfrontend.api.TenantsApiMarshaller
-import it.pagopa.interop.backendforfrontend.model.{CertifiedAttributesResponse, DeclaredTenantAttributeSeed, Problem}
+import it.pagopa.interop.backendforfrontend.model.{
+  CertifiedAttributesResponse,
+  DeclaredTenantAttributeSeed,
+  Problem,
+  VerifiedTenantAttributeSeed
+}
 import spray.json.DefaultJsonProtocol
 
 object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
@@ -16,4 +21,7 @@ object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSuppo
 
   override implicit def fromEntityUnmarshallerDeclaredTenantAttributeSeed
     : FromEntityUnmarshaller[DeclaredTenantAttributeSeed] = sprayJsonUnmarshaller[DeclaredTenantAttributeSeed]
+
+  override implicit def fromEntityUnmarshallerVerifiedTenantAttributeSeed
+    : FromEntityUnmarshaller[VerifiedTenantAttributeSeed] = sprayJsonUnmarshaller[VerifiedTenantAttributeSeed]
 }
