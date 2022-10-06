@@ -76,4 +76,18 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Verifying verified attribute ${seed.id} to $tenantId")
     }
+
+  override def revokeVerifiedAttribute(tenantId: UUID, attributeId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenant] =
+    withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.revokeVerifiedAttribute(
+          xCorrelationId = correlationId,
+          tenantId = tenantId,
+          attributeId = attributeId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Revoking verified attribute $attributeId to $tenantId")
+    }
 }

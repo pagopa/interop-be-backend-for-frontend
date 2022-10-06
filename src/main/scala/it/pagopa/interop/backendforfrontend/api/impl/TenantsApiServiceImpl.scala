@@ -112,4 +112,21 @@ final case class TenantsApiServiceImpl(
     }
   }
 
+  override def revokeVerifiedAttribute(tenantId: String, attributeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      for {
+        tenantUuid    <- tenantId.toFutureUUID
+        attributeUuid <- attributeId.toFutureUUID
+        _             <- tenantProcessService.revokeVerifiedAttribute(tenantUuid, attributeUuid).void
+      } yield ()
+
+    onComplete(result) {
+      handleError(s"Error revoking verified attribute $attributeId to tenant $tenantId") orElse { case Success(_) =>
+        revokeDeclaredAttribute204
+      }
+    }
+  }
 }
