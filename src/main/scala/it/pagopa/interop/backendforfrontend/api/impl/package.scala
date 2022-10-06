@@ -4,9 +4,14 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.commons.jwt.JWTConfiguration
+import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
+import it.pagopa.interop.commons.utils.BEARER
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import spray.json._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
@@ -91,5 +96,17 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         )
       )
     )
+
+  def generateInternalContexts(
+    tokenGenerator: InteropTokenGenerator
+  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[Seq[(String, String)]] = for {
+    m2mToken <- tokenGenerator
+      .generateInternalToken(
+        subject = JWTConfiguration.jwtInternalTokenConfig.subject,
+        audience = JWTConfiguration.jwtInternalTokenConfig.audience.toList,
+        tokenIssuer = JWTConfiguration.jwtInternalTokenConfig.issuer,
+        secondsDuration = JWTConfiguration.jwtInternalTokenConfig.durationInSeconds
+      )
+  } yield contexts.appended(BEARER -> m2mToken.serialized)
 
 }
