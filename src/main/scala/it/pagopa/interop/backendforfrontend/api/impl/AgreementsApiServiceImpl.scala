@@ -189,8 +189,8 @@ final case class AgreementsApiServiceImpl(
         .zip(tenantManagementService.getTenant(agreement.producerId))
 
       (consumerDescription, producerDescription) <- consumerTenant.selfcareId
-        .fold(Future.successful("UNKNOWN"))(getDescription)
-        .zip(producerTenant.selfcareId.fold(Future.successful("UNKNOWN"))(getDescription))
+        .fold(Future.successful(consumerTenant.id.toString()))(getDescription)
+        .zip(producerTenant.selfcareId.fold(Future.successful(producerTenant.id.toString()))(getDescription))
 
       eService <- catalogManagementService.getEService(agreement.eserviceId)
     } yield (producerDescription, consumerDescription, consumerTenant, eService)
