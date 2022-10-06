@@ -97,7 +97,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       )
     )
 
-  def generateInternalContexts(
+  def generateInternalTokenContexts(
     tokenGenerator: InteropTokenGenerator
   )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[Seq[(String, String)]] = for {
     m2mToken <- tokenGenerator
