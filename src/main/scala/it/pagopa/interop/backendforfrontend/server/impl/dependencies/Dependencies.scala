@@ -32,7 +32,12 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.impl._
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
-import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, DefaultSessionTokenGenerator, getClaimsVerifier}
+import it.pagopa.interop.commons.jwt.service.impl.{
+  DefaultInteropTokenGenerator,
+  DefaultJWTReader,
+  DefaultSessionTokenGenerator,
+  getClaimsVerifier
+}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
 import it.pagopa.interop.commons.ratelimiter.akkahttp.RateLimiterDirective
@@ -122,10 +127,19 @@ trait Dependencies {
       }
     )
 
+    val interopTokenGenerator: DefaultInteropTokenGenerator = new DefaultInteropTokenGenerator(
+      signerService,
+      new PrivateKeysKidHolder {
+        override val RSAPrivateKeyset: Set[KID] = ApplicationConfiguration.rsaKeysIdentifiers
+        override val ECPrivateKeyset: Set[KID]  = ApplicationConfiguration.ecKeysIdentifiers
+      }
+    )
+
     val authorizationApi: AuthorizationApi = new AuthorizationApi(
       AuthorizationApiServiceImpl(
         jwtReader,
         sessionTokenGenerator,
+        interopTokenGenerator,
         tenantManagement,
         tenantProcess,
         partyProcess,
