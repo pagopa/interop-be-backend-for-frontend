@@ -58,7 +58,7 @@ final case class AuthorizationApiServiceImpl(
       rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, String] = Map(
         USER_ROLES            -> roles,
-        ORGANIZATION_ID_CLAIM -> tenantId.toString,
+        ORGANIZATION_ID_CLAIM -> tenantId.toString(),
         SELFCARE_ID_CLAIM     -> selfcareId
       )
       token <- sessionTokenGenerator.generate(
@@ -108,6 +108,6 @@ final case class AuthorizationApiServiceImpl(
     orgClaims            <- Option(nullableOrgClaimsMap).toTry(MissingClaim(s"$organizationClaim in selfcare token"))
     orgClaimsMap = orgClaims.asScala.toMap
     organizationId <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization in selfcare token"))
-  } yield organizationId.toString
+  } yield organizationId.toString()
 
 }
