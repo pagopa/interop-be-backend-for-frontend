@@ -2,18 +2,22 @@ package it.pagopa.interop.backendforfrontend.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.TenantProcessService
-
 import it.pagopa.interop.tenantprocess.client.invoker.ApiInvoker
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.tenantprocess.client.api.{TenantApi, EnumsSerializers}
+import it.pagopa.interop.tenantprocess.client.api.{EnumsSerializers, TenantApi}
 import it.pagopa.interop.tenantprocess.client.invoker.BearerToken
-import it.pagopa.interop.tenantprocess.client.model.Tenant
+import it.pagopa.interop.tenantprocess.client.model.{
+  DeclaredTenantAttributeSeed,
+  ExternalId,
+  SelfcareTenantSeed,
+  Tenant,
+  VerifiedTenantAttributeSeed
+}
 
 import java.util.UUID
-import scala.concurrent.{Future, ExecutionContextExecutor}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import akka.actor.typed.ActorSystem
-import it.pagopa.interop.tenantprocess.client.model.{SelfcareTenantSeed, ExternalId, DeclaredTenantAttributeSeed}
 import it.pagopa.interop.commons.utils.withHeaders
 
 class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
@@ -59,4 +63,17 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
     invoker.invoke(request, s"Upserting Tenant ($origin, $externalId) with SelfcareId ${selfcareId}")
   }
 
+  override def verifyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenant] =
+    withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.verifyVerifiedAttribute(
+          xCorrelationId = correlationId,
+          tenantId = tenantId,
+          verifiedTenantAttributeSeed = seed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Verifying verified attribute ${seed.id} to $tenantId")
+    }
 }

@@ -8,7 +8,12 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
-import it.pagopa.interop.backendforfrontend.model.{CertifiedAttributesResponse, DeclaredTenantAttributeSeed, Problem}
+import it.pagopa.interop.backendforfrontend.model.{
+  CertifiedAttributesResponse,
+  DeclaredTenantAttributeSeed,
+  Problem,
+  VerifiedTenantAttributeSeed
+}
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeConverter
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{
@@ -66,7 +71,7 @@ final case class TenantsApiServiceImpl(
   override def addDeclaredAttribute(
     seed: DeclaredTenantAttributeSeed
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
-    val result: Future[Unit] = tenantProcessService.addDeclaredAttribute(seed.toSeed).as(())
+    val result: Future[Unit] = tenantProcessService.addDeclaredAttribute(seed.toSeed).void
 
     onComplete(result) {
       handleError(s"Error adding declared attribute ${seed.id} to requester tenant") orElse { case Success(_) =>
@@ -81,7 +86,7 @@ final case class TenantsApiServiceImpl(
     val result: Future[Unit] =
       for {
         attributeUuid <- attributeId.toFutureUUID
-        _             <- tenantProcessService.revokeDeclaredAttribute(attributeUuid).as(())
+        _             <- tenantProcessService.revokeDeclaredAttribute(attributeUuid).void
       } yield ()
 
     onComplete(result) {
@@ -90,4 +95,21 @@ final case class TenantsApiServiceImpl(
       }
     }
   }
+
+  override def verifyVerifiedAttribute(tenantId: String, seed: VerifiedTenantAttributeSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] = for {
+      tenantUuid <- tenantId.toFutureUUID
+      _          <- tenantProcessService.verifyVerifiedAttribute(tenantUuid, seed.toSeed).void
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error verifying verified attribute ${seed.id} to tenant $tenantId") orElse { case Success(_) =>
+        verifyVerifiedAttribute204
+      }
+    }
+  }
+
 }
