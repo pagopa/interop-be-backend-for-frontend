@@ -6,9 +6,11 @@ import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
-import it.pagopa.interop.commons.utils.BEARER
+import it.pagopa.interop.commons.utils.{BEARER, UID}
+import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -99,9 +101,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       )
     )
 
-  def generateInternalTokenContexts(
-    tokenGenerator: InteropTokenGenerator
-  )(implicit ec: ExecutionContext, contexts: Seq[(String, String)]): Future[Seq[(String, String)]] = for {
+  def generateInternalTokenContexts(tokenGenerator: InteropTokenGenerator, sessionClaims: Map[String, AnyRef])(implicit
+    ec: ExecutionContext,
+    contexts: Seq[(String, String)]
+  ): Future[Seq[(String, String)]] = for {
+    uid      <- getUid(sessionClaims)
     m2mToken <- tokenGenerator
       .generateInternalToken(
         subject = JWTConfiguration.jwtInternalTokenConfig.subject,
@@ -109,6 +113,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         tokenIssuer = JWTConfiguration.jwtInternalTokenConfig.issuer,
         secondsDuration = JWTConfiguration.jwtInternalTokenConfig.durationInSeconds
       )
-  } yield contexts.appended(BEARER -> m2mToken.serialized)
+  } yield contexts ++ Seq((BEARER, m2mToken.serialized), (UID, uid))
+
+  private def getUid(sessionClaims: Map[String, AnyRef]): Future[String] =
+    sessionClaims.get(UID).map(_.toString).toFuture(MissingClaim("uid in selfcare token"))
 
 }
