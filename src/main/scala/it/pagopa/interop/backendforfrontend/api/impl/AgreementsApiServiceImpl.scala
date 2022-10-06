@@ -25,8 +25,6 @@ import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
-import it.pagopa.interop.selfcare.partyprocess.client.model
-import it.pagopa.interop.backendforfrontend.error.BFFErrors
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -179,29 +177,29 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  def getDescription(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[String] =
+    partyProcessService.getInstitution(selfcareId).map(_.description)
+
   def parallelGet(agreement: AgreementProcess.Agreement)(implicit
     contexts: Seq[(String, String)]
-  ): Future[(model.Institution, model.Institution, TenantManagement.Tenant, CatalogManagement.EService)] =
+  ): Future[(String, String, TenantManagement.Tenant, CatalogManagement.EService)] =
     for {
       (consumerTenant, producerTenant) <- tenantManagementService
         .getTenant(agreement.consumerId)
         .zip(tenantManagementService.getTenant(agreement.producerId))
 
-      (consumerSelfcareId, producerSelfcareId) <- consumerTenant.selfcareId
-        .toFuture(BFFErrors.MissingSelfcareId(consumerTenant.id))
-        .zip(producerTenant.selfcareId.toFuture(BFFErrors.MissingSelfcareId(producerTenant.id)))
+      (consumerDescription, producerDescription) <- consumerTenant.selfcareId
+        .fold(Future.successful("UNKNOWN"))(getDescription)
+        .zip(producerTenant.selfcareId.fold(Future.successful("UNKNOWN"))(getDescription))
 
-      ((consumerInstitution, producerInstitution), eService) <- partyProcessService
-        .getInstitution(consumerSelfcareId)
-        .zip(partyProcessService.getInstitution(producerSelfcareId))
-        .zip(catalogManagementService.getEService(agreement.eserviceId))
-    } yield (producerInstitution, consumerInstitution, consumerTenant, eService)
+      eService <- catalogManagementService.getEService(agreement.eserviceId)
+    } yield (producerDescription, consumerDescription, consumerTenant, eService)
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement
   )(implicit contexts: Seq[(String, String)]): Future[Agreement] = for {
-    (producer, consumer, consumerTenant, eService) <- parallelGet(agreement)
-    currentDescriptor                              <- eService.descriptors
+    (producerDescription, consumerDescription, consumerTenant, eService) <- parallelGet(agreement)
+    currentDescriptor                                                    <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(AgreementDescriptorNotFound(agreement.id))
     activeDescriptor = eService.descriptors.sortBy(_.version.toInt).lastOption
@@ -220,9 +218,9 @@ final case class AgreementsApiServiceImpl(
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
-    producer = Tenant(id = agreement.producerId, name = producer.description),
+    producer = Tenant(id = agreement.producerId, name = producerDescription),
     consumer =
-      TenantWithAttributes(id = agreement.consumerId, name = consumer.description, attributes = tenantAttributes),
+      TenantWithAttributes(id = agreement.consumerId, name = consumerDescription, attributes = tenantAttributes),
     eservice = EService(
       id = agreement.eserviceId,
       name = eService.name,
