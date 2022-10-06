@@ -53,7 +53,7 @@ final case class AuthorizationApiServiceImpl(
   ): Route = {
     val result: Future[(SessionToken, RateLimitStatus)] = for {
       (sessionClaims, roles, selfcareId) <- readJwt(identityToken).toFuture
-      internalContexts                   <- generateInternalTokenContexts(interopTokenGenerator)
+      internalContexts                   <- generateInternalTokenContexts(interopTokenGenerator, sessionClaims)
       tenantId <- getTenantIdOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
       rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, String] = Map(
