@@ -83,40 +83,6 @@ object TenantManagementServiceTypes {
 
   }
 
-  implicit class DeclaredTenantAttributeConverter(private val attribute: TenantManagement.DeclaredTenantAttribute)
-      extends AnyVal {
-    def toApi(name: String, description: String): DeclaredTenantAttribute = DeclaredTenantAttribute(
-      id = attribute.id,
-      name = name,
-      description = description,
-      assignmentTimestamp = attribute.assignmentTimestamp,
-      revocationTimestamp = attribute.revocationTimestamp
-    )
-  }
-
-  implicit class CertifiedTenantAttributeConverter(private val attribute: TenantManagement.CertifiedTenantAttribute)
-      extends AnyVal {
-    def toApi(name: String, description: String): CertifiedTenantAttribute = CertifiedTenantAttribute(
-      id = attribute.id,
-      name = name,
-      description = description,
-      assignmentTimestamp = attribute.assignmentTimestamp,
-      revocationTimestamp = attribute.revocationTimestamp
-    )
-  }
-
-  implicit class VerifiedTenantAttributeConverter(private val attribute: TenantManagement.VerifiedTenantAttribute)
-      extends AnyVal {
-    def toApi(name: String, description: String): VerifiedTenantAttribute = VerifiedTenantAttribute(
-      id = attribute.id,
-      name = name,
-      description = description,
-      assignmentTimestamp = attribute.assignmentTimestamp,
-      verifiedBy = attribute.verifiedBy.map(_.toApi),
-      revokedBy = attribute.revokedBy.map(_.toApi)
-    )
-  }
-
   implicit class VerificationRenewalConverter(private val v: TenantManagement.VerificationRenewal) extends AnyVal {
     def toApi: VerificationRenewal = v match {
       case TenantManagement.VerificationRenewal.REVOKE_ON_EXPIRATION => REVOKE_ON_EXPIRATION
