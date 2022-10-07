@@ -28,9 +28,10 @@ object TenantManagementServiceTypes {
 
   implicit class VerifiedTenantAttributeConverter(private val attribute: TenantManagement.VerifiedTenantAttribute)
       extends AnyVal {
-    def toApi(name: String): VerifiedTenantAttribute = VerifiedTenantAttribute(
+    def toApi(name: String, description: String): VerifiedTenantAttribute = VerifiedTenantAttribute(
       id = attribute.id,
       name = name,
+      description = description,
       assignmentTimestamp = attribute.assignmentTimestamp,
       verifiedBy = attribute.verifiedBy.map(_.toApi),
       revokedBy = attribute.revokedBy.map(_.toApi)

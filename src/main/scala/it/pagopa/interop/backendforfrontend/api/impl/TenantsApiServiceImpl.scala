@@ -8,13 +8,9 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
-import it.pagopa.interop.backendforfrontend.model.{
-  CertifiedAttributesResponse,
-  DeclaredTenantAttributeSeed,
-  Problem,
-  VerifiedTenantAttributeSeed
-}
+import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeConverter
+import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{
   AttributeRegistryManagementService,
@@ -23,7 +19,10 @@ import it.pagopa.interop.backendforfrontend.service.{
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.tenantmanagement.client.model.CertifiedTenantAttribute
+import it.pagopa.interop.tenantmanagement.client.model.{
+  CertifiedTenantAttribute => DepCertifiedTenantAttribute,
+  VerifiedTenantAttribute => DepVerifiedTenantAttribute
+}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -44,7 +43,7 @@ final case class TenantsApiServiceImpl(
     toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse]
   ): Route = {
 
-    def getAttributeSafe(attribute: CertifiedTenantAttribute): Future[Option[Attribute]] =
+    def getAttributeSafe(attribute: DepCertifiedTenantAttribute): Future[Option[Attribute]] =
       attributeRegistryService
         .getAttributeById(attribute.id)
         .redeem(
@@ -126,6 +125,47 @@ final case class TenantsApiServiceImpl(
     onComplete(result) {
       handleError(s"Error revoking verified attribute $attributeId to tenant $tenantId") orElse { case Success(_) =>
         revokeDeclaredAttribute204
+      }
+    }
+  }
+
+  override def getVerifiedAttributes(tenantId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerVerifiedAttributesResponse: ToEntityMarshaller[VerifiedAttributesResponse],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    def getAttributeSafe(attribute: DepVerifiedTenantAttribute): Future[Option[Attribute]] =
+      attributeRegistryService
+        .getAttributeById(attribute.id)
+        .redeem(
+          e => {
+            logger.error(s"Unable to find attribute ${attribute.id}", e)
+            Option.empty[Attribute]
+          },
+          Option(_)
+        )
+
+    def toVerifiedAttributes(
+      tenantAttributes: Seq[DepVerifiedTenantAttribute],
+      registryAttributes: Seq[Attribute]
+    ): Seq[VerifiedTenantAttribute] = {
+      val registryMap = registryAttributes.map(a => (a.id, a)).toMap
+      tenantAttributes
+        .map(a => (a, registryMap.get(a.id)))
+        .collect { case (ta, Some(ra)) => ta.toApi(ra.name, ra.description) }
+    }
+
+    val result: Future[VerifiedAttributesResponse] = for {
+      tenantUUID <- tenantId.toFutureUUID
+      tenant     <- tenantManagementService.getTenant(tenantUUID)
+      tenantVerifiedAttributes = tenant.attributes.mapFilter(_.verified)
+      registryAttributes <- Future.traverse(tenantVerifiedAttributes)(getAttributeSafe).map(_.flatten)
+    } yield VerifiedAttributesResponse(toVerifiedAttributes(tenantVerifiedAttributes, registryAttributes))
+
+    onComplete(result) {
+      handleError(s"Error retrieving verified attributes for tenant $tenantId") orElse { case Success(attributes) =>
+        getVerifiedAttributes200(attributes)
       }
     }
   }
