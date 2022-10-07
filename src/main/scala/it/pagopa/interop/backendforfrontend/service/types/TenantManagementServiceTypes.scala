@@ -19,9 +19,10 @@ object TenantManagementServiceTypes {
 
   implicit class CertifiedTenantAttributeConverter(private val attribute: TenantManagement.CertifiedTenantAttribute)
       extends AnyVal {
-    def toApi(name: String): CertifiedTenantAttribute = CertifiedTenantAttribute(
+    def toApi(name: String, description: String): CertifiedTenantAttribute = CertifiedTenantAttribute(
       id = attribute.id,
       name = name,
+      description = description,
       assignmentTimestamp = attribute.assignmentTimestamp,
       revocationTimestamp = attribute.revocationTimestamp
     )

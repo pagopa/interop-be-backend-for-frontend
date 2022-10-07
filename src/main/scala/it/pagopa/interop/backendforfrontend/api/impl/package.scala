@@ -27,7 +27,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val declaredTenantAttributeFormat: RootJsonFormat[DeclaredTenantAttribute]   =
     jsonFormat5(DeclaredTenantAttribute)
   implicit val certifiedTenantAttributeFormat: RootJsonFormat[CertifiedTenantAttribute] =
-    jsonFormat4(CertifiedTenantAttribute)
+    jsonFormat5(CertifiedTenantAttribute)
   implicit val tenantVerifiedFormat: RootJsonFormat[TenantVerifier]                     = jsonFormat5(TenantVerifier)
   implicit val tenantRevokerFormat: RootJsonFormat[TenantRevoker]                       = jsonFormat6(TenantRevoker)
   implicit val verifiedTenantAttributeFormat: RootJsonFormat[VerifiedTenantAttribute]   =

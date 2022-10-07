@@ -9,7 +9,6 @@ import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.AttributeConverter
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{
@@ -55,77 +54,25 @@ final case class TenantsApiServiceImpl(
           Option(_)
         )
 
-    val result: Future[CertifiedAttributesResponse] = for {
+    def toCertifiedAttributes(
+      tenantAttributes: Seq[DepCertifiedTenantAttribute],
+      registryAttributes: Seq[Attribute]
+    ): Seq[CertifiedTenantAttribute] = {
+      val registryMap = registryAttributes.map(a => (a.id, a)).toMap
+      tenantAttributes
+        .map(a => (a, registryMap.get(a.id)))
+        .collect { case (ta, Some(ra)) => ta.toApi(ra.name, ra.description) }
+    }
+    val result: Future[CertifiedAttributesResponse]                                         = for {
       tenantUUID <- tenantId.toFutureUUID
       tenant     <- tenantManagementService.getTenant(tenantUUID)
-      attributes <- Future.traverse(tenant.attributes.mapFilter(_.certified))(getAttributeSafe).map(_.flatten)
-    } yield CertifiedAttributesResponse(attributes.map(_.toCertifiedAttribute))
+      tenantCertifiedAttributes = tenant.attributes.mapFilter(_.certified)
+      registryAttributes <- Future.traverse(tenantCertifiedAttributes)(getAttributeSafe).map(_.flatten)
+    } yield CertifiedAttributesResponse(toCertifiedAttributes(tenantCertifiedAttributes, registryAttributes))
 
     onComplete(result) {
       handleError(s"Error retrieving certified attributes for tenant $tenantId") orElse { case Success(attributes) =>
         getCertifiedAttributes200(attributes)
-      }
-    }
-  }
-
-  override def addDeclaredAttribute(
-    seed: DeclaredTenantAttributeSeed
-  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
-    val result: Future[Unit] = tenantProcessService.addDeclaredAttribute(seed.toSeed).void
-
-    onComplete(result) {
-      handleError(s"Error adding declared attribute ${seed.id} to requester tenant") orElse { case Success(_) =>
-        addDeclaredAttribute204
-      }
-    }
-  }
-
-  override def revokeDeclaredAttribute(
-    attributeId: String
-  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
-    val result: Future[Unit] =
-      for {
-        attributeUuid <- attributeId.toFutureUUID
-        _             <- tenantProcessService.revokeDeclaredAttribute(attributeUuid).void
-      } yield ()
-
-    onComplete(result) {
-      handleError(s"Error revoking declared attribute $attributeId to requester tenant") orElse { case Success(_) =>
-        revokeDeclaredAttribute204
-      }
-    }
-  }
-
-  override def verifyVerifiedAttribute(tenantId: String, seed: VerifiedTenantAttributeSeed)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    val result: Future[Unit] = for {
-      tenantUuid <- tenantId.toFutureUUID
-      _          <- tenantProcessService.verifyVerifiedAttribute(tenantUuid, seed.toSeed).void
-    } yield ()
-
-    onComplete(result) {
-      handleError(s"Error verifying verified attribute ${seed.id} to tenant $tenantId") orElse { case Success(_) =>
-        verifyVerifiedAttribute204
-      }
-    }
-  }
-
-  override def revokeVerifiedAttribute(tenantId: String, attributeId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    val result: Future[Unit] =
-      for {
-        tenantUuid    <- tenantId.toFutureUUID
-        attributeUuid <- attributeId.toFutureUUID
-        _             <- tenantProcessService.revokeVerifiedAttribute(tenantUuid, attributeUuid).void
-      } yield ()
-
-    onComplete(result) {
-      handleError(s"Error revoking verified attribute $attributeId to tenant $tenantId") orElse { case Success(_) =>
-        revokeDeclaredAttribute204
       }
     }
   }
@@ -211,4 +158,67 @@ final case class TenantsApiServiceImpl(
       }
     }
   }
+
+  override def addDeclaredAttribute(
+    seed: DeclaredTenantAttributeSeed
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] = tenantProcessService.addDeclaredAttribute(seed.toSeed).void
+
+    onComplete(result) {
+      handleError(s"Error adding declared attribute ${seed.id} to requester tenant") orElse { case Success(_) =>
+        addDeclaredAttribute204
+      }
+    }
+  }
+
+  override def revokeDeclaredAttribute(
+    attributeId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] =
+      for {
+        attributeUuid <- attributeId.toFutureUUID
+        _             <- tenantProcessService.revokeDeclaredAttribute(attributeUuid).void
+      } yield ()
+
+    onComplete(result) {
+      handleError(s"Error revoking declared attribute $attributeId to requester tenant") orElse { case Success(_) =>
+        revokeDeclaredAttribute204
+      }
+    }
+  }
+
+  override def verifyVerifiedAttribute(tenantId: String, seed: VerifiedTenantAttributeSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] = for {
+      tenantUuid <- tenantId.toFutureUUID
+      _          <- tenantProcessService.verifyVerifiedAttribute(tenantUuid, seed.toSeed).void
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error verifying verified attribute ${seed.id} to tenant $tenantId") orElse { case Success(_) =>
+        verifyVerifiedAttribute204
+      }
+    }
+  }
+
+  override def revokeVerifiedAttribute(tenantId: String, attributeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      for {
+        tenantUuid    <- tenantId.toFutureUUID
+        attributeUuid <- attributeId.toFutureUUID
+        _             <- tenantProcessService.revokeVerifiedAttribute(tenantUuid, attributeUuid).void
+      } yield ()
+
+    onComplete(result) {
+      handleError(s"Error revoking verified attribute $attributeId to tenant $tenantId") orElse { case Success(_) =>
+        revokeDeclaredAttribute204
+      }
+    }
+  }
+
 }
