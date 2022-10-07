@@ -9,6 +9,7 @@ import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{
@@ -18,11 +19,7 @@ import it.pagopa.interop.backendforfrontend.service.{
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.tenantmanagement.client.model.{
-  CertifiedTenantAttribute => DepCertifiedTenantAttribute,
-  DeclaredTenantAttribute => DepDeclaredTenantAttribute,
-  VerifiedTenantAttribute => DepVerifiedTenantAttribute
-}
+import it.pagopa.interop.tenantmanagement.client.model.{TenantAttribute => DepTenantAttribute}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -41,123 +38,34 @@ final case class TenantsApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse]
-  ): Route = {
-
-    def getAttributeSafe(attribute: DepCertifiedTenantAttribute): Future[Option[Attribute]] =
-      attributeRegistryService
-        .getAttributeById(attribute.id)
-        .redeem(
-          e => {
-            logger.error(s"Unable to find attribute ${attribute.id}", e)
-            Option.empty[Attribute]
-          },
-          Option(_)
-        )
-
-    def toCertifiedAttributes(
-      tenantAttributes: Seq[DepCertifiedTenantAttribute],
-      registryAttributes: Seq[Attribute]
-    ): Seq[CertifiedTenantAttribute] = {
-      val registryMap = registryAttributes.map(a => (a.id, a)).toMap
-      tenantAttributes
-        .map(a => (a, registryMap.get(a.id)))
-        .collect { case (ta, Some(ra)) => ta.toApi(ra.name, ra.description) }
-    }
-    val result: Future[CertifiedAttributesResponse]                                         = for {
-      tenantUUID <- tenantId.toFutureUUID
-      tenant     <- tenantManagementService.getTenant(tenantUUID)
-      tenantCertifiedAttributes = tenant.attributes.mapFilter(_.certified)
-      registryAttributes <- Future.traverse(tenantCertifiedAttributes)(getAttributeSafe).map(_.flatten)
-    } yield CertifiedAttributesResponse(toCertifiedAttributes(tenantCertifiedAttributes, registryAttributes))
-
-    onComplete(result) {
+  ): Route =
+    onComplete(getTenantAttributes(tenantId, _.certified)) {
       handleError(s"Error retrieving certified attributes for tenant $tenantId") orElse { case Success(attributes) =>
-        getCertifiedAttributes200(attributes)
+        getCertifiedAttributes200(CertifiedAttributesResponse(attributes))
       }
     }
-  }
 
   override def getVerifiedAttributes(tenantId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerVerifiedAttributesResponse: ToEntityMarshaller[VerifiedAttributesResponse],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-
-    def getAttributeSafe(attribute: DepVerifiedTenantAttribute): Future[Option[Attribute]] =
-      attributeRegistryService
-        .getAttributeById(attribute.id)
-        .redeem(
-          e => {
-            logger.error(s"Unable to find attribute ${attribute.id}", e)
-            Option.empty[Attribute]
-          },
-          Option(_)
-        )
-
-    def toVerifiedAttributes(
-      tenantAttributes: Seq[DepVerifiedTenantAttribute],
-      registryAttributes: Seq[Attribute]
-    ): Seq[VerifiedTenantAttribute] = {
-      val registryMap = registryAttributes.map(a => (a.id, a)).toMap
-      tenantAttributes
-        .map(a => (a, registryMap.get(a.id)))
-        .collect { case (ta, Some(ra)) => ta.toApi(ra.name, ra.description) }
-    }
-
-    val result: Future[VerifiedAttributesResponse] = for {
-      tenantUUID <- tenantId.toFutureUUID
-      tenant     <- tenantManagementService.getTenant(tenantUUID)
-      tenantVerifiedAttributes = tenant.attributes.mapFilter(_.verified)
-      registryAttributes <- Future.traverse(tenantVerifiedAttributes)(getAttributeSafe).map(_.flatten)
-    } yield VerifiedAttributesResponse(toVerifiedAttributes(tenantVerifiedAttributes, registryAttributes))
-
-    onComplete(result) {
+  ): Route =
+    onComplete(getTenantAttributes(tenantId, _.verified)) {
       handleError(s"Error retrieving verified attributes for tenant $tenantId") orElse { case Success(attributes) =>
-        getVerifiedAttributes200(attributes)
+        getVerifiedAttributes200(VerifiedAttributesResponse(attributes))
       }
     }
-  }
 
   override def getDeclaredAttributes(tenantId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerDeclaredAttributesResponse: ToEntityMarshaller[DeclaredAttributesResponse],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-
-    def getAttributeSafe(attribute: DepDeclaredTenantAttribute): Future[Option[Attribute]] =
-      attributeRegistryService
-        .getAttributeById(attribute.id)
-        .redeem(
-          e => {
-            logger.error(s"Unable to find attribute ${attribute.id}", e)
-            Option.empty[Attribute]
-          },
-          Option(_)
-        )
-
-    def toDeclaredAttributes(
-      tenantAttributes: Seq[DepDeclaredTenantAttribute],
-      registryAttributes: Seq[Attribute]
-    ): Seq[DeclaredTenantAttribute] = {
-      val registryMap = registryAttributes.map(a => (a.id, a)).toMap
-      tenantAttributes
-        .map(a => (a, registryMap.get(a.id)))
-        .collect { case (ta, Some(ra)) => ta.toApi(ra.name, ra.description) }
-    }
-
-    val result: Future[DeclaredAttributesResponse] = for {
-      tenantUUID <- tenantId.toFutureUUID
-      tenant     <- tenantManagementService.getTenant(tenantUUID)
-      tenantDeclaredAttributes = tenant.attributes.mapFilter(_.declared)
-      registryAttributes <- Future.traverse(tenantDeclaredAttributes)(getAttributeSafe).map(_.flatten)
-    } yield DeclaredAttributesResponse(toDeclaredAttributes(tenantDeclaredAttributes, registryAttributes))
-
-    onComplete(result) {
+  ): Route =
+    onComplete(getTenantAttributes(tenantId, _.declared)) {
       handleError(s"Error retrieving declared attributes for tenant $tenantId") orElse { case Success(attributes) =>
-        getDeclaredAttributes200(attributes)
+        getDeclaredAttributes200(DeclaredAttributesResponse(attributes))
       }
     }
-  }
 
   override def addDeclaredAttribute(
     seed: DeclaredTenantAttributeSeed
@@ -219,6 +127,43 @@ final case class TenantsApiServiceImpl(
         revokeDeclaredAttribute204
       }
     }
+  }
+
+  private def getTenantAttributes[DepAttribute, ApiAttribute](
+    tenantId: String,
+    attributeFromTenantAttribute: DepTenantAttribute => Option[DepAttribute]
+  )(implicit
+    contexts: Seq[(String, String)],
+    adaptable: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
+  ): Future[Seq[ApiAttribute]] = {
+
+    def getAttributeSafe(attribute: DepAttribute): Future[Option[Attribute]] = {
+      val id = getAttributeId(attribute)
+      attributeRegistryService
+        .getAttributeById(id)
+        .redeem(
+          e => {
+            logger.error(s"Unable to find attribute $id", e)
+            Option.empty[Attribute]
+          },
+          Option(_)
+        )
+    }
+
+    def toApi(tenantAttributes: Seq[DepAttribute], registryAttributes: Seq[Attribute]): Seq[ApiAttribute] = {
+      val registryMap = registryAttributes.map(a => (a.id, a)).toMap
+      tenantAttributes
+        .map(a => (a, registryMap.get(getAttributeId(a))))
+        .collect { case (ta, Some(ra)) => tenantAttributeToApi(ta, ra.name, ra.description) }
+    }
+
+    for {
+      tenantUUID <- tenantId.toFutureUUID
+      tenant     <- tenantManagementService.getTenant(tenantUUID)
+      tenantAttributes = tenant.attributes.mapFilter(attributeFromTenantAttribute)
+      registryAttributes <- Future.traverse(tenantAttributes)(getAttributeSafe).map(_.flatten)
+    } yield toApi(tenantAttributes, registryAttributes)
+
   }
 
 }
