@@ -5,7 +5,6 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
@@ -135,33 +134,13 @@ final case class TenantsApiServiceImpl(
   )(implicit
     contexts: Seq[(String, String)],
     adaptable: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
-  ): Future[Seq[ApiAttribute]] = {
-
-    def getAttributeSafe(attribute: DepAttribute): Future[Option[Attribute]] =
-      attributeRegistryService
-        .getAttributeById(attribute.id)
-        .redeem(
-          e => {
-            logger.error(s"Unable to find attribute ${attribute.id}", e)
-            Option.empty[Attribute]
-          },
-          Option(_)
-        )
-
-    def toApi(tenantAttributes: Seq[DepAttribute], registryAttributes: Seq[Attribute]): Seq[ApiAttribute] = {
-      val registryMap = registryAttributes.map(a => (a.id, a)).toMap
-      tenantAttributes
-        .map(a => (a, registryMap.get(a.id)))
-        .collect { case (ta, Some(ra)) => ta.toApi(ra.name, ra.description) }
-    }
-
+  ): Future[Seq[ApiAttribute]] =
     for {
       tenantUUID <- tenantId.toFutureUUID
       tenant     <- tenantManagementService.getTenant(tenantUUID)
       tenantAttributes = tenant.attributes.mapFilter(attributeFromTenantAttribute)
-      registryAttributes <- Future.traverse(tenantAttributes)(getAttributeSafe).map(_.flatten)
-    } yield toApi(tenantAttributes, registryAttributes)
-
-  }
+      attributeIds     = tenantAttributes.map(_.id)
+      registryAttributes <- attributeRegistryService.getBulkAttributes(attributeIds)
+    } yield Utils.tenantAttributesToApi(tenantAttributes, registryAttributes.attributes)
 
 }
