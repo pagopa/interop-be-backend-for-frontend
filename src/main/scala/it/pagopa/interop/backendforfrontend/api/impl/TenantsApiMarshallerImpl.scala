@@ -6,6 +6,7 @@ import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import it.pagopa.interop.backendforfrontend.api.TenantsApiMarshaller
 import it.pagopa.interop.backendforfrontend.model.{
   CertifiedAttributesResponse,
+  DeclaredAttributesResponse,
   DeclaredTenantAttributeSeed,
   Problem,
   VerifiedAttributesResponse,
@@ -28,4 +29,7 @@ object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSuppo
 
   override implicit def toEntityMarshallerVerifiedAttributesResponse: ToEntityMarshaller[VerifiedAttributesResponse] =
     sprayJsonMarshaller[VerifiedAttributesResponse]
+
+  override implicit def toEntityMarshallerDeclaredAttributesResponse: ToEntityMarshaller[DeclaredAttributesResponse] =
+    sprayJsonMarshaller[DeclaredAttributesResponse]
 }

@@ -274,7 +274,7 @@ final case class AgreementsApiServiceImpl(
       case (a1, Some(a2)) => a1.toApi(a2.name)
     }
     val declared  = tenantAttribute.declared.map(a => (a, registryAttributes.attributes.find(_.id == a.id))).collect {
-      case (a1, Some(a2)) => a1.toApi(a2.name)
+      case (a1, Some(a2)) => a1.toApi(a2.name, a2.description)
     }
     val verified  = tenantAttribute.verified.map(a => (a, registryAttributes.attributes.find(_.id == a.id))).collect {
       case (a1, Some(a2)) => a1.toApi(a2.name, a2.description)

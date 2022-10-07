@@ -21,6 +21,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.tenantmanagement.client.model.{
   CertifiedTenantAttribute => DepCertifiedTenantAttribute,
+  DeclaredTenantAttribute => DepDeclaredTenantAttribute,
   VerifiedTenantAttribute => DepVerifiedTenantAttribute
 }
 
@@ -166,6 +167,47 @@ final case class TenantsApiServiceImpl(
     onComplete(result) {
       handleError(s"Error retrieving verified attributes for tenant $tenantId") orElse { case Success(attributes) =>
         getVerifiedAttributes200(attributes)
+      }
+    }
+  }
+
+  override def getDeclaredAttributes(tenantId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerDeclaredAttributesResponse: ToEntityMarshaller[DeclaredAttributesResponse],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    def getAttributeSafe(attribute: DepDeclaredTenantAttribute): Future[Option[Attribute]] =
+      attributeRegistryService
+        .getAttributeById(attribute.id)
+        .redeem(
+          e => {
+            logger.error(s"Unable to find attribute ${attribute.id}", e)
+            Option.empty[Attribute]
+          },
+          Option(_)
+        )
+
+    def toDeclaredAttributes(
+      tenantAttributes: Seq[DepDeclaredTenantAttribute],
+      registryAttributes: Seq[Attribute]
+    ): Seq[DeclaredTenantAttribute] = {
+      val registryMap = registryAttributes.map(a => (a.id, a)).toMap
+      tenantAttributes
+        .map(a => (a, registryMap.get(a.id)))
+        .collect { case (ta, Some(ra)) => ta.toApi(ra.name, ra.description) }
+    }
+
+    val result: Future[DeclaredAttributesResponse] = for {
+      tenantUUID <- tenantId.toFutureUUID
+      tenant     <- tenantManagementService.getTenant(tenantUUID)
+      tenantDeclaredAttributes = tenant.attributes.mapFilter(_.declared)
+      registryAttributes <- Future.traverse(tenantDeclaredAttributes)(getAttributeSafe).map(_.flatten)
+    } yield DeclaredAttributesResponse(toDeclaredAttributes(tenantDeclaredAttributes, registryAttributes))
+
+    onComplete(result) {
+      handleError(s"Error retrieving declared attributes for tenant $tenantId") orElse { case Success(attributes) =>
+        getDeclaredAttributes200(attributes)
       }
     }
   }

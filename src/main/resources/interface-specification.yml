@@ -839,11 +839,92 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/institutions/{tenantId}/attributes/declared':
+    parameters:
+      - name: tenantId
+        in: path
+        description: Tenant id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - tenants
+      summary: Gets the declared attributes of an institution using internal institution id
+      description: Gets declared attributes for institution using internal institution id
+      operationId: getDeclaredAttributes
+      parameters:
+        - name: tenantId
+          in: path
+          description: The internal identifier of the tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclaredAttributesResponse'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/institutions/{tenantId}/attributes/verified':
     parameters:
       - name: tenantId
         in: path
-        description: Tenant id which attribute needs to be verified
+        description: Tenant id
         required: true
         schema:
           type: string
@@ -1861,6 +1942,16 @@ components:
             $ref: '#/components/schemas/CertifiedAttribute'
       required:
         - attributes
+    DeclaredAttributesResponse:
+      title: DeclaredAttributesResponse
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeclaredTenantAttribute'
+      required:
+        - attributes
     VerifiedAttributesResponse:
       title: VerifiedAttributesResponse
       type: object
@@ -1999,6 +2090,8 @@ components:
           format: uuid
         name:
           type: string
+        description:
+          type: string
         assignmentTimestamp:
           type: string
           format: date-time
@@ -2008,6 +2101,7 @@ components:
       required:
         - id
         - name
+        - description
         - assignmentTimestamp
     DeclaredTenantAttributeSeed:
       type: object

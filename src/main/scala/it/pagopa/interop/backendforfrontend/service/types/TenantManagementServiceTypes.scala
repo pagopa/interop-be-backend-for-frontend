@@ -8,9 +8,10 @@ object TenantManagementServiceTypes {
 
   implicit class DeclaredTenantAttributeConverter(private val attribute: TenantManagement.DeclaredTenantAttribute)
       extends AnyVal {
-    def toApi(name: String): DeclaredTenantAttribute = DeclaredTenantAttribute(
+    def toApi(name: String, description: String): DeclaredTenantAttribute = DeclaredTenantAttribute(
       id = attribute.id,
       name = name,
+      description = description,
       assignmentTimestamp = attribute.assignmentTimestamp,
       revocationTimestamp = attribute.revocationTimestamp
     )
