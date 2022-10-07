@@ -8,28 +8,29 @@ import java.util.UUID
 
 object TenantManagementServiceTypes {
 
-  trait AdaptableTenantAttribute[A, B] {
-//    type Aux[A0, B0] = AdaptableTenantAttribute[A0,  B0] { type B = B0  }
-//    type DepAttribute = A
-//    type LocalAttribute = B
-
-    def tenantAttributeToApi(a: A, name: String, description: String): B
-    def getAttributeId(a: A): UUID
+  trait AdaptableTenantAttribute[DepAttribute, ApiAttribute] {
+    def toApi(a: DepAttribute, name: String, description: String): ApiAttribute
+    def id(a: DepAttribute): UUID
   }
 
   object AdaptableTenantAttribute {
-    def tenantAttributeToApi[A, B](a: A, name: String, description: String)(implicit
-      attribute: AdaptableTenantAttribute[A, B]
-    ): B = attribute.tenantAttributeToApi(a, name, description)
+    def apply[DepAttribute, ApiAttribute](implicit
+      attribute: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
+    ): AdaptableTenantAttribute[DepAttribute, ApiAttribute] = attribute
 
-    def getAttributeId[A, B](a: A)(implicit attribute: AdaptableTenantAttribute[A, B]): UUID =
-      attribute.getAttributeId(a)
+    implicit class AdaptableTenantAttributeOps[DepAttribute, ApiAttribute](a: DepAttribute)(implicit
+      attribute: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
+    ) {
+      def toApi(name: String, description: String): ApiAttribute =
+        AdaptableTenantAttribute[DepAttribute, ApiAttribute].toApi(a, name, description)
+      def id: UUID = AdaptableTenantAttribute[DepAttribute, ApiAttribute].id(a)
+    }
 
     implicit val certifiedAttribute
       : AdaptableTenantAttribute[TenantManagement.CertifiedTenantAttribute, CertifiedTenantAttribute] =
       new AdaptableTenantAttribute[TenantManagement.CertifiedTenantAttribute, CertifiedTenantAttribute] {
-        def getAttributeId(attribute: TenantManagement.CertifiedTenantAttribute): UUID = attribute.id
-        def tenantAttributeToApi(
+        def id(attribute: TenantManagement.CertifiedTenantAttribute): UUID = attribute.id
+        def toApi(
           attribute: TenantManagement.CertifiedTenantAttribute,
           name: String,
           description: String
@@ -46,8 +47,8 @@ object TenantManagementServiceTypes {
     implicit val declaredAttribute
       : AdaptableTenantAttribute[TenantManagement.DeclaredTenantAttribute, DeclaredTenantAttribute] =
       new AdaptableTenantAttribute[TenantManagement.DeclaredTenantAttribute, DeclaredTenantAttribute] {
-        def getAttributeId(attribute: TenantManagement.DeclaredTenantAttribute): UUID = attribute.id
-        def tenantAttributeToApi(
+        def id(attribute: TenantManagement.DeclaredTenantAttribute): UUID = attribute.id
+        def toApi(
           attribute: TenantManagement.DeclaredTenantAttribute,
           name: String,
           description: String
@@ -64,8 +65,8 @@ object TenantManagementServiceTypes {
     implicit val verifiedAttribute
       : AdaptableTenantAttribute[TenantManagement.VerifiedTenantAttribute, VerifiedTenantAttribute] =
       new AdaptableTenantAttribute[TenantManagement.VerifiedTenantAttribute, VerifiedTenantAttribute] {
-        def getAttributeId(attribute: TenantManagement.VerifiedTenantAttribute): UUID = attribute.id
-        def tenantAttributeToApi(
+        def id(attribute: TenantManagement.VerifiedTenantAttribute): UUID = attribute.id
+        def toApi(
           attribute: TenantManagement.VerifiedTenantAttribute,
           name: String,
           description: String

@@ -137,24 +137,22 @@ final case class TenantsApiServiceImpl(
     adaptable: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
   ): Future[Seq[ApiAttribute]] = {
 
-    def getAttributeSafe(attribute: DepAttribute): Future[Option[Attribute]] = {
-      val id = getAttributeId(attribute)
+    def getAttributeSafe(attribute: DepAttribute): Future[Option[Attribute]] =
       attributeRegistryService
-        .getAttributeById(id)
+        .getAttributeById(attribute.id)
         .redeem(
           e => {
-            logger.error(s"Unable to find attribute $id", e)
+            logger.error(s"Unable to find attribute ${attribute.id}", e)
             Option.empty[Attribute]
           },
           Option(_)
         )
-    }
 
     def toApi(tenantAttributes: Seq[DepAttribute], registryAttributes: Seq[Attribute]): Seq[ApiAttribute] = {
       val registryMap = registryAttributes.map(a => (a.id, a)).toMap
       tenantAttributes
-        .map(a => (a, registryMap.get(getAttributeId(a))))
-        .collect { case (ta, Some(ra)) => tenantAttributeToApi(ta, ra.name, ra.description) }
+        .map(a => (a, registryMap.get(a.id)))
+        .collect { case (ta, Some(ra)) => ta.toApi(ra.name, ra.description) }
     }
 
     for {
