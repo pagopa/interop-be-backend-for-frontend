@@ -11,6 +11,11 @@ object AgreementProcessServiceTypes {
       AgreementProcess.AgreementPayload(eserviceId = seed.eserviceId, descriptorId = seed.descriptorId)
   }
 
+  implicit class AgreementRejectionPayloadConverter(private val payload: AgreementRejectionPayload) extends AnyVal {
+    def toSeed: AgreementProcess.AgreementRejectionPayload =
+      AgreementProcess.AgreementRejectionPayload(reason = payload.reason)
+  }
+
   implicit class AgreementStateConverter(private val s: AgreementProcess.AgreementState) extends AnyVal {
     def toApi: AgreementState = s match {
       case AgreementProcess.AgreementState.DRAFT                        => DRAFT
@@ -19,6 +24,7 @@ object AgreementProcessServiceTypes {
       case AgreementProcess.AgreementState.PENDING                      => PENDING
       case AgreementProcess.AgreementState.SUSPENDED                    => SUSPENDED
       case AgreementProcess.AgreementState.MISSING_CERTIFIED_ATTRIBUTES => MISSING_CERTIFIED_ATTRIBUTES
+      case AgreementProcess.AgreementState.REJECTED                     => REJECTED
     }
   }
 
@@ -30,6 +36,7 @@ object AgreementProcessServiceTypes {
       case PENDING                      => AgreementProcess.AgreementState.PENDING
       case SUSPENDED                    => AgreementProcess.AgreementState.SUSPENDED
       case MISSING_CERTIFIED_ATTRIBUTES => AgreementProcess.AgreementState.MISSING_CERTIFIED_ATTRIBUTES
+      case REJECTED                     => AgreementProcess.AgreementState.REJECTED
     }
   }
 

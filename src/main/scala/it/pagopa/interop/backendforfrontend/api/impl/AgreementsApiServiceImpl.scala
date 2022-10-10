@@ -12,8 +12,8 @@ import it.pagopa.interop.backendforfrontend.error.BFFErrors.AgreementDescriptorN
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
-import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.{AgreementPayloadConverter, _}
-import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{MgmtAttributesResponse, _}
+import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
@@ -155,6 +155,24 @@ final case class AgreementsApiServiceImpl(
     onComplete(agreement) {
       handleError(s"Error suspending agreement $agreementId") orElse { case Success(agreement) =>
         suspendAgreement200(agreement)
+      }
+    }
+  }
+
+  override def rejectAgreement(agreementId: String, payload: AgreementRejectionPayload)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
+  ): Route = {
+    val agreement: Future[Agreement] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      agreement     <- agreementProcessService.rejectAgreement(agreementUuid, payload.toSeed)
+      apiAgreement  <- enhanceAgreement(agreement)
+    } yield apiAgreement
+
+    onComplete(agreement) {
+      handleError(s"Error rejecting agreement $agreementId") orElse { case Success(agreement) =>
+        rejectAgreement200(agreement)
       }
     }
   }
