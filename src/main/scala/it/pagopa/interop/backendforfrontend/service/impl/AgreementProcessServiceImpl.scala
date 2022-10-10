@@ -5,11 +5,17 @@ import it.pagopa.interop.agreementprocess.client.invoker.ApiInvoker
 import it.pagopa.interop.agreementprocess.client.api.EnumsSerializers
 import it.pagopa.interop.agreementprocess.client.api.AgreementApi
 import it.pagopa.interop.agreementprocess.client.invoker.BearerToken
-import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementPayload, AgreementState}
+import it.pagopa.interop.agreementprocess.client.model.{
+  Agreement,
+  AgreementPayload,
+  AgreementRejectionPayload,
+  AgreementState
+}
 import it.pagopa.interop.backendforfrontend.service.AgreementProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+
 import java.util.UUID
-import scala.concurrent.{Future, ExecutionContextExecutor}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import akka.actor.typed.ActorSystem
 import it.pagopa.interop.commons.utils.withHeaders
 
@@ -96,4 +102,16 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       invoker.invoke(request, s"Upgrading agreement $agreementId")
     }
 
+  override def rejectAgreement(agreementId: UUID, payload: AgreementRejectionPayload)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Agreement] =
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request = api.rejectAgreement(
+        xCorrelationId = correlationId,
+        agreementId = agreementId,
+        agreementRejectionPayload = payload,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Rejecting agreement $agreementId")
+    }
 }

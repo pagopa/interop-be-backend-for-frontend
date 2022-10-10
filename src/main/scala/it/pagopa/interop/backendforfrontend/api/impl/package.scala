@@ -46,6 +46,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val agreementFormat: RootJsonFormat[Agreement] = jsonFormat16(Agreement)
 
+  implicit val agreementRejectionPayloadFormat: RootJsonFormat[AgreementRejectionPayload] =
+    jsonFormat1(AgreementRejectionPayload)
   implicit val agreementPayloadFormat: RootJsonFormat[AgreementPayload] = jsonFormat2(AgreementPayload)
   implicit val createdResourceFormat: RootJsonFormat[CreatedResource]   = jsonFormat1(CreatedResource)
 
