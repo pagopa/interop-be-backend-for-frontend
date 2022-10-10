@@ -271,7 +271,7 @@ final case class AgreementsApiServiceImpl(
     registryAttributes: MgmtAttributesResponse
   ): Seq[TenantAttribute] = {
 
-    val registryAttributesMap = registryAttributes.attributes.map(a => (a.id, a)).toMap
+    val registryAttributesMap = registryAttributes.attributes.fproductLeft(_.id).toMap
 
     tenantAttributes.collect {
       case TenantManagement.TenantAttribute(Some(declared), None, None)  =>
