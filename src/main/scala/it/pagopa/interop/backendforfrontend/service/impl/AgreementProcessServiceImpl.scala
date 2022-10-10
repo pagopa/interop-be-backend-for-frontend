@@ -37,6 +37,15 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       invoker.invoke(request, s"Creating agreement with seed $seed")
     }
 
+  override def deleteAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.deleteAgreement(xCorrelationId = correlationId, agreementId = agreementId.toString, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Deleting agreement $agreementId")
+    }
+
   override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
     withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
       val request =
