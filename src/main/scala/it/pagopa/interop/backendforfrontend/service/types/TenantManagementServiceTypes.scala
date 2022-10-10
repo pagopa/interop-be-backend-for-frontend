@@ -4,37 +4,83 @@ import it.pagopa.interop.backendforfrontend.model.VerificationRenewal.{AUTOMATIC
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
+import java.util.UUID
+
 object TenantManagementServiceTypes {
 
-  implicit class DeclaredTenantAttributeConverter(private val attribute: TenantManagement.DeclaredTenantAttribute)
-      extends AnyVal {
-    def toApi(name: String): DeclaredTenantAttribute = DeclaredTenantAttribute(
-      id = attribute.id,
-      name = name,
-      assignmentTimestamp = attribute.assignmentTimestamp,
-      revocationTimestamp = attribute.revocationTimestamp
-    )
+  trait AdaptableTenantAttribute[DepAttribute, ApiAttribute] {
+    def toApi(a: DepAttribute, name: String, description: String): ApiAttribute
+    def id(a: DepAttribute): UUID
   }
 
-  implicit class CertifiedTenantAttributeConverter(private val attribute: TenantManagement.CertifiedTenantAttribute)
-      extends AnyVal {
-    def toApi(name: String): CertifiedTenantAttribute = CertifiedTenantAttribute(
-      id = attribute.id,
-      name = name,
-      assignmentTimestamp = attribute.assignmentTimestamp,
-      revocationTimestamp = attribute.revocationTimestamp
-    )
-  }
+  object AdaptableTenantAttribute {
+    def apply[DepAttribute, ApiAttribute](implicit
+      attribute: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
+    ): AdaptableTenantAttribute[DepAttribute, ApiAttribute] = attribute
 
-  implicit class VerifiedTenantAttributeConverter(private val attribute: TenantManagement.VerifiedTenantAttribute)
-      extends AnyVal {
-    def toApi(name: String): VerifiedTenantAttribute = VerifiedTenantAttribute(
-      id = attribute.id,
-      name = name,
-      assignmentTimestamp = attribute.assignmentTimestamp,
-      verifiedBy = attribute.verifiedBy.map(_.toApi),
-      revokedBy = attribute.revokedBy.map(_.toApi)
-    )
+    implicit class AdaptableTenantAttributeOps[DepAttribute, ApiAttribute](a: DepAttribute)(implicit
+      attribute: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
+    ) {
+      def toApi(name: String, description: String): ApiAttribute =
+        AdaptableTenantAttribute[DepAttribute, ApiAttribute].toApi(a, name, description)
+      def id: UUID = AdaptableTenantAttribute[DepAttribute, ApiAttribute].id(a)
+    }
+
+    implicit val certifiedAttribute
+      : AdaptableTenantAttribute[TenantManagement.CertifiedTenantAttribute, CertifiedTenantAttribute] =
+      new AdaptableTenantAttribute[TenantManagement.CertifiedTenantAttribute, CertifiedTenantAttribute] {
+        def id(attribute: TenantManagement.CertifiedTenantAttribute): UUID = attribute.id
+        def toApi(
+          attribute: TenantManagement.CertifiedTenantAttribute,
+          name: String,
+          description: String
+        ): CertifiedTenantAttribute =
+          CertifiedTenantAttribute(
+            id = attribute.id,
+            name = name,
+            description = description,
+            assignmentTimestamp = attribute.assignmentTimestamp,
+            revocationTimestamp = attribute.revocationTimestamp
+          )
+      }
+
+    implicit val declaredAttribute
+      : AdaptableTenantAttribute[TenantManagement.DeclaredTenantAttribute, DeclaredTenantAttribute] =
+      new AdaptableTenantAttribute[TenantManagement.DeclaredTenantAttribute, DeclaredTenantAttribute] {
+        def id(attribute: TenantManagement.DeclaredTenantAttribute): UUID = attribute.id
+        def toApi(
+          attribute: TenantManagement.DeclaredTenantAttribute,
+          name: String,
+          description: String
+        ): DeclaredTenantAttribute =
+          DeclaredTenantAttribute(
+            id = attribute.id,
+            name = name,
+            description = description,
+            assignmentTimestamp = attribute.assignmentTimestamp,
+            revocationTimestamp = attribute.revocationTimestamp
+          )
+      }
+
+    implicit val verifiedAttribute
+      : AdaptableTenantAttribute[TenantManagement.VerifiedTenantAttribute, VerifiedTenantAttribute] =
+      new AdaptableTenantAttribute[TenantManagement.VerifiedTenantAttribute, VerifiedTenantAttribute] {
+        def id(attribute: TenantManagement.VerifiedTenantAttribute): UUID = attribute.id
+        def toApi(
+          attribute: TenantManagement.VerifiedTenantAttribute,
+          name: String,
+          description: String
+        ): VerifiedTenantAttribute =
+          VerifiedTenantAttribute(
+            id = attribute.id,
+            name = name,
+            description = description,
+            assignmentTimestamp = attribute.assignmentTimestamp,
+            verifiedBy = attribute.verifiedBy.map(_.toApi),
+            revokedBy = attribute.revokedBy.map(_.toApi)
+          )
+      }
+
   }
 
   implicit class VerificationRenewalConverter(private val v: TenantManagement.VerificationRenewal) extends AnyVal {

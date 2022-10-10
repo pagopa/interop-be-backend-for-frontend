@@ -15,7 +15,7 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.{AgreementPayloadConverter, _}
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{MgmtAttributesResponse, _}
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
@@ -214,7 +214,7 @@ final case class AgreementsApiServiceImpl(
     agreementDeclaredAttrs  = filterAttributes(attributes, agreement.declaredAttributes.map(_.id))
       .map(_.toDeclaredAttribute)
 
-    tenantAttributes = consumerTenant.attributes.map(enhanceTenantAttribute(attributes, _))
+    tenantAttributes = enhanceTenantAttributes(consumerTenant.attributes, attributes)
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
@@ -266,21 +266,20 @@ final case class AgreementsApiServiceImpl(
   ): Seq[AttributeRegistry.Attribute] =
     filterIds.flatMap(id => registryAttributes.attributes.find(_.id == id))
 
-  def enhanceTenantAttribute(
-    registryAttributes: MgmtAttributesResponse,
-    tenantAttribute: TenantManagement.TenantAttribute
-  ): TenantAttribute = {
-    val certified = tenantAttribute.certified.map(a => (a, registryAttributes.attributes.find(_.id == a.id))).collect {
-      case (a1, Some(a2)) => a1.toApi(a2.name)
-    }
-    val declared  = tenantAttribute.declared.map(a => (a, registryAttributes.attributes.find(_.id == a.id))).collect {
-      case (a1, Some(a2)) => a1.toApi(a2.name)
-    }
-    val verified  = tenantAttribute.verified.map(a => (a, registryAttributes.attributes.find(_.id == a.id))).collect {
-      case (a1, Some(a2)) => a1.toApi(a2.name)
-    }
+  def enhanceTenantAttributes(
+    tenantAttributes: Seq[TenantManagement.TenantAttribute],
+    registryAttributes: MgmtAttributesResponse
+  ): Seq[TenantAttribute] = {
 
-    TenantAttribute(declared = declared, certified = certified, verified = verified)
+    val registryAttributesMap = registryAttributes.attributes.fproductLeft(_.id).toMap
+
+    tenantAttributes.collect {
+      case TenantManagement.TenantAttribute(Some(declared), None, None)  =>
+        TenantAttribute(declared = Utils.tenantAttributeToApi(declared, registryAttributesMap))
+      case TenantManagement.TenantAttribute(None, Some(certified), None) =>
+        TenantAttribute(certified = Utils.tenantAttributeToApi(certified, registryAttributesMap))
+      case TenantManagement.TenantAttribute(None, None, Some(verified))  =>
+        TenantAttribute(verified = Utils.tenantAttributeToApi(verified, registryAttributesMap))
+    }
   }
-
 }
