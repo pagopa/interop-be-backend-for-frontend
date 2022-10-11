@@ -57,6 +57,16 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  override def deleteAgreement(
+    agreementId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] = agreementId.toFutureUUID >>= agreementProcessService.deleteAgreement
+
+    onComplete(result) {
+      handleError(s"Error deleting agreement $agreementId") orElse { case Success(_) => deleteAgreement204 }
+    }
+  }
+
   override def getAgreementById(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
