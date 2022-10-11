@@ -23,6 +23,7 @@ import java.util.UUID
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import com.nimbusds.jwt.JWTClaimsSet
 
 class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with ScalatestRouteTest {
 
@@ -34,7 +35,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val selfcareId: String = UUID.randomUUID().toString()
       val tenantId: UUID     = UUID.randomUUID()
 
-      val jwtClaimsSet = Map(
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
         "organization" -> Map(
           "id"         -> selfcareId.toString(),
           "fiscalCode" -> "fiscalCode",
@@ -122,7 +123,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val selfcareId: String = UUID.randomUUID().toString()
       val tenantId: UUID     = UUID.randomUUID()
 
-      val jwtClaimsSet = Map(
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
         "organization" -> Map(
           "id"         -> selfcareId.toString(),
           "fiscalCode" -> "fiscalCode",
@@ -254,7 +255,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val selfcareId: String = UUID.randomUUID().toString()
       val tenantId: UUID     = UUID.randomUUID()
 
-      val jwtClaimsSet = Map(
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
         "organization" -> Map(
           "id"         -> selfcareId.toString(),
           "fiscalCode" -> "fiscalCode",
