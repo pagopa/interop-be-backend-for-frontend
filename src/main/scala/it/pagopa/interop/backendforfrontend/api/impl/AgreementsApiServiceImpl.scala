@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementprocess.client.model.DocumentSeed
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
@@ -343,7 +342,12 @@ final case class AgreementsApiServiceImpl(
             doc
           )
           .map(path =>
-            DocumentSeed(name = name, prettyName = prettyName, contentType = doc._1.contentType.toString(), path = path)
+            AgreementProcess.DocumentSeed(
+              name = name,
+              prettyName = prettyName,
+              contentType = doc._1.contentType.toString(),
+              path = path
+            )
           )
         document      <- agreementProcessService.addConsumerDocument(agreementUUID, seed)
       } yield document.toApi
@@ -414,11 +418,10 @@ final case class AgreementsApiServiceImpl(
 
     val result: Future[Unit] =
       for {
-        uuid      <- agreementId.toFutureUUID
-        agreement <- agreementProcessService.getAgreementById(uuid)
-        contract  <- agreement.contract.toFuture(ContractNotFound(agreementId))
-        _         <- fileManager.delete(ApplicationConfiguration.storageContainer)(contract.path)
-      } yield ()
+        agreementUUID <- agreementId.toFutureUUID
+        documentUUID  <- documentId.toFutureUUID
+        result        <- agreementProcessService.removeConsumerDocument(agreementUUID, documentUUID)
+      } yield result
 
     onComplete(result) {
       handleError(s"Error deleting consumer document $documentId for agreement $agreementId") orElse {
