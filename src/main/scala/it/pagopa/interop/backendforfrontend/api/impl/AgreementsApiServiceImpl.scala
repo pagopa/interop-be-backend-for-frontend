@@ -1,14 +1,21 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.AgreementDescriptorNotFound
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
+  AgreementDescriptorNotFound,
+  ContractNotFound,
+  InvalidContentType
+}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
@@ -17,11 +24,13 @@ import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServi
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
+import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -31,7 +40,8 @@ final case class AgreementsApiServiceImpl(
   attributeRegistryService: AttributeRegistryManagementService,
   catalogManagementService: CatalogManagementService,
   partyProcessService: PartyProcessService,
-  tenantManagementService: TenantManagementService
+  tenantManagementService: TenantManagementService,
+  fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends AgreementsApiService {
 
@@ -308,6 +318,115 @@ final case class AgreementsApiServiceImpl(
         TenantAttribute(certified = Utils.tenantAttributeToApi(certified, registryAttributesMap))
       case TenantManagement.TenantAttribute(None, None, Some(verified))  =>
         TenantAttribute(verified = Utils.tenantAttributeToApi(verified, registryAttributesMap))
+    }
+  }
+
+  override def addAgreementConsumerDocument(
+    name: String,
+    prettyName: String,
+    doc: (FileInfo, File),
+    agreementId: String
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+    logger.info(s"Adding consumer document to agreement $agreementId")
+
+    val result: Future[Document] =
+      for {
+        agreementUUID <- agreementId.toFutureUUID
+        seed          <- fileManager
+          .store(ApplicationConfiguration.storageContainer, ApplicationConfiguration.consumerDocumentsPath)(
+            doc._1.fileName,
+            doc
+          )
+          .map(path =>
+            AgreementProcess.DocumentSeed(
+              name = name,
+              prettyName = prettyName,
+              contentType = doc._1.contentType.toString(),
+              path = path
+            )
+          )
+        document      <- agreementProcessService.addConsumerDocument(agreementUUID, seed)
+      } yield document.toApi
+
+    onComplete(result) {
+      handleError(s"Error Adding consumer document to agreement $agreementId") orElse { case Success(contract) =>
+        complete(contract)
+      }
+    }
+  }
+
+  override def getAgreementConsumerDocument(agreementId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+    logger.info(s"Retrieving consumer document $documentId from agreement $agreementId")
+
+    val result: Future[HttpEntity.Strict] =
+      for {
+        agreementUUID <- agreementId.toFutureUUID
+        documentUUID  <- documentId.toFutureUUID
+        document      <- agreementProcessService.getConsumerDocument(agreementUUID, documentUUID)
+        contentType   <- getMediaType(document.contentType, agreementId, documentId)
+        byteStream    <- fileManager.get(ApplicationConfiguration.storageContainer)(document.path)
+      } yield HttpEntity(contentType, byteStream.toByteArray())
+
+    onComplete(result) {
+      handleError(s"Error downloading contract fro agreement $agreementId") orElse { case Success(contract) =>
+        complete(contract)
+      }
+    }
+  }
+
+  private def getMediaType(contentType: String, agreementId: String, documentId: String): Future[ContentType] =
+    ContentType
+      .parse(contentType)
+      .leftMap(errors => InvalidContentType(contentType, agreementId, documentId, errors))
+      .toFuture
+
+  override def getAgreementContract(agreementId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+    logger.info(s"Retrieving contract for agreement $agreementId")
+
+    val result: Future[HttpEntity.Strict] =
+      for {
+        uuid       <- agreementId.toFutureUUID
+        agreement  <- agreementProcessService.getAgreementById(uuid)
+        contract   <- agreement.contract.toFuture(ContractNotFound(agreementId))
+        byteStream <- fileManager.get(ApplicationConfiguration.storageContainer)(contract.path)
+      } yield HttpEntity(ContentType(MediaTypes.`application/pdf`), byteStream.toByteArray())
+
+    onComplete(result) {
+      handleError(s"Error downloading contract fro agreement $agreementId") orElse { case Success(contract) =>
+        complete(contract)
+      }
+    }
+  }
+
+  override def removeAgreementConsumerDocument(agreementId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Deleting consumer document $documentId for agreement $agreementId")
+
+    val result: Future[Unit] =
+      for {
+        agreementUUID <- agreementId.toFutureUUID
+        documentUUID  <- documentId.toFutureUUID
+        result        <- agreementProcessService.removeConsumerDocument(agreementUUID, documentUUID)
+      } yield result
+
+    onComplete(result) {
+      handleError(s"Error deleting consumer document $documentId for agreement $agreementId") orElse {
+        case Success(_) => removeAgreementConsumerDocument204
+      }
     }
   }
 }
