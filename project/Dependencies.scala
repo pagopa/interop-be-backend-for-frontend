@@ -29,6 +29,7 @@ object Dependencies {
     lazy val jwt          = namespace %% "interop-commons-jwt"          % commonsVersion
     lazy val rateLimiter  = namespace %% "interop-commons-rate-limiter" % commonsVersion
     lazy val vault        = namespace %% "interop-commons-signer"       % commonsVersion
+    lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
 
     lazy val agreementProcessClient =
       namespace %% "interop-be-agreement-process-client" % agreementProcessVersion
@@ -123,6 +124,7 @@ object Dependencies {
       pagopa.userRegistryClient      % Compile,
       pagopa.attributeRegistryClient % Compile,
       pagopa.vault                   % Compile,
+      pagopa.fileManager             % Compile,
       akka.httpTestkit               % Test,
       akka.testkit                   % Test,
       akka.untypedTestkit            % Test,

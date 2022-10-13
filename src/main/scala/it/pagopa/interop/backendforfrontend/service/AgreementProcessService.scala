@@ -27,4 +27,14 @@ trait AgreementProcessService {
     latest: Option[Boolean] = None
   )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]]
 
+  def addConsumerDocument(agreementId: UUID, seed: DocumentSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Document]
+
+  def getConsumerDocument(agreementId: UUID, documentId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Document]
+  def removeConsumerDocument(agreementId: UUID, documentId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
 }

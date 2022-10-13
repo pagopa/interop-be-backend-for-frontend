@@ -14,7 +14,7 @@ servers:
   - url: '/backend-for-frontend/{{version}}'
     description: This service is the Interop BFF
 security:
-  - bearerAuth: []
+  - bearerAuth: [ ]
 tags:
   - name: authorization
     description: Implements authorization
@@ -85,7 +85,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/AgreementState'
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: latest
@@ -505,6 +505,231 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/agreements/{agreementId}/consumer-documents':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: agreementId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - agreements
+      summary: Add a consumer Document to an Agreement
+      description: Add a consumer Document to an Agreement
+      operationId: addAgreementConsumerDocument
+      requestBody:
+        description: E-Service document
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - prettyName
+                - doc
+              properties:
+                name:
+                  type: string
+                prettyName:
+                  type: string
+                doc:
+                  type: string
+                  format: binary
+        required: true
+      responses:
+        '200':
+          description: Returns the document.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Resource Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/agreements/{agreementId}/consumer-documents/{documentId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: agreementId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: documentId
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - agreements
+      summary: Retrieve a consumer Document of an Agreement
+      description: Retrieve a consumer Document of an Agreement
+      operationId: getAgreementConsumerDocument
+      responses:
+        '200':
+          description: Document retrieved
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Resource Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    delete:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - agreements
+      summary: Remove a consumer Document from an Agreement
+      description: Remove a consumer Document from an Agreement
+      operationId: removeAgreementConsumerDocument
+      responses:
+        '204':
+          description: Document removed
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Resource Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/contract':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: agreementId
+        in: path
+        description: The identifier of the agreement
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - agreements
+      summary: retrieves the agreement contract
+      description: returns the agreement contract for a given agreementId
+      operationId: getAgreementContract
+      responses:
+        '200':
+          description: Agreement contract retrieved
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Agreement not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/agreements/{agreementId}/submit':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -912,7 +1137,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     post:
-      security: [{}]
+      security: [ { } ]
       tags:
         - authorization
       operationId: getSessionToken
@@ -974,7 +1199,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/PartyRole'
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: states
@@ -983,7 +1208,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/RelationshipState'
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: productRoles
@@ -992,7 +1217,7 @@ paths:
             type: array
             items:
               type: string
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: query
@@ -2092,7 +2317,7 @@ paths:
         description: 'code of the attribute to lookup (e.g.: unique identifier of IPA).'
   /status:
     get:
-      security: []
+      security: [ ]
       tags:
         - health
       summary: Health status endpoint
