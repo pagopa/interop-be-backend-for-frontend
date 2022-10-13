@@ -412,17 +412,17 @@ final case class AgreementsApiServiceImpl(
   ): Route = {
     logger.info(s"Deleting consumer document $documentId for agreement $agreementId")
 
-    val result: Future[HttpEntity.Strict] =
+    val result: Future[Unit] =
       for {
-        uuid       <- agreementId.toFutureUUID
-        agreement  <- agreementProcessService.getAgreementById(uuid)
-        contract   <- agreement.contract.toFuture(ContractNotFound(agreementId))
-        byteStream <- fileManager.get(ApplicationConfiguration.storageContainer)(contract.path)
-      } yield HttpEntity(ContentType(MediaTypes.`application/pdf`), byteStream.toByteArray())
+        uuid      <- agreementId.toFutureUUID
+        agreement <- agreementProcessService.getAgreementById(uuid)
+        contract  <- agreement.contract.toFuture(ContractNotFound(agreementId))
+        _         <- fileManager.delete(ApplicationConfiguration.storageContainer)(contract.path)
+      } yield ()
 
     onComplete(result) {
-      handleError(s"Error downloading contract fro agreement $agreementId") orElse { case Success(contract) =>
-        complete(contract)
+      handleError(s"Error deleting consumer document $documentId for agreement $agreementId") orElse {
+        case Success(_) => removeAgreementConsumerDocument204
       }
     }
   }
