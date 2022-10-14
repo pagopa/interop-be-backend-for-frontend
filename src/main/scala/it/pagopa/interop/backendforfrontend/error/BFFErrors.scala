@@ -1,5 +1,6 @@
 package it.pagopa.interop.backendforfrontend.error
 
+import akka.http.scaladsl.model.ErrorInfo
 import it.pagopa.interop.commons.utils.errors.ComponentError
 
 import java.util.UUID
@@ -20,4 +21,17 @@ object BFFErrors {
 
   final case class MissingSelfcareId(tenantId: UUID)
       extends ComponentError("0006", s"SelfcareId in Tenant ${tenantId.toString()} not found")
+
+  final case class ContractNotFound(agreementId: String)
+      extends ComponentError("0007", s"Contract not found for agreement $agreementId")
+
+  final case class InvalidContentType(
+    contentType: String,
+    agreementId: String,
+    documentId: String,
+    errors: List[ErrorInfo]
+  ) extends ComponentError(
+        "0008",
+        s"Invalid contentType $contentType for document $documentId from agreement $agreementId - ${errors.map(_.detail).mkString(",")}"
+      )
 }

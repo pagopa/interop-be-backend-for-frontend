@@ -62,4 +62,7 @@ object ApplicationConfiguration {
   val tenantManagementURL: String  = config.getString("backend-for-frontend.services.tenant-management")
   val tenantProcessURL: String     = config.getString("backend-for-frontend.services.tenant-process")
 
+  val storageKind: String           = config.getString("backend-for-frontend.storage.kind")
+  val storageContainer: String      = config.getString("backend-for-frontend.storage.container")
+  val consumerDocumentsPath: String = config.getString("backend-for-frontend.storage.consumer-documents-path")
 }

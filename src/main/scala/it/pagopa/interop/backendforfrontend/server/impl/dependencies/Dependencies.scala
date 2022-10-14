@@ -52,6 +52,7 @@ import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import it.pagopa.interop.commons.jwt.service.SessionTokenGenerator
 import it.pagopa.interop.backendforfrontend.server.Controller
+import it.pagopa.interop.commons.files.service.FileManager
 
 trait Dependencies {
 
@@ -161,8 +162,22 @@ trait Dependencies {
       oauthAndRateLimitingDirective
     )
 
+    def fileManager(blockingEc: ExecutionContextExecutor): FileManager =
+      FileManager.get(ApplicationConfiguration.storageKind match {
+        case "S3"   => FileManager.S3
+        case "file" => FileManager.File
+        case _      => throw new Exception("Incorrect File Manager")
+      })(blockingEc)
+
     val agreementsApi: AgreementsApi = new AgreementsApi(
-      AgreementsApiServiceImpl(agreementProcess, attributeRegistry, catalogManagement, partyProcess, tenantManagement),
+      AgreementsApiServiceImpl(
+        agreementProcess,
+        attributeRegistry,
+        catalogManagement,
+        partyProcess,
+        tenantManagement,
+        fileManager(blockingEc)
+      ),
       AgreementsApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )

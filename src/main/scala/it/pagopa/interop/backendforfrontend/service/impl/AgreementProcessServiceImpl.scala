@@ -1,23 +1,16 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
+import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementprocess.client.invoker.ApiInvoker
-import it.pagopa.interop.agreementprocess.client.api.EnumsSerializers
-import it.pagopa.interop.agreementprocess.client.api.AgreementApi
-import it.pagopa.interop.agreementprocess.client.invoker.BearerToken
-import it.pagopa.interop.agreementprocess.client.model.{
-  Agreement,
-  AgreementPayload,
-  AgreementRejectionPayload,
-  AgreementState
-}
+import it.pagopa.interop.agreementprocess.client.api.{AgreementApi, EnumsSerializers}
+import it.pagopa.interop.agreementprocess.client.invoker.{ApiInvoker, BearerToken}
+import it.pagopa.interop.agreementprocess.client.model._
 import it.pagopa.interop.backendforfrontend.service.AgreementProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.withHeaders
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
-import akka.actor.typed.ActorSystem
-import it.pagopa.interop.commons.utils.withHeaders
 
 class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
@@ -123,4 +116,40 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Rejecting agreement $agreementId")
     }
+
+  override def addConsumerDocument(agreementId: UUID, seed: DocumentSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Document] = withHeaders[Document] { (bearerToken, correlationId, ip) =>
+    val request = api.addAgreementConsumerDocument(
+      xCorrelationId = correlationId,
+      agreementId = agreementId,
+      documentSeed = seed,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Adding consumer document to agreement $agreementId")
+  }
+
+  override def getConsumerDocument(agreementId: UUID, documentId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Document] = withHeaders[Document] { (bearerToken, correlationId, ip) =>
+    val request = api.getAgreementConsumerDocument(
+      xCorrelationId = correlationId,
+      agreementId = agreementId,
+      documentId = documentId,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Getting consumer document $documentId from agreement $agreementId")
+  }
+
+  override def removeConsumerDocument(agreementId: UUID, documentId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+    val request = api.removeAgreementConsumerDocument(
+      xCorrelationId = correlationId,
+      agreementId = agreementId,
+      documentId = documentId,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Removing document $documentId from agreement $agreementId")
+  }
 }
