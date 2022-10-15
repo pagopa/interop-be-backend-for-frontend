@@ -334,14 +334,12 @@ final case class AgreementsApiServiceImpl(
   ): Route = {
     logger.info(s"Adding consumer document to agreement $agreementId")
 
+    val documentPath: String     = s"${ApplicationConfiguration.consumerDocumentsPath}/$agreementId"
     val result: Future[Document] =
       for {
         agreementUUID <- agreementId.toFutureUUID
         seed          <- fileManager
-          .store(ApplicationConfiguration.storageContainer, ApplicationConfiguration.consumerDocumentsPath)(
-            doc._1.fileName,
-            doc
-          )
+          .store(ApplicationConfiguration.storageContainer, documentPath)(doc._1.fileName, doc)
           .map(path =>
             AgreementProcess.DocumentSeed(
               name = name,
