@@ -28,6 +28,7 @@ import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.io.File
@@ -41,7 +42,8 @@ final case class AgreementsApiServiceImpl(
   catalogManagementService: CatalogManagementService,
   partyProcessService: PartyProcessService,
   tenantManagementService: TenantManagementService,
-  fileManager: FileManager
+  fileManager: FileManager,
+  uuidSupplier: UUIDSupplier
 )(implicit ec: ExecutionContext)
     extends AgreementsApiService {
 
@@ -334,7 +336,8 @@ final case class AgreementsApiServiceImpl(
   ): Route = {
     logger.info(s"Adding consumer document to agreement $agreementId")
 
-    val documentPath: String     = s"${ApplicationConfiguration.consumerDocumentsPath}/$agreementId"
+    val documentId: UUID         = uuidSupplier.get()
+    val documentPath: String     = s"${ApplicationConfiguration.consumerDocumentsPath}/$agreementId/$documentId"
     val result: Future[Document] =
       for {
         agreementUUID <- agreementId.toFutureUUID
@@ -342,6 +345,7 @@ final case class AgreementsApiServiceImpl(
           .store(ApplicationConfiguration.storageContainer, documentPath)(doc._1.fileName, doc)
           .map(path =>
             AgreementProcess.DocumentSeed(
+              id = documentId,
               name = name,
               prettyName = prettyName,
               contentType = doc._1.contentType.toString(),

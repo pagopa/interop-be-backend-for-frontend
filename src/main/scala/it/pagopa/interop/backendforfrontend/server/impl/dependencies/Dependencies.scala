@@ -46,7 +46,7 @@ import it.pagopa.interop.commons.signer.service.SignerService
 import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
@@ -176,7 +176,8 @@ trait Dependencies {
         catalogManagement,
         partyProcess,
         tenantManagement,
-        fileManager(blockingEc)
+        fileManager(blockingEc),
+        UUIDSupplier
       ),
       AgreementsApiMarshallerImpl,
       oauthAndRateLimitingDirective
