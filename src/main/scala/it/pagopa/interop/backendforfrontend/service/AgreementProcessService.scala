@@ -11,7 +11,9 @@ trait AgreementProcessService {
   def deleteAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
   def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
   def activateAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
-  def submitAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
+  def submitAgreement(agreementId: UUID, payload: AgreementSubmissionPayload)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Agreement]
   def suspendAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
   def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
   def rejectAgreement(agreementId: UUID, payload: AgreementRejectionPayload)(implicit

@@ -79,11 +79,16 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       invoker.invoke(request, s"Activating agreement $agreementId")
     }
 
-  override def submitAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
+  override def submitAgreement(agreementId: UUID, payload: AgreementSubmissionPayload)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Agreement] =
     withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
-      val request = api.submitAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
+      val request = api.submitAgreement(
+        xCorrelationId = correlationId,
+        agreementId = agreementId,
+        agreementSubmissionPayload = payload,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
       invoker.invoke(request, s"Submitting agreement $agreementId")
     }
 

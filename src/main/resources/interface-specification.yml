@@ -916,6 +916,13 @@ paths:
           schema:
             type: string
             format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementSubmissionPayload'
+        description: payload for agreement submission
+        required: true
       responses:
         '200':
           description: Agreement pending for activation
@@ -2591,11 +2598,15 @@ components:
         descriptorId:
           type: string
           format: uuid
-        consumerNotes:
-          type: string
       required:
         - eserviceId
         - descriptorId
+    AgreementSubmissionPayload:
+      type: object
+      description: contains the information for agreement creation.
+      properties:
+        consumerNotes:
+          type: string
     AgreementRejectionPayload:
       type: object
       description: contains the information for agreement rejection.

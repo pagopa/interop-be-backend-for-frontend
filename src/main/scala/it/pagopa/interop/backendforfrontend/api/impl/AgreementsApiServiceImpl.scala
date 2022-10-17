@@ -145,14 +145,14 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
-  override def submitAgreement(agreementId: String)(implicit
+  override def submitAgreement(agreementId: String, payload: AgreementSubmissionPayload)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
   ): Route = {
     val agreement: Future[Agreement] = for {
       agreementUuid <- agreementId.toFutureUUID
-      agreement     <- agreementProcessService.submitAgreement(agreementUuid)
+      agreement     <- agreementProcessService.submitAgreement(agreementUuid, payload.toSeed)
       apiAgreement  <- enhanceAgreement(agreement)
     } yield apiAgreement
 

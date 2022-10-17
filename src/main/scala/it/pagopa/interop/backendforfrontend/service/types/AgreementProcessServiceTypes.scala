@@ -8,11 +8,12 @@ object AgreementProcessServiceTypes {
 
   implicit class AgreementPayloadConverter(private val seed: AgreementPayload) extends AnyVal {
     def toSeed: AgreementProcess.AgreementPayload =
-      AgreementProcess.AgreementPayload(
-        eserviceId = seed.eserviceId,
-        descriptorId = seed.descriptorId,
-        consumerNotes = seed.consumerNotes
-      )
+      AgreementProcess.AgreementPayload(eserviceId = seed.eserviceId, descriptorId = seed.descriptorId)
+  }
+
+  implicit class AgreementSubmissionPayloadConverter(private val seed: AgreementSubmissionPayload) extends AnyVal {
+    def toSeed: AgreementProcess.AgreementSubmissionPayload =
+      AgreementProcess.AgreementSubmissionPayload(consumerNotes = seed.consumerNotes)
   }
 
   implicit class AgreementRejectionPayloadConverter(private val payload: AgreementRejectionPayload) extends AnyVal {
