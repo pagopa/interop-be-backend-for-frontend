@@ -37,4 +37,7 @@ object AgreementsApiMarshallerImpl extends AgreementsApiMarshaller with SprayJso
       source.close()
       out.getBytes(StandardCharsets.UTF_8.name)
     }
+
+  override implicit def fromEntityUnmarshallerAgreementSubmissionPayload
+    : FromEntityUnmarshaller[AgreementSubmissionPayload] = sprayJsonUnmarshaller[AgreementSubmissionPayload]
 }
