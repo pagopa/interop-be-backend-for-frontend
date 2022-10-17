@@ -14,13 +14,13 @@ object Versions {
 }
 
 object PagopaVersions {
-  lazy val commonsVersion           = "1.0.8"
-  lazy val agreementProcessVersion  = "1.0.5"
-  lazy val catalogManagementVersion = "1.0.5"
-  lazy val partyProcessVersion      = "1.0.1"
-  lazy val partyManagementVersion   = "1.0.1"
-  lazy val tenantManagementVersion  = "1.0.1"
-  lazy val tenantProcessVersion     = "1.0.1"
-  lazy val userRegistryVersion      = "1.0.1"
-  lazy val attributeRegistryVersion = "1.0.4"
+  lazy val commonsVersion           = "1.0.x-SNAPSHOT"
+  lazy val agreementProcessVersion  = "1.0.x-SNAPSHOT"
+  lazy val catalogManagementVersion = "1.0.x-SNAPSHOT"
+  lazy val partyProcessVersion      = "1.0.x-SNAPSHOT"
+  lazy val partyManagementVersion   = "1.0.x-SNAPSHOT"
+  lazy val tenantManagementVersion  = "1.0.x-SNAPSHOT"
+  lazy val tenantProcessVersion     = "1.0.x-SNAPSHOT"
+  lazy val userRegistryVersion      = "1.0.x-SNAPSHOT"
+  lazy val attributeRegistryVersion = "1.0.x-SNAPSHOT"
 }
