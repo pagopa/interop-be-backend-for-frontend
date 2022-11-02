@@ -51,4 +51,35 @@ object CatalogProcessServiceTypes {
     def toManagement: CatalogManagement.AttributeValue =
       CatalogManagement.AttributeValue(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
   }
+
+  implicit class AgreementApprovalPolicyWrapper(private val aap: CatalogProcess.AgreementApprovalPolicy)
+      extends AnyVal {
+    def toApi: AgreementApprovalPolicy = aap match {
+      case CatalogProcess.AgreementApprovalPolicy.AUTOMATIC => AgreementApprovalPolicy.AUTOMATIC
+      case CatalogProcess.AgreementApprovalPolicy.MANUAL    => AgreementApprovalPolicy.MANUAL
+    }
+  }
+
+  implicit class EServiceDocWrapper(private val esd: CatalogProcess.EServiceDoc) extends AnyVal {
+    def toApi: EServiceDoc =
+      EServiceDoc(id = esd.id, name = esd.name, contentType = esd.contentType, prettyName = esd.prettyName)
+  }
+
+  implicit class EServiceDescriptorWrapper(private val esd: CatalogProcess.EServiceDescriptor) extends AnyVal {
+    def toApi(mail: Option[Mail]): EServiceDescriptor = EServiceDescriptor(
+      id = esd.id,
+      version = esd.version,
+      description = esd.description,
+      interface = esd.interface.map(_.toApi),
+      docs = esd.docs.map(_.toApi),
+      state = esd.state.toApi,
+      audience = esd.audience,
+      voucherLifespan = esd.voucherLifespan,
+      dailyCallsPerConsumer = esd.dailyCallsPerConsumer,
+      dailyCallsTotal = esd.dailyCallsTotal,
+      agreementApprovalPolicy = esd.agreementApprovalPolicy.toApi,
+      mail = mail
+    )
+  }
+
 }

@@ -25,6 +25,9 @@ object BFFErrors {
   final case class ContractNotFound(agreementId: String)
       extends ComponentError("0007", s"Contract not found for agreement $agreementId")
 
+  final case class EServiceDescriptorNotFound(eServiceId: String, descriptorId: String)
+      extends ComponentError("0008", s"Descriptor ${descriptorId} not found in Eservice ${eServiceId}")
+
   final case class InvalidContentType(
     contentType: String,
     agreementId: String,

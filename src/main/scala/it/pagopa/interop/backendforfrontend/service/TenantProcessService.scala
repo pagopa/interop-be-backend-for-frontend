@@ -19,4 +19,8 @@ trait TenantProcessService {
   def revokeVerifiedAttribute(tenantId: UUID, attributeId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenant]
+
+  def getTenant(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant]
+
+  def updateTenant(tenantId: UUID, tenantDelta: TenantDelta)(implicit contexts: Seq[(String, String)]): Future[Unit]
 }

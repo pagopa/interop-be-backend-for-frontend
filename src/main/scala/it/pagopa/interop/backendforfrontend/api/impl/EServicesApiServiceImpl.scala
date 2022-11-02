@@ -12,6 +12,7 @@ import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{
   AgreementProcessService,
   CatalogProcessService,
@@ -26,7 +27,9 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.util.{Failure, Success}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
+import akka.http.scaladsl.model.StatusCodes
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -44,6 +47,32 @@ final case class EServicesApiServiceImpl(
     CatalogProcess.EServiceDescriptorState.SUSPENDED,
     CatalogProcess.EServiceDescriptorState.DEPRECATED
   )
+
+  override def getEserviceDescriptor(eserviceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEServiceDescriptor: ToEntityMarshaller[EServiceDescriptor],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[EServiceDescriptor] = for {
+      (eserviceUUID, descriptorUUID) <- eserviceId.toFutureUUID.zip(descriptorId.toFutureUUID)
+      eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
+      descriptor                     <- eService.descriptors
+        .find(_.id === descriptorUUID)
+        .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
+      mail                           <- tenantManagementService
+        .getTenant(eService.producer.id)
+        .map(_.mails.headOption.map(_.toApi))
+    } yield descriptor.toApi(mail)
+
+    onComplete(result) {
+      handleError(s"Error retrieving descriptor $descriptorId of eservice $eserviceId") orElse {
+        case Failure(x: EServiceDescriptorNotFound) =>
+          logger.warn(x.getMessage)
+          getEserviceDescriptor404(problemOf(StatusCodes.NotFound, x))
+        case Success(descriptor)                    => getEserviceDescriptor200(descriptor)
+      }
+    }
+  }
 
   override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
     implicit

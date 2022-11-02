@@ -13,6 +13,7 @@ import it.pagopa.interop.backendforfrontend.model.{
   VerifiedTenantAttributeSeed
 }
 import spray.json.DefaultJsonProtocol
+import it.pagopa.interop.backendforfrontend.model.TenantDelta
 
 object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
 
@@ -32,4 +33,8 @@ object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSuppo
 
   override implicit def toEntityMarshallerDeclaredAttributesResponse: ToEntityMarshaller[DeclaredAttributesResponse] =
     sprayJsonMarshaller[DeclaredAttributesResponse]
+
+  override implicit def fromEntityUnmarshallerTenantDelta: FromEntityUnmarshaller[TenantDelta] =
+    sprayJsonUnmarshaller[TenantDelta]
+
 }

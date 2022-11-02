@@ -128,6 +128,23 @@ final case class TenantsApiServiceImpl(
     }
   }
 
+  override def updateTenant(tenantId: String, tenantDelta: TenantDelta)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] = for {
+      tenantUUID <- tenantId.toFutureUUID
+      tenant     <- tenantProcessService.getTenant(tenantUUID)
+      ()         <- tenantProcessService.updateTenant(tenantUUID, tenantDelta.toExternalModel(tenant))
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error updating tenant with id $tenantId") orElse { case Success(_) =>
+        updateTenant204
+      }
+    }
+  }
+
   private def getTenantAttributes[DepAttribute, ApiAttribute](
     tenantId: String,
     attributeFromTenantAttribute: DepTenantAttribute => Option[DepAttribute]

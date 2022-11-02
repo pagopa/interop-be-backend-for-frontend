@@ -110,4 +110,8 @@ object TenantManagementServiceTypes {
       revocationDate = v.revocationDate
     )
   }
+
+  implicit class MailConverter(private val m: TenantManagement.Mail) extends AnyVal {
+    def toApi: Mail = Mail(address = m.address, description = m.description)
+  }
 }
