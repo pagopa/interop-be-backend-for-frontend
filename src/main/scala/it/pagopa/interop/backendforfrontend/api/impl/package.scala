@@ -17,6 +17,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
+  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]               = jsonFormat4(EServiceDoc)
+  implicit val mailFormat: RootJsonFormat[Mail]                             = jsonFormat2(Mail)
+  implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor] = jsonFormat12(EServiceDescriptor)
+
+  implicit val tenantDelta: RootJsonFormat[TenantDelta] = jsonFormat2(TenantDelta)
+
   implicit val tenantFormat: RootJsonFormat[Tenant] = jsonFormat2(Tenant)
 
   implicit val paginationFormat: RootJsonFormat[Pagination] = jsonFormat3(Pagination)
@@ -44,7 +50,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val tenantWithAttributesFormat: RootJsonFormat[TenantWithAttributes] = jsonFormat3(TenantWithAttributes)
   implicit val activeDescriptorFormat: RootJsonFormat[ActiveDescriptor]         = jsonFormat3(ActiveDescriptor)
-  implicit val eServiceFormat: RootJsonFormat[EService]                         = jsonFormat4(EService)
+  implicit val agreementsEServiceFormat: RootJsonFormat[AgreementsEService]     = jsonFormat4(AgreementsEService)
 
   implicit val documentFormat: RootJsonFormat[Document] = jsonFormat5(Document)
 

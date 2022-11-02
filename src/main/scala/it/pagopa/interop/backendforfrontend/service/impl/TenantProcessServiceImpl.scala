@@ -19,6 +19,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import akka.actor.typed.ActorSystem
 import it.pagopa.interop.commons.utils.withHeaders
+import it.pagopa.interop.tenantprocess.client.model.TenantDelta
 
 class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
@@ -90,4 +91,22 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Revoking verified attribute $attributeId to $tenantId")
     }
+
+  override def updateTenant(tenantId: UUID, tenantDelta: TenantDelta)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Tenant] =
+      api.updateTenant(xCorrelationId = correlationId, xForwardedFor = ip, id = tenantId, tenantDelta = tenantDelta)(
+        BearerToken(bearerToken)
+      )
+    invoker.invoke(request, s"Updating tenant with id $tenantId").map(_ => ())(blockingEc)
+  }
+
+  override def getTenant(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
+    withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Tenant] =
+        api.getTenant(xCorrelationId = correlationId, xForwardedFor = ip, id = tenantId)(BearerToken(bearerToken))
+      invoker.invoke(request, s"Getting tenant with id $tenantId")
+    }
+
 }

@@ -1405,7 +1405,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     post:
-      security: [ { } ]
+      security: [{}]
       tags:
         - authorization
       operationId: getSessionToken
@@ -2583,9 +2583,192 @@ paths:
         in: path
         required: true
         description: 'code of the attribute to lookup (e.g.: unique identifier of IPA).'
+  '/tenants/{tenantId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: tenantId
+        in: path
+        description: the tenant id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - tenants
+      summary: Updates the content of the tenant
+      description: Updates the content of the tenant
+      operationId: updateTenant
+      parameters:
+        - name: tenantId
+          in: path
+          description: The internal identifier of the tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantDelta'
+        description: payload for tenant update
+        required: true
+      responses:
+        '204':
+          description: Tenant updated
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Tenant not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/eservices/{eserviceId}/descriptor/{descriptorId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: eserviceId
+        in: path
+        description: the eservice id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: descriptorId
+        in: path
+        description: the descriptor id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - eservices
+      summary: Retrieves the eservice descriptor corresponding to the id
+      description: Retrieves the eservice descriptor corresponding to the id
+      operationId: getEserviceDescriptor
+      parameters:
+        - name: eserviceId
+          in: path
+          description: The internal identifier of the eservice
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: descriptorId
+          in: path
+          description: the descriptor id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The corresponding eService descriptor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EServiceDescriptor'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Eservice not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /status:
     get:
-      security: [ ]
+      security: []
       tags:
         - health
       summary: Health status endpoint
@@ -2612,6 +2795,91 @@ components:
       schema:
         type: string
   schemas:
+    Mail:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+        description:
+          type: string
+    EServiceDescriptor:
+      type: object
+      required:
+        - id
+        - version
+        - docs
+        - state
+        - creationDate
+        - audience
+        - voucherLifespan
+        - dailyCallsPerConsumer
+        - dailyCallsTotal
+        - agreementApprovalPolicy
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: string
+        description:
+          type: string
+        interface:
+          $ref: '#/components/schemas/EServiceDoc'
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceDoc'
+        state:
+          $ref: '#/components/schemas/EServiceDescriptorState'
+        audience:
+          type: array
+          items:
+            type: string
+        voucherLifespan:
+          type: integer
+          format: int32
+        dailyCallsPerConsumer:
+          description: 'maximum number of daily calls that this descriptor can afford.'
+          type: integer
+          format: int32
+          minimum: 0
+        dailyCallsTotal:
+          description: 'total daily calls available for this e-service.'
+          type: integer
+          format: int32
+          minimum: 0
+        agreementApprovalPolicy:
+          $ref: '#/components/schemas/AgreementApprovalPolicy'
+        mail:
+          $ref: '#/components/schemas/Mail'
+    EServiceDoc:
+      type: object
+      required:
+        - id
+        - name
+        - contentType
+        - prettyName
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        contentType:
+          type: string
+        prettyName:
+          type: string
+    AgreementApprovalPolicy:
+      type: string
+      description: |
+        EService Descriptor policy for new Agreements approval.
+        AUTOMATIC - the agreement will be automatically approved if Consumer attributes are met
+        MANUAL - the Producer must approve every agreement for this Descriptor.
+      enum:
+        - AUTOMATIC
+        - MANUAL
     Agreement:
       properties:
         id:
@@ -2625,7 +2893,7 @@ components:
         consumer:
           $ref: '#/components/schemas/TenantWithAttributes'
         eservice:
-          $ref: '#/components/schemas/EService'
+          $ref: '#/components/schemas/AgreementsEService'
         state:
           $ref: '#/components/schemas/AgreementState'
         verifiedAttributes:
@@ -2694,6 +2962,16 @@ components:
       required:
         - eserviceId
         - descriptorId
+    TenantDelta:
+      description: Tenant Delta model
+      type: object
+      properties:
+        contactEmail:
+          type: string
+        description:
+          type: string
+      required:
+        - contactEmail
     AgreementSubmissionPayload:
       type: object
       description: contains the information for agreement creation.
@@ -2933,7 +3211,7 @@ components:
         createdAt:
           type: string
           format: date-time
-    EService:
+    AgreementsEService:
       properties:
         id:
           type: string

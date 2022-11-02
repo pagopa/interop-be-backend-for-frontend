@@ -62,10 +62,7 @@ final case class AgreementsApiServiceImpl(
     onComplete(result) {
       handleError(
         s"Error creating agreement for EService ${payload.eserviceId} and Descriptor ${payload.descriptorId}"
-      ) orElse { case Success(resource) =>
-        createAgreement200(resource)
-
-      }
+      ) orElse { case Success(resource) => createAgreement200(resource) }
     }
   }
 
@@ -261,7 +258,7 @@ final case class AgreementsApiServiceImpl(
     producer = Tenant(id = agreement.producerId, name = producerDescription),
     consumer =
       TenantWithAttributes(id = agreement.consumerId, name = consumerDescription, attributes = tenantAttributes),
-    eservice = EService(
+    eservice = AgreementsEService(
       id = agreement.eserviceId,
       name = eService.name,
       version = currentDescriptor.version,

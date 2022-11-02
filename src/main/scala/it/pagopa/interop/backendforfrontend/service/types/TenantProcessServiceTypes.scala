@@ -17,6 +17,18 @@ object TenantProcessServiceTypes {
     )
   }
 
+  implicit class TenantDeltaConverter(private val delta: TenantDelta) extends AnyVal {
+    def toExternalModel(tenant: TenantProcess.Tenant): TenantProcess.TenantDelta = TenantProcess.TenantDelta(
+      selfcareId = tenant.selfcareId,
+      features = tenant.features,
+      mails = TenantProcess.MailSeed(
+        kind = TenantProcess.MailKind.CONTACT_EMAIL,
+        address = delta.contactEmail,
+        description = delta.description
+      ) :: Nil
+    )
+  }
+
   implicit class VerificationRenewalConverter(private val v: VerificationRenewal) extends AnyVal {
     def toSeed: TenantProcess.VerificationRenewal = v match {
       case VerificationRenewal.REVOKE_ON_EXPIRATION => TenantProcess.VerificationRenewal.REVOKE_ON_EXPIRATION
