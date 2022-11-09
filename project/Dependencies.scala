@@ -37,6 +37,9 @@ object Dependencies {
     lazy val catalogManagementClient =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
 
+    lazy val catalogProcessClient =
+      namespace %% "interop-be-catalog-process-client" % catalogProcessVersion
+
     lazy val partyManagementClient =
       namespace %% "interop-selfcare-party-management-client" % partyManagementVersion
 
@@ -117,6 +120,7 @@ object Dependencies {
       pagopa.rateLimiter             % Compile,
       pagopa.agreementProcessClient  % Compile,
       pagopa.catalogManagementClient % Compile,
+      pagopa.catalogProcessClient    % Compile,
       pagopa.partyProcessClient      % Compile,
       pagopa.partyManagementClient   % Compile,
       pagopa.tenantManagementClient  % Compile,

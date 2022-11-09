@@ -1,11 +1,11 @@
 package it.pagopa.interop.backendforfrontend.server.impl.dependencies
 
-import cats.implicits._
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.http.scaladsl.server.{Directive1, Route}
+import cats.implicits._
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
@@ -18,6 +18,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   AttributesApiServiceImpl,
   AuthorizationApiMarshallerImpl,
   AuthorizationApiServiceImpl,
+  EServicesApiMarshallerImpl,
+  EServicesApiServiceImpl,
   HealthApiMarshallerImpl,
   HealthServiceApiImpl,
   PartyApiMarshallerImpl,
@@ -28,10 +30,12 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   problemOf
 }
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.server.Controller
 import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.impl._
+import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.jwt._
-import it.pagopa.interop.commons.jwt.service.JWTReader
+import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.jwt.service.impl.{
   DefaultInteropTokenGenerator,
   DefaultJWTReader,
@@ -50,9 +54,6 @@ import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupp
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
-import it.pagopa.interop.commons.jwt.service.SessionTokenGenerator
-import it.pagopa.interop.backendforfrontend.server.Controller
-import it.pagopa.interop.commons.files.service.FileManager
 
 trait Dependencies {
 
@@ -111,6 +112,8 @@ trait Dependencies {
       new AgreementProcessServiceImpl(ApplicationConfiguration.agreementProcessURL, blockingEc)
     val catalogManagement: CatalogManagementService           =
       new CatalogManagementServiceImpl(ApplicationConfiguration.catalogManagementURL, blockingEc)
+    val catalogProcess: CatalogProcessService                 =
+      new CatalogProcessServiceImpl(ApplicationConfiguration.catalogProcessURL, blockingEc)
     val tenantManagement: TenantManagementService             =
       new TenantManagementServiceImpl(ApplicationConfiguration.tenantManagementURL, blockingEc)
     val userRegistry: UserRegistryService                     =
@@ -189,11 +192,18 @@ trait Dependencies {
       oauthAndRateLimitingDirective
     )
 
+    val eServicesApi: EservicesApi = new EservicesApi(
+      EServicesApiServiceImpl(agreementProcess, catalogProcess, tenantManagement, partyProcess),
+      EServicesApiMarshallerImpl,
+      oauthAndRateLimitingDirective
+    )
+
     new Controller(
       attributes = attributesApi,
       authorization = authorizationApi,
       agreements = agreementsApi,
       tenants = tenantsApi,
+      eservices = eServicesApi,
       party = partyApi,
       health = healthApi,
       validationExceptionToRoute = validationExceptionToRoute.some

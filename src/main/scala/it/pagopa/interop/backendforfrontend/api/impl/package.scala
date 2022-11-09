@@ -6,11 +6,11 @@ import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
-import it.pagopa.interop.commons.utils.{BEARER, UID}
-import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
+import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
+import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,6 +18,12 @@ import scala.concurrent.{ExecutionContext, Future}
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val tenantFormat: RootJsonFormat[Tenant] = jsonFormat2(Tenant)
+
+  implicit val slimOrganizationFormat: RootJsonFormat[SlimOrganization] = jsonFormat2(SlimOrganization)
+  implicit val slimAgreementFormat: RootJsonFormat[SlimAgreement]       = jsonFormat2(SlimAgreement)
+  implicit val slimDescriptorFormat: RootJsonFormat[SlimDescriptor]     = jsonFormat3(SlimDescriptor)
+  implicit val catalogEServiceFormat: RootJsonFormat[CatalogEService]   = jsonFormat8(CatalogEService)
+  implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices] = jsonFormat4(CatalogEServices)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
