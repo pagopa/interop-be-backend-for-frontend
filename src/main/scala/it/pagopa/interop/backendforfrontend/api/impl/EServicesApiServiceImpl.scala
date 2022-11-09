@@ -5,7 +5,6 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.MissingSelfcareId
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -23,6 +22,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,7 +61,7 @@ final case class EServicesApiServiceImpl(
         offset = offset,
         limit = limit
       )
-      enhancedEServices <- pagedResults.eservices.traverse(enhanceEService(requesterId))
+      enhancedEServices <- Future.traverse(pagedResults.eservices)(enhanceEService(requesterId))
     } yield CatalogEServices(
       eservices = enhancedEServices,
       totalCount = pagedResults.totalCount,
