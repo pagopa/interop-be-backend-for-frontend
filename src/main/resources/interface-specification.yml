@@ -2715,20 +2715,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CatalogEService'
-        totalCount:
-          type: integer
-          format: int32
-        offset:
-          type: integer
-          format: int32
-        limit:
-          type: integer
-          format: int32
+        pagination:
+          $ref: '#/components/schemas/Pagination'
       required:
         - eservices
-        - totalCount
-        - offset
-        - limit
+        - pagination
     CatalogEService:
       type: object
       required:
@@ -2819,6 +2810,22 @@ components:
         session_token:
           type: string
           format: jws
+    Pagination:
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+        totalResults:
+          type: integer
+          format: int32
+      required:
+        - offset
+        - limit
+        - totalResults
     PartyRole:
       type: string
       description: Represents the generic available role types for the relationship

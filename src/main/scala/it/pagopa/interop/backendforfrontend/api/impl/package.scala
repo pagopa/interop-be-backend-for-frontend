@@ -19,11 +19,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val tenantFormat: RootJsonFormat[Tenant] = jsonFormat2(Tenant)
 
+  implicit val paginationFormat: RootJsonFormat[Pagination] = jsonFormat3(Pagination)
+
   implicit val slimOrganizationFormat: RootJsonFormat[SlimOrganization] = jsonFormat2(SlimOrganization)
   implicit val slimAgreementFormat: RootJsonFormat[SlimAgreement]       = jsonFormat2(SlimAgreement)
   implicit val slimDescriptorFormat: RootJsonFormat[SlimDescriptor]     = jsonFormat3(SlimDescriptor)
   implicit val catalogEServiceFormat: RootJsonFormat[CatalogEService]   = jsonFormat8(CatalogEService)
-  implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices] = jsonFormat4(CatalogEServices)
+  implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices] = jsonFormat2(CatalogEServices)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)

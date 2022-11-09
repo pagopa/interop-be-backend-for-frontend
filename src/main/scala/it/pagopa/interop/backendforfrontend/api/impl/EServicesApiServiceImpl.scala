@@ -64,9 +64,7 @@ final case class EServicesApiServiceImpl(
       enhancedEServices <- Future.traverse(pagedResults.eservices)(enhanceEService(requesterId))
     } yield CatalogEServices(
       eservices = enhancedEServices,
-      totalCount = pagedResults.totalCount,
-      offset = offset,
-      limit = limit
+      pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
     )
 
     onComplete(result) {
