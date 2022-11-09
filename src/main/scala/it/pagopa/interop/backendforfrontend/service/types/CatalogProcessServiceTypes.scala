@@ -6,11 +6,6 @@ import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 
 object CatalogProcessServiceTypes {
 
-  implicit class EServiceDescriptorConverter(private val d: CatalogProcess.EServiceDescriptor) extends AnyVal {
-    def toActiveDescriptor: ActiveDescriptor =
-      ActiveDescriptor(id = d.id, state = d.state.toApi, version = d.version)
-  }
-
   implicit class EServiceDescriptorStateConverter(private val d: CatalogProcess.EServiceDescriptorState)
       extends AnyVal {
     def toApi: EServiceDescriptorState = d match {

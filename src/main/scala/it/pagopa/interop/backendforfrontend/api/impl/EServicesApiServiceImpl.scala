@@ -5,7 +5,6 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.MissingSelfcareId
@@ -44,14 +43,6 @@ final case class EServicesApiServiceImpl(
     CatalogProcess.EServiceDescriptorState.PUBLISHED,
     CatalogProcess.EServiceDescriptorState.SUSPENDED,
     CatalogProcess.EServiceDescriptorState.DEPRECATED
-  )
-
-  private val AGREEMENT_STATES_FILTER: List[AgreementProcess.AgreementState] = List(
-    AgreementProcess.AgreementState.DRAFT,
-    AgreementProcess.AgreementState.ACTIVE,
-    AgreementProcess.AgreementState.PENDING,
-    AgreementProcess.AgreementState.SUSPENDED,
-    AgreementProcess.AgreementState.MISSING_CERTIFIED_ATTRIBUTES
   )
 
   override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
@@ -109,7 +100,7 @@ final case class EServicesApiServiceImpl(
           consumerId = requesterId.toString.some,
           eServiceId = eService.id.toString.some,
           descriptorId = d.id.toString.some,
-          states = AGREEMENT_STATES_FILTER
+          states = Nil
         )
         .map(_.headOption)
     )
