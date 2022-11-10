@@ -186,8 +186,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
-              updatedAt = None,
-              mails = Nil
+              updatedAt = None
             )
           )
         )
