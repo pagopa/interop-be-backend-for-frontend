@@ -3,6 +3,7 @@ package it.pagopa.interop.backendforfrontend.service.types
 import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 
 object CatalogProcessServiceTypes {
 
@@ -28,4 +29,22 @@ object CatalogProcessServiceTypes {
     }
   }
 
+  implicit class AttributesConverter(private val a: CatalogProcess.Attributes) extends AnyVal {
+    def toManagement: CatalogManagement.Attributes =
+      CatalogManagement.Attributes(
+        certified = a.certified.map(_.toManagement),
+        declared = a.declared.map(_.toManagement),
+        verified = a.verified.map(_.toManagement)
+      )
+  }
+
+  implicit class AttributeConverter(private val a: CatalogProcess.Attribute) extends AnyVal {
+    def toManagement: CatalogManagement.Attribute =
+      CatalogManagement.Attribute(single = a.single.map(_.toManagement), group = a.group.map(_.map(_.toManagement)))
+  }
+
+  implicit class AttributeValueConverter(private val a: CatalogProcess.AttributeValue) extends AnyVal {
+    def toManagement: CatalogManagement.AttributeValue =
+      CatalogManagement.AttributeValue(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
+  }
 }

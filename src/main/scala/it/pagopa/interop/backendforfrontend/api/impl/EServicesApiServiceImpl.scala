@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.MissingSelfcareId
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -22,7 +23,6 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -109,24 +109,9 @@ final case class EServicesApiServiceImpl(
     producer = CompactOrganization(id = eService.producerId, name = producerInstitution.description),
     agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
     isMine = eService.producerId == requesterId,
-    canSubscribe = certifiedAttributesSatisfied(eService, requesterTenant),
+    canSubscribe =
+      certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
     activeDescriptor = activeDescriptor.map(d => CompactDescriptor(id = d.id, state = d.state.toApi, d.version))
   )
-
-  // TODO These methods could be published by the Agreement Process
-  def certifiedAttributesSatisfied(eService: CatalogProcess.EService, consumer: TenantManagement.Tenant): Boolean =
-    attributesSatisfied(
-      eService.attributes.certified,
-      consumer.attributes.mapFilter(_.certified).filter(_.revocationTimestamp.isEmpty).map(_.id)
-    )
-
-  private def attributesSatisfied(requested: Seq[CatalogProcess.Attribute], assigned: Seq[UUID]): Boolean =
-    requested.forall {
-      case CatalogProcess.Attribute(Some(single), _) => assigned.contains(single.id)
-      case CatalogProcess.Attribute(_, Some(group))  => group.map(_.id).intersect(assigned).nonEmpty
-      case _                                         => true
-    }
-
-  // End TODO
 
 }

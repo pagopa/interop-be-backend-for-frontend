@@ -34,6 +34,9 @@ object Dependencies {
     lazy val agreementProcessClient =
       namespace %% "interop-be-agreement-process-client" % agreementProcessVersion
 
+    lazy val agreementProcessLifecycle =
+      namespace %% "interop-be-agreement-process-lifecycle" % agreementProcessVersion
+
     lazy val catalogManagementClient =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
 
@@ -101,39 +104,40 @@ object Dependencies {
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
     lazy val `server`: Seq[ModuleID]  = Seq(
       // For making Java 12 happy
-      "javax.annotation"             % "javax.annotation-api" % "1.3.2" % "compile",
+      "javax.annotation"               % "javax.annotation-api" % "1.3.2" % "compile",
       //
-      akka.actor                     % Compile,
-      akka.actorTyped                % Compile,
-      akka.http                      % Compile,
-      akka.httpJson                  % Compile,
-      akka.management                % Compile,
-      akka.managementLogLevels       % Compile,
-      akka.persistence               % Compile,
-      akka.slf4j                     % Compile,
-      akka.stream                    % Compile,
-      cats.core                      % Compile,
-      logback.classic                % Compile,
-      mustache.mustache              % Compile,
-      pagopa.commonsUtils            % Compile,
-      pagopa.jwt                     % Compile,
-      pagopa.rateLimiter             % Compile,
-      pagopa.agreementProcessClient  % Compile,
-      pagopa.catalogManagementClient % Compile,
-      pagopa.catalogProcessClient    % Compile,
-      pagopa.partyProcessClient      % Compile,
-      pagopa.partyManagementClient   % Compile,
-      pagopa.tenantManagementClient  % Compile,
-      pagopa.tenantProcessClient     % Compile,
-      pagopa.userRegistryClient      % Compile,
-      pagopa.attributeRegistryClient % Compile,
-      pagopa.vault                   % Compile,
-      pagopa.fileManager             % Compile,
-      akka.httpTestkit               % Test,
-      akka.testkit                   % Test,
-      akka.untypedTestkit            % Test,
-      scalamock.core                 % Test,
-      scalatest.core                 % Test
+      akka.actor                       % Compile,
+      akka.actorTyped                  % Compile,
+      akka.http                        % Compile,
+      akka.httpJson                    % Compile,
+      akka.management                  % Compile,
+      akka.managementLogLevels         % Compile,
+      akka.persistence                 % Compile,
+      akka.slf4j                       % Compile,
+      akka.stream                      % Compile,
+      cats.core                        % Compile,
+      logback.classic                  % Compile,
+      mustache.mustache                % Compile,
+      pagopa.commonsUtils              % Compile,
+      pagopa.jwt                       % Compile,
+      pagopa.rateLimiter               % Compile,
+      pagopa.agreementProcessClient    % Compile,
+      pagopa.agreementProcessLifecycle % Compile,
+      pagopa.catalogManagementClient   % Compile,
+      pagopa.catalogProcessClient      % Compile,
+      pagopa.partyProcessClient        % Compile,
+      pagopa.partyManagementClient     % Compile,
+      pagopa.tenantManagementClient    % Compile,
+      pagopa.tenantProcessClient       % Compile,
+      pagopa.userRegistryClient        % Compile,
+      pagopa.attributeRegistryClient   % Compile,
+      pagopa.vault                     % Compile,
+      pagopa.fileManager               % Compile,
+      akka.httpTestkit                 % Test,
+      akka.testkit                     % Test,
+      akka.untypedTestkit              % Test,
+      scalamock.core                   % Test,
+      scalatest.core                   % Test
     )
 
     lazy val client: Seq[ModuleID] = Seq(
