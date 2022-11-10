@@ -2738,16 +2738,16 @@ components:
         description:
           type: string
         producer:
-          $ref: '#/components/schemas/SlimOrganization'
+          $ref: '#/components/schemas/CompactOrganization'
         agreement:
-          $ref: '#/components/schemas/SlimAgreement'
+          $ref: '#/components/schemas/CompactAgreement'
         isMine:
           type: boolean
         canSubscribe:
           type: boolean
         activeDescriptor:
-          $ref: '#/components/schemas/SlimDescriptor'
-    SlimAgreement:
+          $ref: '#/components/schemas/CompactDescriptor'
+    CompactAgreement:
       type: object
       required:
         - id
@@ -2758,7 +2758,7 @@ components:
           format: uuid
         state:
           $ref: '#/components/schemas/AgreementState'
-    SlimDescriptor:
+    CompactDescriptor:
       type: object
       required:
         - id
@@ -2772,7 +2772,7 @@ components:
           $ref: '#/components/schemas/EServiceDescriptorState'
         version:
           type: string
-    SlimOrganization:
+    CompactOrganization:
       type: object
       required:
         - id

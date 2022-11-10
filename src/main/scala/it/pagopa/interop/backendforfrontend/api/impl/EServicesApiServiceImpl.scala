@@ -106,11 +106,11 @@ final case class EServicesApiServiceImpl(
     id = eService.id,
     name = eService.name,
     description = eService.description,
-    producer = SlimOrganization(id = eService.producerId, name = producerInstitution.description),
-    agreement = agreement.map(a => SlimAgreement(id = a.id, state = a.state.toApi)),
+    producer = CompactOrganization(id = eService.producerId, name = producerInstitution.description),
+    agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
     isMine = eService.producerId == requesterId,
     canSubscribe = certifiedAttributesSatisfied(eService, requesterTenant),
-    activeDescriptor = activeDescriptor.map(d => SlimDescriptor(id = d.id, state = d.state.toApi, d.version))
+    activeDescriptor = activeDescriptor.map(d => CompactDescriptor(id = d.id, state = d.state.toApi, d.version))
   )
 
   // TODO These methods could be published by the Agreement Process
