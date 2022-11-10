@@ -10,6 +10,7 @@ import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError =>
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf}
 import it.pagopa.interop.backendforfrontend.model.Problem
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
+import it.pagopa.interop.catalogprocess.client.invoker.{ApiError => CatalogProcessError}
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
 import it.pagopa.interop.commons.ratelimiter
 import it.pagopa.interop.commons.ratelimiter.model.{Headers, RateLimitStatus}
@@ -32,6 +33,7 @@ object Handlers {
     case Failure(err: AgreementProcessError[_])                 => completeWithError(err.responseContent, logMessage)
     case Failure(err: AttributeRegistryError[_])                => completeWithError(err.responseContent, logMessage)
     case Failure(err: CatalogManagementError[_])                => completeWithError(err.responseContent, logMessage)
+    case Failure(err: CatalogProcessError[_])                   => completeWithError(err.responseContent, logMessage)
     case Failure(err: TenantManagementError[_])                 => completeWithError(err.responseContent, logMessage)
     case Failure(err: TenantProcessError[_])                    => completeWithError(err.responseContent, logMessage)
     case Failure(err: PartyProcessError[_])                     => completeWithError(err.responseContent, logMessage)

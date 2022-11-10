@@ -6,11 +6,11 @@ import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
-import it.pagopa.interop.commons.utils.{BEARER, UID}
-import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
+import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
+import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,6 +18,14 @@ import scala.concurrent.{ExecutionContext, Future}
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val tenantFormat: RootJsonFormat[Tenant] = jsonFormat2(Tenant)
+
+  implicit val paginationFormat: RootJsonFormat[Pagination] = jsonFormat3(Pagination)
+
+  implicit val compactOrganizationFormat: RootJsonFormat[CompactOrganization] = jsonFormat2(CompactOrganization)
+  implicit val compactAgreementFormat: RootJsonFormat[CompactAgreement]       = jsonFormat2(CompactAgreement)
+  implicit val compactDescriptorFormat: RootJsonFormat[CompactDescriptor]     = jsonFormat3(CompactDescriptor)
+  implicit val catalogEServiceFormat: RootJsonFormat[CatalogEService]         = jsonFormat8(CatalogEService)
+  implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]       = jsonFormat2(CatalogEServices)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)

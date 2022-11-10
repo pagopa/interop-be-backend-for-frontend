@@ -1,0 +1,17 @@
+package it.pagopa.interop.backendforfrontend.service
+
+import it.pagopa.interop.catalogprocess.client.model._
+
+import scala.concurrent.Future
+
+trait CatalogProcessService {
+
+  def getEServices(
+    name: Option[String] = None,
+    producersIds: Seq[String],
+    states: Seq[EServiceDescriptorState],
+    offset: Int,
+    limit: Int
+  )(implicit contexts: Seq[(String, String)]): Future[EServices]
+
+}
