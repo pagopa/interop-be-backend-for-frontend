@@ -4,7 +4,7 @@ import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
-import cats.implicits._
+import cats.syntax.all._
 
 object CatalogProcessServiceTypes {
 
