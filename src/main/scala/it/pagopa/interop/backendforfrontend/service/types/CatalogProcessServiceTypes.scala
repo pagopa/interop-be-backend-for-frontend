@@ -4,6 +4,7 @@ import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import cats.implicits._
 
 object CatalogProcessServiceTypes {
 
@@ -40,7 +41,10 @@ object CatalogProcessServiceTypes {
 
   implicit class AttributeConverter(private val a: CatalogProcess.Attribute) extends AnyVal {
     def toManagement: CatalogManagement.Attribute =
-      CatalogManagement.Attribute(single = a.single.map(_.toManagement), group = a.group.map(_.map(_.toManagement)))
+      CatalogManagement.Attribute(
+        single = a.single.map(_.toManagement),
+        group = a.group.nested.map(_.toManagement).value
+      )
   }
 
   implicit class AttributeValueConverter(private val a: CatalogProcess.AttributeValue) extends AnyVal {
