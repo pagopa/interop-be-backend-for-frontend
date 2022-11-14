@@ -1502,7 +1502,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     post:
-      security: [ { } ]
+      security: [{}]
       tags:
         - authorization
       operationId: getSessionToken
