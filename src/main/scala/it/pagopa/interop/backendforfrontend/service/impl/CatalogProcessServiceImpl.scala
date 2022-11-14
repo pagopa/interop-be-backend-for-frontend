@@ -1,16 +1,16 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
 import akka.actor.typed.ActorSystem
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.catalogprocess.client.model.{EServiceDescriptorState, EServices}
+import it.pagopa.interop.catalogprocess.client.model.{EService, EServiceDescriptorState, EServices}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
-import scala.concurrent.{ExecutionContextExecutor, Future}
-import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+
 import java.util.UUID
-import it.pagopa.interop.catalogprocess.client.model.OldEService
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
@@ -45,9 +45,9 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )
     }
 
-  override def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[OldEService] =
+  override def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] =
     withHeaders { (bearerToken, correlationId, ip) =>
-      val request: ApiRequest[OldEService] =
+      val request: ApiRequest[EService] =
         api.getEServiceById(xCorrelationId = correlationId, eServiceId = eServiceId.toString, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )

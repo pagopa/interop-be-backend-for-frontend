@@ -1,24 +1,23 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeManagement}
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.MissingSelfcareId
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.AttributeDetails
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{
-  AgreementProcessService,
-  CatalogProcessService,
-  PartyProcessService,
-  TenantManagementService
-}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils._
@@ -28,11 +27,10 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
-import it.pagopa.interop.backendforfrontend.error.BFFErrors._
-import akka.http.scaladsl.model.StatusCodes
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
+  attributeRegistryManagementService: AttributeRegistryManagementService,
   catalogProcessService: CatalogProcessService,
   tenantManagementService: TenantManagementService,
   partyProcessService: PartyProcessService
@@ -48,31 +46,120 @@ final case class EServicesApiServiceImpl(
     CatalogProcess.EServiceDescriptorState.DEPRECATED
   )
 
-  override def getEserviceDescriptor(eserviceId: String, descriptorId: String)(implicit
+  private val SUBSCRIBED_AGREEMENT_STATES: Set[AgreementProcess.AgreementState] = Set(
+    AgreementProcess.AgreementState.PENDING,
+    AgreementProcess.AgreementState.ACTIVE,
+    AgreementProcess.AgreementState.SUSPENDED
+  )
+
+  override def getCatalogEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerEServiceDescriptor: ToEntityMarshaller[EServiceDescriptor],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCatalogEServiceDescriptor: ToEntityMarshaller[CatalogEServiceDescriptor]
   ): Route = {
-    val result: Future[EServiceDescriptor] = for {
+    val result: Future[CatalogEServiceDescriptor] = for {
+      requesterId                    <- getOrganizationIdFuture(contexts)
       (eserviceUUID, descriptorUUID) <- eserviceId.toFutureUUID.zip(descriptorId.toFutureUUID)
       eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
       descriptor                     <- eService.descriptors
         .find(_.id === descriptorUUID)
-        .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
-      mail                           <- tenantManagementService
-        .getTenant(eService.producer.id)
-        .map(_.mails.headOption.map(_.toApi))
-    } yield descriptor.toApi(mail)
+        .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
+      attributes <- attributeRegistryManagementService.getBulkAttributes(extractIdsFromAttributes(eService.attributes))(
+        contexts
+      )
+      requesterTenant <- tenantManagementService
+        .getTenant(eService.producerId)
+      agreement       <- agreementProcessService
+        .getAgreements(
+          consumerId = requesterId.some,
+          eServiceId = eserviceId.some,
+          descriptorId = descriptorId.some,
+          states = Seq.empty,
+          latest = None
+        )
+        .map(_.headOption)
+    } yield CatalogEServiceDescriptor(
+      eServiceId = eService.id,
+      name = eService.name,
+      eServiceDescription = eService.description,
+      technology = eService.technology.toApi,
+      attributes = convertToApiAttributes(eService.attributes, attributes.attributes),
+      descriptorId = descriptor.id,
+      version = descriptor.version,
+      descriptorDescription = descriptor.description,
+      interface = descriptor.interface.map(_.toApi),
+      docs = descriptor.docs.map(_.toApi),
+      state = descriptor.state.toApi,
+      audience = descriptor.audience,
+      voucherLifespan = descriptor.voucherLifespan,
+      dailyCallsPerConsumer = descriptor.dailyCallsPerConsumer,
+      dailyCallsTotal = descriptor.dailyCallsTotal,
+      agreementApprovalPolicy = descriptor.agreementApprovalPolicy.toApi,
+      activeDescriptor = getActiveDescriptor(eService).map(ad => ActiveDescriptor(ad.id, ad.state.toApi, ad.version)),
+      agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
+      canSubscribe = certifiedAttributesSatisfied(
+        eService.attributes.toManagement,
+        requesterTenant.attributes.mapFilter(_.certified)
+      ),
+      isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
+      isMine = eService.producerId.toString == requesterId,
+      mail = requesterTenant.mails.headOption.map(_.toApi)
+    )
 
     onComplete(result) {
       handleError(s"Error retrieving descriptor $descriptorId of eservice $eserviceId") orElse {
         case Failure(x: EServiceDescriptorNotFound) =>
           logger.warn(x.getMessage)
-          getEserviceDescriptor404(problemOf(StatusCodes.NotFound, x))
-        case Success(descriptor)                    => getEserviceDescriptor200(descriptor)
+          getCatalogEServiceDescriptor404(problemOf(StatusCodes.NotFound, x))
+        case Success(descriptor)                    => getCatalogEServiceDescriptor200(descriptor)
       }
     }
   }
+
+  private def extractIdsFromAttributes(attributes: CatalogProcess.Attributes): Seq[UUID] =
+    attributes.certified.flatMap(extractIdsFromAttribute) ++
+      attributes.declared.flatMap(extractIdsFromAttribute) ++
+      attributes.verified.flatMap(extractIdsFromAttribute)
+
+  private def extractIdsFromAttribute(attribute: CatalogProcess.Attribute): Seq[UUID] = {
+    val fromSingle: Seq[UUID] = attribute.single.toSeq.map(_.id)
+    val fromGroup: Seq[UUID]  = attribute.group.toSeq.flatMap(_.map(_.id))
+
+    fromSingle ++ fromGroup
+  }
+
+  private def convertToApiAttributes(
+    currentAttributes: CatalogProcess.Attributes,
+    attributes: Seq[AttributeManagement.Attribute]
+  ): EServiceAttributes = {
+    val attributeNames: Map[UUID, AttributeDetails] =
+      attributes.map(attr => attr.id -> AttributeDetails(attr.name, attr.description)).toMap
+
+    EServiceAttributes(
+      certified = currentAttributes.certified.map(convertToApiAttribute(attributeNames)),
+      declared = currentAttributes.declared.map(convertToApiAttribute(attributeNames)),
+      verified = currentAttributes.verified.map(convertToApiAttribute(attributeNames))
+    )
+  }
+
+  private def convertToApiAttribute(
+    attributeNames: Map[UUID, AttributeDetails]
+  )(attribute: CatalogProcess.Attribute): EServiceAttribute = EServiceAttribute(
+    single = attribute.single.map(convertToApiAttributeValue(attributeNames)),
+    group = attribute.group.map(values => values.map(convertToApiAttributeValue(attributeNames)))
+  )
+
+  private def convertToApiAttributeValue(
+    attributeNames: Map[UUID, AttributeDetails]
+  )(value: CatalogProcess.AttributeValue) = EServiceAttributeValue(
+    id = value.id,
+    // TODO how to manage this case? Raise an error/Default/Flat option values
+    // TODO for now default value "Unknown"
+    name = attributeNames.get(value.id).map(_.name).getOrElse("Unknown"),
+    // TODO same here
+    description = attributeNames.get(value.id).map(_.description).getOrElse("Unknown"),
+    explicitAttributeVerification = value.explicitAttributeVerification
+  )
 
   override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
     implicit
@@ -116,10 +203,7 @@ final case class EServicesApiServiceImpl(
       if (requesterId != eService.producerId) tenantManagementService.getTenant(requesterId)
       else Future.successful(producerTenant)
 
-    activeDescriptor = eService.descriptors
-      .filter(d => ACTIVE_DESCRIPTOR_STATES_FILTER.contains(d.state))
-      .sortBy(_.version.toInt)
-      .lastOption
+    activeDescriptor = getActiveDescriptor(eService)
 
     agreement <- activeDescriptor.flatTraverse(d =>
       agreementProcessService
@@ -142,5 +226,11 @@ final case class EServicesApiServiceImpl(
       certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
     activeDescriptor = activeDescriptor.map(d => CompactDescriptor(id = d.id, state = d.state.toApi, d.version))
   )
+
+  def getActiveDescriptor(eService: CatalogProcess.EService): Option[CatalogProcess.EServiceDescriptor] =
+    eService.descriptors
+      .filter(d => ACTIVE_DESCRIPTOR_STATES_FILTER.contains(d.state))
+      .sortBy(_.version.toInt)
+      .lastOption
 
 }

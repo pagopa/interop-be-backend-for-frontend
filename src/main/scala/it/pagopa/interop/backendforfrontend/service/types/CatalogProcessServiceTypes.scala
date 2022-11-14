@@ -1,10 +1,10 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
+import cats.syntax.all._
 import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
-import cats.syntax.all._
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 
 object CatalogProcessServiceTypes {
 
@@ -65,21 +65,11 @@ object CatalogProcessServiceTypes {
       EServiceDoc(id = esd.id, name = esd.name, contentType = esd.contentType, prettyName = esd.prettyName)
   }
 
-  implicit class EServiceDescriptorWrapper(private val esd: CatalogProcess.EServiceDescriptor) extends AnyVal {
-    def toApi(mail: Option[Mail]): EServiceDescriptor = EServiceDescriptor(
-      id = esd.id,
-      version = esd.version,
-      description = esd.description,
-      interface = esd.interface.map(_.toApi),
-      docs = esd.docs.map(_.toApi),
-      state = esd.state.toApi,
-      audience = esd.audience,
-      voucherLifespan = esd.voucherLifespan,
-      dailyCallsPerConsumer = esd.dailyCallsPerConsumer,
-      dailyCallsTotal = esd.dailyCallsTotal,
-      agreementApprovalPolicy = esd.agreementApprovalPolicy.toApi,
-      mail = mail
-    )
+  implicit class EServiceTechnologyWrapper(private val est: CatalogProcess.EServiceTechnology) extends AnyVal {
+    def toApi: EServiceTechnology = est match {
+      case CatalogProcess.EServiceTechnology.REST => EServiceTechnology.REST
+      case CatalogProcess.EServiceTechnology.SOAP => EServiceTechnology.SOAP
+    }
   }
 
 }

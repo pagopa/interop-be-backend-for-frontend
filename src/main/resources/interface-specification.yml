@@ -14,7 +14,7 @@ servers:
   - url: '/backend-for-frontend/{{version}}'
     description: This service is the Interop BFF
 security:
-  - bearerAuth: []
+  - bearerAuth: [ ]
 tags:
   - name: authorization
     description: Implements authorization
@@ -90,7 +90,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/AgreementState'
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: latest
@@ -522,7 +522,7 @@ paths:
         required: true
     post:
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       tags:
         - agreements
       summary: Add a consumer Document to an Agreement
@@ -643,7 +643,7 @@ paths:
         required: true
     get:
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       tags:
         - agreements
       summary: Retrieve a consumer Document of an Agreement
@@ -729,7 +729,7 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
     delete:
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       tags:
         - agreements
       summary: Remove a consumer Document from an Agreement
@@ -1335,7 +1335,7 @@ paths:
             type: array
             items:
               type: string
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: states
@@ -1344,7 +1344,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/EServiceDescriptorState'
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: offset
@@ -1400,12 +1400,109 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/catalog/eservices/{eserviceId}/descriptor/{descriptorId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: eserviceId
+        in: path
+        description: the eservice id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: descriptorId
+        in: path
+        description: the descriptor id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - eservices
+      summary: Retrieves the eservice descriptor corresponding to the id
+      description: Retrieves the eservice descriptor corresponding to the id
+      operationId: getCatalogEServiceDescriptor
+      parameters:
+        - name: eserviceId
+          in: path
+          description: The internal identifier of the eservice
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: descriptorId
+          in: path
+          description: the descriptor id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The corresponding eService descriptor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogEServiceDescriptor'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Eservice not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/session/tokens':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     post:
-      security: [{}]
+      security: [ { } ]
       tags:
         - authorization
       operationId: getSessionToken
@@ -1467,7 +1564,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/PartyRole'
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: states
@@ -1476,7 +1573,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/RelationshipState'
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: productRoles
@@ -1485,7 +1582,7 @@ paths:
             type: array
             items:
               type: string
-            default: []
+            default: [ ]
           explode: false
         - in: query
           name: query
@@ -2669,106 +2766,9 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/eservices/{eserviceId}/descriptor/{descriptorId}':
-    parameters:
-      - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
-      - name: eserviceId
-        in: path
-        description: the eservice id
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: descriptorId
-        in: path
-        description: the descriptor id
-        required: true
-        schema:
-          type: string
-          format: uuid
-    get:
-      tags:
-        - eservices
-      summary: Retrieves the eservice descriptor corresponding to the id
-      description: Retrieves the eservice descriptor corresponding to the id
-      operationId: getEserviceDescriptor
-      parameters:
-        - name: eserviceId
-          in: path
-          description: The internal identifier of the eservice
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: descriptorId
-          in: path
-          description: the descriptor id
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: The corresponding eService descriptor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EServiceDescriptor'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '404':
-          description: Eservice not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '429':
-          description: Too Many Requests
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /status:
     get:
-      security: []
+      security: [ ]
       tags:
         - health
       summary: Health status endpoint
@@ -2804,26 +2804,44 @@ components:
           type: string
         description:
           type: string
-    EServiceDescriptor:
+    CatalogEServiceDescriptor:
       type: object
       required:
-        - id
+        - eServiceId
+        - name
+        - eServiceDescription
+        - technology
+        - attributes
+        - descriptorId
         - version
         - docs
         - state
-        - creationDate
         - audience
         - voucherLifespan
         - dailyCallsPerConsumer
         - dailyCallsTotal
         - agreementApprovalPolicy
+        - canSubscribe
+        - isSubscribed
+        - isMine
       properties:
-        id:
+        eServiceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        eServiceDescription:
+          type: string
+        technology:
+          $ref: '#/components/schemas/EServiceTechnology'
+        attributes:
+          $ref: '#/components/schemas/EServiceAttributes'
+        descriptorId:
           type: string
           format: uuid
         version:
           type: string
-        description:
+        descriptorDescription:
           type: string
         interface:
           $ref: '#/components/schemas/EServiceDoc'
@@ -2852,6 +2870,16 @@ components:
           minimum: 0
         agreementApprovalPolicy:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
+        activeDescriptor:
+          $ref: '#/components/schemas/ActiveDescriptor'
+        agreement:
+          $ref: '#/components/schemas/CompactAgreement'
+        canSubscribe:
+          type: boolean
+        isSubscribed:
+          type: boolean
+        isMine:
+          type: boolean
         mail:
           $ref: '#/components/schemas/Mail'
     EServiceDoc:
@@ -3250,6 +3278,58 @@ components:
         - DEPRECATED
         - SUSPENDED
         - ARCHIVED
+    EServiceTechnology:
+      type: string
+      description: EService Descriptor State
+      enum:
+        - REST
+        - SOAP
+    EServiceAttributes:
+      type: object
+      properties:
+        certified:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttribute'
+        declared:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttribute'
+        verified:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttribute'
+      additionalProperties: false
+      required:
+        - certified
+        - declared
+        - verified
+    EServiceAttribute:
+      type: object
+      properties:
+        single:
+          $ref: '#/components/schemas/EServiceAttributeValue'
+        group:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeValue'
+    EServiceAttributeValue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        explicitAttributeVerification:
+          type: boolean
+      required:
+        - id
+        - name
+        - description
+        - explicitAttributeVerification
     AttributeSeed:
       title: AttributeSeed
       type: object
