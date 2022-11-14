@@ -14,7 +14,7 @@ servers:
   - url: '/backend-for-frontend/{{version}}'
     description: This service is the Interop BFF
 security:
-  - bearerAuth: [ ]
+  - bearerAuth: []
 tags:
   - name: authorization
     description: Implements authorization
@@ -90,7 +90,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/AgreementState'
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: latest
@@ -522,7 +522,7 @@ paths:
         required: true
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - agreements
       summary: Add a consumer Document to an Agreement
@@ -643,7 +643,7 @@ paths:
         required: true
     get:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - agreements
       summary: Retrieve a consumer Document of an Agreement
@@ -729,7 +729,7 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
     delete:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - agreements
       summary: Remove a consumer Document from an Agreement
@@ -1335,7 +1335,7 @@ paths:
             type: array
             items:
               type: string
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: states
@@ -1344,7 +1344,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/EServiceDescriptorState'
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: offset
@@ -1564,7 +1564,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/PartyRole'
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: states
@@ -1573,7 +1573,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/RelationshipState'
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: productRoles
@@ -1582,7 +1582,7 @@ paths:
             type: array
             items:
               type: string
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: query
@@ -2768,7 +2768,7 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /status:
     get:
-      security: [ ]
+      security: []
       tags:
         - health
       summary: Health status endpoint
