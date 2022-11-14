@@ -33,6 +33,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val catalogEServiceFormat: RootJsonFormat[CatalogEService]         = jsonFormat8(CatalogEService)
   implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]       = jsonFormat2(CatalogEServices)
 
+  implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]   = jsonFormat4(ProducerEService)
+  implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices] = jsonFormat2(ProducerEServices)
+
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
   implicit val verifiedTenantAttributeSeedFormat: RootJsonFormat[VerifiedTenantAttributeSeed] =

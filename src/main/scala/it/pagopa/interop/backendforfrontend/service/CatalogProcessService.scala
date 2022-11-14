@@ -1,6 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service
 
 import it.pagopa.interop.catalogprocess.client.model._
+
 import java.util.UUID
 import scala.concurrent.Future
 
@@ -8,7 +9,8 @@ trait CatalogProcessService {
 
   def getEServices(
     name: Option[String] = None,
-    producersIds: Seq[String],
+    eServicesIds: Seq[UUID],
+    producersIds: Seq[UUID],
     states: Seq[EServiceDescriptorState],
     offset: Int,
     limit: Int

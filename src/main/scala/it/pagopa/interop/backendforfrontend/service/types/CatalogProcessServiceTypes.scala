@@ -80,6 +80,8 @@ object CatalogProcessServiceTypes {
       agreementApprovalPolicy = esd.agreementApprovalPolicy.toApi,
       mail = mail
     )
+
+    def toCompactDescriptor: CompactDescriptor = CompactDescriptor(id = esd.id, state = esd.state.toApi, esd.version)
   }
 
 }

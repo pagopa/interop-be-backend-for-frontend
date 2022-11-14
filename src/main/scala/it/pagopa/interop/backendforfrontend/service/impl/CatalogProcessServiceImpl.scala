@@ -1,16 +1,16 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
 import akka.actor.typed.ActorSystem
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.catalogprocess.client.model.{EServiceDescriptorState, EServices}
+import it.pagopa.interop.catalogprocess.client.model.{EServiceDescriptorState, EServices, OldEService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
-import scala.concurrent.{ExecutionContextExecutor, Future}
-import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+
 import java.util.UUID
-import it.pagopa.interop.catalogprocess.client.model.OldEService
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
@@ -24,7 +24,8 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
 
   override def getEServices(
     name: Option[String] = None,
-    producersIds: Seq[String],
+    eServicesIds: Seq[UUID],
+    producersIds: Seq[UUID],
     states: Seq[EServiceDescriptorState],
     offset: Int,
     limit: Int
@@ -32,6 +33,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     withHeaders[EServices] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[EServices] = api.getEServices(
         name = name,
+        eservicesIds = eServicesIds,
         producersIds = producersIds,
         states = states,
         offset = offset,
