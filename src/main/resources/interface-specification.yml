@@ -1421,8 +1421,8 @@ paths:
     get:
       tags:
         - eservices
-      summary: Retrieves the eservice descriptor corresponding to the id
-      description: Retrieves the eservice descriptor corresponding to the id
+      summary: Retrieves the catalog eservice descriptor corresponding to the id
+      description: Retrieves the catalog eservice descriptor corresponding to the id
       operationId: getCatalogEServiceDescriptor
       parameters:
         - name: eserviceId
@@ -2871,7 +2871,7 @@ components:
         agreementApprovalPolicy:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
         activeDescriptor:
-          $ref: '#/components/schemas/ActiveDescriptor'
+          $ref: '#/components/schemas/CompactDescriptor'
         agreement:
           $ref: '#/components/schemas/CompactAgreement'
         canSubscribe:

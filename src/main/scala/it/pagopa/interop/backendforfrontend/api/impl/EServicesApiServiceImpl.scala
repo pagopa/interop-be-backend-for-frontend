@@ -95,7 +95,7 @@ final case class EServicesApiServiceImpl(
       dailyCallsPerConsumer = descriptor.dailyCallsPerConsumer,
       dailyCallsTotal = descriptor.dailyCallsTotal,
       agreementApprovalPolicy = descriptor.agreementApprovalPolicy.toApi,
-      activeDescriptor = getActiveDescriptor(eService).map(ad => ActiveDescriptor(ad.id, ad.state.toApi, ad.version)),
+      activeDescriptor = getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version)),
       agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
       canSubscribe = certifiedAttributesSatisfied(
         eService.attributes.toManagement,
