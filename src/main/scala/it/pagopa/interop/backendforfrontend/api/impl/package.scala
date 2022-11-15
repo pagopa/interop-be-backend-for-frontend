@@ -52,7 +52,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val tenantAttributeFormat: RootJsonFormat[TenantAttribute]                   = jsonFormat3(TenantAttribute)
 
   implicit val tenantWithAttributesFormat: RootJsonFormat[TenantWithAttributes] = jsonFormat3(TenantWithAttributes)
-  implicit val activeDescriptorFormat: RootJsonFormat[ActiveDescriptor]         = jsonFormat3(ActiveDescriptor)
   implicit val agreementsEServiceFormat: RootJsonFormat[AgreementsEService]     = jsonFormat4(AgreementsEService)
 
   implicit val documentFormat: RootJsonFormat[Document] = jsonFormat5(Document)

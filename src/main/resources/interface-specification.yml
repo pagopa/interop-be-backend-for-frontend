@@ -3329,25 +3329,11 @@ components:
         version:
           type: string
         activeDescriptor:
-          $ref: '#/components/schemas/ActiveDescriptor'
+          $ref: '#/components/schemas/CompactDescriptor'
       additionalProperties: false
       required:
         - id
         - name
-        - version
-    ActiveDescriptor:
-      properties:
-        id:
-          type: string
-          format: uuid
-        state:
-          $ref: '#/components/schemas/EServiceDescriptorState'
-        version:
-          type: string
-      additionalProperties: false
-      required:
-        - id
-        - state
         - version
     EServiceDescriptorState:
       type: string
