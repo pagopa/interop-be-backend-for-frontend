@@ -71,8 +71,7 @@ final case class EServicesApiServiceImpl(
           consumerId = requesterId.some,
           eServiceId = eserviceId.some,
           descriptorId = descriptorId.some,
-          states = Seq.empty,
-          latest = None
+          states = Seq.empty
         )
         .map(_.headOption)
     } yield CatalogEServiceDescriptor(
