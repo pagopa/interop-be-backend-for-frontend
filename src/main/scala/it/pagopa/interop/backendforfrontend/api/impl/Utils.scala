@@ -8,8 +8,6 @@ import java.util.UUID
 
 object Utils {
 
-  final case class AttributeDetails(name: String, description: String)
-
   def tenantAttributesToApi[DepAttribute, ApiAttribute](
     tenantAttributes: Seq[DepAttribute],
     registryAttributes: Seq[Attribute]

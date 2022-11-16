@@ -1,10 +1,13 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import cats.syntax.all._
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeManagement}
 import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+
+import java.util.UUID
 
 object CatalogProcessServiceTypes {
 
@@ -66,20 +69,6 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceDescriptorWrapper(private val esd: CatalogProcess.EServiceDescriptor) extends AnyVal {
-    def toApi(mail: Option[Mail]): CatalogEServiceDescriptor = CatalogEServiceDescriptor(
-      eServiceId = esd.id,
-      version = esd.version,
-      eServiceDescription = esd.description,
-      interface = esd.interface.map(_.toApi),
-      docs = esd.docs.map(_.toApi),
-      state = esd.state.toApi,
-      audience = esd.audience,
-      voucherLifespan = esd.voucherLifespan,
-      dailyCallsPerConsumer = esd.dailyCallsPerConsumer,
-      dailyCallsTotal = esd.dailyCallsTotal,
-      agreementApprovalPolicy = esd.agreementApprovalPolicy.toApi,
-      mail = mail
-    )
 
     def toCompactDescriptor: CompactDescriptor = CompactDescriptor(id = esd.id, state = esd.state.toApi, esd.version)
   }
@@ -89,5 +78,37 @@ object CatalogProcessServiceTypes {
       case CatalogProcess.EServiceTechnology.SOAP => EServiceTechnology.SOAP
     }
   }
+
+  final case class AttributeDetails(name: String, description: String)
+
+  implicit class AttributesWrapper(private val eServiceAttributes: CatalogProcess.Attributes) extends AnyVal {
+
+    def toApi(attributes: Seq[AttributeManagement.Attribute]): EServiceAttributes = {
+      val attributeNames: Map[UUID, AttributeDetails] =
+        attributes.map(attr => attr.id -> AttributeDetails(attr.name, attr.description)).toMap
+
+      EServiceAttributes(
+        certified = eServiceAttributes.certified.map(convertToApiAttribute(attributeNames)),
+        declared = eServiceAttributes.declared.map(convertToApiAttribute(attributeNames)),
+        verified = eServiceAttributes.verified.map(convertToApiAttribute(attributeNames))
+      )
+    }
+
+    private def convertToApiAttribute(
+      attributeNames: Map[UUID, AttributeDetails]
+    )(attribute: CatalogProcess.Attribute): EServiceAttribute = EServiceAttribute(
+      single = attribute.single.map(convertToApiAttributeValue(attributeNames)),
+      group = attribute.group.nested.map(convertToApiAttributeValue(attributeNames)).value
+    )
+  }
+
+  private def convertToApiAttributeValue(
+    attributeNames: Map[UUID, AttributeDetails]
+  )(value: CatalogProcess.AttributeValue) = EServiceAttributeValue(
+    id = value.id,
+    name = attributeNames.get(value.id).map(_.name).getOrElse("Unknown"),
+    description = attributeNames.get(value.id).map(_.description).getOrElse("Unknown"),
+    explicitAttributeVerification = value.explicitAttributeVerification
+  )
 
 }

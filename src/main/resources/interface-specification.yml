@@ -2888,12 +2888,8 @@ components:
     CatalogEServiceDescriptor:
       type: object
       required:
-        - eServiceId
-        - name
-        - eServiceDescription
-        - technology
-        - attributes
-        - descriptorId
+        - eservice
+        - id
         - version
         - docs
         - state
@@ -2906,23 +2902,12 @@ components:
         - isSubscribed
         - isMine
       properties:
-        eServiceId:
-          type: string
-          format: uuid
-        name:
-          type: string
-        eServiceDescription:
-          type: string
-        technology:
-          $ref: '#/components/schemas/EServiceTechnology'
-        attributes:
-          $ref: '#/components/schemas/EServiceAttributes'
-        descriptorId:
+        id:
           type: string
           format: uuid
         version:
           type: string
-        descriptorDescription:
+        description:
           type: string
         interface:
           $ref: '#/components/schemas/EServiceDoc'
@@ -2951,16 +2936,46 @@ components:
           minimum: 0
         agreementApprovalPolicy:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
-        activeDescriptor:
-          $ref: '#/components/schemas/CompactDescriptor'
+        eservice:
+          $ref: '#/components/schemas/CatalogEService'
+    CatalogEService:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - technology
+        - attributes
+        - descriptors
+        - isMine
+        - canSubscribe
+        - isSubscribed
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        technology:
+          $ref: '#/components/schemas/EServiceTechnology'
+        attributes:
+          $ref: '#/components/schemas/EServiceAttributes'
+        descriptors:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompactDescriptor'
         agreement:
           $ref: '#/components/schemas/CompactAgreement'
+        isMine:
+          type: boolean
         canSubscribe:
           type: boolean
         isSubscribed:
           type: boolean
-        isMine:
-          type: boolean
+        activeDescriptor:
+          $ref: '#/components/schemas/CompactDescriptor'
         mail:
           $ref: '#/components/schemas/Mail'
     EServiceDoc:
@@ -3101,13 +3116,13 @@ components:
         eservices:
           type: array
           items:
-            $ref: '#/components/schemas/CatalogEService'
+            $ref: '#/components/schemas/CatalogEServiceItem'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
         - eservices
         - pagination
-    CatalogEService:
+    CatalogEServiceItem:
       type: object
       required:
         - id
