@@ -65,6 +65,24 @@ object CatalogProcessServiceTypes {
       EServiceDoc(id = esd.id, name = esd.name, contentType = esd.contentType, prettyName = esd.prettyName)
   }
 
+  implicit class EServiceDescriptorWrapper(private val esd: CatalogProcess.EServiceDescriptor) extends AnyVal {
+    def toApi(mail: Option[Mail]): CatalogEServiceDescriptor = CatalogEServiceDescriptor(
+      eServiceId = esd.id,
+      version = esd.version,
+      eServiceDescription = esd.description,
+      interface = esd.interface.map(_.toApi),
+      docs = esd.docs.map(_.toApi),
+      state = esd.state.toApi,
+      audience = esd.audience,
+      voucherLifespan = esd.voucherLifespan,
+      dailyCallsPerConsumer = esd.dailyCallsPerConsumer,
+      dailyCallsTotal = esd.dailyCallsTotal,
+      agreementApprovalPolicy = esd.agreementApprovalPolicy.toApi,
+      mail = mail
+    )
+
+    def toCompactDescriptor: CompactDescriptor = CompactDescriptor(id = esd.id, state = esd.state.toApi, esd.version)
+  }
   implicit class EServiceTechnologyWrapper(private val est: CatalogProcess.EServiceTechnology) extends AnyVal {
     def toApi: EServiceTechnology = est match {
       case CatalogProcess.EServiceTechnology.REST => EServiceTechnology.REST

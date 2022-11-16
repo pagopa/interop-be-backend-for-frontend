@@ -9,7 +9,8 @@ trait CatalogProcessService {
 
   def getEServices(
     name: Option[String] = None,
-    producersIds: Seq[String],
+    eServicesIds: Seq[UUID],
+    producersIds: Seq[UUID],
     states: Seq[EServiceDescriptorState],
     offset: Int,
     limit: Int

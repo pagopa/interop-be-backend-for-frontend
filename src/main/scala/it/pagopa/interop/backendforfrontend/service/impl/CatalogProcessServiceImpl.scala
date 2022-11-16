@@ -24,7 +24,8 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
 
   override def getEServices(
     name: Option[String] = None,
-    producersIds: Seq[String],
+    eServicesIds: Seq[UUID],
+    producersIds: Seq[UUID],
     states: Seq[EServiceDescriptorState],
     offset: Int,
     limit: Int
@@ -32,6 +33,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     withHeaders[EServices] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[EServices] = api.getEServices(
         name = name,
+        eservicesIds = eServicesIds,
         producersIds = producersIds,
         states = states,
         offset = offset,

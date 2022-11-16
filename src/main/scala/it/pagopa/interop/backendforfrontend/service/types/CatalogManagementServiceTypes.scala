@@ -7,8 +7,8 @@ import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 object CatalogManagementServiceTypes {
 
   implicit class EServiceDescriptorConverter(private val d: CatalogManagement.EServiceDescriptor) extends AnyVal {
-    def toActiveDescriptor: ActiveDescriptor =
-      ActiveDescriptor(id = d.id, state = d.state.toApi, version = d.version)
+    def toCompactDescriptor: CompactDescriptor =
+      CompactDescriptor(id = d.id, state = d.state.toApi, version = d.version)
   }
 
   implicit class EServiceDescriptorStateConverter(private val d: CatalogManagement.EServiceDescriptorState)

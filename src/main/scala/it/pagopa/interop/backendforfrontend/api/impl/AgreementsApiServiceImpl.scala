@@ -262,7 +262,7 @@ final case class AgreementsApiServiceImpl(
       id = agreement.eserviceId,
       name = eService.name,
       version = currentDescriptor.version,
-      activeDescriptor = activeDescriptor.map(_.toActiveDescriptor)
+      activeDescriptor = activeDescriptor.map(_.toCompactDescriptor)
     ),
     state = agreement.state.toApi,
     verifiedAttributes = agreementVerifiedAttrs,
