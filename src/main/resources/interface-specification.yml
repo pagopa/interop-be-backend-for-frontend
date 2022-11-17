@@ -2937,8 +2937,8 @@ components:
         agreementApprovalPolicy:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
         eservice:
-          $ref: '#/components/schemas/CatalogEService'
-    CatalogEService:
+          $ref: '#/components/schemas/CatalogDescriptorEService'
+    CatalogDescriptorEService:
       type: object
       required:
         - id
@@ -3116,13 +3116,13 @@ components:
         eservices:
           type: array
           items:
-            $ref: '#/components/schemas/CatalogEServiceItem'
+            $ref: '#/components/schemas/CatalogEService'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
         - eservices
         - pagination
-    CatalogEServiceItem:
+    CatalogEService:
       type: object
       required:
         - id

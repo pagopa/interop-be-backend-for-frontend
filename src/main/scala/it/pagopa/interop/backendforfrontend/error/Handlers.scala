@@ -8,6 +8,7 @@ import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
 import it.pagopa.interop.backendforfrontend.model.Problem
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiError => CatalogProcessError}
@@ -39,7 +40,8 @@ object Handlers {
     case Failure(err: PartyProcessError[_])                     => completeWithError(err.responseContent, logMessage)
     case Failure(err: UserRegistryError[_])                     => completeWithError(err.responseContent, logMessage)
     case Failure(tmr: ratelimiter.error.Errors.TooManyRequests) => tooManyRequests(tmr.status)
-    case Failure(_)                                             => internalServerError(logMessage)
+    case Failure(err: AttributeNotExists) => internalServerError(s"$logMessage - ${err.getMessage}")
+    case Failure(_)                       => internalServerError(logMessage)
   }
 
   private def log(logMessage: String)(implicit

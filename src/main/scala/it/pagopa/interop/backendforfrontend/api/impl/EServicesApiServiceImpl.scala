@@ -87,7 +87,7 @@ final case class EServicesApiServiceImpl(
       dailyCallsPerConsumer = descriptor.dailyCallsPerConsumer,
       dailyCallsTotal = descriptor.dailyCallsTotal,
       agreementApprovalPolicy = descriptor.agreementApprovalPolicy.toApi,
-      eservice = CatalogEService(
+      eservice = CatalogDescriptorEService(
         id = eService.id,
         name = eService.name,
         description = eService.description,
@@ -149,7 +149,7 @@ final case class EServicesApiServiceImpl(
         offset = offset,
         limit = limit
       )
-      enhancedEServices <- Future.traverse(pagedResults.eservices)(enhanceCatalogEServiceItem(requesterId))
+      enhancedEServices <- Future.traverse(pagedResults.eservices)(enhanceCatalogEService(requesterId))
     } yield CatalogEServices(
       eservices = enhancedEServices,
       pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
@@ -204,9 +204,9 @@ final case class EServicesApiServiceImpl(
       )
       .map(_.flatten.map(_.eserviceId).distinct)
 
-  private def enhanceCatalogEServiceItem(
+  private def enhanceCatalogEService(
     requesterId: UUID
-  )(eService: CatalogProcess.EService)(implicit contexts: Seq[(String, String)]): Future[CatalogEServiceItem] = for {
+  )(eService: CatalogProcess.EService)(implicit contexts: Seq[(String, String)]): Future[CatalogEService] = for {
     // TODO Use directly the tenant once the name will be added to its model
     producerTenant      <- tenantManagementService.getTenant(eService.producerId)
     selfcareId          <- producerTenant.selfcareId.toFuture(MissingSelfcareId(producerTenant.id))
@@ -229,7 +229,7 @@ final case class EServicesApiServiceImpl(
         )
         .map(_.headOption)
     )
-  } yield CatalogEServiceItem(
+  } yield CatalogEService(
     id = eService.id,
     name = eService.name,
     description = eService.description,
