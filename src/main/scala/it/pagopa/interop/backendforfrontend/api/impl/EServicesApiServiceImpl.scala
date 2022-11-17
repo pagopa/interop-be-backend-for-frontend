@@ -65,6 +65,7 @@ final case class EServicesApiServiceImpl(
       attributes                     <- attributeRegistryManagementService
         .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
         .map(_.attributes)
+      eServiceAttributes             <- eService.attributes.toApi(attributes)
       requesterTenant                <- tenantManagementService.getTenant(eService.producerId)
       agreement                      <- agreementProcessService
         .getAgreements(
@@ -91,7 +92,7 @@ final case class EServicesApiServiceImpl(
         name = eService.name,
         description = eService.description,
         technology = eService.technology.toApi,
-        attributes = eService.attributes.toApi(attributes),
+        attributes = eServiceAttributes,
         descriptors = eService.descriptors
           .filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
           .map(_.toCompactDescriptor),

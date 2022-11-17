@@ -2,12 +2,15 @@ package it.pagopa.interop.backendforfrontend.service.types
 
 import cats.syntax.all._
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeManagement}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
 import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 
 import java.util.UUID
+import scala.concurrent.Future
 
 object CatalogProcessServiceTypes {
 
@@ -83,32 +86,39 @@ object CatalogProcessServiceTypes {
 
   implicit class AttributesWrapper(private val eServiceAttributes: CatalogProcess.Attributes) extends AnyVal {
 
-    def toApi(attributes: Seq[AttributeManagement.Attribute]): EServiceAttributes = {
+    def toApi(attributes: Seq[AttributeManagement.Attribute]): Future[EServiceAttributes] = {
       val attributeNames: Map[UUID, AttributeDetails] =
         attributes.map(attr => attr.id -> AttributeDetails(attr.name, attr.description)).toMap
 
-      EServiceAttributes(
-        certified = eServiceAttributes.certified.map(convertToApiAttribute(attributeNames)),
-        declared = eServiceAttributes.declared.map(convertToApiAttribute(attributeNames)),
-        verified = eServiceAttributes.verified.map(convertToApiAttribute(attributeNames))
-      )
-    }
+      for {
+        certified <- eServiceAttributes.certified.traverse(convertToApiAttribute(attributeNames))
+        declared  <- eServiceAttributes.declared.traverse(convertToApiAttribute(attributeNames))
+        verified  <- eServiceAttributes.verified.traverse(convertToApiAttribute(attributeNames))
+      } yield EServiceAttributes(certified = certified, declared = declared, verified = verified)
+    }.toFuture
 
     private def convertToApiAttribute(
       attributeNames: Map[UUID, AttributeDetails]
-    )(attribute: CatalogProcess.Attribute): EServiceAttribute = EServiceAttribute(
-      single = attribute.single.map(convertToApiAttributeValue(attributeNames)),
-      group = attribute.group.nested.map(convertToApiAttributeValue(attributeNames)).value
-    )
-  }
+    )(attribute: CatalogProcess.Attribute): Either[AttributeNotExists, EServiceAttribute] =
+      for {
+        single <- attribute.single.traverse(convertToApiAttributeValue(attributeNames))
+        group  <- attribute.group.nested.traverse(convertToApiAttributeValue(attributeNames))
+      } yield EServiceAttribute(single = single, group = group.value)
 
-  private def convertToApiAttributeValue(
-    attributeNames: Map[UUID, AttributeDetails]
-  )(value: CatalogProcess.AttributeValue) = EServiceAttributeValue(
-    id = value.id,
-    name = attributeNames.get(value.id).map(_.name).getOrElse("Unknown"),
-    description = attributeNames.get(value.id).map(_.description).getOrElse("Unknown"),
-    explicitAttributeVerification = value.explicitAttributeVerification
-  )
+    private def convertToApiAttributeValue(
+      attributeNames: Map[UUID, AttributeDetails]
+    )(value: CatalogProcess.AttributeValue): Either[AttributeNotExists, EServiceAttributeValue] =
+      attributeNames
+        .get(value.id)
+        .toRight(AttributeNotExists(value.id))
+        .map(attribute =>
+          EServiceAttributeValue(
+            id = value.id,
+            name = attribute.name,
+            description = attribute.description,
+            explicitAttributeVerification = value.explicitAttributeVerification
+          )
+        )
+  }
 
 }
