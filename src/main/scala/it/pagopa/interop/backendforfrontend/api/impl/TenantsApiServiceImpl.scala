@@ -33,6 +33,26 @@ final case class TenantsApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
+  override def getProducers(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactOrganization: ToEntityMarshaller[CompactOrganizations]
+  ): Route = {
+    val result: Future[CompactOrganizations] =
+      for {
+        pagedResults <- tenantProcessService.getProducers(name = name, limit = limit, offset = offset)
+      } yield CompactOrganizations(
+        results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+        pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
+      )
+
+    onComplete(result) {
+      handleError(s"Error retrieving producers for name $name, offset $offset, limit $limit") orElse {
+        case Success(r) => getProducers200(r)
+      }
+    }
+  }
+
   override def getCertifiedAttributes(tenantId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
