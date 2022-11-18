@@ -32,12 +32,12 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
     "succeed when the tenant is present" in {
 
       val uid: String        = UUID.randomUUID().toString
-      val selfcareId: String = UUID.randomUUID().toString()
+      val selfcareId: String = UUID.randomUUID().toString
       val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
         "organization" -> Map(
-          "id"         -> selfcareId.toString(),
+          "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ),
@@ -64,13 +64,14 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           Future.successful(
             Tenant(
               id = tenantId,
-              selfcareId = selfcareId.toString.some,
+              selfcareId = selfcareId.some,
               externalId = ExternalId("origin", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
               updatedAt = None,
-              mails = Nil
+              mails = Nil,
+              name = "name"
             )
           )
         )
@@ -78,10 +79,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin,anotherRole",
-        "organizationId" -> tenantId.toString(),
-        "selfcareId"     -> selfcareId.toString(),
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
         "organization"   -> Map(
-          "id"         -> selfcareId.toString(),
+          "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ).toJSONObject
@@ -121,12 +122,12 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
     "succeed even if the tenant needs to be upserted" in {
 
       val uid: String        = UUID.randomUUID().toString
-      val selfcareId: String = UUID.randomUUID().toString()
+      val selfcareId: String = UUID.randomUUID().toString
       val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
         "organization" -> Map(
-          "id"         -> selfcareId.toString(),
+          "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ),
@@ -174,20 +175,21 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(_: String, _: String)(_: String)(_: Seq[(String, String)]))
-        .expects("IPA", "IPACode", selfcareId, *)
+        .selfcareUpsertTenant(_: String, _: String, _: String)(_: String)(_: Seq[(String, String)]))
+        .expects("IPA", "IPACode", "foo", selfcareId, *)
         .once()
         .returns(
           Future.successful(
             tenantprocess.client.model.Tenant(
               id = tenantId,
-              selfcareId = selfcareId.toString.some,
+              selfcareId = selfcareId.some,
               externalId = tenantprocess.client.model.ExternalId("IPA", "IPACode"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
               updatedAt = None,
-              mails = Nil
+              mails = Nil,
+              name = "foo"
             )
           )
         )
@@ -195,10 +197,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin,anotherRole",
-        "organizationId" -> tenantId.toString(),
-        "selfcareId"     -> selfcareId.toString(),
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
         "organization"   -> Map(
-          "id"         -> selfcareId.toString(),
+          "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
         ).toJSONObject
@@ -254,12 +256,12 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
     "fail on SessionTokenGenerator failure" in {
 
       val uid: String        = UUID.randomUUID().toString
-      val selfcareId: String = UUID.randomUUID().toString()
+      val selfcareId: String = UUID.randomUUID().toString
       val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
         "organization" -> Map(
-          "id"         -> selfcareId.toString(),
+          "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"))
         ),
@@ -286,13 +288,14 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           Future.successful(
             Tenant(
               id = tenantId,
-              selfcareId = selfcareId.toString.some,
+              selfcareId = selfcareId.some,
               externalId = ExternalId("origin", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
               updatedAt = None,
-              mails = Nil
+              mails = Nil,
+              name = "name"
             )
           )
         )
@@ -300,10 +303,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin",
-        "organizationId" -> tenantId.toString(),
-        "selfcareId"     -> selfcareId.toString(),
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
         "organization"   -> Map(
-          "id"         -> selfcareId.toString(),
+          "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
           "roles"      -> List(Map("role" -> "admin"))
         ).toJSONObject

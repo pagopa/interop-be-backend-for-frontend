@@ -8,15 +8,17 @@ import spray.json.DefaultJsonProtocol
 
 object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
 
-  override implicit def toEntityMarshallerCatalogEServiceDescriptor: ToEntityMarshaller[CatalogEServiceDescriptor] =
-    sprayJsonMarshaller[CatalogEServiceDescriptor]
-
   override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
 
   override implicit def toEntityMarshallerCatalogEServices: ToEntityMarshaller[CatalogEServices] =
     sprayJsonMarshaller[CatalogEServices]
 
+  override implicit def toEntityMarshallerCatalogEServiceDescriptor: ToEntityMarshaller[CatalogEServiceDescriptor] =
+    sprayJsonMarshaller[CatalogEServiceDescriptor]
+
   override implicit def toEntityMarshallerProducerEServices: ToEntityMarshaller[ProducerEServices] =
     sprayJsonMarshaller[ProducerEServices]
 
+  override implicit def toEntityMarshallerProducerEServiceDescriptor: ToEntityMarshaller[ProducerEServiceDescriptor] =
+    sprayJsonMarshaller[ProducerEServiceDescriptor]
 }
