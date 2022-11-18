@@ -3070,14 +3070,14 @@ components:
     CatalogEServices:
       type: object
       properties:
-        eservices:
+        results:
           type: array
           items:
             $ref: '#/components/schemas/CatalogEService'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
-        - eservices
+        - results
         - pagination
     CatalogEService:
       type: object
@@ -3178,13 +3178,13 @@ components:
         limit:
           type: integer
           format: int32
-        totalResults:
+        totalCount:
           type: integer
           format: int32
       required:
         - offset
         - limit
-        - totalResults
+        - totalCount
     PartyRole:
       type: string
       description: Represents the generic available role types for the relationship
@@ -3211,14 +3211,14 @@ components:
     ProducerEServices:
       type: object
       properties:
-        eservices:
+        results:
           type: array
           items:
             $ref: '#/components/schemas/ProducerEService'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
-        - eservices
+        - results
         - pagination
     ProductInfo:
       type: object
