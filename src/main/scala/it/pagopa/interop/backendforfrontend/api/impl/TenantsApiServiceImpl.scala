@@ -40,7 +40,7 @@ final case class TenantsApiServiceImpl(
   ): Route = {
     val result: Future[CompactOrganizations] =
       for {
-        pagedResults <- tenantProcessService.getProducers(name = name, limit = limit, offset = offset)
+        pagedResults <- tenantProcessService.getProducers(name = name, offset = offset, limit = limit)
       } yield CompactOrganizations(
         results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
         pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
@@ -49,6 +49,26 @@ final case class TenantsApiServiceImpl(
     onComplete(result) {
       handleError(s"Error retrieving producers for name $name, offset $offset, limit $limit") orElse {
         case Success(r) => getProducers200(r)
+      }
+    }
+  }
+
+  override def getConsumers(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactOrganization: ToEntityMarshaller[CompactOrganizations]
+  ): Route = {
+    val result: Future[CompactOrganizations] =
+      for {
+        pagedResults <- tenantProcessService.getConsumers(name = name, offset = offset, limit = limit)
+      } yield CompactOrganizations(
+        results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+        pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
+      )
+
+    onComplete(result) {
+      handleError(s"Error retrieving consumers for name $name, offset $offset, limit $limit") orElse {
+        case Success(r) => getConsumers200(r)
       }
     }
   }
