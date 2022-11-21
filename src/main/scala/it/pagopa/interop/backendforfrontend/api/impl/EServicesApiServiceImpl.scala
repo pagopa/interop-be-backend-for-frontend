@@ -295,7 +295,7 @@ final case class EServicesApiServiceImpl(
           getProducerEServiceDescriptor404(problemOf(StatusCodes.NotFound, x))
         case Failure(x: InvalidEServiceRequester)   =>
           logger.error(x.getMessage)
-          getProducerEServiceDescriptor400(problemOf(StatusCodes.NotFound, x))
+          getProducerEServiceDescriptor403(problemOf(StatusCodes.Forbidden, x))
         case Success(descriptor)                    => getProducerEServiceDescriptor200(descriptor)
       }
     }
