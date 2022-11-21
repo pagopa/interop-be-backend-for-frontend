@@ -68,10 +68,10 @@ final case class EServicesApiServiceImpl(
         offset = offset,
         limit = limit
       )
-      enhancedEServices <- Future.traverse(pagedResults.eservices)(enhanceCatalogEService(requesterId))
+      enhancedEServices <- Future.traverse(pagedResults.results)(enhanceCatalogEService(requesterId))
     } yield CatalogEServices(
-      eservices = enhancedEServices,
-      pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
+      results = enhancedEServices,
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
     onComplete(result) {
@@ -177,8 +177,8 @@ final case class EServicesApiServiceImpl(
         limit = limit
       )
     } yield ProducerEServices(
-      eservices = pagedResults.eservices.map(enhanceProducerEService),
-      pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
+      results = pagedResults.results.map(enhanceProducerEService),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
     onComplete(result) {
