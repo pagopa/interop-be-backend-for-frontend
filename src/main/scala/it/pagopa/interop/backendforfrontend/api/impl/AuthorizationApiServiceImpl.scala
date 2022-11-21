@@ -88,7 +88,9 @@ final case class AuthorizationApiServiceImpl(
     for {
       partyInstitution <- partyProcess.getInstitution(selfcareId)
       tenantId         <- tenantProcess
-        .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId)(partyInstitution.id.toString)
+        .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
+          partyInstitution.id.toString
+        )
         .map(_.id)
     } yield tenantId
 

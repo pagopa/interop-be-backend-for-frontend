@@ -12,15 +12,10 @@ import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{
-  AgreementProcessService,
-  CatalogProcessService,
-  PartyProcessService,
-  TenantManagementService
-}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils._
@@ -33,6 +28,7 @@ import scala.util.{Failure, Success}
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
+  attributeRegistryManagementService: AttributeRegistryManagementService,
   catalogProcessService: CatalogProcessService,
   tenantManagementService: TenantManagementService,
   partyProcessService: PartyProcessService
@@ -48,31 +44,11 @@ final case class EServicesApiServiceImpl(
     CatalogProcess.EServiceDescriptorState.DEPRECATED
   )
 
-  override def getEserviceDescriptor(eserviceId: String, descriptorId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerEServiceDescriptor: ToEntityMarshaller[EServiceDescriptor],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    val result: Future[EServiceDescriptor] = for {
-      (eserviceUUID, descriptorUUID) <- eserviceId.toFutureUUID.zip(descriptorId.toFutureUUID)
-      eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
-      descriptor                     <- eService.descriptors
-        .find(_.id === descriptorUUID)
-        .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
-      mail                           <- tenantManagementService
-        .getTenant(eService.producer.id)
-        .map(_.mails.headOption.map(_.toApi))
-    } yield descriptor.toApi(mail)
-
-    onComplete(result) {
-      handleError(s"Error retrieving descriptor $descriptorId of eservice $eserviceId") orElse {
-        case Failure(x: EServiceDescriptorNotFound) =>
-          logger.warn(x.getMessage)
-          getEserviceDescriptor404(problemOf(StatusCodes.NotFound, x))
-        case Success(descriptor)                    => getEserviceDescriptor200(descriptor)
-      }
-    }
-  }
+  private val SUBSCRIBED_AGREEMENT_STATES: Set[AgreementProcess.AgreementState] = Set(
+    AgreementProcess.AgreementState.PENDING,
+    AgreementProcess.AgreementState.ACTIVE,
+    AgreementProcess.AgreementState.SUSPENDED
+  )
 
   override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
     implicit
@@ -103,6 +79,85 @@ final case class EServicesApiServiceImpl(
         getEServicesCatalog200(eServices)
       }
     }
+  }
+
+  override def getCatalogEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCatalogEServiceDescriptor: ToEntityMarshaller[CatalogEServiceDescriptor]
+  ): Route = {
+    val result: Future[CatalogEServiceDescriptor] = for {
+      requesterId                    <- getOrganizationIdFuture(contexts)
+      (eserviceUUID, descriptorUUID) <- eserviceId.toFutureUUID.zip(descriptorId.toFutureUUID)
+      eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
+      descriptor                     <- eService.descriptors
+        .find(_.id === descriptorUUID)
+        .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
+      attributes                     <- attributeRegistryManagementService
+        .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
+        .map(_.attributes)
+      eServiceAttributes             <- eService.attributes.toApi(attributes)
+      requesterTenant                <- tenantManagementService.getTenant(eService.producerId)
+      agreement                      <- agreementProcessService
+        .getAgreements(
+          consumerId = requesterId.some,
+          eServiceId = eserviceId.some,
+          descriptorId = descriptorId.some,
+          states = Seq.empty
+        )
+        .map(_.headOption)
+    } yield CatalogEServiceDescriptor(
+      id = descriptor.id,
+      version = descriptor.version,
+      description = descriptor.description,
+      interface = descriptor.interface.map(_.toApi),
+      docs = descriptor.docs.map(_.toApi),
+      state = descriptor.state.toApi,
+      audience = descriptor.audience,
+      voucherLifespan = descriptor.voucherLifespan,
+      dailyCallsPerConsumer = descriptor.dailyCallsPerConsumer,
+      dailyCallsTotal = descriptor.dailyCallsTotal,
+      agreementApprovalPolicy = descriptor.agreementApprovalPolicy.toApi,
+      eservice = CatalogDescriptorEService(
+        id = eService.id,
+        name = eService.name,
+        description = eService.description,
+        technology = eService.technology.toApi,
+        attributes = eServiceAttributes,
+        descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
+        agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
+        isMine = eService.producerId.toString == requesterId,
+        canSubscribe = certifiedAttributesSatisfied(
+          eService.attributes.toManagement,
+          requesterTenant.attributes.mapFilter(_.certified)
+        ),
+        isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
+        activeDescriptor =
+          getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version)),
+        mail = requesterTenant.mails.headOption.map(_.toApi)
+      )
+    )
+
+    onComplete(result) {
+      handleError(s"Error retrieving descriptor $descriptorId of eservice $eserviceId from catalog") orElse {
+        case Failure(x: EServiceDescriptorNotFound) =>
+          logger.warn(x.getMessage)
+          getCatalogEServiceDescriptor404(problemOf(StatusCodes.NotFound, x))
+        case Success(descriptor)                    => getCatalogEServiceDescriptor200(descriptor)
+      }
+    }
+  }
+
+  private def extractIdsFromAttributes(attributes: CatalogProcess.Attributes): Seq[UUID] =
+    attributes.certified.flatMap(extractIdsFromAttribute) ++
+      attributes.declared.flatMap(extractIdsFromAttribute) ++
+      attributes.verified.flatMap(extractIdsFromAttribute)
+
+  private def extractIdsFromAttribute(attribute: CatalogProcess.Attribute): Seq[UUID] = {
+    val fromSingle: Seq[UUID] = attribute.single.toSeq.map(_.id)
+    val fromGroup: Seq[UUID]  = attribute.group.toSeq.flatMap(_.map(_.id))
+
+    fromSingle ++ fromGroup
   }
 
   override def getProducerEServices(q: Option[String], consumersIds: String, offset: Int, limit: Int)(implicit
@@ -191,6 +246,66 @@ final case class EServicesApiServiceImpl(
     draftDescriptor = getDraftDescriptor(eService).map(_.toCompactDescriptor)
   )
 
+  override def getProducerEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerProducerDescriptor: ToEntityMarshaller[ProducerEServiceDescriptor]
+  ): Route = {
+    val result: Future[ProducerEServiceDescriptor] = for {
+      requesterId                    <- getOrganizationIdFutureUUID(contexts)
+      (eserviceUUID, descriptorUUID) <- eserviceId.toFutureUUID.zip(descriptorId.toFutureUUID)
+      eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
+      // This is an anti-pattern, but it's the cleanest solution
+      _                              <- isTheProducer(eService, requesterId)
+      descriptor                     <- eService.descriptors
+        .find(_.id === descriptorUUID)
+        .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
+      attributes                     <- attributeRegistryManagementService
+        .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
+        .map(_.attributes)
+      eServiceAttributes             <- eService.attributes.toApi(attributes)
+      requesterTenant                <- tenantManagementService.getTenant(eService.producerId)
+    } yield ProducerEServiceDescriptor(
+      id = descriptor.id,
+      version = descriptor.version,
+      description = descriptor.description,
+      interface = descriptor.interface.map(_.toApi),
+      docs = descriptor.docs.map(_.toApi),
+      state = descriptor.state.toApi,
+      audience = descriptor.audience,
+      voucherLifespan = descriptor.voucherLifespan,
+      dailyCallsPerConsumer = descriptor.dailyCallsPerConsumer,
+      dailyCallsTotal = descriptor.dailyCallsTotal,
+      agreementApprovalPolicy = descriptor.agreementApprovalPolicy.toApi,
+      eservice = ProducerDescriptorEService(
+        id = eService.id,
+        name = eService.name,
+        description = eService.description,
+        technology = eService.technology.toApi,
+        attributes = eServiceAttributes,
+        descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
+        draftDescriptor = getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version)),
+        mail = requesterTenant.mails.headOption.map(_.toApi)
+      )
+    )
+
+    onComplete(result) {
+      handleError(s"Error retrieving producer descriptor $descriptorId of eservice $eserviceId") orElse {
+        case Failure(x: EServiceDescriptorNotFound) =>
+          logger.warn(x.getMessage)
+          getProducerEServiceDescriptor404(problemOf(StatusCodes.NotFound, x))
+        case Failure(x: InvalidEServiceRequester)   =>
+          logger.error(x.getMessage)
+          getProducerEServiceDescriptor403(problemOf(StatusCodes.Forbidden, x))
+        case Success(descriptor)                    => getProducerEServiceDescriptor200(descriptor)
+      }
+    }
+
+  }
+
+  private def isTheProducer(eService: CatalogProcess.EService, requesterId: UUID): Future[Unit] =
+    Future.failed(InvalidEServiceRequester(eService.id, requesterId)).unlessA(eService.producerId == requesterId)
+
   private def getActiveDescriptor(eService: CatalogProcess.EService): Option[CatalogProcess.EServiceDescriptor] =
     eService.descriptors
       .filter(d => ACTIVE_DESCRIPTOR_STATES_FILTER.contains(d.state))
@@ -199,5 +314,8 @@ final case class EServicesApiServiceImpl(
 
   private def getDraftDescriptor(eService: CatalogProcess.EService): Option[CatalogProcess.EServiceDescriptor] =
     eService.descriptors.find(_.state == CatalogProcess.EServiceDescriptorState.DRAFT)
+
+  private def getNonDraftDescriptors(eService: CatalogProcess.EService): Seq[CatalogProcess.EServiceDescriptor] =
+    eService.descriptors.filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
 
 }

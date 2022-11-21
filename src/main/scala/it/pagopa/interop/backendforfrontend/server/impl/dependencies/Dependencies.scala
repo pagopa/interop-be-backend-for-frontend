@@ -193,7 +193,7 @@ trait Dependencies {
     )
 
     val eServicesApi: EservicesApi = new EservicesApi(
-      EServicesApiServiceImpl(agreementProcess, catalogProcess, tenantManagement, partyProcess),
+      EServicesApiServiceImpl(agreementProcess, attributeRegistry, catalogProcess, tenantManagement, partyProcess),
       EServicesApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )

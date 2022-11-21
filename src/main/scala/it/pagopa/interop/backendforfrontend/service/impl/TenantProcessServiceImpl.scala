@@ -11,6 +11,8 @@ import it.pagopa.interop.tenantprocess.client.model.{
   ExternalId,
   SelfcareTenantSeed,
   Tenant,
+  TenantDelta,
+  Tenants,
   VerifiedTenantAttributeSeed
 }
 
@@ -19,7 +21,6 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import akka.actor.typed.ActorSystem
 import it.pagopa.interop.commons.utils.withHeaders
-import it.pagopa.interop.tenantprocess.client.model.TenantDelta
 
 class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
@@ -53,15 +54,15 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       invoker.invoke(request, s"Revoking declared attribute $attributeId to requester Tenant")
     }
 
-  def selfcareUpsertTenant(origin: String, externalId: String)(selfcareId: String)(implicit
+  def selfcareUpsertTenant(origin: String, externalId: String, name: String)(selfcareId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenant] = withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
     val request: ApiRequest[Tenant] = api.selfcareUpsertTenant(
       xCorrelationId = correlationId,
-      selfcareTenantSeed = SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId),
+      selfcareTenantSeed = SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, name),
       xForwardedFor = ip
     )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Upserting Tenant ($origin, $externalId) with SelfcareId ${selfcareId}")
+    invoker.invoke(request, s"Upserting Tenant $name ($origin, $externalId) with SelfcareId $selfcareId")
   }
 
   override def verifyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
@@ -109,4 +110,33 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       invoker.invoke(request, s"Getting tenant with id $tenantId")
     }
 
+  override def getProducers(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenants] =
+    withHeaders[Tenants] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Tenants] =
+        api.getProducers(
+          xCorrelationId = correlationId,
+          xForwardedFor = ip,
+          name = name,
+          limit = limit,
+          offset = offset
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Getting producers with name $name, limit $limit, offset $offset")
+    }
+
+  override def getConsumers(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenants] =
+    withHeaders[Tenants] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Tenants] =
+        api.getConsumers(
+          xCorrelationId = correlationId,
+          xForwardedFor = ip,
+          name = name,
+          limit = limit,
+          offset = offset
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Getting consumers with name $name, limit $limit, offset $offset")
+    }
 }

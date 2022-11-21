@@ -16,5 +16,5 @@ trait CatalogProcessService {
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[EServices]
 
-  def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[OldEService]
+  def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
 }
