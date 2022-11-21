@@ -26,11 +26,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val compactOrganizationFormat: RootJsonFormat[CompactOrganization] = jsonFormat2(CompactOrganization)
   implicit val compactAgreementFormat: RootJsonFormat[CompactAgreement]       = jsonFormat2(CompactAgreement)
   implicit val compactDescriptorFormat: RootJsonFormat[CompactDescriptor]     = jsonFormat3(CompactDescriptor)
-  implicit val catalogEServiceItemFormat: RootJsonFormat[CatalogEService]     = jsonFormat8(CatalogEService)
+  implicit val catalogEServiceFormat: RootJsonFormat[CatalogEService]         = jsonFormat8(CatalogEService)
   implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]       = jsonFormat2(CatalogEServices)
-
-  implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]   = jsonFormat4(ProducerEService)
-  implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices] = jsonFormat2(ProducerEServices)
+  implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]       = jsonFormat4(ProducerEService)
+  implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices]     = jsonFormat2(ProducerEServices)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
@@ -92,11 +91,19 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   )
   implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
   implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
-  implicit val catalogEServiceFormat: RootJsonFormat[CatalogDescriptorEService]     = jsonFormat12(
+  implicit val catalogDescriptorEServiceFormat: RootJsonFormat[CatalogDescriptorEService] = jsonFormat12(
     CatalogDescriptorEService
   )
   implicit val catalogEServiceDescriptorFormat: RootJsonFormat[CatalogEServiceDescriptor] = jsonFormat12(
     CatalogEServiceDescriptor
+  )
+
+  implicit val producerDescriptorEService: RootJsonFormat[ProducerDescriptorEService] = jsonFormat8(
+    ProducerDescriptorEService
+  )
+
+  implicit val producerEServiceDescriptorFormat: RootJsonFormat[ProducerEServiceDescriptor] = jsonFormat12(
+    ProducerEServiceDescriptor
   )
 
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)

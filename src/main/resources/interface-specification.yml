@@ -1481,6 +1481,122 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /producer/eservices/{eserviceId}/descriptors/{descriptorId}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: eserviceId
+        in: path
+        description: the eservice id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: descriptorId
+        in: path
+        description: the descriptor id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - eservices
+      summary: Retrieves a producer eservice descriptor corresponding to the id
+      description: Retrieves a producer eservice descriptor corresponding to the id
+      operationId: getProducerEServiceDescriptor
+      parameters:
+        - name: eserviceId
+          in: path
+          description: The internal identifier of the eservice
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: descriptorId
+          in: path
+          description: the descriptor id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The corresponding eService descriptor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProducerEServiceDescriptor'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Eservice not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/catalog/eservices/{eserviceId}/descriptor/{descriptorId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -2975,6 +3091,85 @@ components:
         isSubscribed:
           type: boolean
         activeDescriptor:
+          $ref: '#/components/schemas/CompactDescriptor'
+        mail:
+          $ref: '#/components/schemas/Mail'
+    ProducerEServiceDescriptor:
+      type: object
+      required:
+        - id
+        - version
+        - docs
+        - state
+        - audience
+        - voucherLifespan
+        - dailyCallsPerConsumer
+        - dailyCallsTotal
+        - agreementApprovalPolicy
+        - eservice
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: string
+        description:
+          type: string
+        interface:
+          $ref: '#/components/schemas/EServiceDoc'
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceDoc'
+        state:
+          $ref: '#/components/schemas/EServiceDescriptorState'
+        audience:
+          type: array
+          items:
+            type: string
+        voucherLifespan:
+          type: integer
+          format: int32
+        dailyCallsPerConsumer:
+          description: 'maximum number of daily calls that this descriptor can afford.'
+          type: integer
+          format: int32
+          minimum: 0
+        dailyCallsTotal:
+          description: 'total daily calls available for this e-service.'
+          type: integer
+          format: int32
+          minimum: 0
+        agreementApprovalPolicy:
+          $ref: '#/components/schemas/AgreementApprovalPolicy'
+        eservice:
+          $ref: '#/components/schemas/ProducerDescriptorEService'
+    ProducerDescriptorEService:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - technology
+        - attributes
+        - descriptors
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        technology:
+          $ref: '#/components/schemas/EServiceTechnology'
+        attributes:
+          $ref: '#/components/schemas/EServiceAttributes'
+        descriptors:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompactDescriptor'
+        draftDescriptor:
           $ref: '#/components/schemas/CompactDescriptor'
         mail:
           $ref: '#/components/schemas/Mail'

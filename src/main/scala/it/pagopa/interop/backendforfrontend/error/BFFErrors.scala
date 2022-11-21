@@ -40,4 +40,10 @@ object BFFErrors {
 
   final case class AttributeNotExists(id: UUID)
       extends ComponentError("0009", s"Attribute ${id.toString} does not exist in the attribute registry")
+
+  final case class InvalidEServiceRequester(eServiceId: UUID, requesterId: UUID)
+      extends ComponentError(
+        "0010",
+        s"EService ${eServiceId.toString} does not belong to producer ${requesterId.toString}"
+      )
 }
