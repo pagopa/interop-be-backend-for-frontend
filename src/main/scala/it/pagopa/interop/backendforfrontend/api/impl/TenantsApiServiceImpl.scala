@@ -43,7 +43,7 @@ final case class TenantsApiServiceImpl(
         pagedResults <- tenantProcessService.getProducers(name = name, offset = offset, limit = limit)
       } yield CompactOrganizations(
         results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
-        pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
+        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
       )
 
     onComplete(result) {
@@ -63,7 +63,7 @@ final case class TenantsApiServiceImpl(
         pagedResults <- tenantProcessService.getConsumers(name = name, offset = offset, limit = limit)
       } yield CompactOrganizations(
         results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
-        pagination = Pagination(offset = offset, limit = limit, totalResults = pagedResults.totalCount)
+        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
       )
 
     onComplete(result) {
