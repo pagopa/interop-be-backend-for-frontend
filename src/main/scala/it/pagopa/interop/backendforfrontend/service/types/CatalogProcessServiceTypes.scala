@@ -1,10 +1,16 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
+import cats.syntax.all._
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeManagement}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
 import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
-import cats.syntax.all._
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+
+import java.util.UUID
+import scala.concurrent.Future
 
 object CatalogProcessServiceTypes {
 
@@ -66,22 +72,53 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceDescriptorWrapper(private val esd: CatalogProcess.EServiceDescriptor) extends AnyVal {
-    def toApi(mail: Option[Mail]): EServiceDescriptor = EServiceDescriptor(
-      id = esd.id,
-      version = esd.version,
-      description = esd.description,
-      interface = esd.interface.map(_.toApi),
-      docs = esd.docs.map(_.toApi),
-      state = esd.state.toApi,
-      audience = esd.audience,
-      voucherLifespan = esd.voucherLifespan,
-      dailyCallsPerConsumer = esd.dailyCallsPerConsumer,
-      dailyCallsTotal = esd.dailyCallsTotal,
-      agreementApprovalPolicy = esd.agreementApprovalPolicy.toApi,
-      mail = mail
-    )
 
     def toCompactDescriptor: CompactDescriptor = CompactDescriptor(id = esd.id, state = esd.state.toApi, esd.version)
+  }
+  implicit class EServiceTechnologyWrapper(private val est: CatalogProcess.EServiceTechnology) extends AnyVal {
+    def toApi: EServiceTechnology = est match {
+      case CatalogProcess.EServiceTechnology.REST => EServiceTechnology.REST
+      case CatalogProcess.EServiceTechnology.SOAP => EServiceTechnology.SOAP
+    }
+  }
+
+  final case class AttributeDetails(name: String, description: String)
+
+  implicit class AttributesWrapper(private val eServiceAttributes: CatalogProcess.Attributes) extends AnyVal {
+
+    def toApi(attributes: Seq[AttributeManagement.Attribute]): Future[EServiceAttributes] = {
+      val attributeNames: Map[UUID, AttributeDetails] =
+        attributes.map(attr => attr.id -> AttributeDetails(attr.name, attr.description)).toMap
+
+      for {
+        certified <- eServiceAttributes.certified.traverse(convertToApiAttribute(attributeNames))
+        declared  <- eServiceAttributes.declared.traverse(convertToApiAttribute(attributeNames))
+        verified  <- eServiceAttributes.verified.traverse(convertToApiAttribute(attributeNames))
+      } yield EServiceAttributes(certified = certified, declared = declared, verified = verified)
+    }.toFuture
+
+    private def convertToApiAttribute(
+      attributeNames: Map[UUID, AttributeDetails]
+    )(attribute: CatalogProcess.Attribute): Either[AttributeNotExists, EServiceAttribute] =
+      for {
+        single <- attribute.single.traverse(convertToApiAttributeValue(attributeNames))
+        group  <- attribute.group.nested.traverse(convertToApiAttributeValue(attributeNames))
+      } yield EServiceAttribute(single = single, group = group.value)
+
+    private def convertToApiAttributeValue(
+      attributeNames: Map[UUID, AttributeDetails]
+    )(value: CatalogProcess.AttributeValue): Either[AttributeNotExists, EServiceAttributeValue] =
+      attributeNames
+        .get(value.id)
+        .toRight(AttributeNotExists(value.id))
+        .map(attribute =>
+          EServiceAttributeValue(
+            id = value.id,
+            name = attribute.name,
+            description = attribute.description,
+            explicitAttributeVerification = value.explicitAttributeVerification
+          )
+        )
   }
 
 }

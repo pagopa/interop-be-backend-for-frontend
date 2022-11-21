@@ -17,10 +17,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
-  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]               = jsonFormat4(EServiceDoc)
-  implicit val mailFormat: RootJsonFormat[Mail]                             = jsonFormat2(Mail)
-  implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor] = jsonFormat12(EServiceDescriptor)
-
   implicit val tenantDelta: RootJsonFormat[TenantDelta] = jsonFormat2(TenantDelta)
 
   implicit val tenantFormat: RootJsonFormat[Tenant] = jsonFormat2(Tenant)
@@ -32,9 +28,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val compactDescriptorFormat: RootJsonFormat[CompactDescriptor]     = jsonFormat3(CompactDescriptor)
   implicit val catalogEServiceFormat: RootJsonFormat[CatalogEService]         = jsonFormat8(CatalogEService)
   implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]       = jsonFormat2(CatalogEServices)
-
-  implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]   = jsonFormat4(ProducerEService)
-  implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices] = jsonFormat2(ProducerEServices)
+  implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]       = jsonFormat4(ProducerEService)
+  implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices]     = jsonFormat2(ProducerEServices)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
@@ -88,6 +83,28 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val attributesResponseFormat: RootJsonFormat[AttributesResponse] = jsonFormat1(AttributesResponse)
 
   implicit val attributeSeedFormat: RootJsonFormat[AttributeSeed] = jsonFormat5(AttributeSeed)
+
+  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                       = jsonFormat4(EServiceDoc)
+  implicit val mailFormat: RootJsonFormat[Mail]                                     = jsonFormat2(Mail)
+  implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] = jsonFormat4(
+    EServiceAttributeValue
+  )
+  implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
+  implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
+  implicit val catalogDescriptorEServiceFormat: RootJsonFormat[CatalogDescriptorEService] = jsonFormat12(
+    CatalogDescriptorEService
+  )
+  implicit val catalogEServiceDescriptorFormat: RootJsonFormat[CatalogEServiceDescriptor] = jsonFormat12(
+    CatalogEServiceDescriptor
+  )
+
+  implicit val producerDescriptorEService: RootJsonFormat[ProducerDescriptorEService] = jsonFormat8(
+    ProducerDescriptorEService
+  )
+
+  implicit val producerEServiceDescriptorFormat: RootJsonFormat[ProducerEServiceDescriptor] = jsonFormat12(
+    ProducerEServiceDescriptor
+  )
 
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)
