@@ -255,6 +255,7 @@ final case class EServicesApiServiceImpl(
       requesterId                    <- getOrganizationIdFutureUUID(contexts)
       (eserviceUUID, descriptorUUID) <- eserviceId.toFutureUUID.zip(descriptorId.toFutureUUID)
       eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
+      // This is an anti-pattern, but it's the cleanest solution
       _                              <- isTheProducer(eService, requesterId)
       descriptor                     <- eService.descriptors
         .find(_.id === descriptorUUID)
