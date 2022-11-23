@@ -150,7 +150,7 @@ jobs:
         with:
           aws-region: eu-central-1
           role-to-assume: 'arn:aws:iam::505630707203:role/interop-github-ecr-dev'
-          role-session-name: interop-be-attribute-registry-management-${{ github.job }}
+          role-session-name: interop-be-backend-for-frontend-${{ github.job }}
 
       - name: Login to Amazon ECR
         id: login-ecr
