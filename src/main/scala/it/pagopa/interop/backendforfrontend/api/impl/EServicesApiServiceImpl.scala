@@ -246,6 +246,42 @@ final case class EServicesApiServiceImpl(
     draftDescriptor = getDraftDescriptor(eService).map(_.toCompactDescriptor)
   )
 
+  override def getProducerEServiceDetails(eserviceId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProducerEServiceDetails: ToEntityMarshaller[ProducerEServiceDetails],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[ProducerEServiceDetails] = for {
+      requesterId        <- getOrganizationIdFutureUUID(contexts)
+      eserviceUUID       <- eserviceId.toFutureUUID
+      eService           <- catalogProcessService.getEServiceById(eserviceUUID)
+      // This is an anti-pattern, but it's the cleanest solution
+      _                  <- isTheProducer(eService, requesterId)
+      attributes         <- attributeRegistryManagementService
+        .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
+        .map(_.attributes)
+      eServiceAttributes <- eService.attributes.toApi(attributes)
+    } yield ProducerEServiceDetails(
+      id = eService.id,
+      name = eService.name,
+      description = eService.description,
+      technology = eService.technology.toApi,
+      attributes = eServiceAttributes
+    )
+
+    onComplete(result) {
+      handleError(s"Error retrieving producer eservice $eserviceId") orElse {
+        case Failure(x: EServiceDescriptorNotFound) =>
+          logger.warn(x.getMessage)
+          getProducerEServiceDetails404(problemOf(StatusCodes.NotFound, x))
+        case Failure(x: InvalidEServiceRequester)   =>
+          logger.error(x.getMessage)
+          getProducerEServiceDetails403(problemOf(StatusCodes.Forbidden, x))
+        case Success(eService)                      => getProducerEServiceDetails200(eService)
+      }
+    }
+  }
+
   override def getProducerEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],

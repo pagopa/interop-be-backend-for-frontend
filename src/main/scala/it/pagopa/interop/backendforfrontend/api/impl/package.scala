@@ -107,6 +107,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     ProducerEServiceDescriptor
   )
 
+  implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] = jsonFormat5(
+    ProducerEServiceDetails
+  )
+
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)
 
