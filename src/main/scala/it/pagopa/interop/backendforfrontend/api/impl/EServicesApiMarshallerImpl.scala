@@ -19,6 +19,9 @@ object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonS
   override implicit def toEntityMarshallerProducerEServices: ToEntityMarshaller[ProducerEServices] =
     sprayJsonMarshaller[ProducerEServices]
 
+  override implicit def toEntityMarshallerProducerEServiceDetails: ToEntityMarshaller[ProducerEServiceDetails] =
+    sprayJsonMarshaller[ProducerEServiceDetails]
+
   override implicit def toEntityMarshallerProducerEServiceDescriptor: ToEntityMarshaller[ProducerEServiceDescriptor] =
     sprayJsonMarshaller[ProducerEServiceDescriptor]
 }
