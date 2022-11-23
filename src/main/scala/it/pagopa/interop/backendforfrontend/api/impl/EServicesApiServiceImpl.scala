@@ -275,7 +275,7 @@ final case class EServicesApiServiceImpl(
           logger.warn(x.getMessage)
           getProducerEServiceDetails404(problemOf(StatusCodes.NotFound, x))
         case Failure(x: InvalidEServiceRequester)   =>
-          logger.error(x.getMessage)
+          logger.warn(x.getMessage)
           getProducerEServiceDetails403(problemOf(StatusCodes.Forbidden, x))
         case Success(eService)                      => getProducerEServiceDetails200(eService)
       }
@@ -331,7 +331,7 @@ final case class EServicesApiServiceImpl(
           logger.warn(x.getMessage)
           getProducerEServiceDescriptor404(problemOf(StatusCodes.NotFound, x))
         case Failure(x: InvalidEServiceRequester)   =>
-          logger.error(x.getMessage)
+          logger.warn(x.getMessage)
           getProducerEServiceDescriptor403(problemOf(StatusCodes.Forbidden, x))
         case Success(descriptor)                    => getProducerEServiceDescriptor200(descriptor)
       }
