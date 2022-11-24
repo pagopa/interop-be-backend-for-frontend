@@ -87,7 +87,7 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCatalogEServiceDescriptor: ToEntityMarshaller[CatalogEServiceDescriptor]
   ): Route = {
     val result: Future[CatalogEServiceDescriptor] = for {
-      requesterId                    <- getOrganizationIdFuture(contexts)
+      requesterId                    <- getOrganizationIdFutureUUID(contexts)
       (eserviceUUID, descriptorUUID) <- eserviceId.toFutureUUID.zip(descriptorId.toFutureUUID)
       eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
       descriptor                     <- eService.descriptors
@@ -100,7 +100,7 @@ final case class EServicesApiServiceImpl(
       requesterTenant                <- tenantManagementService.getTenant(eService.producerId)
       agreement                      <- agreementProcessService
         .getAgreements(
-          consumerId = requesterId.some,
+          consumerId = requesterId.toString.some,
           eServiceId = eserviceId.some,
           descriptorId = descriptorId.some,
           states = Seq.empty
@@ -126,7 +126,7 @@ final case class EServicesApiServiceImpl(
         attributes = eServiceAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
-        isMine = eService.producerId.toString == requesterId,
+        isMine = eService.producerId == requesterId,
         canSubscribe = certifiedAttributesSatisfied(
           eService.attributes.toManagement,
           requesterTenant.attributes.mapFilter(_.certified)
