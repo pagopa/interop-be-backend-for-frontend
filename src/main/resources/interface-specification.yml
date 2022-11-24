@@ -3250,7 +3250,7 @@ components:
         - dailyCallsPerConsumer
         - dailyCallsTotal
         - agreementApprovalPolicy
-        - canSubscribe
+        - hasCertifiedAttributes
         - isSubscribed
         - isMine
       properties:
@@ -3300,7 +3300,7 @@ components:
         - attributes
         - descriptors
         - isMine
-        - canSubscribe
+        - hasCertifiedAttributes
         - isSubscribed
       properties:
         id:
@@ -3322,7 +3322,7 @@ components:
           $ref: '#/components/schemas/CompactAgreement'
         isMine:
           type: boolean
-        canSubscribe:
+        hasCertifiedAttributes:
           type: boolean
         isSubscribed:
           type: boolean
@@ -3581,7 +3581,7 @@ components:
         - description
         - producer
         - isMine
-        - canSubscribe
+        - hasCertifiedAttributes
       properties:
         id:
           type: string
@@ -3596,7 +3596,7 @@ components:
           $ref: '#/components/schemas/CompactAgreement'
         isMine:
           type: boolean
-        canSubscribe:
+        hasCertifiedAttributes:
           type: boolean
         activeDescriptor:
           $ref: '#/components/schemas/CompactDescriptor'
