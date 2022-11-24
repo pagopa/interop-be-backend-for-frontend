@@ -114,4 +114,8 @@ object TenantManagementServiceTypes {
   implicit class MailConverter(private val m: TenantManagement.Mail) extends AnyVal {
     def toApi: Mail = Mail(address = m.address, description = m.description)
   }
+
+  implicit class ExternalIdConverter(private val e: TenantManagement.ExternalId) extends AnyVal {
+    def toApi: ExternalId = ExternalId(origin = e.origin, value = e.value)
+  }
 }

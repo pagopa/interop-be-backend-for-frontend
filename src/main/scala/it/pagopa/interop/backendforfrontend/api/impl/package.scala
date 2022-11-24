@@ -19,7 +19,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val tenantDelta: RootJsonFormat[TenantDelta] = jsonFormat2(TenantDelta)
 
-  implicit val tenantFormat: RootJsonFormat[Tenant] = jsonFormat2(Tenant)
+  implicit val tenantFormat: RootJsonFormat[CompactTenant] = jsonFormat2(CompactTenant)
 
   implicit val paginationFormat: RootJsonFormat[Pagination] = jsonFormat3(Pagination)
 
@@ -47,8 +47,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat6(VerifiedTenantAttribute)
   implicit val tenantAttributeFormat: RootJsonFormat[TenantAttribute]                   = jsonFormat3(TenantAttribute)
 
-  implicit val tenantWithAttributesFormat: RootJsonFormat[TenantWithAttributes] = jsonFormat3(TenantWithAttributes)
-  implicit val agreementsEServiceFormat: RootJsonFormat[AgreementsEService]     = jsonFormat4(AgreementsEService)
+  // implicit val tenantWithAttributesFormat: RootJsonFormat[TenantAttribute]  = jsonFormat3(TenantAttribute)
+  implicit val agreementsEServiceFormat: RootJsonFormat[AgreementsEService] = jsonFormat4(AgreementsEService)
 
   implicit val documentFormat: RootJsonFormat[Document] = jsonFormat5(Document)
 
@@ -70,8 +70,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val productInfoFormat: RootJsonFormat[ProductInfo]           = jsonFormat3(ProductInfo)
   implicit val relationshipInfoFormat: RootJsonFormat[RelationshipInfo] = jsonFormat11(RelationshipInfo)
 
-  implicit val institutionAttributeFormat: RootJsonFormat[InstitutionAttribute] = jsonFormat3(InstitutionAttribute)
-  implicit val institutionFormat: RootJsonFormat[Institution]                   = jsonFormat11(Institution)
+  // implicit val institutionAttributeFormat: RootJsonFormat[TenantAttribute] = jsonFormat3(TenantAttribute)
+  implicit val externalIdFormat: RootJsonFormat[ExternalId] = jsonFormat2(ExternalId)
+  implicit val institutionFormat: RootJsonFormat[Tenant]    = jsonFormat8(Tenant)
 
   implicit val certifiedAttributesResponseFormat: RootJsonFormat[CertifiedAttributesResponse] =
     jsonFormat1(CertifiedAttributesResponse)

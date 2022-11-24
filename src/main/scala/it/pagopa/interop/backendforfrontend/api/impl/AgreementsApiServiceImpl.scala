@@ -214,9 +214,6 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
-  def getDescription(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[String] =
-    partyProcessService.getInstitution(selfcareId).map(_.description)
-
   def parallelGet(agreement: AgreementProcess.Agreement)(implicit
     contexts: Seq[(String, String)]
   ): Future[(String, String, TenantManagement.Tenant, CatalogManagement.EService)] =
@@ -224,13 +221,8 @@ final case class AgreementsApiServiceImpl(
       (consumerTenant, producerTenant) <- tenantManagementService
         .getTenant(agreement.consumerId)
         .zip(tenantManagementService.getTenant(agreement.producerId))
-
-      (consumerDescription, producerDescription) <- consumerTenant.selfcareId
-        .fold(Future.successful(consumerTenant.id.toString()))(getDescription)
-        .zip(producerTenant.selfcareId.fold(Future.successful(producerTenant.id.toString()))(getDescription))
-
-      eService <- catalogManagementService.getEService(agreement.eserviceId)
-    } yield (producerDescription, consumerDescription, consumerTenant, eService)
+      eService                         <- catalogManagementService.getEService(agreement.eserviceId)
+    } yield (producerTenant.name, consumerTenant.name, consumerTenant, eService)
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement
@@ -255,9 +247,17 @@ final case class AgreementsApiServiceImpl(
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
-    producer = Tenant(id = agreement.producerId, name = producerDescription),
-    consumer =
-      TenantWithAttributes(id = agreement.consumerId, name = consumerDescription, attributes = tenantAttributes),
+    producer = CompactTenant(id = agreement.producerId, name = producerDescription),
+    consumer = Tenant(
+      id = agreement.consumerId,
+      selfcareId = consumerTenant.id.some,
+      externalId = consumerTenant.externalId,
+      createdAt = consumerTenant.createdAt,
+      updatedAt = consumerTenant.updatedAt,
+      name = consumerDescription,
+      attributes = tenantAttributes,
+      contactMail = consumerTenant.mails
+    ),
     eservice = AgreementsEService(
       id = agreement.eserviceId,
       name = eService.name,
