@@ -97,7 +97,7 @@ final case class EServicesApiServiceImpl(
         .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
         .map(_.attributes)
       eServiceAttributes             <- eService.attributes.toApi(attributes)
-      requesterTenant                <- tenantManagementService.getTenant(eService.producerId)
+      requesterTenant                <- tenantManagementService.getTenant(requesterId)
       agreement                      <- agreementProcessService
         .getAgreements(
           consumerId = requesterId.toString.some,
