@@ -139,12 +139,6 @@ jobs:
         with:
           package-version-ids: ${{ steps.version.outputs.ids }}
 
-      - name: Regenerating code
-        run: sbt ++${{ matrix.scala }} generateCode
-
-      - name: Compile project
-        run: sbt ++${{ matrix.scala }} +compile
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
