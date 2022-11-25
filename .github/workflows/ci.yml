@@ -138,6 +138,12 @@ jobs:
         uses: actions/delete-package-versions@v2
         with:
           package-version-ids: ${{ steps.version.outputs.ids }}
+          
+      - name: Regenerating code
+        run: sbt ++${{ matrix.scala }} generateCode
+
+      - name: Publish project
+        run: sbt ++${{ matrix.scala }} compile
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
