@@ -127,7 +127,7 @@ final case class EServicesApiServiceImpl(
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
         isMine = eService.producerId == requesterId,
-        canSubscribe = certifiedAttributesSatisfied(
+        hasCertifiedAttributes = certifiedAttributesSatisfied(
           eService.attributes.toManagement,
           requesterTenant.attributes.mapFilter(_.certified)
         ),
@@ -234,7 +234,7 @@ final case class EServicesApiServiceImpl(
     producer = CompactOrganization(id = eService.producerId, name = producerInstitution.description),
     agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
     isMine = eService.producerId == requesterId,
-    canSubscribe =
+    hasCertifiedAttributes =
       certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
     activeDescriptor = activeDescriptor.map(_.toCompactDescriptor)
   )
