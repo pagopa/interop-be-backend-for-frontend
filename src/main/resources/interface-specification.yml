@@ -1966,7 +1966,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionToken'
-  '/institutions/{tenantId}/relationships':
+  '/tenants/{tenantId}/relationships':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
@@ -2134,80 +2134,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/{tenantId}':
-    get:
-      tags:
-        - party
-      summary: Gets the corresponding institution using internal institution id
-      description: Gets institution using internal institution id
-      operationId: getInstitution
-      parameters:
-        - name: tenantId
-          in: path
-          description: The internal identifier of the tenant
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Institution'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '404':
-          description: Not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '429':
-          description: Too Many Requests
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/{tenantId}/attributes/certified':
+  '/tenants/{tenantId}/attributes/certified':
     get:
       tags:
         - tenants
@@ -2280,7 +2207,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/attributes/declared':
+  '/tenants/attributes/declared':
     post:
       tags:
         - tenants
@@ -2347,7 +2274,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/attributes/declared/{attributeId}':
+  '/tenants/attributes/declared/{attributeId}':
     delete:
       tags:
         - tenants
@@ -2416,7 +2343,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/{tenantId}/attributes/declared':
+  '/tenants/{tenantId}/attributes/declared':
     parameters:
       - name: tenantId
         in: path
@@ -2497,7 +2424,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/{tenantId}/attributes/verified':
+  '/tenants/{tenantId}/attributes/verified':
     parameters:
       - name: tenantId
         in: path
@@ -2682,7 +2609,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/{tenantId}/attributes/verified/{attributeId}':
+  '/tenants/{tenantId}/attributes/verified/{attributeId}':
     parameters:
       - name: tenantId
         in: path
@@ -3124,6 +3051,70 @@ paths:
         schema:
           type: string
           format: uuid
+    get:
+      tags:
+        - tenants
+      summary: Gets the corresponding institution using internal institution id
+      description: Gets institution using internal institution id
+      operationId: getTenant
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
     post:
       tags:
         - tenants
@@ -3464,9 +3455,9 @@ components:
           type: string
           format: uuid
         producer:
-          $ref: '#/components/schemas/Tenant'
+          $ref: '#/components/schemas/CompactTenant'
         consumer:
-          $ref: '#/components/schemas/TenantWithAttributes'
+          $ref: '#/components/schemas/Tenant'
         eservice:
           $ref: '#/components/schemas/AgreementsEService'
         state:
@@ -4063,77 +4054,7 @@ components:
             $ref: '#/components/schemas/Attribute'
       required:
         - attributes
-    InstitutionAttribute:
-      type: object
-      properties:
-        origin:
-          type: string
-        code:
-          type: string
-        description:
-          type: string
-      required:
-        - origin
-        - code
-        - description
-    InstitutionAttributes:
-      type: array
-      items:
-        $ref: '#/components/schemas/InstitutionAttribute'
-    Institution:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 97c0f418-bcb3-48d4-825a-fe8b29ae68e5
-        externalId:
-          description: external institution id
-          example: 'c_f205'
-          type: string
-        originId:
-          description: origin institution id (e.g iPA code)
-          example: 'c_f205'
-          type: string
-        description:
-          type: string
-          example: AGENCY X
-        digitalAddress:
-          example: email@pec.mail.org
-          format: email
-          type: string
-        address:
-          example: via del campo
-          type: string
-        zipCode:
-          example: 20100
-          type: string
-        taxCode:
-          description: institution tax code
-          type: string
-        origin:
-          type: string
-          description: The origin form which the institution has been retrieved
-          example: IPA
-        institutionType:
-          type: string
-          description: institution type
-          example: PA
-        attributes:
-          $ref: '#/components/schemas/InstitutionAttributes'
-      required:
-        - id
-        - externalId
-        - originId
-        - description
-        - digitalAddress
-        - address
-        - zipCode
-        - taxCode
-        - attributes
-        - origin
-      additionalProperties: false
-    Tenant:
+    CompactTenant:
       properties:
         id:
           type: string
@@ -4143,21 +4064,47 @@ components:
       required:
         - id
         - name
-    TenantWithAttributes:
+    ExternalId:
+      properties:
+        origin:
+          type: string
+        value:
+          type: string
+      required:
+        - origin
+        - value
+    Tenant:
       properties:
         id:
           type: string
           format: uuid
+        selfcareId:
+          type: string
+          format: uuid
+        externalId:
+          $ref: '#/components/schemas/ExternalId'
+        certifier:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
         name:
           type: string
         attributes:
           type: array
           items:
             $ref: '#/components/schemas/TenantAttribute'
+        contactMail:
+          type: string
       required:
         - id
+        - externalId
         - name
         - attributes
+        - createdAt
     TenantAttribute:
       type: object
       properties:
