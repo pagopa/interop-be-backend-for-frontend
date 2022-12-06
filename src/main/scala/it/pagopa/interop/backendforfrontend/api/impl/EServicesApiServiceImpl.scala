@@ -171,7 +171,7 @@ final case class EServicesApiServiceImpl(
       pagedResults <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = eServicesIds,
-        producersIds = Nil,
+        producersIds = List(producerId),
         states = Nil,
         offset = offset,
         limit = limit
