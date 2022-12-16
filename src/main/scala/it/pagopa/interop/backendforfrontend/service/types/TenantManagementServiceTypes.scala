@@ -1,5 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
+import it.pagopa.interop.backendforfrontend.api.impl.Utils
 import it.pagopa.interop.backendforfrontend.model.VerificationRenewal.{AUTOMATIC_RENEWAL, REVOKE_ON_EXPIRATION}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
@@ -117,5 +118,18 @@ object TenantManagementServiceTypes {
 
   implicit class ExternalIdConverter(private val e: TenantManagement.ExternalId) extends AnyVal {
     def toApi: ExternalId = ExternalId(origin = e.origin, value = e.value)
+  }
+
+  implicit class TenantConverter(private val t: TenantManagement.Tenant) extends AnyVal {
+    def toApi(selfcareUUID: Option[UUID])(implicit adaptable: AdaptableTenantAttribute[DepAttribute, ApiAttribute]): Tenant = Tenant(
+        id = t.id,
+        selfcareId = selfcareUUID,
+        externalId = t.externalId.toApi,
+        createdAt = t.createdAt,
+        updatedAt = t.updatedAt,
+        name = t.name,
+        attributes = Utils.tenantAttributesToApi(t.attributes,Nil),
+        contactMail = t.mails.headOption.map(_.address)
+      )
   }
 }

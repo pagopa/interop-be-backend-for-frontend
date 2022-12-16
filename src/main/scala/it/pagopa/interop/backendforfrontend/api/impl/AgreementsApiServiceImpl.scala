@@ -22,6 +22,7 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.files.service.FileManager
@@ -251,12 +252,12 @@ final case class AgreementsApiServiceImpl(
     consumer = Tenant(
       id = agreement.consumerId,
       selfcareId = consumerTenant.id.some,
-      externalId = consumerTenant.externalId,
+      externalId = consumerTenant.externalId.toApi,
       createdAt = consumerTenant.createdAt,
       updatedAt = consumerTenant.updatedAt,
       name = consumerDescription,
       attributes = tenantAttributes,
-      contactMail = consumerTenant.mails
+      contactMail = consumerTenant.mails.headOption.map(_.address)
     ),
     eservice = AgreementsEService(
       id = agreement.eserviceId,
