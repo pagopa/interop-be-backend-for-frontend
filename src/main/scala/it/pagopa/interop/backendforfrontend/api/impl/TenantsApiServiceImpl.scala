@@ -3,7 +3,7 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
-import cats.implicits._
+import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -11,14 +11,17 @@ import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryManagementService, TenantManagementService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.{
+  AttributeRegistryManagementService,
+  TenantManagementService,
+  TenantProcessService
+}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.tenantmanagement.client.model.{TenantAttribute => DepTenantAttribute}
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Try}
+import scala.util.Success
 
 final case class TenantsApiServiceImpl(
   attributeRegistryService: AttributeRegistryManagementService,
@@ -197,18 +200,16 @@ final case class TenantsApiServiceImpl(
       registryAttributes <- attributeRegistryService.getBulkAttributes(attributeIds)
     } yield Utils.tenantAttributesToApi(tenantAttributes, registryAttributes.attributes)
 
-
-
   override def getTenant(tenantId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerTenant: ToEntityMarshaller[Tenant]
   ): Route = {
     val result: Future[Tenant] = for {
-      tenantUUID <- tenantId.toFutureUUID
-      tms        <- tenantManagementService.getTenant(tenantUUID)
-      selfcareUUID <- tms.selfcareId.traverse(_.toFutureUUID)
-    } yield ???
+      tenant       <- tenantId.toFutureUUID >>= tenantManagementService.getTenant
+      selfcareUUID <- tenant.selfcareId.traverse(_.toFutureUUID)
+      attributes   <- attributeRegistryService.getBulkAttributes(Utils.tenantAttributesIds(tenant)).map(_.attributes)
+    } yield tenant.toApi(selfcareUUID, attributes)
 
     onComplete(result) {
       handleError(s"Error retrieving tenant with tenantId $tenantId)") orElse { case Success(t) =>

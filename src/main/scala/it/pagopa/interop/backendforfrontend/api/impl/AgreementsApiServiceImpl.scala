@@ -31,6 +31,7 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils
 
 import java.io.File
 import java.util.UUID
@@ -234,7 +235,7 @@ final case class AgreementsApiServiceImpl(
       .toFuture(AgreementDescriptorNotFound(agreement.id))
     activeDescriptor = eService.descriptors.sortBy(_.version.toInt).lastOption
 
-    allAttributesIds = (eServiceAttributesIds(eService) ++ tenantAttributesIds(consumerTenant)).distinct
+    allAttributesIds = (eServiceAttributesIds(eService) ++ Utils.tenantAttributesIds(consumerTenant)).distinct
     attributes <- attributeRegistryService.getBulkAttributes(allAttributesIds)
 
     agreementVerifiedAttrs  = filterAttributes(attributes, agreement.verifiedAttributes.map(_.id))
@@ -244,7 +245,7 @@ final case class AgreementsApiServiceImpl(
     agreementDeclaredAttrs  = filterAttributes(attributes, agreement.declaredAttributes.map(_.id))
       .map(_.toDeclaredAttribute)
 
-    tenantAttributes = enhanceTenantAttributes(consumerTenant.attributes, attributes)
+    tenantAttributes = Utils.enhanceTenantAttributes(consumerTenant.attributes, attributes.attributes)
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
@@ -294,33 +295,11 @@ final case class AgreementsApiServiceImpl(
       .map(_.id)
   }
 
-  def tenantAttributesIds(tenant: TenantManagement.Tenant): Seq[UUID] =
-    tenant.attributes.mapFilter(_.verified.map(_.id)) ++
-      tenant.attributes.mapFilter(_.certified.map(_.id)) ++
-      tenant.attributes.mapFilter(_.declared.map(_.id))
-
   def filterAttributes(
     registryAttributes: MgmtAttributesResponse,
     filterIds: Seq[UUID]
   ): Seq[AttributeRegistry.Attribute] =
     filterIds.flatMap(id => registryAttributes.attributes.find(_.id == id))
-
-  def enhanceTenantAttributes(
-    tenantAttributes: Seq[TenantManagement.TenantAttribute],
-    registryAttributes: MgmtAttributesResponse
-  ): Seq[TenantAttribute] = {
-
-    val registryAttributesMap = registryAttributes.attributes.fproductLeft(_.id).toMap
-
-    tenantAttributes.collect {
-      case TenantManagement.TenantAttribute(Some(declared), None, None)  =>
-        TenantAttribute(declared = Utils.tenantAttributeToApi(declared, registryAttributesMap))
-      case TenantManagement.TenantAttribute(None, Some(certified), None) =>
-        TenantAttribute(certified = Utils.tenantAttributeToApi(certified, registryAttributesMap))
-      case TenantManagement.TenantAttribute(None, None, Some(verified))  =>
-        TenantAttribute(verified = Utils.tenantAttributeToApi(verified, registryAttributesMap))
-    }
-  }
 
   override def addAgreementConsumerDocument(
     name: String,

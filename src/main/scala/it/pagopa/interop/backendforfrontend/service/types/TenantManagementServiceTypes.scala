@@ -1,11 +1,13 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
-import it.pagopa.interop.backendforfrontend.api.impl.Utils
+// import cats.syntax.all._
 import it.pagopa.interop.backendforfrontend.model.VerificationRenewal.{AUTOMATIC_RENEWAL, REVOKE_ON_EXPIRATION}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 
 import java.util.UUID
+import it.pagopa.interop.backendforfrontend.api.impl.Utils
 
 object TenantManagementServiceTypes {
 
@@ -120,16 +122,21 @@ object TenantManagementServiceTypes {
     def toApi: ExternalId = ExternalId(origin = e.origin, value = e.value)
   }
 
+  implicit class AttributeListConverter(private val as: Seq[TenantManagement.TenantAttribute]) extends AnyVal {
+    def toApi(attributes: Seq[AttributeRegistry.Attribute]): Seq[TenantAttribute] =
+      Utils.enhanceTenantAttributes(as, attributes)
+  }
+
   implicit class TenantConverter(private val t: TenantManagement.Tenant) extends AnyVal {
-    def toApi(selfcareUUID: Option[UUID])(implicit adaptable: AdaptableTenantAttribute[DepAttribute, ApiAttribute]): Tenant = Tenant(
-        id = t.id,
-        selfcareId = selfcareUUID,
-        externalId = t.externalId.toApi,
-        createdAt = t.createdAt,
-        updatedAt = t.updatedAt,
-        name = t.name,
-        attributes = Utils.tenantAttributesToApi(t.attributes,Nil),
-        contactMail = t.mails.headOption.map(_.address)
-      )
+    def toApi(selfcareUUID: Option[UUID], attributes: Seq[AttributeRegistry.Attribute]): Tenant = Tenant(
+      id = t.id,
+      selfcareId = selfcareUUID,
+      externalId = t.externalId.toApi,
+      createdAt = t.createdAt,
+      updatedAt = t.updatedAt,
+      name = t.name,
+      attributes = t.attributes.toApi(attributes),
+      contactMail = t.mails.headOption.map(_.address)
+    )
   }
 }
