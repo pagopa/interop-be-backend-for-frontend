@@ -1,8 +1,12 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
+import cats.syntax.all._
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
+import it.pagopa.interop.backendforfrontend.model.TenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.util.UUID
 
@@ -21,5 +25,26 @@ object Utils {
     registryAttributesMap: Map[UUID, Attribute]
   )(implicit adaptable: AdaptableTenantAttribute[DepAttribute, ApiAttribute]): Option[ApiAttribute] =
     registryAttributesMap.get(tenantAttribute.id).map(ra => tenantAttribute.toApi(ra.name, ra.description))
+
+  def enhanceTenantAttributes(
+    tenantAttributes: Seq[TenantManagement.TenantAttribute],
+    registryAttributes: Seq[AttributeRegistry.Attribute]
+  ): Seq[TenantAttribute] = {
+    val registryAttributesMap: Map[UUID, Attribute] = registryAttributes.fproductLeft(_.id).toMap
+
+    tenantAttributes.collect {
+      case TenantManagement.TenantAttribute(Some(declared), None, None)  =>
+        TenantAttribute(declared = Utils.tenantAttributeToApi(declared, registryAttributesMap))
+      case TenantManagement.TenantAttribute(None, Some(certified), None) =>
+        TenantAttribute(certified = Utils.tenantAttributeToApi(certified, registryAttributesMap))
+      case TenantManagement.TenantAttribute(None, None, Some(verified))  =>
+        TenantAttribute(verified = Utils.tenantAttributeToApi(verified, registryAttributesMap))
+    }
+  }
+
+  def tenantAttributesIds(tenant: TenantManagement.Tenant): Seq[UUID] =
+    tenant.attributes.mapFilter(_.verified.map(_.id)) ++
+      tenant.attributes.mapFilter(_.certified.map(_.id)) ++
+      tenant.attributes.mapFilter(_.declared.map(_.id))
 
 }

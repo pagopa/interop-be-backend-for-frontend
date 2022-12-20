@@ -22,6 +22,7 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.files.service.FileManager
@@ -30,6 +31,7 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils
 
 import java.io.File
 import java.util.UUID
@@ -214,9 +216,6 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
-  def getDescription(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[String] =
-    partyProcessService.getInstitution(selfcareId).map(_.description)
-
   def parallelGet(agreement: AgreementProcess.Agreement)(implicit
     contexts: Seq[(String, String)]
   ): Future[(String, String, TenantManagement.Tenant, CatalogManagement.EService)] =
@@ -224,13 +223,8 @@ final case class AgreementsApiServiceImpl(
       (consumerTenant, producerTenant) <- tenantManagementService
         .getTenant(agreement.consumerId)
         .zip(tenantManagementService.getTenant(agreement.producerId))
-
-      (consumerDescription, producerDescription) <- consumerTenant.selfcareId
-        .fold(Future.successful(consumerTenant.id.toString()))(getDescription)
-        .zip(producerTenant.selfcareId.fold(Future.successful(producerTenant.id.toString()))(getDescription))
-
-      eService <- catalogManagementService.getEService(agreement.eserviceId)
-    } yield (producerDescription, consumerDescription, consumerTenant, eService)
+      eService                         <- catalogManagementService.getEService(agreement.eserviceId)
+    } yield (producerTenant.name, consumerTenant.name, consumerTenant, eService)
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement
@@ -241,7 +235,7 @@ final case class AgreementsApiServiceImpl(
       .toFuture(AgreementDescriptorNotFound(agreement.id))
     activeDescriptor = eService.descriptors.sortBy(_.version.toInt).lastOption
 
-    allAttributesIds = (eServiceAttributesIds(eService) ++ tenantAttributesIds(consumerTenant)).distinct
+    allAttributesIds = (eServiceAttributesIds(eService) ++ Utils.tenantAttributesIds(consumerTenant)).distinct
     attributes <- attributeRegistryService.getBulkAttributes(allAttributesIds)
 
     agreementVerifiedAttrs  = filterAttributes(attributes, agreement.verifiedAttributes.map(_.id))
@@ -251,13 +245,21 @@ final case class AgreementsApiServiceImpl(
     agreementDeclaredAttrs  = filterAttributes(attributes, agreement.declaredAttributes.map(_.id))
       .map(_.toDeclaredAttribute)
 
-    tenantAttributes = enhanceTenantAttributes(consumerTenant.attributes, attributes)
+    tenantAttributes = Utils.enhanceTenantAttributes(consumerTenant.attributes, attributes.attributes)
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
-    producer = Tenant(id = agreement.producerId, name = producerDescription),
-    consumer =
-      TenantWithAttributes(id = agreement.consumerId, name = consumerDescription, attributes = tenantAttributes),
+    producer = CompactTenant(id = agreement.producerId, name = producerDescription),
+    consumer = Tenant(
+      id = agreement.consumerId,
+      selfcareId = consumerTenant.id.some,
+      externalId = consumerTenant.externalId.toApi,
+      createdAt = consumerTenant.createdAt,
+      updatedAt = consumerTenant.updatedAt,
+      name = consumerDescription,
+      attributes = tenantAttributes,
+      contactMail = consumerTenant.mails.headOption.map(_.address)
+    ),
     eservice = AgreementsEService(
       id = agreement.eserviceId,
       name = eService.name,
@@ -293,33 +295,11 @@ final case class AgreementsApiServiceImpl(
       .map(_.id)
   }
 
-  def tenantAttributesIds(tenant: TenantManagement.Tenant): Seq[UUID] =
-    tenant.attributes.mapFilter(_.verified.map(_.id)) ++
-      tenant.attributes.mapFilter(_.certified.map(_.id)) ++
-      tenant.attributes.mapFilter(_.declared.map(_.id))
-
   def filterAttributes(
     registryAttributes: MgmtAttributesResponse,
     filterIds: Seq[UUID]
   ): Seq[AttributeRegistry.Attribute] =
     filterIds.flatMap(id => registryAttributes.attributes.find(_.id == id))
-
-  def enhanceTenantAttributes(
-    tenantAttributes: Seq[TenantManagement.TenantAttribute],
-    registryAttributes: MgmtAttributesResponse
-  ): Seq[TenantAttribute] = {
-
-    val registryAttributesMap = registryAttributes.attributes.fproductLeft(_.id).toMap
-
-    tenantAttributes.collect {
-      case TenantManagement.TenantAttribute(Some(declared), None, None)  =>
-        TenantAttribute(declared = Utils.tenantAttributeToApi(declared, registryAttributesMap))
-      case TenantManagement.TenantAttribute(None, Some(certified), None) =>
-        TenantAttribute(certified = Utils.tenantAttributeToApi(certified, registryAttributesMap))
-      case TenantManagement.TenantAttribute(None, None, Some(verified))  =>
-        TenantAttribute(verified = Utils.tenantAttributeToApi(verified, registryAttributesMap))
-    }
-  }
 
   override def addAgreementConsumerDocument(
     name: String,
