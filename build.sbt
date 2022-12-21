@@ -8,8 +8,8 @@ ThisBuild / dependencyOverrides ++= Dependencies.Jars.overrides
 ThisBuild / version           := ComputeVersion.version
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-ThisBuild / resolvers += "Pagopa Nexus Snapshots" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-snapshots/"
-ThisBuild / resolvers += "Pagopa Nexus Releases" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-releases/"
+ThisBuild / githubSuppressPublicationWarning := true
+ThisBuild / resolvers += Resolver.githubPackages("pagopa")
 
 lazy val generateCode = taskKey[Unit]("A task for generating the code starting from the swagger definition")
 
@@ -54,11 +54,17 @@ cleanFiles += baseDirectory.value / "client" / "src"
 
 cleanFiles += baseDirectory.value / "client" / "target"
 
-ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
-
 lazy val generated = project
   .in(file("generated"))
-  .settings(scalacOptions := Seq(), scalafmtOnCompile := true, libraryDependencies := Dependencies.Jars.`server`)
+  .settings(
+    scalacOptions       := Seq(),
+    scalafmtOnCompile   := true,
+    libraryDependencies := Dependencies.Jars.`server`,
+    publish / skip      := true,
+    publish             := (()),
+    publishLocal        := (()),
+    publishTo           := None
+  )
   .setupBuildInfo
 
 lazy val root = (project in file("."))
@@ -67,7 +73,7 @@ lazy val root = (project in file("."))
     Test / parallelExecution    := false,
     scalafmtOnCompile           := true,
     dockerBuildOptions ++= Seq("--network=host"),
-    dockerRepository            := Some(System.getenv("DOCKER_REPO")),
+    dockerRepository            := Some(System.getenv("ECR_REGISTRY")),
     dockerBaseImage             := "adoptopenjdk:11-jdk-hotspot",
     daemonUser                  := "daemon",
     Docker / version            := (ThisBuild / version).value.replaceAll("-SNAPSHOT", "-latest").toLowerCase,
@@ -80,6 +86,8 @@ lazy val root = (project in file("."))
   .dependsOn(generated)
   .enableContractTest
   .enablePlugins(JavaAppPackaging)
+  .enablePlugins(DockerPlugin)
+  .enablePlugins(NoPublishPlugin)
   .setupBuildInfo
 
 Test / fork := true
