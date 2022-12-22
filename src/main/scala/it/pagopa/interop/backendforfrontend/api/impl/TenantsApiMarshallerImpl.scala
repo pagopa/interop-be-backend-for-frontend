@@ -32,4 +32,6 @@ object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSuppo
   override implicit def toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations] =
     sprayJsonMarshaller[CompactOrganizations]
 
+  override implicit def toEntityMarshallerTenant: ToEntityMarshaller[Tenant] =
+    sprayJsonMarshaller[Tenant]
 }

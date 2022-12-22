@@ -205,12 +205,7 @@ final case class EServicesApiServiceImpl(
   private def enhanceCatalogEService(
     requesterId: UUID
   )(eService: CatalogProcess.EService)(implicit contexts: Seq[(String, String)]): Future[CatalogEService] = for {
-    // TODO Use directly the tenant once the name will be added to its model
-    producerTenant      <- tenantManagementService.getTenant(eService.producerId)
-    selfcareId          <- producerTenant.selfcareId.toFuture(MissingSelfcareId(producerTenant.id))
-    producerInstitution <- partyProcessService.getInstitution(selfcareId)
-    // End TODO
-
+    producerTenant  <- tenantManagementService.getTenant(eService.producerId)
     requesterTenant <-
       if (requesterId != eService.producerId) tenantManagementService.getTenant(requesterId)
       else Future.successful(producerTenant)
@@ -231,7 +226,7 @@ final case class EServicesApiServiceImpl(
     id = eService.id,
     name = eService.name,
     description = eService.description,
-    producer = CompactOrganization(id = eService.producerId, name = producerInstitution.description),
+    producer = CompactOrganization(id = eService.producerId, name = producerTenant.name),
     agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
     isMine = eService.producerId == requesterId,
     hasCertifiedAttributes =

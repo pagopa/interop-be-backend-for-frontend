@@ -8,8 +8,8 @@ import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PartyApiService
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{InstitutionNotFound, RelationshipNotFound}
-import it.pagopa.interop.backendforfrontend.model.{Institution, Problem, RelationshipInfo}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.RelationshipNotFound
+import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
 import it.pagopa.interop.backendforfrontend.service.{
   AttributeRegistryManagementService,
   PartyProcessService,
@@ -34,7 +34,7 @@ final case class PartyApiServiceImpl(
 )(implicit ec: ExecutionContext)
     extends PartyApiService {
 
-  private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+  private val logger: LoggerTakingImplicit[ContextFieldsToLog]                                                     =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getRelationship(relationshipId: String)(implicit
@@ -65,9 +65,7 @@ final case class PartyApiServiceImpl(
           )
         )
     }
-
   }
-
   override def getUserInstitutionRelationships(
     personId: Option[String],
     roles: String,
@@ -121,9 +119,7 @@ final case class PartyApiServiceImpl(
           )
         )
     }
-
   }
-
   private def filterByUserName(relationships: Seq[RelationshipInfo], query: Option[String]): Seq[RelationshipInfo] = {
     query.fold(relationships)(q =>
       relationships.filter(relationship =>
@@ -133,36 +129,4 @@ final case class PartyApiServiceImpl(
       )
     )
   }
-
-  override def getInstitution(tenantId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerInstitution: ToEntityMarshaller[Institution],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    logger.info(s"Retrieving tenant $tenantId")
-    val result: Future[Institution] = for {
-      tenantUUID  <- tenantId.toFutureUUID
-      selfcareId  <- tenantManagementService
-        .getTenant(tenantUUID)
-        .flatMap(_.selfcareId.toFuture(MissingSelfcareId(tenantUUID)))
-      institution <- partyProcessService.getInstitution(selfcareId)
-    } yield PartyProcessConverter.toApiInstitution(institution)
-
-    onComplete(result) {
-      case Success(institution)               => getInstitution200(institution)
-      case Failure(ex: ResourceNotFoundError) =>
-        logger.error(s"Error while retrieving institution $tenantId - ${ex.getMessage}")
-        getInstitution404(problemOf(StatusCodes.NotFound, InstitutionNotFound(s"corresponding to tenantId $tenantId")))
-      case Failure(ex)                        =>
-        logger.error(s"Error while retrieving institution $tenantId - ${ex.getMessage}")
-        complete(
-          StatusCodes.InternalServerError,
-          problemOf(
-            StatusCodes.InternalServerError,
-            GenericError(s"Something went wrong trying to get institution $tenantId - ${ex.getMessage}")
-          )
-        )
-    }
-  }
-
 }

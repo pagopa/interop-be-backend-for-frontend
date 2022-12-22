@@ -66,22 +66,4 @@ object PartyProcessConverter {
 
   def toApiProductInfo(productInfo: PartyProcessProductInfo): ProductInfo =
     ProductInfo(id = productInfo.id, role = productInfo.role, createdAt = productInfo.createdAt)
-
-  def toApiInstitutionAttribute(attribute: PartyProcessAttribute): InstitutionAttribute =
-    InstitutionAttribute(origin = attribute.origin, code = attribute.code, description = attribute.description)
-
-  def toApiInstitution(institution: PartyProcessInstitution): Institution =
-    Institution(
-      id = institution.id,
-      externalId = institution.externalId,
-      originId = institution.originId,
-      description = institution.description,
-      digitalAddress = institution.digitalAddress,
-      address = institution.address,
-      zipCode = institution.zipCode,
-      taxCode = institution.taxCode,
-      origin = institution.origin,
-      institutionType = institution.institutionType,
-      attributes = institution.attributes.map(toApiInstitutionAttribute)
-    )
 }

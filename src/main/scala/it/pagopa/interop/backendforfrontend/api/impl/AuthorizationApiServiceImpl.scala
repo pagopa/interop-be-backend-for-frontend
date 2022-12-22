@@ -76,7 +76,6 @@ final case class AuthorizationApiServiceImpl(
       }
     }
   }
-
   private def getTenantIdOr(
     selfcareId: String
   )(alternative: => Future[UUID])(implicit contexts: Seq[(String, String)]): Future[UUID] =
@@ -87,12 +86,11 @@ final case class AuthorizationApiServiceImpl(
   private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] =
     for {
       partyInstitution <- partyProcess.getInstitution(selfcareId)
-      tenantId         <- tenantProcess
+      tenant           <- tenantProcess
         .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
           partyInstitution.id.toString
         )
-        .map(_.id)
-    } yield tenantId
+    } yield tenant.id
 
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
     claims        <- jwtReader.getClaims(identityToken.identity_token)
