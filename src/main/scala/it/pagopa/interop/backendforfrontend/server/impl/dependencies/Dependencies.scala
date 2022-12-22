@@ -27,7 +27,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   TenantsApiMarshallerImpl,
   TenantsApiServiceImpl,
   entityMarshallerProblem,
-  problemOf
+  problemOf,
+  serviceErrorCodePrefix
 }
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.server.Controller
@@ -35,13 +36,13 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.impl._
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.jwt._
-import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.jwt.service.impl.{
   DefaultInteropTokenGenerator,
   DefaultJWTReader,
   DefaultSessionTokenGenerator,
   getClaimsVerifier
 }
+import it.pagopa.interop.commons.jwt.service.{JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
 import it.pagopa.interop.commons.ratelimiter.akkahttp.RateLimiterDirective
@@ -49,7 +50,7 @@ import it.pagopa.interop.commons.ratelimiter.impl.RedisRateLimiter
 import it.pagopa.interop.commons.signer.service.SignerService
 import it.pagopa.interop.commons.signer.service.impl.KMSSignerService
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.errors.ServiceCode
 import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 
@@ -64,10 +65,11 @@ trait Dependencies {
     val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
     ec =>
       contexts => {
-        RateLimiterDirective.rateLimiterDirective(
-          rateLimiter,
-          problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
-        )(contexts)(ec, entityMarshallerProblem, logger)
+        RateLimiterDirective.rateLimiterDirective(rateLimiter)(contexts)(
+          ec,
+          ServiceCode(serviceErrorCodePrefix),
+          logger
+        )
       }
   }
 
