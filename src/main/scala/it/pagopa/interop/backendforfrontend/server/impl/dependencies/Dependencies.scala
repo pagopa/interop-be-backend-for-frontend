@@ -55,8 +55,13 @@ import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupp
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import com.typesafe.scalalogging.Logger
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 trait Dependencies {
+
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog]("OAuth2JWTValidatorAsContexts")
 
   private val rateLimiter: RateLimiter =
     RedisRateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplier)
