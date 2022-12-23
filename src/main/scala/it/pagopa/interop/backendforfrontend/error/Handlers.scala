@@ -22,12 +22,9 @@ import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantMana
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
 import spray.json._
 
-import scala.util.matching.Regex
 import scala.util.{Failure, Try}
 
 object Handlers {
-
-  val downstreamErrorCodeRegex: Regex = "^([0-9]+)-([0-9]+)$".r
 
   def handleError(logMessage: String)(implicit
     contexts: Seq[(String, String)],
@@ -62,12 +59,13 @@ object Handlers {
       case None                      => unexpectedErrorProblem(endpointMessage)
     }
 
-    val (actualServiceCode, error): (ServiceCode, ComponentError) = problem.errors.headOption.map(_.code) match {
-      case Some(downstreamErrorCodeRegex(downstreamServiceCode, downstreamErrorCode)) =>
-        val errorMessage = problem.errors.map(_.detail).mkString(",")
-        (ServiceCode(downstreamServiceCode), DownstreamError(downstreamErrorCode, errorMessage))
-      case _ => (serviceCode, GenericError(endpointMessage))
-    }
+    val (actualServiceCode, error): (ServiceCode, ComponentError) =
+      problem.errors.headOption.map(_.code.split("-").toList) match {
+        case Some(downstreamServiceCode :: downstreamErrorCode :: Nil) =>
+          val errorMessage = problem.errors.map(_.detail).mkString(",")
+          (ServiceCode(downstreamServiceCode), DownstreamError(downstreamErrorCode, errorMessage))
+        case _                                                         => (serviceCode, GenericError(endpointMessage))
+      }
 
     statusCode match {
       case 400 => badRequest(error, endpointMessage)(contexts, logger, actualServiceCode)
