@@ -1,6 +1,7 @@
 package it.pagopa.interop.backendforfrontend.error
 
 import akka.http.scaladsl.model.ErrorInfo
+import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
 import it.pagopa.interop.commons.utils.errors.ComponentError
 
 import java.util.UUID
@@ -46,4 +47,10 @@ object BFFErrors {
         "0010",
         s"EService ${eServiceId.toString} does not belong to producer ${requesterId.toString}"
       )
+
+  final case class SessionTokenTooManyRequests(tenantId: UUID, rateLimitStatus: RateLimitStatus)
+      extends ComponentError("0011", s"Too many requests on Session Token requests for tenant $tenantId")
+
+  final case class DownstreamError(errorCode: String, message: String) extends ComponentError(errorCode, message)
+
 }
