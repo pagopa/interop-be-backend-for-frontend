@@ -34,7 +34,7 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
 
   val problemError: ProblemError = ProblemError("999-0001", "det")
   val problem: Problem           =
-    Problem("someType", 404, "An Error occurred", Some("These are the details"), Seq(problemError))
+    Problem("someType", 404, "An Error occurred", None, Some("These are the details"), Seq(problemError))
   def expectedProblem(httpStatus: StatusCode, errorCode: String, errorMessage: String): Problem = Problem(
     `type` = defaultProblemType,
     status = httpStatus.intValue,
