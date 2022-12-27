@@ -8,7 +8,7 @@ import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
-import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
@@ -114,9 +114,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
-  final val serviceErrorCodePrefix: String = "016"
-  final val defaultProblemType: String     = "about:blank"
-  final val defaultErrorMessage: String    = "Unknown error"
+  final val serviceErrorCodePrefix: String    = "016"
+  final implicit val serviceCode: ServiceCode = ServiceCode(serviceErrorCodePrefix)
+  final val defaultProblemType: String        = "about:blank"
+  final val defaultErrorMessage: String       = "Unknown error"
 
   def problemOf(httpError: StatusCode, error: ComponentError): Problem =
     Problem(
