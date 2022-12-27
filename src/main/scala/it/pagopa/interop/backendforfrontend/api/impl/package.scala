@@ -85,32 +85,27 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                       = jsonFormat4(EServiceDoc)
   implicit val mailFormat: RootJsonFormat[Mail]                                     = jsonFormat2(Mail)
-  implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] = jsonFormat4(
-    EServiceAttributeValue
-  )
+  implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] =
+    jsonFormat4(EServiceAttributeValue)
   implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
   implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
-  implicit val catalogDescriptorEServiceFormat: RootJsonFormat[CatalogDescriptorEService] = jsonFormat12(
-    CatalogDescriptorEService
-  )
-  implicit val catalogEServiceDescriptorFormat: RootJsonFormat[CatalogEServiceDescriptor] = jsonFormat12(
-    CatalogEServiceDescriptor
-  )
+  implicit val catalogDescriptorEServiceFormat: RootJsonFormat[CatalogDescriptorEService] =
+    jsonFormat12(CatalogDescriptorEService)
+  implicit val catalogEServiceDescriptorFormat: RootJsonFormat[CatalogEServiceDescriptor] =
+    jsonFormat12(CatalogEServiceDescriptor)
 
-  implicit val producerDescriptorEService: RootJsonFormat[ProducerDescriptorEService] = jsonFormat8(
-    ProducerDescriptorEService
-  )
+  implicit val producerDescriptorEService: RootJsonFormat[ProducerDescriptorEService] =
+    jsonFormat8(ProducerDescriptorEService)
 
-  implicit val producerEServiceDescriptorFormat: RootJsonFormat[ProducerEServiceDescriptor] = jsonFormat12(
-    ProducerEServiceDescriptor
-  )
+  implicit val producerEServiceDescriptorFormat: RootJsonFormat[ProducerEServiceDescriptor] =
+    jsonFormat12(ProducerEServiceDescriptor)
 
   implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] = jsonFormat5(
     ProducerEServiceDetails
   )
 
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
-  implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)
+  implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat6(Problem)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
@@ -137,6 +132,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       `type` = defaultProblemType,
       status = httpError.intValue,
       title = httpError.defaultMessage,
+      correlationId = None,
       errors = errors.map(error =>
         ProblemError(
           code = s"$serviceErrorCodePrefix-${error.code}",
