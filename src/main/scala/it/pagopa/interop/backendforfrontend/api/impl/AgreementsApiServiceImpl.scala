@@ -258,7 +258,7 @@ final case class AgreementsApiServiceImpl(
       updatedAt = consumerTenant.updatedAt,
       name = consumerDescription,
       attributes = tenantAttributes,
-      contactMail = consumerTenant.mails.headOption.map(_.address)
+      contactMail = consumerTenant.mails.headOption.map(_.toApi)
     ),
     eservice = AgreementsEService(
       id = agreement.eserviceId,
