@@ -123,7 +123,7 @@ object TenantManagementServiceTypes {
   }
 
   implicit class AttributeListConverter(private val as: Seq[TenantManagement.TenantAttribute]) extends AnyVal {
-    def toApi(attributes: Seq[AttributeRegistry.Attribute]): Seq[TenantAttribute] =
+    def toApi(attributes: Seq[AttributeRegistry.Attribute]): TenantAttributes =
       Utils.enhanceTenantAttributes(as, attributes)
   }
 
