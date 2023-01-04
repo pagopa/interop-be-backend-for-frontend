@@ -4092,9 +4092,7 @@ components:
         name:
           type: string
         attributes:
-          type: array
-          items:
-            $ref: '#/components/schemas/TenantAttribute'
+          $ref: '#/components/schemas/TenantAttributes'
         contactMail:
           type: string
       required:
@@ -4103,15 +4101,25 @@ components:
         - name
         - attributes
         - createdAt
-    TenantAttribute:
+    TenantAttributes:
       type: object
       properties:
         declared:
-          $ref: '#/components/schemas/DeclaredTenantAttribute'
+          type: array
+          items:
+            $ref: '#/components/schemas/DeclaredTenantAttribute'
         certified:
-          $ref: '#/components/schemas/CertifiedTenantAttribute'
+          type: array
+          items:
+            $ref: '#/components/schemas/CertifiedTenantAttribute'
         verified:
-          $ref: '#/components/schemas/VerifiedTenantAttribute'
+          type: array
+          items:
+            $ref: '#/components/schemas/VerifiedTenantAttribute'
+      required:
+        - declared
+        - certified
+        - verified
     DeclaredTenantAttribute:
       type: object
       properties:

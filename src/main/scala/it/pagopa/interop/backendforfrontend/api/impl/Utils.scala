@@ -2,13 +2,13 @@ package it.pagopa.interop.backendforfrontend.api.impl
 
 import cats.syntax.all._
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
-import it.pagopa.interop.backendforfrontend.model.TenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.util.UUID
+import it.pagopa.interop.backendforfrontend.model._
 
 object Utils {
 
@@ -29,17 +29,25 @@ object Utils {
   def enhanceTenantAttributes(
     tenantAttributes: Seq[TenantManagement.TenantAttribute],
     registryAttributes: Seq[AttributeRegistry.Attribute]
-  ): Seq[TenantAttribute] = {
+  ): TenantAttributes = {
     val registryAttributesMap: Map[UUID, Attribute] = registryAttributes.fproductLeft(_.id).toMap
 
-    tenantAttributes.collect {
-      case TenantManagement.TenantAttribute(Some(declared), None, None)  =>
-        TenantAttribute(declared = Utils.tenantAttributeToApi(declared, registryAttributesMap))
+    val declareds: Seq[DeclaredTenantAttribute] = tenantAttributes.collect {
+      case TenantManagement.TenantAttribute(Some(declared), None, None) =>
+        Utils.tenantAttributeToApi(declared, registryAttributesMap)
+    }.flattenOption
+
+    val certifieds: Seq[CertifiedTenantAttribute] = tenantAttributes.collect {
       case TenantManagement.TenantAttribute(None, Some(certified), None) =>
-        TenantAttribute(certified = Utils.tenantAttributeToApi(certified, registryAttributesMap))
-      case TenantManagement.TenantAttribute(None, None, Some(verified))  =>
-        TenantAttribute(verified = Utils.tenantAttributeToApi(verified, registryAttributesMap))
-    }
+        Utils.tenantAttributeToApi(certified, registryAttributesMap)
+    }.flattenOption
+
+    val verifieds: Seq[VerifiedTenantAttribute] = tenantAttributes.collect {
+      case TenantManagement.TenantAttribute(None, None, Some(verified)) =>
+        Utils.tenantAttributeToApi(verified, registryAttributesMap)
+    }.flattenOption
+
+    TenantAttributes(declareds, certifieds, verifieds)
   }
 
   def tenantAttributesIds(tenant: TenantManagement.Tenant): Seq[UUID] =
