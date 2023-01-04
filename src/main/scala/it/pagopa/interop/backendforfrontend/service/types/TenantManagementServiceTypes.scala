@@ -136,7 +136,7 @@ object TenantManagementServiceTypes {
       updatedAt = t.updatedAt,
       name = t.name,
       attributes = t.attributes.toApi(attributes),
-      contactMail = t.mails.headOption.map(_.address)
+      contactMail = t.mails.headOption.map(_.toApi)
     )
   }
 }

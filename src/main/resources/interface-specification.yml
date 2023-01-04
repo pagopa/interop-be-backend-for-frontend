@@ -4094,7 +4094,7 @@ components:
         attributes:
           $ref: '#/components/schemas/TenantAttributes'
         contactMail:
-          type: string
+          $ref: '#/components/schemas/Mail'
       required:
         - id
         - externalId
