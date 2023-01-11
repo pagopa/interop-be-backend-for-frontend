@@ -18,10 +18,8 @@ object TenantProcessServiceTypes {
   }
 
   implicit class TenantDeltaConverter(private val delta: TenantDelta) extends AnyVal {
-    def toExternalModel(tenant: TenantProcess.Tenant): TenantProcess.TenantDelta = TenantProcess.TenantDelta(
-      selfcareId = tenant.selfcareId,
-      features = tenant.features,
-      mails = TenantProcess.MailSeed(
+    def toExternalModel: TenantProcess.TenantDelta = TenantProcess.TenantDelta(mails =
+      TenantProcess.MailSeed(
         kind = TenantProcess.MailKind.CONTACT_EMAIL,
         address = delta.contactEmail,
         description = delta.description

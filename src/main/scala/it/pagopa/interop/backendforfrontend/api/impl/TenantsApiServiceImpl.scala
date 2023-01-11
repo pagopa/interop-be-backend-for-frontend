@@ -174,8 +174,7 @@ final case class TenantsApiServiceImpl(
   ): Route = {
     val result: Future[Unit] = for {
       tenantUUID <- tenantId.toFutureUUID
-      tenant     <- tenantProcessService.getTenant(tenantUUID)
-      ()         <- tenantProcessService.updateTenant(tenantUUID, tenantDelta.toExternalModel(tenant))
+      ()         <- tenantProcessService.updateTenant(tenantUUID, tenantDelta.toExternalModel)
     } yield ()
 
     onComplete(result) {
