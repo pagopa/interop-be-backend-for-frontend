@@ -45,7 +45,9 @@ final case class PurposesApiServiceImpl(
   ): Route = {
     val result: Future[Purposes] =
       for {
-        statesEnum     <- parseArrayParameters(states).traverse(PurposeProcess.PurposeVersionState.fromValue).toFuture
+        statesEnum     <- parseArrayParameters(states).distinct
+          .traverse(PurposeProcess.PurposeVersionState.fromValue)
+          .toFuture
         eServicesUUIDs <- parseArrayParameters(eServicesIds).distinct.traverse(_.toFutureUUID)
         consumersUUIDs <- parseArrayParameters(consumersIds).distinct.traverse(_.toFutureUUID)
         pagedResults   <- purposeProcessService.getPurposes(
@@ -84,7 +86,9 @@ final case class PurposesApiServiceImpl(
     producer <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
     consumer <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
     currentVersion            = purpose.versions
-      .filter(_.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
+      .filter(v =>
+        v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL && v.state != PurposeProcess.PurposeVersionState.DRAFT
+      )
       .sortBy(_.createdAt)
       .lastOption
     waitingForApprovalVersion = purpose.versions.find(
