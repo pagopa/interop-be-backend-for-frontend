@@ -56,10 +56,10 @@ final case class PurposesApiServiceImpl(
           offset = offset,
           limit = limit
         )
-        actualEServicesIds = pagedResults.results.map(_.eserviceId)
-        actualConsumersIds = pagedResults.results.map(_.consumerId)
+        actualEServicesIds = pagedResults.results.map(_.eserviceId).distinct
+        actualConsumersIds = pagedResults.results.map(_.consumerId).distinct
         eServices       <- actualEServicesIds.traverse(catalogProcessService.getEServiceById)
-        producers       <- eServices.traverse(e => tenantProcessService.getTenant(e.producerId))
+        producers       <- eServices.map(_.producerId).distinct.traverse(tenantProcessService.getTenant)
         consumers       <- actualConsumersIds.traverse(tenantProcessService.getTenant)
         enhancedResults <- pagedResults.results.traverse(enhancePurpose(_, eServices, producers, consumers))
       } yield Purposes(
