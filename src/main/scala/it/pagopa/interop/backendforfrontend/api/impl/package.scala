@@ -8,8 +8,8 @@ import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
-import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
+import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
 
@@ -101,9 +101,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val producerEServiceDescriptorFormat: RootJsonFormat[ProducerEServiceDescriptor] =
     jsonFormat12(ProducerEServiceDescriptor)
 
-  implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] = jsonFormat5(
-    ProducerEServiceDetails
-  )
+  implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] =
+    jsonFormat5(ProducerEServiceDetails)
+
+  implicit val compactPurposeVersionFormat: RootJsonFormat[CompactPurposeVersion] = jsonFormat2(CompactPurposeVersion)
+  implicit val compactEServiceFormat: RootJsonFormat[CompactEService]             = jsonFormat3(CompactEService)
+  implicit val purposeFormat: RootJsonFormat[Purpose]                             = jsonFormat6(Purpose)
+  implicit val purposesFormat: RootJsonFormat[Purposes]                           = jsonFormat2(Purposes)
 
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat6(Problem)

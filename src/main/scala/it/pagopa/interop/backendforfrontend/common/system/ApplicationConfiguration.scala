@@ -62,6 +62,7 @@ object ApplicationConfiguration {
   val catalogProcessURL: String    = config.getString("backend-for-frontend.services.catalog-process")
   val tenantManagementURL: String  = config.getString("backend-for-frontend.services.tenant-management")
   val tenantProcessURL: String     = config.getString("backend-for-frontend.services.tenant-process")
+  val purposeProcessURL: String    = config.getString("backend-for-frontend.services.purpose-process")
 
   val storageKind: String           = config.getString("backend-for-frontend.storage.kind")
   val storageContainer: String      = config.getString("backend-for-frontend.storage.container")
