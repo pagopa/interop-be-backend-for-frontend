@@ -31,7 +31,7 @@ final case class PurposesApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getPurposesByConsumer(
+  override def getPurposes(
     name: Option[String],
     eServicesIds: String,
     consumersIds: String,
@@ -72,7 +72,7 @@ final case class PurposesApiServiceImpl(
     onComplete(result) {
       handleError(
         s"Error retrieving Purposes for name $name, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
-      ) orElse { case Success(r) => getPurposesByConsumer200(r) }
+      ) orElse { case Success(r) => getPurposes200(r) }
     }
   }
 
