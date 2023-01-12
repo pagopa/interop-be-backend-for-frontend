@@ -31,7 +31,7 @@ final case class PurposesApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getPurposes(
+  override def getPurposesByConsumer(
     name: Option[String],
     eServicesIds: String,
     consumersIds: String,
@@ -72,7 +72,7 @@ final case class PurposesApiServiceImpl(
     onComplete(result) {
       handleError(
         s"Error retrieving Purposes for name $name, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
-      ) orElse { case Success(r) => getPurposes200(r) }
+      ) orElse { case Success(r) => getPurposesByConsumer200(r) }
     }
   }
 
@@ -86,9 +86,7 @@ final case class PurposesApiServiceImpl(
     producer <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
     consumer <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
     currentVersion            = purpose.versions
-      .filter(v =>
-        v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL && v.state != PurposeProcess.PurposeVersionState.DRAFT
-      )
+      .filter(v => v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
       .sortBy(_.createdAt)
       .lastOption
     waitingForApprovalVersion = purpose.versions.find(
