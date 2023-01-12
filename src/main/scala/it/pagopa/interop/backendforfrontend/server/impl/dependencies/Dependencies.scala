@@ -100,7 +100,20 @@ trait Dependencies {
     )
     .toFuture
 
-  def makeController(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
+  def fileManager(blockingEc: ExecutionContextExecutor): FileManager =
+    FileManager.get(ApplicationConfiguration.storageKind match {
+      case "S3"   => FileManager.S3
+      case "file" => FileManager.File
+      case _      => throw new Exception("Incorrect File Manager")
+    })(blockingEc)
+
+  def getWhiteList(blockingEc: ExecutionContextExecutor): Future[List[String]] = {
+    fileManager(blockingEc)
+      .get(ApplicationConfiguration.storageContainer)("")
+      .map(byteStream => new String(byteStream.toByteArray).split('\n').flatMap(_.split(',')).toList)(blockingEc)
+  }
+
+  def makeController(jwtReader: JWTReader, whiteList: List[String], blockingEc: ExecutionContextExecutor)(implicit
     actorSystem: ActorSystem[_]
   ): Controller = {
 
@@ -152,6 +165,7 @@ trait Dependencies {
         tenantManagement,
         tenantProcess,
         partyProcess,
+        whiteList,
         rateLimiter
       ),
       AuthorizationApiMarshallerImpl,
@@ -169,13 +183,6 @@ trait Dependencies {
       AttributesApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
-
-    def fileManager(blockingEc: ExecutionContextExecutor): FileManager =
-      FileManager.get(ApplicationConfiguration.storageKind match {
-        case "S3"   => FileManager.S3
-        case "file" => FileManager.File
-        case _      => throw new Exception("Incorrect File Manager")
-      })(blockingEc)
 
     val agreementsApi: AgreementsApi = new AgreementsApi(
       AgreementsApiServiceImpl(

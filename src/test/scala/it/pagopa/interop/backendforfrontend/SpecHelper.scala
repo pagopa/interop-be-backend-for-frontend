@@ -56,6 +56,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   val mockTenantManagement: TenantManagementService    = mock[TenantManagementService]
   val mockTenantProcess: TenantProcessService          = mock[TenantProcessService]
   val mockPartyProcess: PartyProcessService            = mock[PartyProcessService]
+  final val whiteList: List[String]                    = Nil
   final val bearerToken: String                        = "token"
   val service: AuthorizationApiService                 = AuthorizationApiServiceImpl(
     mockJwtReader,
@@ -64,6 +65,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
     mockTenantManagement,
     mockTenantProcess,
     mockPartyProcess,
+    whiteList,
     mockRateLimiter
   )
 

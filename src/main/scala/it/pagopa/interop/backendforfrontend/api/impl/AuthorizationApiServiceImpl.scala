@@ -9,6 +9,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.UnknownTenantOrigin
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantManagementService, TenantProcessService}
@@ -34,6 +35,7 @@ final case class AuthorizationApiServiceImpl(
   tenantManagement: TenantManagementService,
   tenantProcess: TenantProcessService,
   partyProcess: PartyProcessService,
+  whiteList: List[String],
   rateLimiter: RateLimiter
 )(implicit ec: ExecutionContext)
     extends AuthorizationApiService {
@@ -86,9 +88,12 @@ final case class AuthorizationApiServiceImpl(
   private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] =
     for {
       partyInstitution <- partyProcess.getInstitution(selfcareId)
+      _                <- Future
+        .failed(UnknownTenantOrigin(selfcareId))
+        .unlessA(partyInstitution.origin == "IPA" || whiteList.contains(selfcareId))
       tenant           <- tenantProcess
         .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
-          partyInstitution.id.toString
+          partyInstitution.id.toString()
         )
     } yield tenant.id
 
