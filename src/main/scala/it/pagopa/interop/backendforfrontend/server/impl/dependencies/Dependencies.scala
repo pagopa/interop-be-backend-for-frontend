@@ -112,9 +112,6 @@ trait Dependencies {
     fileManager(blockingEc)
       .get(ApplicationConfiguration.allowListContainer)(filePath)
       .map(byteStream => new String(byteStream.toByteArray).split('\n').flatMap(_.split(',')).toList)(blockingEc)
-      .recoverWith { case _ =>
-        Future.successful(Nil)
-      }(blockingEc)
   }
 
   def makeController(jwtReader: JWTReader, allowList: List[String], blockingEc: ExecutionContextExecutor)(implicit

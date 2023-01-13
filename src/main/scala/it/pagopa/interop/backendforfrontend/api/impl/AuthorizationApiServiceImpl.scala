@@ -58,13 +58,10 @@ final case class AuthorizationApiServiceImpl(
       (sessionClaims, roles, selfcareId) <- readJwt(identityToken).toFuture
       internalContexts                   <- generateInternalTokenContexts(interopTokenGenerator, sessionClaims)
       partyInstitution                   <- partyProcess.getInstitution(selfcareId)
-      _                                  <- Future
-        .failed(UnknownTenantOrigin(selfcareId))
-        .unlessA(partyInstitution.origin == "IPA" || allowList.contains(selfcareId))
-      tenantId        <- getTenantIdOr(selfcareId)(upsertTenantBySelfcareId(partyInstitution)(internalContexts))(
-        internalContexts
-      )
-      rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
+      tenantId                           <- getTenantIdOr(selfcareId, partyInstitution)(
+        upsertTenantBySelfcareId(selfcareId, partyInstitution)(internalContexts)
+      )(internalContexts)
+      rateLimitStatus                    <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, String] = Map(
         USER_ROLES            -> roles,
         ORGANIZATION_ID_CLAIM -> tenantId.toString,
@@ -85,22 +82,33 @@ final case class AuthorizationApiServiceImpl(
       }
     }
   }
-  private def getTenantIdOr(
-    selfcareId: String
-  )(alternative: => Future[UUID])(implicit contexts: Seq[(String, String)]): Future[UUID] =
-    tenantManagement.getBySelfcareId(selfcareId).map(_.id).recoverWith {
-      case ex if TenantManagementService.is404(ex) => alternative
-    }
 
-  private def upsertTenantBySelfcareId(
-    partyInstitution: Institution
-  )(implicit contexts: Seq[(String, String)]): Future[UUID] =
+  private def getTenantIdOr(selfcareId: String, partyInstitution: Institution)(
+    alternative: => Future[UUID]
+  )(implicit contexts: Seq[(String, String)]): Future[UUID] = {
     for {
-      tenant <- tenantProcess
+      tenantId <- tenantManagement.getBySelfcareId(selfcareId).map(_.id).recoverWith {
+        case ex if TenantManagementService.is404(ex) => alternative
+      }
+      _        <- Future
+        .failed(UnknownTenantOrigin(selfcareId))
+        .unlessA(partyInstitution.origin == "IPA" || allowList.contains(selfcareId))
+    } yield tenantId
+  }
+
+  private def upsertTenantBySelfcareId(selfcareId: String, partyInstitution: Institution)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[UUID] =
+    for {
+      _        <- Future
+        .failed(UnknownTenantOrigin(selfcareId))
+        .unlessA(partyInstitution.origin == "IPA" || allowList.contains(selfcareId))
+      tenantId <- tenantProcess
         .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
           partyInstitution.id.toString
         )
-    } yield tenant.id
+        .flatMap(tenant => Future(tenant.id))
+    } yield tenantId
 
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
     claims        <- jwtReader.getClaims(identityToken.identity_token)
