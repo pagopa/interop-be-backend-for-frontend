@@ -22,6 +22,7 @@ import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
+import it.pagopa.interop.selfcare.partyprocess.client.model.Institution
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,11 +57,17 @@ final case class AuthorizationApiServiceImpl(
     val result: Future[(SessionToken, RateLimitStatus)] = for {
       (sessionClaims, roles, selfcareId) <- readJwt(identityToken).toFuture
       internalContexts                   <- generateInternalTokenContexts(interopTokenGenerator, sessionClaims)
-      tenantId <- getTenantIdOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
+      partyInstitution                   <- partyProcess.getInstitution(selfcareId)
+      _                                  <- Future
+        .failed(UnknownTenantOrigin(selfcareId))
+        .unlessA(partyInstitution.origin == "IPA" || allowList.contains(selfcareId))
+      tenantId        <- getTenantIdOr(selfcareId)(upsertTenantBySelfcareId(partyInstitution)(internalContexts))(
+        internalContexts
+      )
       rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, String] = Map(
         USER_ROLES            -> roles,
-        ORGANIZATION_ID_CLAIM -> tenantId.toString(),
+        ORGANIZATION_ID_CLAIM -> tenantId.toString,
         SELFCARE_ID_CLAIM     -> selfcareId
       )
       token <- sessionTokenGenerator.generate(
@@ -85,15 +92,13 @@ final case class AuthorizationApiServiceImpl(
       case ex if TenantManagementService.is404(ex) => alternative
     }
 
-  private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] =
+  private def upsertTenantBySelfcareId(
+    partyInstitution: Institution
+  )(implicit contexts: Seq[(String, String)]): Future[UUID] =
     for {
-      partyInstitution <- partyProcess.getInstitution(selfcareId)
-      _                <- Future
-        .failed(UnknownTenantOrigin(selfcareId))
-        .unlessA(partyInstitution.origin == "IPA" || allowList.contains(selfcareId))
-      tenant           <- tenantProcess
+      tenant <- tenantProcess
         .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
-          partyInstitution.id.toString()
+          partyInstitution.id.toString
         )
     } yield tenant.id
 
@@ -113,6 +118,6 @@ final case class AuthorizationApiServiceImpl(
     orgClaims            <- Option(nullableOrgClaimsMap).toTry(MissingClaim(s"$organizationClaim in selfcare token"))
     orgClaimsMap = orgClaims.asScala.toMap
     organizationId <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization in selfcare token"))
-  } yield organizationId.toString()
+  } yield organizationId.toString
 
 }
