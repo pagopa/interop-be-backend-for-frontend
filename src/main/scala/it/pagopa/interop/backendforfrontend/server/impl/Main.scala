@@ -31,8 +31,8 @@ object Main extends App with CORSSupport with Dependencies {
       logger.info(renderBuildInfo(BuildInfo))
 
       val serverBinding = for {
-        whiteList  <- getWhiteList(blockingEc)
-        controller <- getJwtValidator.map(makeController(_, whiteList, blockingEc))
+        allowList  <- getAllowList(blockingEc)
+        controller <- getJwtValidator.map(makeController(_, allowList, blockingEc))
         binding    <- Http()(actorSystem.classicSystem)
           .newServerAt("0.0.0.0", ApplicationConfiguration.serverPort)
           .bind(corsHandler(controller.routes))

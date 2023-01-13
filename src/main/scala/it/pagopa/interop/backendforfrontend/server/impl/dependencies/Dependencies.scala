@@ -107,13 +107,15 @@ trait Dependencies {
       case _      => throw new Exception("Incorrect File Manager")
     })(blockingEc)
 
-  def getWhiteList(blockingEc: ExecutionContextExecutor): Future[List[String]] = {
+  def getAllowList(blockingEc: ExecutionContextExecutor): Future[List[String]] = {
+    val filePath: String = s"${ApplicationConfiguration.allowListPath}/${ApplicationConfiguration.allowListFilename}"
     fileManager(blockingEc)
-      .get(ApplicationConfiguration.storageContainer)("")
+      .get(ApplicationConfiguration.allowListContainer)(filePath)
       .map(byteStream => new String(byteStream.toByteArray).split('\n').flatMap(_.split(',')).toList)(blockingEc)
+      .recover(_ => List.empty)(blockingEc)
   }
 
-  def makeController(jwtReader: JWTReader, whiteList: List[String], blockingEc: ExecutionContextExecutor)(implicit
+  def makeController(jwtReader: JWTReader, allowList: List[String], blockingEc: ExecutionContextExecutor)(implicit
     actorSystem: ActorSystem[_]
   ): Controller = {
 
@@ -165,7 +167,7 @@ trait Dependencies {
         tenantManagement,
         tenantProcess,
         partyProcess,
-        whiteList,
+        allowList,
         rateLimiter
       ),
       AuthorizationApiMarshallerImpl,

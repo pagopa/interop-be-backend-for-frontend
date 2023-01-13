@@ -35,7 +35,7 @@ final case class AuthorizationApiServiceImpl(
   tenantManagement: TenantManagementService,
   tenantProcess: TenantProcessService,
   partyProcess: PartyProcessService,
-  whiteList: List[String],
+  allowList: List[String],
   rateLimiter: RateLimiter
 )(implicit ec: ExecutionContext)
     extends AuthorizationApiService {
@@ -90,7 +90,7 @@ final case class AuthorizationApiServiceImpl(
       partyInstitution <- partyProcess.getInstitution(selfcareId)
       _                <- Future
         .failed(UnknownTenantOrigin(selfcareId))
-        .unlessA(partyInstitution.origin == "IPA" || whiteList.contains(selfcareId))
+        .unlessA(partyInstitution.origin == "IPA" || allowList.contains(selfcareId))
       tenant           <- tenantProcess
         .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
           partyInstitution.id.toString()
