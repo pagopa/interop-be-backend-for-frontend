@@ -11,6 +11,7 @@ trait PurposeProcessService {
     name: Option[String],
     eServicesIds: Seq[UUID],
     consumersIds: Seq[UUID],
+    producersIds: Seq[UUID],
     states: Seq[PurposeVersionState],
     offset: Int,
     limit: Int

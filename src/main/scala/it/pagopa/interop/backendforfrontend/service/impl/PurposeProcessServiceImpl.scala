@@ -26,6 +26,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
     name: Option[String],
     eServicesIds: Seq[UUID],
     consumersIds: Seq[UUID],
+    producersIds: Seq[UUID],
     states: Seq[PurposeVersionState],
     offset: Int,
     limit: Int
@@ -36,6 +37,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
           name = name,
           eservicesIds = eServicesIds,
           consumersIds = consumersIds,
+          producersIds = producersIds,
           states = states,
           offset = offset,
           limit = limit,

@@ -35,6 +35,7 @@ final case class PurposesApiServiceImpl(
     name: Option[String],
     eServicesIds: String,
     consumersIds: String,
+    producersIds: String,
     states: String,
     offset: Int,
     limit: Int
@@ -50,10 +51,12 @@ final case class PurposesApiServiceImpl(
           .toFuture
         eServicesUUIDs <- parseArrayParameters(eServicesIds).distinct.traverse(_.toFutureUUID)
         consumersUUIDs <- parseArrayParameters(consumersIds).distinct.traverse(_.toFutureUUID)
+        producersUUIDs <- parseArrayParameters(producersIds).distinct.traverse(_.toFutureUUID)
         pagedResults   <- purposeProcessService.getPurposes(
           name = name,
           eServicesIds = eServicesUUIDs,
           consumersIds = consumersUUIDs,
+          producersIds = producersUUIDs,
           states = statesEnum,
           offset = offset,
           limit = limit
