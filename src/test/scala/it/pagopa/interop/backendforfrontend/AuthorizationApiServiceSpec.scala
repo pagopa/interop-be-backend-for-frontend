@@ -56,28 +56,6 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockPartyProcess
-        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
-        .expects(selfcareId, *, *)
-        .once()
-        .returns(
-          Future.successful(
-            Institution(
-              id = UUID.fromString(selfcareId),
-              externalId = "whatever",
-              originId = "IPACode",
-              description = "foo",
-              digitalAddress = "of a digital home?",
-              address = "of an actual home?",
-              zipCode = "winrar",
-              taxCode = "not mine please lol",
-              origin = "IPA",
-              institutionType = None,
-              attributes = Nil
-            )
-          )
-        )
-
       (mockTenantManagement
         .getBySelfcareId(_: String)(_: Seq[(String, String)]))
         .expects(selfcareId, *)
@@ -87,7 +65,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = ExternalId("origin", "externalId"),
+              externalId = ExternalId("IPA", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -302,28 +280,6 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockPartyProcess
-        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
-        .expects(selfcareId, *, *)
-        .once()
-        .returns(
-          Future.successful(
-            Institution(
-              id = UUID.fromString(selfcareId),
-              externalId = "whatever",
-              originId = "IPACode",
-              description = "foo",
-              digitalAddress = "of a digital home?",
-              address = "of an actual home?",
-              zipCode = "winrar",
-              taxCode = "not mine please lol",
-              origin = "IPA",
-              institutionType = None,
-              attributes = Nil
-            )
-          )
-        )
-
       (mockTenantManagement
         .getBySelfcareId(_: String)(_: Seq[(String, String)]))
         .expects(selfcareId, *)
@@ -333,7 +289,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = ExternalId("origin", "externalId"),
+              externalId = ExternalId("IPA", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
