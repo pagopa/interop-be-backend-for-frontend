@@ -98,6 +98,7 @@ final case class EServicesApiServiceImpl(
         .map(_.attributes)
       eServiceAttributes             <- eService.attributes.toApi(attributes)
       requesterTenant                <- tenantManagementService.getTenant(requesterId)
+      producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
       agreement                      <- agreementProcessService
         .getAgreements(
           consumerId = requesterId.toString.some,
@@ -134,7 +135,7 @@ final case class EServicesApiServiceImpl(
         isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
         activeDescriptor =
           getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version)),
-        mail = requesterTenant.mails.headOption.map(_.toApi)
+        mail = producerTenant.mails.headOption.map(_.toApi)
       )
     )
 
