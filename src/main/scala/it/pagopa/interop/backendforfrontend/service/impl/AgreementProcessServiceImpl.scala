@@ -100,6 +100,20 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       invoker.invoke(request, s"Suspending agreement $agreementId")
     }
 
+  override def updateAgreement(agreementId: UUID, agreementUpdatePayload: AgreementUpdatePayload)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Agreement] =
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.updateAgreementById(
+          xCorrelationId = correlationId,
+          agreementId = agreementId,
+          agreementUpdatePayload = agreementUpdatePayload,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Upgrading agreement $agreementId")
+    }
+
   override def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
     withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
       val request =

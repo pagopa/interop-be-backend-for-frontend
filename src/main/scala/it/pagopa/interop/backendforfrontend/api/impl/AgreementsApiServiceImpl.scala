@@ -198,6 +198,24 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  override def updateAgreement(agreementId: String, payload: AgreementUpdatePayload)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
+  ): Route = {
+    val agreement: Future[Agreement] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      agreement     <- agreementProcessService.updateAgreement(agreementUuid, payload.toSeed)
+      apiAgreement  <- enhanceAgreement(agreement)
+    } yield apiAgreement
+
+    onComplete(agreement) {
+      handleError(s"Error updating agreement $agreementId") orElse { case Success(agreement) =>
+        updateAgreement200(agreement)
+      }
+    }
+  }
+
   override def upgradeAgreement(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
