@@ -431,7 +431,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               address = "of an actual home?",
               zipCode = "winzip",
               taxCode = "not mine please",
-              origin = "test-code",
+              origin = "non-IPA",
               institutionType = None,
               attributes = Nil
             )
@@ -440,14 +440,14 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
       (mockTenantProcess
         .selfcareUpsertTenant(_: String, _: String, _: String)(_: String)(_: Seq[(String, String)]))
-        .expects("test-code", "non-IPACode", "foo", selfcareId, *)
+        .expects("non-IPA", "non-IPACode", "foo", selfcareId, *)
         .once()
         .returns(
           Future.successful(
             tenantprocess.client.model.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = tenantprocess.client.model.ExternalId("test-code", "IPACode"),
+              externalId = tenantprocess.client.model.ExternalId("other-origin", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -548,7 +548,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               address = "of an actual home?",
               zipCode = "winzip",
               taxCode = "not mine please",
-              origin = "test-code",
+              origin = "non-IPA",
               institutionType = None,
               attributes = Nil
             )
