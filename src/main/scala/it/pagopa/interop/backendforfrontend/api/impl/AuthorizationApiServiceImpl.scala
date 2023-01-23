@@ -9,6 +9,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.UnknownTenantOrigin
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantManagementService, TenantProcessService}
@@ -34,6 +35,7 @@ final case class AuthorizationApiServiceImpl(
   tenantManagement: TenantManagementService,
   tenantProcess: TenantProcessService,
   partyProcess: PartyProcessService,
+  allowList: List[String],
   rateLimiter: RateLimiter
 )(implicit ec: ExecutionContext)
     extends AuthorizationApiService {
@@ -58,7 +60,7 @@ final case class AuthorizationApiServiceImpl(
       rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, String] = Map(
         USER_ROLES            -> roles,
-        ORGANIZATION_ID_CLAIM -> tenantId.toString(),
+        ORGANIZATION_ID_CLAIM -> tenantId.toString,
         SELFCARE_ID_CLAIM     -> selfcareId
       )
       token <- sessionTokenGenerator.generate(
@@ -76,21 +78,37 @@ final case class AuthorizationApiServiceImpl(
       }
     }
   }
+
+  private def assertTenantAllowed(selfcareId: String, origin: String): Future[Unit] =
+    Future
+      .failed(UnknownTenantOrigin(selfcareId))
+      .unlessA(origin == "IPA" || allowList.contains(selfcareId))
+
   private def getTenantIdOr(
     selfcareId: String
-  )(alternative: => Future[UUID])(implicit contexts: Seq[(String, String)]): Future[UUID] =
-    tenantManagement.getBySelfcareId(selfcareId).map(_.id).recoverWith {
-      case ex if TenantManagementService.is404(ex) => alternative
-    }
+  )(alternative: => Future[(UUID, String)])(implicit contexts: Seq[(String, String)]): Future[UUID] = {
+    for {
+      (tenantId, origin) <- tenantManagement
+        .getBySelfcareId(selfcareId)
+        .map(t => (t.id, t.externalId.origin))
+        .recoverWith {
+          case ex if TenantManagementService.is404(ex) => alternative
+        }
+      _                  <- assertTenantAllowed(selfcareId, origin)
+    } yield tenantId
+  }
 
-  private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] =
+  private def upsertTenantBySelfcareId(
+    selfcareId: String
+  )(implicit contexts: Seq[(String, String)]): Future[(UUID, String)] =
     for {
       partyInstitution <- partyProcess.getInstitution(selfcareId)
+      _                <- assertTenantAllowed(selfcareId, partyInstitution.origin)
       tenant           <- tenantProcess
         .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
           partyInstitution.id.toString
         )
-    } yield tenant.id
+    } yield (tenant.id, tenant.externalId.origin)
 
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
     claims        <- jwtReader.getClaims(identityToken.identity_token)
@@ -108,6 +126,6 @@ final case class AuthorizationApiServiceImpl(
     orgClaims            <- Option(nullableOrgClaimsMap).toTry(MissingClaim(s"$organizationClaim in selfcare token"))
     orgClaimsMap = orgClaims.asScala.toMap
     organizationId <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization in selfcare token"))
-  } yield organizationId.toString()
+  } yield organizationId.toString
 
 }

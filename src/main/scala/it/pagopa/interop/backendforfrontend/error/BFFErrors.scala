@@ -53,4 +53,6 @@ object BFFErrors {
 
   final case class DownstreamError(errorCode: String, message: String) extends ComponentError(errorCode, message)
 
+  final case class UnknownTenantOrigin(selfcareId: String)
+      extends ComponentError("0012", s"SelfcareID ${selfcareId} is not inside whitelist or related with IPA")
 }

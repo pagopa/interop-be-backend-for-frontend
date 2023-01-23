@@ -63,7 +63,10 @@ object ApplicationConfiguration {
   val tenantManagementURL: String  = config.getString("backend-for-frontend.services.tenant-management")
   val tenantProcessURL: String     = config.getString("backend-for-frontend.services.tenant-process")
 
-  val storageKind: String           = config.getString("backend-for-frontend.storage.kind")
-  val storageContainer: String      = config.getString("backend-for-frontend.storage.container")
-  val consumerDocumentsPath: String = config.getString("backend-for-frontend.storage.consumer-documents-path")
+  val storageKind: String                = config.getString("backend-for-frontend.storage.kind")
+  val consumerDocumentsContainer: String = config.getString("backend-for-frontend.storage.consumer-documents.container")
+  val consumerDocumentsPath: String      = config.getString("backend-for-frontend.storage.consumer-documents.path")
+  val allowListContainer: String         = config.getString("backend-for-frontend.storage.allow-list.container")
+  val allowListPath: String              = config.getString("backend-for-frontend.storage.allow-list.path")
+  val allowListFilename: String          = config.getString("backend-for-frontend.storage.allow-list.filename")
 }
