@@ -111,7 +111,7 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
           agreementUpdatePayload = agreementUpdatePayload,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Upgrading agreement $agreementId")
+      invoker.invoke(request, s"Updating agreement $agreementId")
     }
 
   override def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
