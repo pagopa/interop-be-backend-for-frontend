@@ -21,6 +21,11 @@ object AgreementProcessServiceTypes {
       AgreementProcess.AgreementRejectionPayload(reason = payload.reason)
   }
 
+  implicit class AgreementUpdatePayloadConverter(private val payload: AgreementUpdatePayload) extends AnyVal {
+    def toSeed: AgreementProcess.AgreementUpdatePayload =
+      AgreementProcess.AgreementUpdatePayload(consumerNotes = payload.consumerNotes)
+  }
+
   implicit class AgreementStateConverter(private val s: AgreementProcess.AgreementState) extends AnyVal {
     def toApi: AgreementState = s match {
       case AgreementProcess.AgreementState.DRAFT                        => DRAFT
