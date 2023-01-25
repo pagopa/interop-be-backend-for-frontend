@@ -29,7 +29,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
 
   "Generating a session token" should {
 
-    "succeed when the tenant is present" in {
+    "succeed when the tenant is present and its origin is IPA" in {
 
       val uid: String        = UUID.randomUUID().toString
       val selfcareId: String = UUID.randomUUID().toString
@@ -65,7 +65,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = ExternalId("origin", "externalId"),
+              externalId = ExternalId("IPA", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -119,7 +119,153 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       }
     }
 
-    "succeed even if the tenant needs to be upserted" in {
+    "succeed when the tenant is present and its origin is not IPA but is in allowlist" in {
+
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = allowList.head
+      val tenantId: UUID     = UUID.randomUUID()
+
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
+        "organization" -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
+        "uid"          -> uid
+      ).asClaimSet
+
+      (mockJwtReader
+        .getClaims(_: String))
+        .expects(*)
+        .once()
+        .returns(Success(jwtClaimsSet))
+
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(internalToken))
+
+      (mockTenantManagement
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
+        .expects(selfcareId, *)
+        .once()
+        .returns(
+          Future.successful(
+            Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = ExternalId("other-origin", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
+      val desiredClaimSet: Map[String, AnyRef] = Map(
+        "uid"            -> uid,
+        "user-roles"     -> "admin,anotherRole",
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
+        "organization"   -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ).toJSONObject
+      )
+
+      (mockRateLimiter
+        .rateLimiting(_: UUID)(
+          _: ExecutionContext,
+          _: LoggerTakingImplicit[ContextFieldsToLog],
+          _: Seq[(String, String)]
+        ))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
+
+      (mockSessionTokenGenerator
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .expects(
+          SignatureAlgorithm.RSAPkcs1Sha256,
+          desiredClaimSet,
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          ApplicationConfiguration.generatedJwtDuration
+        )
+        .once()
+        .returns(Future.successful("sessionToken"))
+
+      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+        Seq.empty,
+        toEntityMarshallerSessionToken
+      ) ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[SessionToken] shouldEqual SessionToken("sessionToken")
+      }
+    }
+
+    "succeed when the tenant is present and its origin is not IPA and is not in allowlist" in {
+
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = "selfcareId-not-in-allowlist"
+      val tenantId: UUID     = UUID.randomUUID()
+
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
+        "organization" -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
+        "uid"          -> uid
+      ).asClaimSet
+
+      (mockJwtReader
+        .getClaims(_: String))
+        .expects(*)
+        .once()
+        .returns(Success(jwtClaimsSet))
+
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(internalToken))
+
+      (mockTenantManagement
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
+        .expects(selfcareId, *)
+        .once()
+        .returns(
+          Future.successful(
+            Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = ExternalId("other-origin", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
+      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+        Seq.empty,
+        toEntityMarshallerSessionToken
+      ) ~> check {
+        status shouldEqual StatusCodes.BadRequest
+        responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0012")
+      }
+    }
+
+    "succeed if the tenant needs to be upserted and its origin is IPA" in {
 
       val uid: String        = UUID.randomUUID().toString
       val selfcareId: String = UUID.randomUUID().toString
@@ -237,6 +383,187 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       }
     }
 
+    "succeed if the tenant needs to be upserted and its origin is not IPA but is in allowlist" in {
+
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = allowList.head
+      val tenantId: UUID     = UUID.randomUUID()
+
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
+        "organization" -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
+        "uid"          -> uid
+      ).asClaimSet
+
+      (mockJwtReader
+        .getClaims(_: String))
+        .expects(*)
+        .once()
+        .returns(Success(jwtClaimsSet))
+
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(internalToken))
+
+      (mockTenantManagement
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
+        .expects(selfcareId, *)
+        .once()
+        .returns(Future.failed(ApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+
+      (mockPartyProcess
+        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(selfcareId, *, *)
+        .once()
+        .returns(
+          Future.successful(
+            Institution(
+              id = UUID.fromString(selfcareId),
+              externalId = "whatever",
+              originId = "non-IPACode",
+              description = "foo",
+              digitalAddress = "of a digital home?",
+              address = "of an actual home?",
+              zipCode = "winzip",
+              taxCode = "not mine please",
+              origin = "non-IPA",
+              institutionType = None,
+              attributes = Nil
+            )
+          )
+        )
+
+      (mockTenantProcess
+        .selfcareUpsertTenant(_: String, _: String, _: String)(_: String)(_: Seq[(String, String)]))
+        .expects("non-IPA", "non-IPACode", "foo", selfcareId, *)
+        .once()
+        .returns(
+          Future.successful(
+            tenantprocess.client.model.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = tenantprocess.client.model.ExternalId("other-origin", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "foo"
+            )
+          )
+        )
+
+      val desiredClaimSet: Map[String, AnyRef] = Map(
+        "uid"            -> uid,
+        "user-roles"     -> "admin,anotherRole",
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
+        "organization"   -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ).toJSONObject
+      )
+
+      (mockRateLimiter
+        .rateLimiting(_: UUID)(
+          _: ExecutionContext,
+          _: LoggerTakingImplicit[ContextFieldsToLog],
+          _: Seq[(String, String)]
+        ))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
+
+      (mockSessionTokenGenerator
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .expects(
+          SignatureAlgorithm.RSAPkcs1Sha256,
+          desiredClaimSet,
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          ApplicationConfiguration.generatedJwtDuration
+        )
+        .once()
+        .returns(Future.successful("sessionToken"))
+
+      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+        Seq.empty,
+        toEntityMarshallerSessionToken
+      ) ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[SessionToken] shouldEqual SessionToken("sessionToken")
+      }
+    }
+
+    "succeed if the tenant needs to be upserted and its origin is not IPA and is not in allowlist" in {
+
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString
+
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
+        "organization" -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
+        "uid"          -> uid
+      ).asClaimSet
+
+      (mockJwtReader
+        .getClaims(_: String))
+        .expects(*)
+        .once()
+        .returns(Success(jwtClaimsSet))
+
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(internalToken))
+
+      (mockTenantManagement
+        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
+        .expects(selfcareId, *)
+        .once()
+        .returns(Future.failed(ApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+
+      (mockPartyProcess
+        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(selfcareId, *, *)
+        .once()
+        .returns(
+          Future.successful(
+            Institution(
+              id = UUID.fromString(selfcareId),
+              externalId = "whatever",
+              originId = "non-IPACode",
+              description = "foo",
+              digitalAddress = "of a digital home?",
+              address = "of an actual home?",
+              zipCode = "winzip",
+              taxCode = "not mine please",
+              origin = "non-IPA",
+              institutionType = None,
+              attributes = Nil
+            )
+          )
+        )
+
+      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+        Seq.empty,
+        toEntityMarshallerSessionToken
+      ) ~> check {
+        status shouldEqual StatusCodes.BadRequest
+        responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0012")
+      }
+    }
+
     "fail on JWTReader failure" in {
 
       (mockJwtReader
@@ -289,7 +616,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = ExternalId("origin", "externalId"),
+              externalId = ExternalId("IPA", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),

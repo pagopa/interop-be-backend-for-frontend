@@ -50,8 +50,11 @@ object BFFErrors {
 
   final case class DownstreamError(errorCode: String, message: String) extends ComponentError(errorCode, message)
 
-  final case class EServiceNotFound(eServiceId: UUID) extends ComponentError("0012", s"EService $eServiceId not found")
+  final case class UnknownTenantOrigin(selfcareId: String)
+      extends ComponentError("0012", s"SelfcareID ${selfcareId} is not inside whitelist or related with IPA")
 
-  final case class TenantNotFound(tenantId: UUID) extends ComponentError("0013", s"Tenant $tenantId not found")
+  final case class EServiceNotFound(eServiceId: UUID) extends ComponentError("0013", s"EService $eServiceId not found")
+
+  final case class TenantNotFound(tenantId: UUID) extends ComponentError("0014", s"Tenant $tenantId not found")
 
 }

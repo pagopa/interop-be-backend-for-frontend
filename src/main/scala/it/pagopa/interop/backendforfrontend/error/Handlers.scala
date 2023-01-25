@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf, serviceCode}
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{AttributeNotExists, DownstreamError}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{AttributeNotExists, DownstreamError, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.model.Problem
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiError => CatalogProcessError}
@@ -45,6 +45,7 @@ object Handlers {
         Headers.headersFromStatus(tmr.status)
       )
     case Failure(err: AttributeNotExists)                       => internalServerError(err, logMessage)
+    case Failure(err: UnknownTenantOrigin)                      => badRequest(err, logMessage)
     case Failure(err)                                           => internalServerError(err, logMessage)
   }
 

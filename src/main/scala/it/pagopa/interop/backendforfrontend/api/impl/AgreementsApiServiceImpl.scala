@@ -258,7 +258,7 @@ final case class AgreementsApiServiceImpl(
       updatedAt = consumerTenant.updatedAt,
       name = consumerDescription,
       attributes = tenantAttributes,
-      contactMail = consumerTenant.mails.headOption.map(_.toApi)
+      contactMail = consumerTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
     ),
     eservice = AgreementsEService(
       id = agreement.eserviceId,
@@ -319,7 +319,7 @@ final case class AgreementsApiServiceImpl(
       for {
         agreementUUID <- agreementId.toFutureUUID
         seed          <- fileManager
-          .store(ApplicationConfiguration.storageContainer, documentPath)(doc._1.fileName, doc)
+          .store(ApplicationConfiguration.consumerDocumentsContainer, documentPath)(doc._1.fileName, doc)
           .map(path =>
             AgreementProcess.DocumentSeed(
               id = documentId,
@@ -352,7 +352,7 @@ final case class AgreementsApiServiceImpl(
         documentUUID  <- documentId.toFutureUUID
         document      <- agreementProcessService.getConsumerDocument(agreementUUID, documentUUID)
         contentType   <- getMediaType(document.contentType, agreementId, documentId)
-        byteStream    <- fileManager.get(ApplicationConfiguration.storageContainer)(document.path)
+        byteStream    <- fileManager.get(ApplicationConfiguration.consumerDocumentsContainer)(document.path)
       } yield HttpEntity(contentType, byteStream.toByteArray())
 
     onComplete(result) {
@@ -380,7 +380,7 @@ final case class AgreementsApiServiceImpl(
         uuid       <- agreementId.toFutureUUID
         agreement  <- agreementProcessService.getAgreementById(uuid)
         contract   <- agreement.contract.toFuture(ContractNotFound(agreementId))
-        byteStream <- fileManager.get(ApplicationConfiguration.storageContainer)(contract.path)
+        byteStream <- fileManager.get(ApplicationConfiguration.consumerDocumentsContainer)(contract.path)
       } yield HttpEntity(ContentType(MediaTypes.`application/pdf`), byteStream.toByteArray())
 
     onComplete(result) {
