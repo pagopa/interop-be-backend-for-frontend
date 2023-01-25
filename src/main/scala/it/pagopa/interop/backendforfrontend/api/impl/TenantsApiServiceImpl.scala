@@ -33,42 +33,42 @@ final case class TenantsApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getProducers(name: Option[String], offset: Int, limit: Int)(implicit
+  override def getProducers(q: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCompactOrganization: ToEntityMarshaller[CompactOrganizations]
   ): Route = {
     val result: Future[CompactOrganizations] =
       for {
-        pagedResults <- tenantProcessService.getProducers(name = name, offset = offset, limit = limit)
+        pagedResults <- tenantProcessService.getProducers(name = q, offset = offset, limit = limit)
       } yield CompactOrganizations(
         results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
         pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
       )
 
     onComplete(result) {
-      handleError(s"Error retrieving producers for name $name, offset $offset, limit $limit") orElse {
-        case Success(r) => getProducers200(r)
+      handleError(s"Error retrieving producers for name $q, offset $offset, limit $limit") orElse { case Success(r) =>
+        getProducers200(r)
       }
     }
   }
 
-  override def getConsumers(name: Option[String], offset: Int, limit: Int)(implicit
+  override def getConsumers(q: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCompactOrganization: ToEntityMarshaller[CompactOrganizations]
   ): Route = {
     val result: Future[CompactOrganizations] =
       for {
-        pagedResults <- tenantProcessService.getConsumers(name = name, offset = offset, limit = limit)
+        pagedResults <- tenantProcessService.getConsumers(name = q, offset = offset, limit = limit)
       } yield CompactOrganizations(
         results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
         pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
       )
 
     onComplete(result) {
-      handleError(s"Error retrieving consumers for name $name, offset $offset, limit $limit") orElse {
-        case Success(r) => getConsumers200(r)
+      handleError(s"Error retrieving consumers for name $q, offset $offset, limit $limit") orElse { case Success(r) =>
+        getConsumers200(r)
       }
     }
   }

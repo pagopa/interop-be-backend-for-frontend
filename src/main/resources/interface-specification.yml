@@ -41,6 +41,11 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: purposes
+    description: Purpose Module
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'
   - name: tenants
     description: Tenant Module
     externalDocs:
@@ -1406,7 +1411,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
       - in: query
-        name: name
+        name: q
         schema:
           type: string
       - in: query
@@ -1473,7 +1478,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
       - in: query
-        name: name
+        name: q
         schema:
           type: string
       - in: query
@@ -2188,6 +2193,112 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/purposes':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: eservicesIds
+        description: comma separated sequence of EService IDs
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+          default: []
+        explode: false
+      - in: query
+        name: consumersIds
+        description: comma separated sequence of consumers IDs
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+          default: []
+        explode: false
+      - in: query
+        name: producersIds
+        description: comma separated sequence of producers IDs
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+          default: []
+        explode: false
+      - in: query
+        name: states
+        description: comma separated sequence of states
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurposeVersionState'
+          default: []
+        explode: false
+      - in: query
+        name: offset
+        required: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+      - in: query
+        name: limit
+        required: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 50
+    get:
+      tags:
+        - purposes
+      operationId: getPurposes
+      description: Retrieve Purposes
+      responses:
+        '200':
+          description: Purposes retrieved
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purposes'
         '429':
           description: Too Many Requests
           content:
@@ -3616,6 +3727,31 @@ components:
           $ref: '#/components/schemas/EServiceDescriptorState'
         version:
           type: string
+    CompactEService:
+      type: object
+      required:
+        - id
+        - name
+        - producer
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        producer:
+          $ref: '#/components/schemas/CompactOrganization'
+    CompactPurposeVersion:
+      type: object
+      required:
+        - id
+        - state
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          $ref: '#/components/schemas/PurposeVersionState'
     CompactOrganization:
       type: object
       required:
@@ -3731,6 +3867,48 @@ components:
         - id
         - role
         - createdAt
+    Purpose:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        consumer:
+          $ref: '#/components/schemas/CompactOrganization'
+        eservice:
+          $ref: '#/components/schemas/CompactEService'
+        currentVersion:
+          $ref: '#/components/schemas/CompactPurposeVersion'
+        waitingForApprovalVersion:
+          $ref: '#/components/schemas/CompactPurposeVersion'
+      required:
+        - id
+        - title
+        - consumer
+        - eservice
+    Purposes:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Purpose'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - results
+        - pagination
+    PurposeVersionState:
+      type: string
+      description: Purpose State
+      enum:
+        - ACTIVE
+        - DRAFT
+        - SUSPENDED
+        - WAITING_FOR_APPROVAL
+        - ARCHIVED
     RelationshipState:
       type: string
       description: Represents the party relationship state
