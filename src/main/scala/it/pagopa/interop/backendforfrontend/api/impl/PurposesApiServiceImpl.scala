@@ -32,7 +32,7 @@ final case class PurposesApiServiceImpl(
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getPurposes(
-    name: Option[String],
+    q: Option[String],
     eServicesIds: String,
     consumersIds: String,
     producersIds: String,
@@ -53,7 +53,7 @@ final case class PurposesApiServiceImpl(
         consumersUUIDs <- parseArrayParameters(consumersIds).distinct.traverse(_.toFutureUUID)
         producersUUIDs <- parseArrayParameters(producersIds).distinct.traverse(_.toFutureUUID)
         pagedResults   <- purposeProcessService.getPurposes(
-          name = name,
+          name = q,
           eServicesIds = eServicesUUIDs,
           consumersIds = consumersUUIDs,
           producersIds = producersUUIDs,
@@ -74,7 +74,7 @@ final case class PurposesApiServiceImpl(
 
     onComplete(result) {
       handleError(
-        s"Error retrieving Purposes for name $name, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
+        s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
       ) orElse { case Success(r) => getPurposes200(r) }
     }
   }

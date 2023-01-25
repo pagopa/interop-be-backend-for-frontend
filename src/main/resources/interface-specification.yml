@@ -1411,7 +1411,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
       - in: query
-        name: name
+        name: q
         schema:
           type: string
       - in: query
@@ -1478,7 +1478,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
       - in: query
-        name: name
+        name: q
         schema:
           type: string
       - in: query
@@ -2217,7 +2217,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
       - in: query
-        name: name
+        name: q
         schema:
           type: string
       - in: query
