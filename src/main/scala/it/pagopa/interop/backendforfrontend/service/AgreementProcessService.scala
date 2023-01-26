@@ -19,6 +19,7 @@ trait AgreementProcessService {
   def rejectAgreement(agreementId: UUID, payload: AgreementRejectionPayload)(implicit
     contexts: Seq[(String, String)]
   ): Future[Agreement]
+  def cloneAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
 
   def getAgreements(
     producerId: Option[String] = None,
