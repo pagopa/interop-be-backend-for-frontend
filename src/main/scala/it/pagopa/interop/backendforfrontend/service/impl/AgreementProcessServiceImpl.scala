@@ -171,4 +171,12 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
     )(BearerToken(bearerToken))
     invoker.invoke(request, s"Removing document $documentId from agreement $agreementId")
   }
+
+  override def cloneAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request = api.cloneAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      invoker.invoke(request, s"Cloning agreement $agreementId")
+    }
 }

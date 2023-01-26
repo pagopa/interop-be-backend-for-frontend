@@ -427,4 +427,24 @@ final case class AgreementsApiServiceImpl(
       }
     }
   }
+
+  override def cloneAgreement(agreementId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    logger.info(s"Cloning agreement $agreementId")
+
+    val result: Future[CreatedResource] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      result        <- agreementProcessService.cloneAgreement(agreementUuid)
+    } yield CreatedResource(result.id)
+
+    onComplete(result) {
+      handleError(s"Error cloning agreement $agreementId") orElse { case Success(resource) =>
+        cloneAgreement200(resource)
+      }
+    }
+  }
+
 }
