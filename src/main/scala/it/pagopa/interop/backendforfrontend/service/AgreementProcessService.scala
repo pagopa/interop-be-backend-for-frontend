@@ -21,13 +21,15 @@ trait AgreementProcessService {
   ): Future[Agreement]
 
   def getAgreements(
-    producerId: Option[String] = None,
-    consumerId: Option[String] = None,
-    eServiceId: Option[String] = None,
-    descriptorId: Option[String] = None,
-    states: Seq[AgreementState],
-    latest: Option[Boolean] = None
-  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]]
+    producersIds: Seq[UUID] = Seq.empty,
+    consumersIds: Seq[UUID] = Seq.empty,
+    eservicesIds: Seq[UUID] = Seq.empty,
+    descriptorsIds: Seq[UUID] = Seq.empty,
+    states: Seq[AgreementState] = Seq.empty,
+    limit: Int = Int.MaxValue,
+    offset: Int = 0,
+    showOnlyUpgradeable: Option[Boolean] = None
+  )(implicit contexts: Seq[(String, String)]): Future[Agreements]
 
   def addConsumerDocument(agreementId: UUID, seed: DocumentSeed)(implicit
     contexts: Seq[(String, String)]

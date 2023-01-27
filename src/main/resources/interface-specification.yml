@@ -64,25 +64,50 @@ paths:
       operationId: getAgreements
       parameters:
         - in: query
-          name: producerId
+          name: offset
+          required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int32
+            minimum: 0
         - in: query
-          name: consumerId
+          name: limit
+          required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 50
         - in: query
-          name: eserviceId
+          name: eservicesIds
+          description: comma separated sequence of eservices IDs
           schema:
-            type: string
-            format: uuid
+            type: array
+            items:
+              type: string
+              format: uuid
+            default: []
+          explode: false
         - in: query
-          name: descriptorId
+          name: producersIds
+          description: comma separated sequence of producers IDs
           schema:
-            type: string
-            format: uuid
+            type: array
+            items:
+              type: string
+              format: uuid
+            default: []
+          explode: false
+        - in: query
+          name: consumersIds
+          description: comma separated sequence of consumers IDs
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+            default: []
+          explode: false
         - in: query
           name: states
           description: comma separated sequence of agreement states to filter the response with
@@ -93,9 +118,10 @@ paths:
             default: []
           explode: false
         - in: query
-          name: latest
+          name: showOnlyUpgradeable
           schema:
             type: boolean
+            default: false
       responses:
         '200':
           description: Agreement found
@@ -3512,9 +3538,17 @@ components:
         - consumerDocuments
         - createdAt
     Agreements:
-      type: array
-      items:
-        $ref: '#/components/schemas/Agreement'
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agreement'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - results
+        - pagination    
     AgreementPayload:
       type: object
       description: contains the information for agreement creation.

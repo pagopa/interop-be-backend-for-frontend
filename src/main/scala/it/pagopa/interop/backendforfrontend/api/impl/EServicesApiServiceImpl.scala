@@ -102,12 +102,12 @@ final case class EServicesApiServiceImpl(
       producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
       agreement                      <- agreementProcessService
         .getAgreements(
-          consumerId = requesterId.toString.some,
-          eServiceId = eserviceId.some,
-          descriptorId = descriptorId.some,
-          states = Seq.empty
+          consumersIds = Seq(requesterId),
+          eservicesIds = Seq(UUID.fromString(eserviceId)),
+          descriptorsIds = Seq(UUID.fromString(descriptorId)),
+          limit = 1
         )
-        .map(_.headOption)
+        .map(_.results.headOption)
     } yield CatalogEServiceDescriptor(
       id = descriptor.id,
       version = descriptor.version,
@@ -192,17 +192,19 @@ final case class EServicesApiServiceImpl(
 
   private def getProducerEServicesIds(producerId: UUID, consumersIds: List[String])(implicit
     contexts: Seq[(String, String)]
-  ): Future[List[UUID]] =
-    Future
-      .traverse(consumersIds)(consumerId =>
-        // TODO This call will be paginated
-        agreementProcessService.getAgreements(
-          producerId = producerId.toString.some,
-          consumerId.some,
-          states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+  ): Future[List[UUID]] = {
+    for {
+      agreements <- Future
+        .traverse(consumersIds)(consumerId =>
+          agreementProcessService.getAgreements(
+            consumersIds = Seq(UUID.fromString(consumerId)),
+            producersIds = Seq(producerId),
+            states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+          )
         )
-      )
-      .map(_.flatten.map(_.eserviceId).distinct)
+      results    <- Future(agreements.flatMap(_.results))
+    } yield results.map(_.eserviceId).distinct
+  }
 
   private def enhanceCatalogEService(
     requesterId: UUID
@@ -216,13 +218,8 @@ final case class EServicesApiServiceImpl(
 
     agreement <- activeDescriptor.flatTraverse(d =>
       agreementProcessService
-        .getAgreements(
-          consumerId = requesterId.toString.some,
-          eServiceId = eService.id.toString.some,
-          descriptorId = d.id.toString.some,
-          states = Nil
-        )
-        .map(_.headOption)
+        .getAgreements(consumersIds = Seq(requesterId), eservicesIds = Seq(eService.id), descriptorsIds = Seq(d.id))
+        .map(_.results.headOption)
     )
   } yield CatalogEService(
     id = eService.id,

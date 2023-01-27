@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
@@ -27,11 +26,12 @@ import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServic
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.backendforfrontend.api.impl.Utils
+import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import java.io.File
 import java.util.UUID
@@ -97,29 +97,37 @@ final case class AgreementsApiServiceImpl(
   }
 
   override def getAgreements(
-    producerId: Option[String],
-    consumerId: Option[String],
-    eServiceId: Option[String],
-    descriptorId: Option[String],
+    offset: Int,
+    limit: Int,
+    eservicesIds: String,
+    producersIds: String,
+    consumersIds: String,
     states: String,
-    latest: Option[Boolean]
+    showOnlyUpgradeable: Boolean
   )(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerAgreementarray: ToEntityMarshaller[Seq[Agreement]],
+    toEntityMarshallerAgreement: ToEntityMarshaller[Agreements],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val agreements: Future[Seq[Agreement]] = for {
-      statesEnums   <- parseArrayParameters(states).traverse(AgreementState.fromValue).toFuture
-      agreements    <- agreementProcessService.getAgreements(
-        producerId = producerId,
-        consumerId = consumerId,
-        eServiceId = eServiceId,
-        descriptorId = descriptorId,
-        states = statesEnums.map(AgreementProcess.AgreementState.fromApi),
-        latest = latest
+    val agreements: Future[Agreements] = for {
+      producers    <- parseArrayParameters(producersIds).traverse(_.toFutureUUID)
+      eservices    <- parseArrayParameters(eservicesIds).traverse(_.toFutureUUID)
+      consumers    <- parseArrayParameters(consumersIds).traverse(_.toFutureUUID)
+      states       <- parseArrayParameters(states).traverse(AgreementProcess.AgreementState.fromValue).toFuture
+      pagedResults <- agreementProcessService.getAgreements(
+        producersIds = producers,
+        eservicesIds = eservices,
+        consumersIds = consumers,
+        states = states,
+        offset = offset,
+        limit = limit,
+        showOnlyUpgradeable = showOnlyUpgradeable.some
       )
-      apiAgreements <- Future.traverse(agreements)(enhanceAgreement)
-    } yield apiAgreements
+      agreements   <- Future.traverse(pagedResults.results)(enhanceAgreement)
+    } yield Agreements(
+      results = agreements,
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
 
     onComplete(agreements) {
       handleError(s"Error retrieving agreements") orElse { case Success(agreements) => getAgreements200(agreements) }

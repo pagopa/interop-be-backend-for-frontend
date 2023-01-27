@@ -49,22 +49,26 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
     }
 
   override def getAgreements(
-    producerId: Option[String] = None,
-    consumerId: Option[String] = None,
-    eServiceId: Option[String] = None,
-    descriptorId: Option[String] = None,
+    producersIds: Seq[UUID],
+    consumersIds: Seq[UUID],
+    eservicesIds: Seq[UUID],
+    descriptorsIds: Seq[UUID],
     states: Seq[AgreementState],
-    latest: Option[Boolean] = None
-  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] = withHeaders[Seq[Agreement]] {
+    limit: Int,
+    offset: Int,
+    showOnlyUpgradeable: Option[Boolean]
+  )(implicit contexts: Seq[(String, String)]): Future[Agreements] = withHeaders[Agreements] {
     (bearerToken, correlationId, ip) =>
       val request = api.getAgreements(
         xCorrelationId = correlationId,
-        producerId = producerId,
-        consumerId = consumerId,
-        eserviceId = eServiceId,
-        descriptorId = descriptorId,
+        offset = offset,
+        limit = limit,
+        producersIds = producersIds,
+        consumersIds = consumersIds,
+        eservicesIds = eservicesIds,
+        descriptorsIds = descriptorsIds,
         states = states,
-        latest = latest,
+        showOnlyUpgradeable = showOnlyUpgradeable,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving agreements")
