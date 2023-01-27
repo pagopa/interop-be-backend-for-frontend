@@ -104,8 +104,10 @@ final case class PurposesApiServiceImpl(
       name = eService.name,
       producer = CompactOrganization(id = producer.id, name = producer.name)
     ),
-    currentVersion = currentVersion.map(v => CompactPurposeVersion(id = v.id, state = v.state.toApi)),
-    waitingForApprovalVersion =
-      waitingForApprovalVersion.map(v => CompactPurposeVersion(id = v.id, state = v.state.toApi))
+    currentVersion =
+      currentVersion.map(v => CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls)),
+    waitingForApprovalVersion = waitingForApprovalVersion.map(v =>
+      CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls)
+    )
   )
 }
