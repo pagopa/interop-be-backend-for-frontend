@@ -207,6 +207,24 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  override def updateAgreement(agreementId: String, payload: AgreementUpdatePayload)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
+  ): Route = {
+    val agreement: Future[Agreement] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      agreement     <- agreementProcessService.updateAgreement(agreementUuid, payload.toSeed)
+      apiAgreement  <- enhanceAgreement(agreement)
+    } yield apiAgreement
+
+    onComplete(agreement) {
+      handleError(s"Error updating agreement $agreementId") orElse { case Success(agreement) =>
+        updateAgreement200(agreement)
+      }
+    }
+  }
+
   override def upgradeAgreement(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -440,4 +458,24 @@ final case class AgreementsApiServiceImpl(
       }
     }
   }
+
+  override def cloneAgreement(agreementId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    logger.info(s"Cloning agreement $agreementId")
+
+    val result: Future[CreatedResource] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      result        <- agreementProcessService.cloneAgreement(agreementUuid)
+    } yield CreatedResource(result.id)
+
+    onComplete(result) {
+      handleError(s"Error cloning agreement $agreementId") orElse { case Success(resource) =>
+        cloneAgreement200(resource)
+      }
+    }
+  }
+
 }

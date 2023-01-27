@@ -15,10 +15,14 @@ trait AgreementProcessService {
     contexts: Seq[(String, String)]
   ): Future[Agreement]
   def suspendAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
+  def updateAgreement(agreementId: UUID, agreementUpdatePayload: AgreementUpdatePayload)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Agreement]
   def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
   def rejectAgreement(agreementId: UUID, payload: AgreementRejectionPayload)(implicit
     contexts: Seq[(String, String)]
   ): Future[Agreement]
+  def cloneAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
 
   def getAgreements(
     producersIds: Seq[UUID] = Seq.empty,

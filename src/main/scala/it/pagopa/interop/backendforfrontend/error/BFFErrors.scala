@@ -14,9 +14,6 @@ object BFFErrors {
   final case class MissingUserFields(userId: String, missingUserFields: String)
       extends ComponentError("0003", s"Missing some fields for user $userId - $missingUserFields")
 
-  final case class InstitutionNotFound(institutionId: String)
-      extends ComponentError("0004", s"Institution $institutionId not found")
-
   final case class AgreementDescriptorNotFound(agreementId: UUID)
       extends ComponentError("0005", s"Descriptor of agreement $agreementId not found")
 
@@ -55,4 +52,9 @@ object BFFErrors {
 
   final case class UnknownTenantOrigin(selfcareId: String)
       extends ComponentError("0012", s"SelfcareID ${selfcareId} is not inside whitelist or related with IPA")
+
+  final case class EServiceNotFound(eServiceId: UUID) extends ComponentError("0013", s"EService $eServiceId not found")
+
+  final case class TenantNotFound(tenantId: UUID) extends ComponentError("0014", s"Tenant $tenantId not found")
+
 }

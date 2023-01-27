@@ -8,8 +8,8 @@ import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
-import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
+import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
 
@@ -61,7 +61,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val agreementPayloadFormat: RootJsonFormat[AgreementPayload] = jsonFormat2(AgreementPayload)
   implicit val agreementSubmissionPayloadFormat: RootJsonFormat[AgreementSubmissionPayload] =
     jsonFormat1(AgreementSubmissionPayload)
-
+  implicit val agreementUpdatePayloadFormat: RootJsonFormat[AgreementUpdatePayload]         =
+    jsonFormat1(AgreementUpdatePayload)
   implicit val createdResourceFormat: RootJsonFormat[CreatedResource] = jsonFormat1(CreatedResource)
 
   implicit val identityTokenFormat: RootJsonFormat[IdentityToken]       = jsonFormat1(IdentityToken)
@@ -104,9 +105,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val producerEServiceDescriptorFormat: RootJsonFormat[ProducerEServiceDescriptor] =
     jsonFormat12(ProducerEServiceDescriptor)
 
-  implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] = jsonFormat5(
-    ProducerEServiceDetails
-  )
+  implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] =
+    jsonFormat5(ProducerEServiceDetails)
+
+  implicit val compactPurposeVersionFormat: RootJsonFormat[CompactPurposeVersion] = jsonFormat3(CompactPurposeVersion)
+  implicit val compactEServiceFormat: RootJsonFormat[CompactEService]             = jsonFormat3(CompactEService)
+  implicit val purposeFormat: RootJsonFormat[Purpose]                             = jsonFormat6(Purpose)
+  implicit val purposesFormat: RootJsonFormat[Purposes]                           = jsonFormat2(Purposes)
 
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat6(Problem)
