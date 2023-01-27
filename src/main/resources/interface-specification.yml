@@ -3973,12 +3973,16 @@ components:
       required:
         - id
         - state
+        - dailyCalls
       properties:
         id:
           type: string
           format: uuid
         state:
           $ref: '#/components/schemas/PurposeVersionState'
+        dailyCalls:
+          type: integer
+          format: int32
     CompactOrganization:
       type: object
       required:
