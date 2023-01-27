@@ -202,8 +202,10 @@ final case class EServicesApiServiceImpl(
             states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
           )
         )
-      results    <- Future(agreements.flatMap(_.results))
-    } yield results.map(_.eserviceId).distinct
+    } yield {
+      val results = agreements.flatMap(_.results)
+      results.map(_.eserviceId).distinct
+    }
   }
 
   private def enhanceCatalogEService(
@@ -218,7 +220,12 @@ final case class EServicesApiServiceImpl(
 
     agreement <- activeDescriptor.flatTraverse(d =>
       agreementProcessService
-        .getAgreements(consumersIds = Seq(requesterId), eservicesIds = Seq(eService.id), descriptorsIds = Seq(d.id))
+        .getAgreements(
+          consumersIds = Seq(requesterId),
+          eservicesIds = Seq(eService.id),
+          descriptorsIds = Seq(d.id),
+          limit = 1
+        )
         .map(_.results.headOption)
     )
   } yield CatalogEService(

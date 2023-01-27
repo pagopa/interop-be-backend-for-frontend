@@ -32,10 +32,10 @@ object Dependencies {
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
 
     lazy val agreementProcessClient =
-      namespace %% "interop-be-agreement-process-client" % agreementProcessVersion2654
+      namespace %% "interop-be-agreement-process-client" % agreementProcessVersion
 
     lazy val agreementProcessLifecycle =
-      namespace %% "interop-be-agreement-process-lifecycle" % agreementProcessVersion2654
+      namespace %% "interop-be-agreement-process-lifecycle" % agreementProcessVersion
 
     lazy val catalogManagementClient =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion

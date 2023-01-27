@@ -3543,7 +3543,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/Agreement'
+            $ref: '#/components/schemas/CompactAgreements'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
@@ -3625,6 +3625,26 @@ components:
           type: boolean
         activeDescriptor:
           $ref: '#/components/schemas/CompactDescriptor'
+    CompactAgreements:
+      type: object
+      required:
+        - id
+        - producer
+        - eservice
+        - consumer
+        - upgradable
+      properties:
+        id:
+          type: string
+          format: uuid
+        producer:
+          $ref: '#/components/schemas/CompactOrganization'
+        consumer:
+          $ref: '#/components/schemas/CompactOrganization'
+        eservice:
+          $ref: '#/components/schemas/CompactOrganization'
+        upgradable:
+          type: Boolean  
     CompactAgreement:
       type: object
       required:

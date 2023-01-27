@@ -37,6 +37,7 @@ import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
+import cats.Applicative
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -123,7 +124,7 @@ final case class AgreementsApiServiceImpl(
         limit = limit,
         showOnlyUpgradeable = showOnlyUpgradeable.some
       )
-      agreements   <- Future.traverse(pagedResults.results)(enhanceAgreement)
+      agreements   <- Future.traverse(pagedResults.results)(enrichAgreements)
     } yield Agreements(
       results = agreements,
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
@@ -233,6 +234,28 @@ final case class AgreementsApiServiceImpl(
         .zip(tenantManagementService.getTenant(agreement.producerId))
       eService                         <- catalogManagementService.getEService(agreement.eserviceId)
     } yield (producerTenant.name, consumerTenant.name, consumerTenant, eService)
+
+  def parallelGetTenantsService(agreement: AgreementProcess.Agreement)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[(TenantManagement.Tenant, TenantManagement.Tenant, CatalogManagement.EService)] =
+    Applicative[Future].tuple3(
+      tenantManagementService
+        .getTenant(agreement.consumerId),
+      tenantManagementService.getTenant(agreement.producerId),
+      catalogManagementService.getEService(agreement.eserviceId)
+    )
+
+  def enrichAgreements(
+    agreement: AgreementProcess.Agreement
+  )(implicit contexts: Seq[(String, String)]): Future[CompactAgreements] = for {
+    (consumerTenant, producerTenant, eService) <- parallelGetTenantsService(agreement)
+  } yield CompactAgreements(
+    id = agreement.id,
+    producer = CompactOrganization(producerTenant.id, producerTenant.name),
+    consumer = CompactOrganization(consumerTenant.id, consumerTenant.name),
+    eservice = CompactOrganization(eService.id, eService.name),
+    upgradable = false
+  )
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement
