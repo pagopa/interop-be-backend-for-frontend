@@ -1692,6 +1692,37 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /eservices:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - catalog
+      summary: Create a new e-service
+      operationId: createEService
+      requestBody:
+        description: An E-Service seed
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EServiceSeed'
+        required: true
+      responses:
+        '200':
+          description: EService created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OldEService'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/producers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -3549,6 +3580,184 @@ components:
       schema:
         type: string
   schemas:
+    EServiceSeed:
+      type: object
+      required:
+        - producerId
+        - name
+        - description
+        - technology
+        - attributes
+      properties:
+        producerId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 5
+          maxLength: 60
+        description:
+          type: string
+          minLength: 10
+          maxLength: 250
+        technology:
+          $ref: '#/components/schemas/EServiceTechnology'
+        attributes:
+          $ref: '#/components/schemas/CatalogAttributesSeed'
+    CatalogAttributesSeed:
+      properties:
+        certified:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogAttributeSeed'
+        declared:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogAttributeSeed'
+        verified:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogAttributeSeed'
+      required:
+        - certified
+        - declared
+        - verified
+    Organization:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    OldAttributeValue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        explicitAttributeVerification:
+          type: boolean
+      required:
+        - id
+        - name
+        - description
+        - explicitAttributeVerification
+    OldAttribute:
+      type: object
+      properties:
+        single:
+          $ref: '#/components/schemas/OldAttributeValue'
+        group:
+          type: array
+          items:
+            $ref: '#/components/schemas/OldAttributeValue'
+    OldAttributes:
+      properties:
+        certified:
+          type: array
+          items:
+            $ref: '#/components/schemas/OldAttribute'
+        declared:
+          type: array
+          items:
+            $ref: '#/components/schemas/OldAttribute'
+        verified:
+          type: array
+          items:
+            $ref: '#/components/schemas/OldAttribute'
+      required:
+        - certified
+        - declared
+        - verified
+    EServiceDescriptor:
+      type: object
+      required:
+        - id
+        - version
+        - docs
+        - state
+        - creationDate
+        - audience
+        - voucherLifespan
+        - dailyCallsPerConsumer
+        - dailyCallsTotal
+        - agreementApprovalPolicy
+        - serverUrls
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: string
+        description:
+          type: string
+        audience:
+          type: array
+          items:
+            type: string
+        voucherLifespan:
+          type: integer
+          format: int32
+        dailyCallsPerConsumer:
+          description: 'maximum number of daily calls that this descriptor can afford per consumer.'
+          type: integer
+          format: int32
+          minimum: 0
+        dailyCallsTotal:
+          description: 'total daily calls available for this e-service.'
+          type: integer
+          format: int32
+          minimum: 0
+        interface:
+          $ref: '#/components/schemas/EServiceDoc'
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceDoc'
+        state:
+          $ref: '#/components/schemas/EServiceDescriptorState'
+        agreementApprovalPolicy:
+          $ref: '#/components/schemas/AgreementApprovalPolicy'
+        serverUrls:
+          type: array
+          items:
+            type: string
+    OldEService:
+      type: object
+      required:
+        - id
+        - producer
+        - name
+        - description
+        - technology
+        - attributes
+        - descriptors
+      properties:
+        id:
+          type: string
+          format: uuid
+        producer:
+          $ref: '#/components/schemas/Organization'
+        name:
+          type: string
+        description:
+          type: string
+        technology:
+          $ref: '#/components/schemas/EServiceTechnology'
+        attributes:
+          $ref: '#/components/schemas/OldAttributes'
+        descriptors:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceDescriptor'
     Mail:
       type: object
       required:
@@ -4301,6 +4510,26 @@ components:
         - id
         - name
         - description
+        - explicitAttributeVerification
+    CatalogAttributeSeed:
+      type: object
+      properties:
+        single:
+          $ref: '#/components/schemas/CatalogAttributeValueSeed'
+        group:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogAttributeValueSeed'
+    CatalogAttributeValueSeed:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        explicitAttributeVerification:
+          type: boolean
+      required:
+        - id
         - explicitAttributeVerification
     AttributeSeed:
       title: AttributeSeed

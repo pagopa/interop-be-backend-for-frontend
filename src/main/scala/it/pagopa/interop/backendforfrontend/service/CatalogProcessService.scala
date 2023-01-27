@@ -7,6 +7,7 @@ import scala.concurrent.Future
 
 trait CatalogProcessService {
 
+  def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[OldEService]
   def getEServices(
     name: Option[String] = None,
     eServicesIds: Seq[UUID],

@@ -18,6 +18,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   AttributesApiServiceImpl,
   AuthorizationApiMarshallerImpl,
   AuthorizationApiServiceImpl,
+  CatalogApiMarshallerImpl,
+  CatalogApiServiceImpl,
   EServicesApiMarshallerImpl,
   EServicesApiServiceImpl,
   HealthApiMarshallerImpl,
@@ -221,6 +223,9 @@ trait Dependencies {
       oauthAndRateLimitingDirective
     )
 
+    val catalogApi: CatalogApi =
+      new CatalogApi(CatalogApiServiceImpl(catalogProcess), CatalogApiMarshallerImpl, oauthAndRateLimitingDirective)
+
     new Controller(
       attributes = attributesApi,
       authorization = authorizationApi,
@@ -229,6 +234,7 @@ trait Dependencies {
       eservices = eServicesApi,
       purposes = purposesApi,
       party = partyApi,
+      catalog = catalogApi,
       health = healthApi,
       validationExceptionToRoute = validationExceptionToRoute.some
     )(actorSystem.classicSystem)
