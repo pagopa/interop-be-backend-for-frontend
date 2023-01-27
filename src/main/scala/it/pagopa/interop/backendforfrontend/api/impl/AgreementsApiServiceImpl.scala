@@ -269,9 +269,12 @@ final case class AgreementsApiServiceImpl(
     (consumerTenant, producerTenant, eService) <- parallelGetTenantsService(agreement)
   } yield CompactAgreements(
     id = agreement.id,
-    producer = CompactOrganization(producerTenant.id, producerTenant.name),
     consumer = CompactOrganization(consumerTenant.id, consumerTenant.name),
-    eservice = CompactOrganization(eService.id, eService.name),
+    eservice = CompactEService(
+      id = eService.id,
+      name = eService.name,
+      producer = CompactOrganization(producerTenant.id, producerTenant.name)
+    ),
     upgradable = false
   )
 

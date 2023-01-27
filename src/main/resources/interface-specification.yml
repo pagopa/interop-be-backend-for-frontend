@@ -3967,7 +3967,6 @@ components:
       type: object
       required:
         - id
-        - producer
         - eservice
         - consumer
         - upgradable
@@ -3975,12 +3974,10 @@ components:
         id:
           type: string
           format: uuid
-        producer:
-          $ref: '#/components/schemas/CompactOrganization'
         consumer:
           $ref: '#/components/schemas/CompactOrganization'
         eservice:
-          $ref: '#/components/schemas/CompactOrganization'
+          $ref: '#/components/schemas/CompactEService'
         upgradable:
           type: Boolean  
     CompactAgreement:
