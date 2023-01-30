@@ -38,18 +38,21 @@ object CatalogProcessServiceTypes {
     def toProcess: CatalogProcessAttributeValueSeed =
       CatalogProcess.AttributeValueSeed(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
   }
-  implicit class CatalogAttributeSeedConverter(private val e: CatalogAttributeSeed)       extends AnyVal {
+
+  implicit class CatalogAttributeSeedConverter(private val e: CatalogAttributeSeed) extends AnyVal {
     def toProcess: CatalogProcessAttributeSeed =
       CatalogProcess.AttributeSeed(single = e.single.map(_.toProcess), group = e.group.nested.map(_.toProcess).value)
   }
-  implicit class CatalogAttributesSeedConverter(private val esa: CatalogAttributesSeed)   extends AnyVal {
+
+  implicit class CatalogAttributesSeedConverter(private val esa: CatalogAttributesSeed) extends AnyVal {
     def toProcess: CatalogProcessAttributesSeed = CatalogProcess.AttributesSeed(
       certified = esa.certified.map(_.toProcess),
       declared = esa.declared.map(_.toProcess),
       verified = esa.verified.map(_.toProcess)
     )
   }
-  implicit class CatalogEServiceSeedConverter(private val es: EServiceSeed)               extends AnyVal {
+
+  implicit class CatalogEServiceSeedConverter(private val es: EServiceSeed) extends AnyVal {
     def toProcess: CatalogProcessESeed = CatalogProcess.EServiceSeed(
       name = es.name,
       description = es.description,
@@ -66,11 +69,13 @@ object CatalogProcessServiceTypes {
       explicitAttributeVerification = coav.explicitAttributeVerification
     )
   }
-  implicit class CatalogOldAttributeConverter(private val coa: CatalogProcessOldAttribute)            extends AnyVal {
+
+  implicit class CatalogOldAttributeConverter(private val coa: CatalogProcessOldAttribute) extends AnyVal {
     def toApi: OldAttribute =
       OldAttribute(single = coa.single.map(_.toApi), group = coa.group.nested.map(_.toApi).value)
   }
-  implicit class CatalogOldAttributesConverter(private val coas: CatalogProcessOldAttributes)         extends AnyVal {
+
+  implicit class CatalogOldAttributesConverter(private val coas: CatalogProcessOldAttributes) extends AnyVal {
     def toApi: OldAttributes = OldAttributes(
       certified = coas.certified.map(_.toApi),
       declared = coas.declared.map(_.toApi),
@@ -98,7 +103,8 @@ object CatalogProcessServiceTypes {
       serverUrls = coed.serverUrls
     )
   }
-  implicit class CatalogOldEServiceConverter(private val coes: CatalogProcessOldEService)           extends AnyVal {
+
+  implicit class CatalogOldEServiceConverter(private val coes: CatalogProcessOldEService) extends AnyVal {
     def toApi: OldEService = OldEService(
       id = coes.id,
       producer = coes.producer.toApi,
@@ -109,6 +115,7 @@ object CatalogProcessServiceTypes {
       descriptors = coes.descriptors.map(_.toApi)
     )
   }
+
   implicit class EServiceDescriptorStateConverter(private val d: CatalogProcess.EServiceDescriptorState)
       extends AnyVal {
     def toApi: EServiceDescriptorState = d match {

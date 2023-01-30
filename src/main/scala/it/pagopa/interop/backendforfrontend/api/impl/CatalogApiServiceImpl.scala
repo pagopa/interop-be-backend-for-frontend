@@ -27,10 +27,8 @@ final case class CatalogApiServiceImpl(catalogProcess: CatalogProcessService)(im
     toEntityMarshallerOldEService: ToEntityMarshaller[OldEService],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[OldEService] = for {
-      response <- catalogProcess.createEService(eServiceSeed.toProcess)(contexts)
-      converted = response.toApi
-    } yield converted
+    val result: Future[OldEService] =
+      catalogProcess.createEService(eServiceSeed.toProcess)(contexts).map(_.toApi)
 
     onComplete(result) {
       handleError(s"Error creating eservice with seed: $eServiceSeed") orElse { case Success(eservice) =>
