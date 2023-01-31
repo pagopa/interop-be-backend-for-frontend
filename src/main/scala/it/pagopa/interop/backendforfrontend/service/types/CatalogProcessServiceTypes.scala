@@ -7,12 +7,58 @@ import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.catalogprocess.client.model.EServiceTechnology.{REST, SOAP}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 
 import java.util.UUID
 import scala.concurrent.Future
 
 object CatalogProcessServiceTypes {
+
+  type CatalogProcessESeed              = CatalogProcess.EServiceSeed
+  type CatalogProcessETechnology        = CatalogProcess.EServiceTechnology
+  type CatalogProcessAttributesSeed     = CatalogProcess.AttributesSeed
+  type CatalogProcessAttributeSeed      = CatalogProcess.AttributeSeed
+  type CatalogProcessAttributeValueSeed = CatalogProcess.AttributeValueSeed
+  type CatalogProcessEService           = CatalogProcess.EService
+
+  implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
+    def toProcess: CatalogProcessETechnology = est match {
+      case EServiceTechnology.REST => REST
+      case EServiceTechnology.SOAP => SOAP
+    }
+  }
+
+  implicit class EServiceAttributeValueConverter(private val a: EServiceAttributeValue) extends AnyVal {
+    def toProcess: CatalogProcessAttributeValueSeed =
+      CatalogProcess.AttributeValueSeed(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
+  }
+
+  implicit class EServiceAttributeSeedConverter(private val e: EServiceAttribute) extends AnyVal {
+    def toProcess: CatalogProcessAttributeSeed =
+      CatalogProcess.AttributeSeed(single = e.single.map(_.toProcess), group = e.group.nested.map(_.toProcess).value)
+  }
+
+  implicit class EServiceAttributesSeedConverter(private val esa: EServiceAttributes) extends AnyVal {
+    def toProcess: CatalogProcessAttributesSeed = CatalogProcess.AttributesSeed(
+      certified = esa.certified.map(_.toProcess),
+      declared = esa.declared.map(_.toProcess),
+      verified = esa.verified.map(_.toProcess)
+    )
+  }
+
+  implicit class EServiceSeedConverter(private val es: EServiceSeed) extends AnyVal {
+    def toProcess: CatalogProcessESeed = CatalogProcess.EServiceSeed(
+      name = es.name,
+      description = es.description,
+      technology = es.technology.toProcess,
+      attributes = es.attributes.toProcess
+    )
+  }
+
+  implicit class EServiceConverter(private val coes: CatalogProcessEService) extends AnyVal {
+    def toApi: CreatedResource = CreatedResource(id = coes.id)
+  }
 
   implicit class EServiceDescriptorStateConverter(private val d: CatalogProcess.EServiceDescriptorState)
       extends AnyVal {
