@@ -20,9 +20,9 @@ object CatalogProcessServiceTypes {
   type CatalogProcessAttributesSeed     = CatalogProcess.AttributesSeed
   type CatalogProcessAttributeSeed      = CatalogProcess.AttributeSeed
   type CatalogProcessAttributeValueSeed = CatalogProcess.AttributeValueSeed
-  type CatalogProcessOldEService        = CatalogProcess.OldEService
+  type CatalogProcessEService           = CatalogProcess.EService
 
-  implicit class CatalogEServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
+  implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcessETechnology = est match {
       case EServiceTechnology.REST => REST
       case EServiceTechnology.SOAP => SOAP
@@ -56,7 +56,7 @@ object CatalogProcessServiceTypes {
     )
   }
 
-  implicit class OldEServiceConverter(private val coes: CatalogProcessOldEService) extends AnyVal {
+  implicit class EServiceConverter(private val coes: CatalogProcessEService) extends AnyVal {
     def toApi: CreatedResource = CreatedResource(id = coes.id)
   }
 
