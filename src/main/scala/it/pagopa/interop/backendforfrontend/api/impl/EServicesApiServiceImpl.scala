@@ -66,6 +66,20 @@ final case class EServicesApiServiceImpl(
     }
   }
 
+  override def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.publishDescriptor(eServiceId, descriptorId)(contexts)
+
+    onComplete(result) {
+      handleError(s"Error publish descriptor $descriptorId for eservice $eServiceId") orElse { case Success(_) =>
+        publishDescriptor204
+      }
+    }
+  }
+
   override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
     implicit
     contexts: Seq[(String, String)],
