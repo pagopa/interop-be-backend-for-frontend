@@ -64,4 +64,16 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
     }
 
+  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.suspendDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId.toString,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
+  }
 }
