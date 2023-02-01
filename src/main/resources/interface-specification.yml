@@ -4060,6 +4060,9 @@ components:
         dailyCalls:
           type: integer
           format: int32
+        expectedApprovalDate:
+          type: string
+          format: date-time
     CompactOrganization:
       type: object
       required:
