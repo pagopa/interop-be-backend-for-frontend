@@ -376,7 +376,7 @@ final case class EServicesApiServiceImpl(
 
     onComplete(result) {
       handleError(s"Error updating eservice with Id: $eServiceId") orElse { case Success(eservice) =>
-        createEService200(eservice)
+        updateEServiceById200(eservice)
       }
     }
   }
