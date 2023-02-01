@@ -30,6 +30,19 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         )
       invoker.invoke(request, s"Eservice created")
     }
+
+  def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.activateDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Descriptor activated")
+  }
   override def getEServices(
     name: Option[String] = None,
     eServicesIds: Seq[UUID],

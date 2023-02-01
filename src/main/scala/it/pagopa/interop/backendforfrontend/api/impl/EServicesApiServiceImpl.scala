@@ -65,6 +65,19 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+  override def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.activateDescriptor(eServiceId, descriptorId)(contexts)
+
+    onComplete(result) {
+      handleError(s"Error activating descriptor: $descriptorId on eservice : $eServiceId") orElse { case Success(_) =>
+        activateDescriptor204
+      }
+    }
+  }
 
   override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
     implicit
