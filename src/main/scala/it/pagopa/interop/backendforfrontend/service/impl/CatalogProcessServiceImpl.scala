@@ -5,7 +5,13 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.catalogprocess.client.model.{EService, EServiceDescriptorState, EServiceSeed, EServices}
+import it.pagopa.interop.catalogprocess.client.model.{
+  EService,
+  EServiceDescriptorState,
+  EServiceSeed,
+  EServices,
+  UpdateEServiceSeed
+}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
@@ -64,4 +70,16 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
     }
 
+  override def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EService] =
+      api.updateEServiceById(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId.toString,
+        updateEServiceSeed = updateEServiceSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Updating EService with $eServiceId")
+  }
 }

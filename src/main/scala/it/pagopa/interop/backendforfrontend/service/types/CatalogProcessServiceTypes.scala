@@ -21,6 +21,16 @@ object CatalogProcessServiceTypes {
   type CatalogProcessAttributeSeed      = CatalogProcess.AttributeSeed
   type CatalogProcessAttributeValueSeed = CatalogProcess.AttributeValueSeed
   type CatalogProcessEService           = CatalogProcess.EService
+  type CatalogProcessUpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed
+
+  implicit class UpdateEServiceSeedConverter(private val ues: UpdateEServiceSeed) extends AnyVal {
+    def toProcess: CatalogProcessUpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed(
+      name = ues.name,
+      description = ues.description,
+      technology = ues.technology.toProcess,
+      attributes = ues.attributes.toProcess
+    )
+  }
 
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcessETechnology = est match {

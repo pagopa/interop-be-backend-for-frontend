@@ -9,6 +9,10 @@ trait CatalogProcessService {
 
   def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService]
 
+  def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService]
+
   def getEServices(
     name: Option[String] = None,
     eServicesIds: Seq[UUID],

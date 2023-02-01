@@ -365,4 +365,19 @@ final case class EServicesApiServiceImpl(
 
   private def getNonDraftDescriptors(eService: CatalogProcess.EService): Seq[CatalogProcess.EServiceDescriptor] =
     eService.descriptors.filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
+
+  override def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result: Future[CreatedResource] =
+      catalogProcessService.updateEServiceById(eServiceId, updateEServiceSeed.toProcess)(contexts).map(_.toApi)
+
+    onComplete(result) {
+      handleError(s"Error updating eservice with Id: $eServiceId") orElse { case Success(eservice) =>
+        createEService200(eservice)
+      }
+    }
+  }
 }
