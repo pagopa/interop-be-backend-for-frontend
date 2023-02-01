@@ -275,8 +275,21 @@ final case class AgreementsApiServiceImpl(
       name = eService.name,
       producer = CompactOrganization(producerTenant.id, producerTenant.name)
     ),
-    upgradable = false
+    upgradable = isUpgradable(agreement.descriptorId.toString, eService.descriptors).getOrElse(false)
   )
+
+  def isUpgradable(descriptorId: String, descriptors: Seq[CatalogManagement.EServiceDescriptor]): Option[Boolean] =
+    for {
+      currentDescriptor <- descriptors.find(_.id == descriptorId).headOption
+      upgradable        <- descriptors
+        .filter(_.version.toInt > currentDescriptor.version.toInt)
+        .find(d =>
+          d.state == CatalogManagement.EServiceDescriptorState.PUBLISHED ||
+            d.state == CatalogManagement.EServiceDescriptorState.SUSPENDED
+        )
+        .headOption
+
+    } yield upgradable.some.isDefined
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement

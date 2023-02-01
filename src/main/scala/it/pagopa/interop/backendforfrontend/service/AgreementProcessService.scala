@@ -32,7 +32,7 @@ trait AgreementProcessService {
     states: Seq[AgreementState] = Seq.empty,
     limit: Int = Int.MaxValue,
     offset: Int = 0,
-    showOnlyUpgradeable: Option[Boolean] = None
+    showOnlyUpgradeable: Option[Boolean] = Some(false)
   )(implicit contexts: Seq[(String, String)]): Future[Agreements]
 
   def addConsumerDocument(agreementId: UUID, seed: DocumentSeed)(implicit
