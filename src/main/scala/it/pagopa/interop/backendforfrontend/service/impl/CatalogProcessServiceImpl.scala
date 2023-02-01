@@ -70,7 +70,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     val request: ApiRequest[Unit] =
       api.suspendDescriptor(
         xCorrelationId = correlationId,
-        eServiceId = eServiceId.toString,
+        eServiceId = eServiceId,
         descriptorId = descriptorId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
