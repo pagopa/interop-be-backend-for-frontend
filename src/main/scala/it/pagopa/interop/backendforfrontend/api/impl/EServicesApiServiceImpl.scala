@@ -410,4 +410,17 @@ final case class EServicesApiServiceImpl(
 
   private def getNonDraftDescriptors(eService: CatalogProcess.EService): Seq[CatalogProcess.EServiceDescriptor] =
     eService.descriptors.filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
+
+  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
+    onComplete(result) {
+      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
+        suspendDescriptor204
+      }
+    }
+  }
 }
