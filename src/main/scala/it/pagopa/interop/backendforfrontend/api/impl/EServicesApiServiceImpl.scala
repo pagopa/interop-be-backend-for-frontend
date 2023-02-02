@@ -209,20 +209,33 @@ final case class EServicesApiServiceImpl(
     contexts: Seq[(String, String)]
   ): Future[List[UUID]] = {
     for {
-      consumersIdsUUID <- consumersIds.traverse(_.toFutureUUID)
+      consumersIdsUUID <- Future.traverse(consumersIds)(_.toFutureUUID)
+
       agreements <- Future
-        .traverse(consumersIdsUUID)(consumerId =>
-          agreementProcessService.getAgreements(
-            consumersIds = Seq(consumerId),
-            producersIds = Seq(producerId),
-            states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
-            limit = 50
-          )
-        )
+        .traverse(consumersIdsUUID)(consumerId => {
+          loop(List())(0) { offset =>
+            agreementProcessService.getAgreements(
+              consumersIds = Seq(consumerId),
+              producersIds = Seq(producerId),
+              states = Seq(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
+              limit = 50,
+              offset = offset
+            )
+          }
+        })
+        .map(_.flatten)
     } yield {
-      val results = agreements.flatMap(_.results)
-      results.map(_.eserviceId).distinct
+      agreements.map(_.eserviceId).distinct
     }
+  }
+  // It's stack safe since every submission to an Execution context resets the stack, creating a trampoline effect
+  def loop(
+    acc: List[AgreementProcess.Agreement]
+  )(offset: Int)(f: Int => Future[AgreementProcess.Agreements]): Future[List[AgreementProcess.Agreement]] = {
+    f(offset).flatMap(res =>
+      if (res.totalCount < offset + 50) Future.successful(acc ++ res.results)
+      else loop(acc ++ res.results)(offset + 50)(f)
+    )
   }
 
   private def enhanceCatalogEService(
