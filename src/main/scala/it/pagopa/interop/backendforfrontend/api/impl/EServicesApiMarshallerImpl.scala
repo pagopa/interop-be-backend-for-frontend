@@ -2,6 +2,7 @@ package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import it.pagopa.interop.backendforfrontend.api.EservicesApiMarshaller
 import it.pagopa.interop.backendforfrontend.model._
 import spray.json.DefaultJsonProtocol
@@ -24,4 +25,10 @@ object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonS
 
   override implicit def toEntityMarshallerProducerEServiceDescriptor: ToEntityMarshaller[ProducerEServiceDescriptor] =
     sprayJsonMarshaller[ProducerEServiceDescriptor]
+
+  override implicit def fromEntityUnmarshallerEServiceSeed: FromEntityUnmarshaller[EServiceSeed] =
+    sprayJsonUnmarshaller[EServiceSeed]
+
+  override implicit def toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource] =
+    sprayJsonMarshaller[CreatedResource]
 }

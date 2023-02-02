@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.catalogprocess.client.model.{EService, EServiceDescriptorState, EServices}
+import it.pagopa.interop.catalogprocess.client.model.{EService, EServiceDescriptorState, EServiceSeed, EServices}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
@@ -22,6 +22,14 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
+  override def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService] =
+    withHeaders { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EService] =
+        api.createEService(xCorrelationId = correlationId, eServiceSeed = eServiceSeed, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Eservice created")
+    }
   override def getEServices(
     name: Option[String] = None,
     eServicesIds: Seq[UUID],

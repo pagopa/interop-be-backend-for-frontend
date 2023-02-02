@@ -107,7 +107,7 @@ final case class PurposesApiServiceImpl(
     currentVersion =
       currentVersion.map(v => CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls)),
     waitingForApprovalVersion = waitingForApprovalVersion.map(v =>
-      CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls)
+      CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls, v.expectedApprovalDate)
     )
   )
 }
