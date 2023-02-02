@@ -77,4 +77,17 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
     }
 
+  def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.publishDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Publishing Descriptor $descriptorId EService for $eServiceId from Catalog Process")
+  }
+
 }

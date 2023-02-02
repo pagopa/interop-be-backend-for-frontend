@@ -13,6 +13,10 @@ trait CatalogProcessService {
     contexts: Seq[(String, String)]
   ): Future[Unit]
 
+  def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
+
   def getEServices(
     name: Option[String] = None,
     eServicesIds: Seq[UUID],
