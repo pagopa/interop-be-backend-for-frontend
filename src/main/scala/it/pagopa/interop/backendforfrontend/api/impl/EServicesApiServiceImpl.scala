@@ -73,7 +73,7 @@ final case class EServicesApiServiceImpl(
       catalogProcessService.activateDescriptor(eServiceId, descriptorId)(contexts)
 
     onComplete(result) {
-      handleError(s"Error activating descriptor: $descriptorId on eservice : $eServiceId") orElse { case Success(_) =>
+      handleError(s"Error activating descriptor $descriptorId on eservice $eServiceId") orElse { case Success(_) =>
         activateDescriptor204
       }
     }
