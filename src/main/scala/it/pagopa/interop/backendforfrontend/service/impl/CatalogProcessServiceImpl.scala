@@ -5,7 +5,13 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.catalogprocess.client.model.{EService, EServiceDescriptorState, EServiceSeed, EServices}
+import it.pagopa.interop.catalogprocess.client.model.{
+  EService,
+  EServiceDescriptorState,
+  EServiceSeed,
+  UpdateEServiceDescriptorSeed,
+  EServices
+}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
@@ -64,4 +70,23 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
     }
 
+  override def updateDraftDescriptor(
+    eServiceId: UUID,
+    descriptorId: UUID,
+    updateEServiceDescriptorSeed: UpdateEServiceDescriptorSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EService] =
+    withHeaders { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EService] =
+        api.updateDraftDescriptor(
+          xCorrelationId = correlationId,
+          eServiceId = eServiceId.toString,
+          descriptorId = descriptorId.toString,
+          updateEServiceDescriptorSeed = updateEServiceDescriptorSeed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(
+        request,
+        s"Update draft descriptor $descriptorId for EService $eServiceId with seed $updateEServiceDescriptorSeed"
+      )
+    }
 }

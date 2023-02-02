@@ -15,13 +15,13 @@ import scala.concurrent.Future
 
 object CatalogProcessServiceTypes {
 
-  type CatalogProcessESeed              = CatalogProcess.EServiceSeed
-  type CatalogProcessETechnology        = CatalogProcess.EServiceTechnology
-  type CatalogProcessAttributesSeed     = CatalogProcess.AttributesSeed
-  type CatalogProcessAttributeSeed      = CatalogProcess.AttributeSeed
-  type CatalogProcessAttributeValueSeed = CatalogProcess.AttributeValueSeed
-  type CatalogProcessEService           = CatalogProcess.EService
-
+  type CatalogProcessESeed                        = CatalogProcess.EServiceSeed
+  type CatalogProcessETechnology                  = CatalogProcess.EServiceTechnology
+  type CatalogProcessAttributesSeed               = CatalogProcess.AttributesSeed
+  type CatalogProcessAttributeSeed                = CatalogProcess.AttributeSeed
+  type CatalogProcessAttributeValueSeed           = CatalogProcess.AttributeValueSeed
+  type CatalogProcessEService                     = CatalogProcess.EService
+  type CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcessETechnology = est match {
       case EServiceTechnology.REST => REST
@@ -44,6 +44,17 @@ object CatalogProcessServiceTypes {
       certified = esa.certified.map(_.toProcess),
       declared = esa.declared.map(_.toProcess),
       verified = esa.verified.map(_.toProcess)
+    )
+  }
+
+  implicit class UpdateEServiceDescriptorSeedConverter(private val usds: UpdateEServiceDescriptorSeed) extends AnyVal {
+    def toProcess: CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed(
+      description = usds.description,
+      audience = usds.audience,
+      voucherLifespan = usds.voucherLifespan,
+      dailyCallsPerConsumer = usds.dailyCallsPerConsumer,
+      dailyCallsTotal = usds.dailyCallsTotal,
+      agreementApprovalPolicy = usds.agreementApprovalPolicy.toProcess
     )
   }
 
@@ -109,6 +120,13 @@ object CatalogProcessServiceTypes {
     def toApi: AgreementApprovalPolicy = aap match {
       case CatalogProcess.AgreementApprovalPolicy.AUTOMATIC => AgreementApprovalPolicy.AUTOMATIC
       case CatalogProcess.AgreementApprovalPolicy.MANUAL    => AgreementApprovalPolicy.MANUAL
+    }
+  }
+
+  implicit class AgreementApprovalPolicyConverter(private val aap: AgreementApprovalPolicy) extends AnyVal {
+    def toProcess: CatalogProcess.AgreementApprovalPolicy = aap match {
+      case AgreementApprovalPolicy.AUTOMATIC => CatalogProcess.AgreementApprovalPolicy.AUTOMATIC
+      case AgreementApprovalPolicy.MANUAL    => CatalogProcess.AgreementApprovalPolicy.MANUAL
     }
   }
 
