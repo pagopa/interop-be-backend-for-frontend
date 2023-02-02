@@ -51,6 +51,21 @@ final case class EServicesApiServiceImpl(
     AgreementProcess.AgreementState.SUSPENDED
   )
 
+  override def createEService(eServiceSeed: EServiceSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result: Future[CreatedResource] =
+      catalogProcessService.createEService(eServiceSeed.toProcess)(contexts).map(_.toApi)
+
+    onComplete(result) {
+      handleError(s"Error creating eservice with seed: $eServiceSeed") orElse { case Success(eservice) =>
+        createEService200(eservice)
+      }
+    }
+  }
+
   override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
     implicit
     contexts: Seq[(String, String)],
@@ -355,5 +370,4 @@ final case class EServicesApiServiceImpl(
 
   private def getNonDraftDescriptors(eService: CatalogProcess.EService): Seq[CatalogProcess.EServiceDescriptor] =
     eService.descriptors.filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
-
 }
