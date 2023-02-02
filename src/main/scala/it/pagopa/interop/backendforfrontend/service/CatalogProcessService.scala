@@ -7,20 +7,32 @@ import scala.concurrent.Future
 
 trait CatalogProcessService {
 
+  def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
+
+  def createDescriptor(eServiceId: UUID, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
+                                                                                         contexts: Seq[(String, String)]
+  ): Future[EServiceDescriptor]
+
   def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService]
+
+  def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
+
+  def getEServices(
+                    name: Option[String] = None,
+                    eServicesIds: Seq[UUID],
+                    producersIds: Seq[UUID],
+                    states: Seq[EServiceDescriptorState],
+                    offset: Int,
+                    limit: Int
+                  )(implicit contexts: Seq[(String, String)]): Future[EServices]
+
+  def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
 
   def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
-
-  def getEServices(
-    name: Option[String] = None,
-    eServicesIds: Seq[UUID],
-    producersIds: Seq[UUID],
-    states: Seq[EServiceDescriptorState],
-    offset: Int,
-    limit: Int
-  )(implicit contexts: Seq[(String, String)]): Future[EServices]
-
-  def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
 }
