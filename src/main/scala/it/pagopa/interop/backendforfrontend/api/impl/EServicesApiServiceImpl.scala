@@ -74,7 +74,7 @@ final case class EServicesApiServiceImpl(
       catalogProcessService.publishDescriptor(eServiceId, descriptorId)(contexts)
 
     onComplete(result) {
-      handleError(s"Error publish descriptor $descriptorId for eservice $eServiceId") orElse { case Success(_) =>
+      handleError(s"Error publishing descriptor $descriptorId for eservice $eServiceId") orElse { case Success(_) =>
         publishDescriptor204
       }
     }
