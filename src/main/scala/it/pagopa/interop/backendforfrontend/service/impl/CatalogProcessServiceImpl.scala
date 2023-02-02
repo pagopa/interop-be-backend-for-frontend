@@ -50,6 +50,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Descriptor activated")
   }
+
   override def getEServices(
     name: Option[String] = None,
     eServicesIds: Seq[UUID],
@@ -111,6 +112,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Publishing Descriptor $descriptorId EService for $eServiceId from Catalog Process")
   }
+
   override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
