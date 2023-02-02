@@ -37,6 +37,19 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         )
       invoker.invoke(request, s"Eservice created")
     }
+
+  def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.activateDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Descriptor activated")
+  }
   override def getEServices(
     name: Option[String] = None,
     eServicesIds: Seq[UUID],
@@ -84,5 +97,18 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Create descriptor for $eServiceId ")
     }
+  }
+
+  def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.publishDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Publishing Descriptor $descriptorId EService for $eServiceId from Catalog Process")
   }
 }
