@@ -4306,6 +4306,10 @@ components:
           $ref: '#/components/schemas/CompactPurposeVersion'
         waitingForApprovalVersion:
           $ref: '#/components/schemas/CompactPurposeVersion'
+        suspendedByConsumer:
+          type: boolean
+        suspendedByProducer:
+          type: boolean
       required:
         - id
         - title
