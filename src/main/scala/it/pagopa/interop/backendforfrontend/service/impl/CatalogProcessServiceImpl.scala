@@ -5,7 +5,14 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.catalogprocess.client.model.{EService, EServiceDescriptorState, EServiceSeed, EServices}
+import it.pagopa.interop.catalogprocess.client.model.{
+  EServiceDescriptor,
+  EService,
+  EServiceDescriptorState,
+  EServiceSeed,
+  EServiceDescriptorSeed,
+  EServices
+}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
@@ -77,6 +84,21 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
     }
 
+  def createDescriptor(eServiceId: UUID, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EServiceDescriptor] = {
+    withHeaders { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EServiceDescriptor] =
+        api.createDescriptor(
+          xCorrelationId = correlationId,
+          eServiceId = eServiceId.toString,
+          eServiceDescriptorSeed = eServiceDescriptorSeed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Create descriptor for $eServiceId ")
+    }
+  }
+
   def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
@@ -89,5 +111,4 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Publishing Descriptor $descriptorId EService for $eServiceId from Catalog Process")
   }
-
 }
