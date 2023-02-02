@@ -199,7 +199,8 @@ final case class EServicesApiServiceImpl(
           agreementProcessService.getAgreements(
             consumersIds = Seq(UUID.fromString(consumerId)),
             producersIds = Seq(producerId),
-            states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+            states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
+            limit = 50
           )
         )
     } yield {

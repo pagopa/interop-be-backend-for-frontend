@@ -30,7 +30,7 @@ trait AgreementProcessService {
     eservicesIds: Seq[UUID] = Seq.empty,
     descriptorsIds: Seq[UUID] = Seq.empty,
     states: Seq[AgreementState] = Seq.empty,
-    limit: Int = Int.MaxValue,
+    limit: Int,
     offset: Int = 0,
     showOnlyUpgradeable: Option[Boolean] = Some(false)
   )(implicit contexts: Seq[(String, String)]): Future[Agreements]

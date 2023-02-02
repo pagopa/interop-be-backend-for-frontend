@@ -3969,7 +3969,7 @@ components:
         - id
         - eservice
         - consumer
-        - upgradable
+        - canBeUpgraded
       properties:
         id:
           type: string
@@ -3978,7 +3978,7 @@ components:
           $ref: '#/components/schemas/CompactOrganization'
         eservice:
           $ref: '#/components/schemas/CompactEService'
-        upgradable:
+        canBeUpgraded:
           type: Boolean  
     CompactAgreement:
       type: object
