@@ -21,7 +21,9 @@ object CatalogProcessServiceTypes {
   type CatalogProcessAttributeSeed                = CatalogProcess.AttributeSeed
   type CatalogProcessAttributeValueSeed           = CatalogProcess.AttributeValueSeed
   type CatalogProcessEService                     = CatalogProcess.EService
+  type CatalogProcessEServiceDescriptorSeed       = CatalogProcess.EServiceDescriptorSeed
   type CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed
+
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcessETechnology = est match {
       case EServiceTechnology.REST => REST
@@ -57,8 +59,7 @@ object CatalogProcessServiceTypes {
       agreementApprovalPolicy = usds.agreementApprovalPolicy.toProcess
     )
   }
-
-  implicit class EServiceSeedConverter(private val es: EServiceSeed) extends AnyVal {
+  implicit class EServiceSeedConverter(private val es: EServiceSeed)                                   extends AnyVal {
     def toProcess: CatalogProcessESeed = CatalogProcess.EServiceSeed(
       name = es.name,
       description = es.description,
@@ -66,11 +67,9 @@ object CatalogProcessServiceTypes {
       attributes = es.attributes.toProcess
     )
   }
-
-  implicit class EServiceConverter(private val coes: CatalogProcessEService) extends AnyVal {
+  implicit class EServiceConverter(private val coes: CatalogProcessEService)                           extends AnyVal {
     def toApi: CreatedResource = CreatedResource(id = coes.id)
   }
-
   implicit class EServiceDescriptorStateConverter(private val d: CatalogProcess.EServiceDescriptorState)
       extends AnyVal {
     def toApi: EServiceDescriptorState = d match {
@@ -81,7 +80,6 @@ object CatalogProcessServiceTypes {
       case CatalogProcess.EServiceDescriptorState.ARCHIVED   => ARCHIVED
     }
   }
-
   implicit class EServiceDescriptorStateObjectConverter(private val d: CatalogProcess.EServiceDescriptorState.type)
       extends AnyVal {
     def fromApi(s: EServiceDescriptorState): CatalogProcess.EServiceDescriptorState = s match {
@@ -136,9 +134,10 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceDescriptorWrapper(private val esd: CatalogProcess.EServiceDescriptor) extends AnyVal {
-
     def toCompactDescriptor: CompactDescriptor = CompactDescriptor(id = esd.id, state = esd.state.toApi, esd.version)
+    def toApi: CreatedResource                 = CreatedResource(id = esd.id)
   }
+
   implicit class EServiceTechnologyWrapper(private val est: CatalogProcess.EServiceTechnology) extends AnyVal {
     def toApi: EServiceTechnology = est match {
       case CatalogProcess.EServiceTechnology.REST => EServiceTechnology.REST
@@ -184,5 +183,14 @@ object CatalogProcessServiceTypes {
           )
         )
   }
-
+  implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed) extends AnyVal {
+    def toProcess: CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
+      description = seed.description,
+      audience = seed.audience,
+      voucherLifespan = seed.voucherLifespan,
+      dailyCallsPerConsumer = seed.dailyCallsPerConsumer,
+      dailyCallsTotal = seed.dailyCallsTotal,
+      agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess
+    )
+  }
 }

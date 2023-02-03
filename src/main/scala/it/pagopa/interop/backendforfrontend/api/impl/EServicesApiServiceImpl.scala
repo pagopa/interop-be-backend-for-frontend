@@ -65,6 +65,51 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+  override def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.activateDescriptor(eServiceId, descriptorId)(contexts)
+
+    onComplete(result) {
+      handleError(s"Error activating descriptor $descriptorId on eservice $eServiceId") orElse { case Success(_) =>
+        activateDescriptor204
+      }
+    }
+  }
+
+  override def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.publishDescriptor(eServiceId, descriptorId)(contexts)
+
+    onComplete(result) {
+      handleError(s"Error publishing descriptor $descriptorId for eservice $eServiceId") orElse { case Success(_) =>
+        publishDescriptor204
+      }
+    }
+  }
+
+  override def createDescriptor(eServiceId: String, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result: Future[CreatedResource] = for {
+      eServiceIdUUID <- eServiceId.toFutureUUID
+      descriptor     <- catalogProcessService
+        .createDescriptor(eServiceIdUUID, eServiceDescriptorSeed.toProcess)(contexts)
+    } yield descriptor.toApi
+
+    onComplete(result) {
+      handleError(s"Error creating descriptor with seed: $eServiceDescriptorSeed") orElse { case Success(descriptor) =>
+        createDescriptor200(descriptor)
+      }
+    }
+  }
 
   override def updateDraftDescriptor(
     eServiceId: String,
@@ -391,4 +436,17 @@ final case class EServicesApiServiceImpl(
 
   private def getNonDraftDescriptors(eService: CatalogProcess.EService): Seq[CatalogProcess.EServiceDescriptor] =
     eService.descriptors.filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
+
+  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
+    onComplete(result) {
+      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
+        suspendDescriptor204
+      }
+    }
+  }
 }
