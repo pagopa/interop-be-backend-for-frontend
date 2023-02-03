@@ -423,4 +423,20 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+  
+  override def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.deleteEServiceDocumentById(eServiceId, descriptorId, documentId)(contexts)
+    onComplete(result) {
+      handleError(
+        s"Error deleting document ${documentId} for eService ${eServiceId} descriptor ${descriptorId}"
+      ) orElse { case Success(_) =>
+        deleteEServiceDocumentById204
+      }
+    }
+  }
+
 }
