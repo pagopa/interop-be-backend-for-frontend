@@ -4,6 +4,7 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
@@ -23,6 +24,7 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 
+import java.io.{File}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -396,6 +398,51 @@ final case class EServicesApiServiceImpl(
 
   }
 
+  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
+    onComplete(result) {
+      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
+        suspendDescriptor204
+      }
+    }
+  }
+
+  def createEServiceDocument(
+    kind: String,
+    prettyName: String,
+    doc: (FileInfo, File),
+    eServiceId: String,
+    descriptorId: String
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result: Future[CreatedResource] = for {
+      (eserviceUUID, descriptorUUID) <- eServiceId.toFutureUUID.zip(descriptorId.toFutureUUID)
+      eService                       <- catalogProcessService
+        .createEServiceDocument(
+          kind = kind,
+          prettyName = prettyName,
+          doc = doc,
+          eServiceId = eserviceUUID,
+          descriptorId = descriptorUUID
+        )(contexts)
+    } yield eService.toApi
+
+    onComplete(result) {
+      handleError(
+        s"Error creating eService document of kind $kind and name $prettyName for eService $eServiceId and descriptor $descriptorId"
+      ) orElse { case Success(eservice) =>
+        createDescriptor200(eservice)
+      }
+    }
+  }
+
   private def isTheProducer(eService: CatalogProcess.EService, requesterId: UUID): Future[Unit] =
     Future.failed(InvalidEServiceRequester(eService.id, requesterId)).unlessA(eService.producerId == requesterId)
 
@@ -411,16 +458,4 @@ final case class EServicesApiServiceImpl(
   private def getNonDraftDescriptors(eService: CatalogProcess.EService): Seq[CatalogProcess.EServiceDescriptor] =
     eService.descriptors.filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
 
-  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    val result: Future[Unit] =
-      catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
-    onComplete(result) {
-      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
-        suspendDescriptor204
-      }
-    }
-  }
 }

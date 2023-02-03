@@ -18,6 +18,8 @@ import it.pagopa.interop.commons.utils.withHeaders
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import akka.http.scaladsl.server.directives.FileInfo
+import java.io.File
 
 class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
@@ -125,4 +127,28 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
   }
+
+  override def createEServiceDocument(
+    kind: String,
+    prettyName: String,
+    doc: (FileInfo, File),
+    eServiceId: UUID,
+    descriptorId: UUID
+  )(implicit contexts: Seq[(String, String)]): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EService] =
+      api.createEServiceDocument(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId.toString,
+        descriptorId = descriptorId.toString,
+        kind = kind,
+        prettyName = prettyName,
+        doc = doc._2,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"eService document of kind $kind and name $prettyName for eService $eServiceId and descriptor $descriptorId"
+    )
+  }
+
 }

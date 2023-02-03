@@ -4,7 +4,8 @@ import it.pagopa.interop.catalogprocess.client.model._
 
 import java.util.UUID
 import scala.concurrent.Future
-
+import akka.http.scaladsl.server.directives.FileInfo
+import java.io.File
 trait CatalogProcessService {
 
   def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService]
@@ -35,4 +36,12 @@ trait CatalogProcessService {
   def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
+
+  def createEServiceDocument(
+    kind: String,
+    prettyName: String,
+    doc: (FileInfo, File),
+    eServiceId: UUID,
+    descriptorId: UUID
+  )(implicit contexts: Seq[(String, String)]): Future[EService]
 }
