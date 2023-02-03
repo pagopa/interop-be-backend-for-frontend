@@ -6,9 +6,11 @@ import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
 import it.pagopa.interop.catalogprocess.client.model.{
+  EServiceDescriptor,
   EService,
   EServiceDescriptorState,
   EServiceSeed,
+  EServiceDescriptorSeed,
   EServices,
   UpdateEServiceSeed
 }
@@ -36,6 +38,20 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         )
       invoker.invoke(request, s"Eservice created")
     }
+
+  def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.activateDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Descriptor activated")
+  }
+
   override def getEServices(
     name: Option[String] = None,
     eServicesIds: Seq[UUID],
@@ -70,6 +86,46 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
     }
 
+  def createDescriptor(eServiceId: UUID, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EServiceDescriptor] = {
+    withHeaders { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EServiceDescriptor] =
+        api.createDescriptor(
+          xCorrelationId = correlationId,
+          eServiceId = eServiceId.toString,
+          eServiceDescriptorSeed = eServiceDescriptorSeed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Create descriptor for $eServiceId ")
+    }
+  }
+
+  def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.publishDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Publishing Descriptor $descriptorId EService for $eServiceId from Catalog Process")
+  }
+
+  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.suspendDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
+  }
   override def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>

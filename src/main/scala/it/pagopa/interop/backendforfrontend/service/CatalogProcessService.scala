@@ -9,6 +9,14 @@ trait CatalogProcessService {
 
   def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService]
 
+  def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
+
+  def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
+
   def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[EService]
@@ -23,4 +31,12 @@ trait CatalogProcessService {
   )(implicit contexts: Seq[(String, String)]): Future[EServices]
 
   def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
+
+  def createDescriptor(eServiceId: UUID, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EServiceDescriptor]
+
+  def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
 }
