@@ -6,16 +6,17 @@ import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
 import it.pagopa.interop.catalogprocess.client.model.{
-  EServiceDescriptor,
   EService,
+  EServiceDescriptor,
+  EServiceDescriptorSeed,
   EServiceDescriptorState,
   EServiceSeed,
-  EServiceDescriptorSeed,
   EServices
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
+import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -124,5 +125,19 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         xForwardedFor = ip
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
+  }
+
+  override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[File] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[File] =
+      api.getEServiceDocumentById(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        documentId = documentId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving document $documentId of EService $eServiceId from Catalog Process")
   }
 }

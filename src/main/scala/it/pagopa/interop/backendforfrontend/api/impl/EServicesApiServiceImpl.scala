@@ -23,6 +23,7 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 
+import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -420,6 +421,20 @@ final case class EServicesApiServiceImpl(
     onComplete(result) {
       handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
         suspendDescriptor204
+      }
+    }
+  }
+
+  override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+    val result: Future[File] =
+      catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)(contexts)
+    onComplete(result) {
+      handleError(s"Error retrieving document ${documentId} of EService ${eServiceId}") orElse { case Success(file) =>
+        getEServiceDocumentById200(file)
       }
     }
   }

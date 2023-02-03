@@ -2,6 +2,7 @@ package it.pagopa.interop.backendforfrontend.service
 
 import it.pagopa.interop.catalogprocess.client.model._
 
+import java.io.File
 import java.util.UUID
 import scala.concurrent.Future
 
@@ -35,4 +36,8 @@ trait CatalogProcessService {
   def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
+
+  def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[File]
 }
