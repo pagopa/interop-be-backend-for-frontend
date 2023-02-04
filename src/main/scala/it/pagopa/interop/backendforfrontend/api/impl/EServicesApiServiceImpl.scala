@@ -395,6 +395,34 @@ final case class EServicesApiServiceImpl(
     }
 
   }
+  
+  override def updateEServiceDocumentById(
+    eServiceId: String,
+    descriptorId: String,
+    documentId: String,
+    updateEServiceDescriptorDocumentSeed: UpdateEServiceDescriptorDocumentSeed
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[EServiceDoc] = for {
+      eServiceDoc <- catalogProcessService.updateEServiceDocumentById(
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        documentId = documentId,
+        updateEServiceDescriptorDocumentSeed = updateEServiceDescriptorDocumentSeed.toProcess
+      )(contexts)
+    } yield eServiceDoc.toApi
+
+    onComplete(result) {
+      handleError(
+        s"Error updating document $documentId on eService $eServiceId for descriptor ${descriptorId}"
+      ) orElse { case Success(eServiceDoc) =>
+        updateEServiceDocumentById200(eServiceDoc)
+      }
+    }
+  }
 
   private def isTheProducer(eService: CatalogProcess.EService, requesterId: UUID): Future[Unit] =
     Future.failed(InvalidEServiceRequester(eService.id, requesterId)).unlessA(eService.producerId == requesterId)

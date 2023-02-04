@@ -35,4 +35,11 @@ trait CatalogProcessService {
   def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
+
+  def updateEServiceDocumentById(
+    eServiceId: String,
+    descriptorId: String,
+    documentId: String,
+    updateEServiceDescriptorDocumentSeed: UpdateEServiceDescriptorDocumentSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EServiceDoc]
 }
