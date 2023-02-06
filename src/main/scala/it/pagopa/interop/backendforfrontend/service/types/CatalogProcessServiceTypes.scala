@@ -15,12 +15,12 @@ import scala.concurrent.Future
 
 object CatalogProcessServiceTypes {
 
-  type CatalogProcessESeed                  = CatalogProcess.EServiceSeed
-  type CatalogProcessETechnology            = CatalogProcess.EServiceTechnology
-  type CatalogProcessAttributesSeed         = CatalogProcess.AttributesSeed
-  type CatalogProcessAttributeSeed          = CatalogProcess.AttributeSeed
-  type CatalogProcessAttributeValueSeed     = CatalogProcess.AttributeValueSeed
-  type CatalogProcessEService               = CatalogProcess.EService
+  type CatalogProcessESeed              = CatalogProcess.EServiceSeed
+  type CatalogProcessETechnology        = CatalogProcess.EServiceTechnology
+  type CatalogProcessAttributesSeed     = CatalogProcess.AttributesSeed
+  type CatalogProcessAttributeSeed      = CatalogProcess.AttributeSeed
+  type CatalogProcessAttributeValueSeed = CatalogProcess.AttributeValueSeed
+  type CatalogProcessEService           = CatalogProcess.EService
   type CatalogProcessUpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed
 
   implicit class UpdateEServiceSeedConverter(private val ues: UpdateEServiceSeed) extends AnyVal {

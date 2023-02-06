@@ -2129,6 +2129,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: An E-Service update seed containing the possible updatable fields
         required: true
