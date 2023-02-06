@@ -296,7 +296,7 @@ final case class EServicesApiServiceImpl(
     activeDescriptor = activeDescriptor.map(_.toCompactDescriptor)
   )
 
-  private def enhanceProducerEService(eService: CatalogProcess.EService) = ProducerEService(
+  private def enhanceProducerEService(eService: CatalogProcess.EService)                        = ProducerEService(
     id = eService.id,
     name = eService.name,
     activeDescriptor = getActiveDescriptor(eService).map(_.toCompactDescriptor),
@@ -393,9 +393,8 @@ final case class EServicesApiServiceImpl(
         case Success(descriptor)                    => getProducerEServiceDescriptor200(descriptor)
       }
     }
-
   }
-  
+
   override def updateEServiceDocumentById(
     eServiceId: String,
     descriptorId: String,
@@ -406,13 +405,14 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[EServiceDoc] = catalogProcessService.updateEServiceDocumentById(
+    val result: Future[EServiceDoc] = catalogProcessService
+      .updateEServiceDocumentById(
         eServiceId = eServiceId,
         descriptorId = descriptorId,
         documentId = documentId,
         updateEServiceDescriptorDocumentSeed = updateEServiceDescriptorDocumentSeed.toProcess
       )(contexts)
-    } .map(_.toApi)
+      .map(_.toApi)
 
     onComplete(result) {
       handleError(
@@ -422,7 +422,6 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
-
   private def isTheProducer(eService: CatalogProcess.EService, requesterId: UUID): Future[Unit] =
     Future.failed(InvalidEServiceRequester(eService.id, requesterId)).unlessA(eService.producerId == requesterId)
 
