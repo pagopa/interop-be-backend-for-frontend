@@ -406,14 +406,13 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[EServiceDoc] = for {
-      eServiceDoc <- catalogProcessService.updateEServiceDocumentById(
+    val result: Future[EServiceDoc] = catalogProcessService.updateEServiceDocumentById(
         eServiceId = eServiceId,
         descriptorId = descriptorId,
         documentId = documentId,
         updateEServiceDescriptorDocumentSeed = updateEServiceDescriptorDocumentSeed.toProcess
       )(contexts)
-    } yield eServiceDoc.toApi
+    } .map(_.toApi)
 
     onComplete(result) {
       handleError(

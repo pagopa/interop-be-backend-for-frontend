@@ -145,7 +145,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(
       request,
-      s"Updating document $documentId on eService $eServiceId for descriptor $descriptorId from Catalog Process"
+      s"Updating document $documentId on eService $eServiceId for descriptor $descriptorId with seed $updateEServiceDescriptorDocumentSeed from Catalog Process"
     )
   }
 }
