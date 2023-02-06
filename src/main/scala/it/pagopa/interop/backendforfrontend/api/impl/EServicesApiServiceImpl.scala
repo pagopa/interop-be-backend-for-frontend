@@ -430,8 +430,9 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerFile: ToEntityMarshaller[File]
   ): Route = {
-    val result: Future[File] =
+    val result: Future[File] = {
       catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)(contexts)
+    }
     onComplete(result) {
       handleError(s"Error retrieving document ${documentId} of EService ${eServiceId}") orElse { case Success(file) =>
         getEServiceDocumentById200(file)
