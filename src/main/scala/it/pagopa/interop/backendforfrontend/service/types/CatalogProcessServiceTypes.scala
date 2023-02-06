@@ -183,6 +183,7 @@ object CatalogProcessServiceTypes {
           )
         )
   }
+
   implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed) extends AnyVal {
     def toProcess: CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
       description = seed.description,
