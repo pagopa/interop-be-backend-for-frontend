@@ -423,7 +423,7 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
-  
+
   override def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -433,9 +433,7 @@ final case class EServicesApiServiceImpl(
     onComplete(result) {
       handleError(
         s"Error deleting document ${documentId} for eService ${eServiceId} descriptor ${descriptorId}"
-      ) orElse { case Success(_) =>
-        deleteEServiceDocumentById204
-      }
+      ) orElse { case Success(_) => deleteEServiceDocumentById204 }
     }
   }
 
