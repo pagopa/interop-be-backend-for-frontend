@@ -23,23 +23,37 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
+import it.pagopa.interop.commons.utils.service.UUIDSupplier
+import it.pagopa.interop.backendforfrontend.common.system.FileManagerUtils
+import it.pagopa.interop.commons.files.service.FileManager
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 
-import java.io.{File}
+import java.io.File
+import java.nio.file.Files
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import scala.xml.Elem
+import io.circe.Json
+import it.pagopa.interop.commons.utils.Digester
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
   catalogProcessService: CatalogProcessService,
   tenantManagementService: TenantManagementService,
-  partyProcessService: PartyProcessService
+  partyProcessService: PartyProcessService,
+  fileManager: FileManager,
+  uuidSupplier: UUIDSupplier
 )(implicit ec: ExecutionContext)
     extends EservicesApiService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+
+  private lazy val INTERFACE = "INTERFACE"
+  private lazy val DOCUMENT  = "DOCUMENT"
 
   private val ACTIVE_DESCRIPTOR_STATES_FILTER: List[CatalogProcess.EServiceDescriptorState] = List(
     CatalogProcess.EServiceDescriptorState.PUBLISHED,
@@ -395,23 +409,9 @@ final case class EServicesApiServiceImpl(
         case Success(descriptor)                    => getProducerEServiceDescriptor200(descriptor)
       }
     }
-
   }
 
-  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    val result: Future[Unit] =
-      catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
-    onComplete(result) {
-      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
-        suspendDescriptor204
-      }
-    }
-  }
-
-  def createEServiceDocument(
+  override def createEServiceDocument(
     kind: String,
     prettyName: String,
     doc: (FileInfo, File),
@@ -422,15 +422,46 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
+
+    val isInterface: Boolean = kind match {
+      case INTERFACE => true
+      case DOCUMENT  => false
+      case _         => false
+    }
+
+    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (isInterface)
+      InterfaceParser.parseOpenApi(bytes).flatMap(InterfaceParserUtils.getUrls[Json]) orElse
+        InterfaceParser.parseWSDL(bytes).flatMap(InterfaceParserUtils.getUrls[Elem])
+    else Right(List.empty)
+
+    val documentIdUuid: UUID = uuidSupplier.get()
+
     val result: Future[CreatedResource] = for {
       (eserviceUUID, descriptorUUID) <- eServiceId.toFutureUUID.zip(descriptorId.toFutureUUID)
+      eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
+      _                              <- eService.descriptors
+        .find(_.id === descriptorUUID)
+        .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
+      _                              <- FileManagerUtils.verify(doc, eService, isInterface).toFuture
+      serverUrls                     <- extractServerUrls(Files.readAllBytes(doc._2.toPath), isInterface).toFuture
+      filePath                       <- fileManager.store(
+        ApplicationConfiguration.eServiceDocumentsContainer,
+        ApplicationConfiguration.eServiceDocumentsPath
+      )(documentIdUuid.toString, doc)
       eService                       <- catalogProcessService
         .createEServiceDocument(
-          kind = kind,
-          prettyName = prettyName,
-          doc = doc,
           eServiceId = eserviceUUID,
-          descriptorId = descriptorUUID
+          descriptorId = descriptorUUID,
+          documentId = documentIdUuid,
+          documentSeed = CatalogProcess.CreateEServiceDescriptorDocumentSeed(
+            prettyName = prettyName,
+            fileName = doc._1.getFileName,
+            filePath = filePath,
+            kind = kind.toProcess,
+            contentType = doc._1.getContentType.toString(),
+            checksum = Digester.toMD5(doc._2),
+            serverUrls = serverUrls.some
+          )
         )(contexts)
     } yield eService.toApi
 
@@ -458,4 +489,16 @@ final case class EServicesApiServiceImpl(
   private def getNonDraftDescriptors(eService: CatalogProcess.EService): Seq[CatalogProcess.EServiceDescriptor] =
     eService.descriptors.filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
 
+  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
+    onComplete(result) {
+      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
+        suspendDescriptor204
+      }
+    }
+  }
 }
