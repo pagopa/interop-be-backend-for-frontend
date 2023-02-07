@@ -1,15 +1,19 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MessageEntity, StatusCodes}
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
+import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagementDependency}
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
+import it.pagopa.interop.backendforfrontend.api.impl.ResponseHandlers.getEServiceDocumentByIdResponse
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
+import it.pagopa.interop.backendforfrontend.error.CatalogProcessErrors.ContentTypeParsingError
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
@@ -17,13 +21,16 @@ import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServic
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.commons.files.service.FileManager
+import it.pagopa.interop.commons.jwt.{ADMIN_ROLE, API_ROLE, M2M_ROLE, SECURITY_ROLE, authorize}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 
-import java.io.File
+import java.io.{File, FileOutputStream}
+import java.nio.file.{Files, Path}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -33,7 +40,9 @@ final case class EServicesApiServiceImpl(
   attributeRegistryManagementService: AttributeRegistryManagementService,
   catalogProcessService: CatalogProcessService,
   tenantManagementService: TenantManagementService,
-  partyProcessService: PartyProcessService
+  partyProcessService: PartyProcessService,
+  catalogManagementService: CatalogManagementService,
+  fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends EservicesApiService {
 
@@ -425,19 +434,44 @@ final case class EServicesApiServiceImpl(
     }
   }
 
+  private def getDocumentContentType(document: CatalogManagementDependency.EServiceDoc): Future[ContentType] =
+    ContentType
+      .parse(document.contentType)
+      .fold(
+        ex => Future.failed(ContentTypeParsingError(document.contentType, document.path, ex.map(_.formatPretty))),
+        Future.successful
+      )
+
+  private def convertToMessageEntity(documentDetails: DocumentDetails): MessageEntity = {
+    val randomPath: Path               = Files.createTempDirectory(s"document")
+    val temporaryFilePath: String      = s"${randomPath.toString}/${documentDetails.name}"
+    val file: File                     = new File(temporaryFilePath)
+    val outputStream: FileOutputStream = new FileOutputStream(file)
+    documentDetails.data.writeTo(outputStream)
+    HttpEntity.fromFile(documentDetails.contentType, file)
+  }
+
   override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerFile: ToEntityMarshaller[File]
   ): Route = {
-    val result: Future[File] = for {
-      //document <- catalogManagementService.getEServiceDocument(eServiceId, descriptorId, documentId)
-      //contentType <- getDocumentContentType(document)
-      //catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)(contexts)
-    }
-    onComplete(result) {
-      handleError(s"Error retrieving document ${documentId} of EService ${eServiceId}") orElse { case Success(file) =>
-        getEServiceDocumentById200(file)
+    authorize(ADMIN_ROLE, API_ROLE, SECURITY_ROLE, M2M_ROLE) {
+      val operationLabel =
+        s"Retrieving EService document $documentId for EService $eServiceId and descriptor $descriptorId"
+      logger.info(operationLabel)
+
+      val result: Future[DocumentDetails] = for {
+        document    <- catalogManagementService.getEServiceDocument(eServiceId, descriptorId, documentId)
+        contentType <- getDocumentContentType(document)
+        response    <- fileManager.get(ApplicationConfiguration.consumerDocumentsContainer)(document.path)
+      } yield DocumentDetails(document.name, contentType, response)
+
+      onComplete(result) {
+        getEServiceDocumentByIdResponse[DocumentDetails](operationLabel) { documentDetails =>
+          val output: MessageEntity = convertToMessageEntity(documentDetails)
+          complete(output)
+        }
       }
     }
   }
