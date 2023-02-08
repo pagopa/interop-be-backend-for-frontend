@@ -448,7 +448,7 @@ final case class EServicesApiServiceImpl(
         ApplicationConfiguration.eServiceDocumentsContainer,
         ApplicationConfiguration.eServiceDocumentsPath
       )(documentIdUuid.toString, doc)
-      eService                       <- catalogProcessService
+      _                              <- catalogProcessService
         .createEServiceDocument(
           eServiceId = eserviceUUID,
           descriptorId = descriptorUUID,
@@ -460,7 +460,7 @@ final case class EServicesApiServiceImpl(
             kind = kind.toProcess,
             contentType = doc._1.getContentType.toString(),
             checksum = Digester.toMD5(doc._2),
-            serverUrls = serverUrls.some
+            serverUrls = serverUrls
           )
         )(contexts)
     } yield CreatedResource(documentIdUuid)
