@@ -72,6 +72,12 @@ object CatalogProcessServiceTypes {
     def toApi: CreatedResource = CreatedResource(id = coes.id)
   }
 
+  implicit class UpdateEServiceDescriptorDocumentSeedConverter(private val seed: UpdateEServiceDescriptorDocumentSeed)
+      extends AnyVal {
+    def toProcess: CatalogProcess.UpdateEServiceDescriptorDocumentSeed =
+      CatalogProcess.UpdateEServiceDescriptorDocumentSeed(prettyName = seed.prettyName)
+  }
+
   implicit class EServiceDescriptorStateConverter(private val d: CatalogProcess.EServiceDescriptorState)
       extends AnyVal {
     def toApi: EServiceDescriptorState = d match {
