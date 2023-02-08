@@ -11,7 +11,9 @@ import it.pagopa.interop.catalogprocess.client.model.{
   EServiceDescriptorState,
   EServiceSeed,
   EServiceDescriptorSeed,
-  EServices
+  EServices,
+  EServiceDoc,
+  UpdateEServiceDescriptorDocumentSeed
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
@@ -124,6 +126,40 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         xForwardedFor = ip
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
+  }
+
+  def updateEServiceDocumentById(
+    eServiceId: String,
+    descriptorId: String,
+    documentId: String,
+    updateEServiceDescriptorDocumentSeed: UpdateEServiceDescriptorDocumentSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EServiceDoc] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EServiceDoc] =
+      api.updateEServiceDocumentById(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        documentId = documentId,
+        updateEServiceDescriptorDocumentSeed = updateEServiceDescriptorDocumentSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Updating document $documentId on eService $eServiceId for descriptor $descriptorId with seed $updateEServiceDescriptorDocumentSeed from Catalog Process"
+    )
+  }
+
+  override def cloneEServiceByDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EService] =
+      api.cloneEServiceByDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Cloning EService $eServiceId with descriptor $descriptorId")
   }
 
   override def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
