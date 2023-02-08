@@ -15,13 +15,14 @@ import scala.concurrent.Future
 
 object CatalogProcessServiceTypes {
 
-  type CatalogProcessESeed                  = CatalogProcess.EServiceSeed
-  type CatalogProcessETechnology            = CatalogProcess.EServiceTechnology
-  type CatalogProcessAttributesSeed         = CatalogProcess.AttributesSeed
-  type CatalogProcessAttributeSeed          = CatalogProcess.AttributeSeed
-  type CatalogProcessAttributeValueSeed     = CatalogProcess.AttributeValueSeed
-  type CatalogProcessEService               = CatalogProcess.EService
-  type CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed
+  type CatalogProcessESeed                        = CatalogProcess.EServiceSeed
+  type CatalogProcessETechnology                  = CatalogProcess.EServiceTechnology
+  type CatalogProcessAttributesSeed               = CatalogProcess.AttributesSeed
+  type CatalogProcessAttributeSeed                = CatalogProcess.AttributeSeed
+  type CatalogProcessAttributeValueSeed           = CatalogProcess.AttributeValueSeed
+  type CatalogProcessEService                     = CatalogProcess.EService
+  type CatalogProcessEServiceDescriptorSeed       = CatalogProcess.EServiceDescriptorSeed
+  type CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed
 
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcessETechnology = est match {
@@ -48,7 +49,7 @@ object CatalogProcessServiceTypes {
     )
   }
 
-  implicit class EServiceSeedConverter(private val es: EServiceSeed)                       extends AnyVal {
+  implicit class EServiceSeedConverter(private val es: EServiceSeed) extends AnyVal {
     def toProcess: CatalogProcessESeed = CatalogProcess.EServiceSeed(
       name = es.name,
       description = es.description,
@@ -56,6 +57,7 @@ object CatalogProcessServiceTypes {
       attributes = es.attributes.toProcess
     )
   }
+
   implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed) extends AnyVal {
     def toProcess: CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
       description = seed.description,
@@ -66,8 +68,15 @@ object CatalogProcessServiceTypes {
       agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess
     )
   }
-  implicit class EServiceConverter(private val coes: CatalogProcessEService)               extends AnyVal {
+
+  implicit class EServiceConverter(private val coes: CatalogProcessEService) extends AnyVal {
     def toApi: CreatedResource = CreatedResource(id = coes.id)
+  }
+
+  implicit class UpdateEServiceDescriptorDocumentSeedConverter(private val seed: UpdateEServiceDescriptorDocumentSeed)
+      extends AnyVal {
+    def toProcess: CatalogProcess.UpdateEServiceDescriptorDocumentSeed =
+      CatalogProcess.UpdateEServiceDescriptorDocumentSeed(prettyName = seed.prettyName)
   }
 
   implicit class EServiceDescriptorStateConverter(private val d: CatalogProcess.EServiceDescriptorState)
@@ -185,11 +194,21 @@ object CatalogProcessServiceTypes {
         )
   }
 
+  implicit class UpdateEServiceDescriptorSeedConverter(private val usds: UpdateEServiceDescriptorSeed) extends AnyVal {
+    def toProcess: CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed(
+      description = usds.description,
+      audience = usds.audience,
+      voucherLifespan = usds.voucherLifespan,
+      dailyCallsPerConsumer = usds.dailyCallsPerConsumer,
+      dailyCallsTotal = usds.dailyCallsTotal,
+      agreementApprovalPolicy = usds.agreementApprovalPolicy.toProcess
+    )
+  }
+
   implicit class DocumentKindWrapper(private val str: String) extends AnyVal {
     def toProcess: CatalogProcess.EServiceDocumentKind = str match {
       case "DOCUMENT"  => CatalogProcess.EServiceDocumentKind.DOCUMENT
       case "INTERFACE" => CatalogProcess.EServiceDocumentKind.INTERFACE
     }
   }
-
 }

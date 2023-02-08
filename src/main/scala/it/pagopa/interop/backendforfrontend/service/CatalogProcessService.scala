@@ -6,6 +6,10 @@ import java.util.UUID
 import scala.concurrent.Future
 trait CatalogProcessService {
 
+  def cloneEServiceByDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService]
+
   def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService]
 
   def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
@@ -27,11 +31,28 @@ trait CatalogProcessService {
 
   def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
 
+  def updateDraftDescriptor(
+    eServiceId: UUID,
+    descriptorId: UUID,
+    updateEServiceDescriptorSeed: UpdateEServiceDescriptorSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EService]
+
   def createDescriptor(eServiceId: UUID, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[EServiceDescriptor]
 
   def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
+
+  def updateEServiceDocumentById(
+    eServiceId: String,
+    descriptorId: String,
+    documentId: String,
+    updateEServiceDescriptorDocumentSeed: UpdateEServiceDescriptorDocumentSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EServiceDoc]
+
+  def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
 
