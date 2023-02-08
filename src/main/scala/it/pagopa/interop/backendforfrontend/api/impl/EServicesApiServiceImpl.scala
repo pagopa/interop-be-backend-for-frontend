@@ -228,7 +228,7 @@ final case class EServicesApiServiceImpl(
 
     def go(start: Int)(as: List[AgreementProcess.Agreement]): Future[List[AgreementProcess.Agreement]] =
       getAgreementsFrom(start).flatMap(agrs =>
-        if (agrs.isEmpty) Future.successful(as) else go(start + agrs.size)(as ++ agrs)
+        if (agrs.size < 50) Future.successful(as ++ agrs) else go(start + 50)(as ++ agrs)
       )
 
     go(0)(Nil)
