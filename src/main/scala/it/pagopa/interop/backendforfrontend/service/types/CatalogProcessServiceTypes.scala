@@ -15,13 +15,14 @@ import scala.concurrent.Future
 
 object CatalogProcessServiceTypes {
 
-  type CatalogProcessESeed                  = CatalogProcess.EServiceSeed
-  type CatalogProcessETechnology            = CatalogProcess.EServiceTechnology
-  type CatalogProcessAttributesSeed         = CatalogProcess.AttributesSeed
-  type CatalogProcessAttributeSeed          = CatalogProcess.AttributeSeed
-  type CatalogProcessAttributeValueSeed     = CatalogProcess.AttributeValueSeed
-  type CatalogProcessEService               = CatalogProcess.EService
-  type CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed
+  type CatalogProcessESeed                        = CatalogProcess.EServiceSeed
+  type CatalogProcessETechnology                  = CatalogProcess.EServiceTechnology
+  type CatalogProcessAttributesSeed               = CatalogProcess.AttributesSeed
+  type CatalogProcessAttributeSeed                = CatalogProcess.AttributeSeed
+  type CatalogProcessAttributeValueSeed           = CatalogProcess.AttributeValueSeed
+  type CatalogProcessEService                     = CatalogProcess.EService
+  type CatalogProcessEServiceDescriptorSeed       = CatalogProcess.EServiceDescriptorSeed
+  type CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed
 
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcessETechnology = est match {
@@ -193,4 +194,14 @@ object CatalogProcessServiceTypes {
         )
   }
 
+  implicit class UpdateEServiceDescriptorSeedConverter(private val usds: UpdateEServiceDescriptorSeed) extends AnyVal {
+    def toProcess: CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed(
+      description = usds.description,
+      audience = usds.audience,
+      voucherLifespan = usds.voucherLifespan,
+      dailyCallsPerConsumer = usds.dailyCallsPerConsumer,
+      dailyCallsTotal = usds.dailyCallsTotal,
+      agreementApprovalPolicy = usds.agreementApprovalPolicy.toProcess
+    )
+  }
 }

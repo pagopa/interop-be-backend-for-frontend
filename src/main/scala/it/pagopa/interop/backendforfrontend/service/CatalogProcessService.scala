@@ -32,6 +32,12 @@ trait CatalogProcessService {
 
   def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
 
+  def updateDraftDescriptor(
+    eServiceId: UUID,
+    descriptorId: UUID,
+    updateEServiceDescriptorSeed: UpdateEServiceDescriptorSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EService]
+
   def createDescriptor(eServiceId: UUID, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[EServiceDescriptor]

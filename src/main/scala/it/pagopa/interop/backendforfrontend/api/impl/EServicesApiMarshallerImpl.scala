@@ -32,6 +32,9 @@ object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonS
   override implicit def toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource] =
     sprayJsonMarshaller[CreatedResource]
 
+  override implicit def fromEntityUnmarshallerUpdateEServiceDescriptorSeed
+    : FromEntityUnmarshaller[UpdateEServiceDescriptorSeed] = sprayJsonUnmarshaller[UpdateEServiceDescriptorSeed]
+
   override implicit def fromEntityUnmarshallerEServiceDescriptorSeed: FromEntityUnmarshaller[EServiceDescriptorSeed] =
     sprayJsonUnmarshaller[EServiceDescriptorSeed]
 
