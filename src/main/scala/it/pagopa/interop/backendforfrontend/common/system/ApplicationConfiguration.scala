@@ -67,6 +67,8 @@ object ApplicationConfiguration {
   val storageKind: String                = config.getString("backend-for-frontend.storage.kind")
   val consumerDocumentsContainer: String = config.getString("backend-for-frontend.storage.consumer-documents.container")
   val consumerDocumentsPath: String      = config.getString("backend-for-frontend.storage.consumer-documents.path")
+  val eServiceDocumentsContainer: String = config.getString("backend-for-frontend.storage.eservice-documents.container")
+  val eServiceDocumentsPath: String      = config.getString("backend-for-frontend.storage.eservice-documents.path")
   val allowListContainer: String         = config.getString("backend-for-frontend.storage.allow-list.container")
   val allowListPath: String              = config.getString("backend-for-frontend.storage.allow-list.path")
   val allowListFilename: String          = config.getString("backend-for-frontend.storage.allow-list.filename")

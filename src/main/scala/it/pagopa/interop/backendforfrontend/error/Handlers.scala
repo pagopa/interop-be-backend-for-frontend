@@ -10,6 +10,7 @@ import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
   AgreementDescriptorNotFound,
   AttributeNotExists,
   DownstreamError,
+  InvalidInterfaceFileDetected,
   UnknownTenantOrigin
 }
 import it.pagopa.interop.backendforfrontend.model.Problem
@@ -51,6 +52,7 @@ object Handlers {
       )
     case Failure(err: AttributeNotExists)                       => internalServerError(err, logMessage)
     case Failure(err: UnknownTenantOrigin)                      => badRequest(err, logMessage)
+    case Failure(err: InvalidInterfaceFileDetected)             => badRequest(err, logMessage)
     case Failure(err: AgreementDescriptorNotFound)              => notFound(err, logMessage)
     case Failure(err)                                           => internalServerError(err, logMessage)
   }

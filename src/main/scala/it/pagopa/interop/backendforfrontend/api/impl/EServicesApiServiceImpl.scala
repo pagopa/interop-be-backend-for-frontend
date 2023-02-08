@@ -4,6 +4,7 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
@@ -22,22 +23,37 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
+import it.pagopa.interop.commons.utils.service.UUIDSupplier
+import it.pagopa.interop.backendforfrontend.common.system.FileManagerUtils
+import it.pagopa.interop.commons.files.service.FileManager
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 
+import java.io.File
+import java.nio.file.Files
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import scala.xml.Elem
+import io.circe.Json
+import it.pagopa.interop.commons.utils.Digester
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
   catalogProcessService: CatalogProcessService,
   tenantManagementService: TenantManagementService,
-  partyProcessService: PartyProcessService
+  partyProcessService: PartyProcessService,
+  fileManager: FileManager,
+  uuidSupplier: UUIDSupplier
 )(implicit ec: ExecutionContext)
     extends EservicesApiService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+
+  private lazy val INTERFACE = "INTERFACE"
+  private lazy val DOCUMENT  = "DOCUMENT"
 
   private val ACTIVE_DESCRIPTOR_STATES_FILTER: List[CatalogProcess.EServiceDescriptorState] = List(
     CatalogProcess.EServiceDescriptorState.PUBLISHED,
@@ -62,6 +78,77 @@ final case class EServicesApiServiceImpl(
     onComplete(result) {
       handleError(s"Error creating eservice with seed: $eServiceSeed") orElse { case Success(eservice) =>
         createEService200(eservice)
+      }
+    }
+  }
+  override def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.activateDescriptor(eServiceId, descriptorId)(contexts)
+
+    onComplete(result) {
+      handleError(s"Error activating descriptor $descriptorId on eservice $eServiceId") orElse { case Success(_) =>
+        activateDescriptor204
+      }
+    }
+  }
+
+  override def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.publishDescriptor(eServiceId, descriptorId)(contexts)
+
+    onComplete(result) {
+      handleError(s"Error publishing descriptor $descriptorId for eservice $eServiceId") orElse { case Success(_) =>
+        publishDescriptor204
+      }
+    }
+  }
+
+  override def createDescriptor(eServiceId: String, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result: Future[CreatedResource] = for {
+      eServiceIdUUID <- eServiceId.toFutureUUID
+      descriptor     <- catalogProcessService
+        .createDescriptor(eServiceIdUUID, eServiceDescriptorSeed.toProcess)(contexts)
+    } yield descriptor.toApi
+
+    onComplete(result) {
+      handleError(s"Error creating descriptor with seed: $eServiceDescriptorSeed") orElse { case Success(descriptor) =>
+        createDescriptor200(descriptor)
+      }
+    }
+  }
+
+  override def updateDraftDescriptor(
+    eServiceId: String,
+    descriptorId: String,
+    updateEServiceDescriptorSeed: UpdateEServiceDescriptorSeed
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result = for {
+      eServiceIdUUID   <- eServiceId.toFutureUUID
+      descriptorIdUUID <- descriptorId.toFutureUUID
+      descriptor       <- catalogProcessService
+        .updateDraftDescriptor(eServiceIdUUID, descriptorIdUUID, updateEServiceDescriptorSeed.toProcess)(contexts)
+
+    } yield (descriptor.toApi)
+
+    onComplete(result) {
+      handleError(
+        s"Error updating draft descriptor $descriptorId on service $eServiceId with seed: $updateEServiceDescriptorSeed"
+      ) orElse { case Success(resource) =>
+        updateDraftDescriptor200(resource)
       }
     }
   }
@@ -266,7 +353,7 @@ final case class EServicesApiServiceImpl(
     activeDescriptor = activeDescriptor.map(_.toCompactDescriptor)
   )
 
-  private def enhanceProducerEService(eService: CatalogProcess.EService) = ProducerEService(
+  private def enhanceProducerEService(eService: CatalogProcess.EService)                        = ProducerEService(
     id = eService.id,
     name = eService.name,
     activeDescriptor = getActiveDescriptor(eService).map(_.toCompactDescriptor),
@@ -363,7 +450,97 @@ final case class EServicesApiServiceImpl(
         case Success(descriptor)                    => getProducerEServiceDescriptor200(descriptor)
       }
     }
+  }
 
+  override def createEServiceDocument(
+    kind: String,
+    prettyName: String,
+    doc: (FileInfo, File),
+    eServiceId: String,
+    descriptorId: String
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+
+    val isInterface: Boolean = kind match {
+      case INTERFACE => true
+      case DOCUMENT  => false
+      case _         => false
+    }
+
+    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (isInterface)
+      InterfaceParser.parseOpenApi(bytes).flatMap(InterfaceParserUtils.getUrls[Json]) orElse
+        InterfaceParser.parseWSDL(bytes).flatMap(InterfaceParserUtils.getUrls[Elem])
+    else Right(List.empty)
+
+    val documentIdUuid: UUID = uuidSupplier.get()
+
+    val result: Future[CreatedResource] = for {
+      (eserviceUUID, descriptorUUID) <- eServiceId.toFutureUUID.zip(descriptorId.toFutureUUID)
+      eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
+      _                              <- eService.descriptors
+        .find(_.id === descriptorUUID)
+        .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
+      _                              <- FileManagerUtils.verify(doc, eService, isInterface).toFuture
+      serverUrls                     <- extractServerUrls(Files.readAllBytes(doc._2.toPath), isInterface).toFuture
+      filePath                       <- fileManager.store(
+        ApplicationConfiguration.eServiceDocumentsContainer,
+        ApplicationConfiguration.eServiceDocumentsPath
+      )(documentIdUuid.toString, doc)
+      _                              <- catalogProcessService
+        .createEServiceDocument(
+          eServiceId = eserviceUUID,
+          descriptorId = descriptorUUID,
+          documentSeed = CatalogProcess.CreateEServiceDescriptorDocumentSeed(
+            documentId = documentIdUuid,
+            prettyName = prettyName,
+            fileName = doc._1.getFileName,
+            filePath = filePath,
+            kind = kind.toProcess,
+            contentType = doc._1.getContentType.toString(),
+            checksum = Digester.toMD5(doc._2),
+            serverUrls = serverUrls
+          )
+        )(contexts)
+    } yield CreatedResource(documentIdUuid)
+
+    onComplete(result) {
+      handleError(
+        s"Error creating eService document of kind $kind and name $prettyName for eService $eServiceId and descriptor $descriptorId"
+      ) orElse { case Success(document) =>
+        createEServiceDocument200(document)
+      }
+    }
+  }
+
+  override def updateEServiceDocumentById(
+    eServiceId: String,
+    descriptorId: String,
+    documentId: String,
+    updateEServiceDescriptorDocumentSeed: UpdateEServiceDescriptorDocumentSeed
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[EServiceDoc] = catalogProcessService
+      .updateEServiceDocumentById(
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        documentId = documentId,
+        updateEServiceDescriptorDocumentSeed = updateEServiceDescriptorDocumentSeed.toProcess
+      )(contexts)
+      .map(_.toApi)
+
+    onComplete(result) {
+      handleError(
+        s"Error updating document $documentId on eService $eServiceId for descriptor ${descriptorId}"
+      ) orElse { case Success(eServiceDoc) =>
+        updateEServiceDocumentById200(eServiceDoc)
+      }
+    }
   }
 
   private def isTheProducer(eService: CatalogProcess.EService, requesterId: UUID): Future[Unit] =
@@ -380,4 +557,50 @@ final case class EServicesApiServiceImpl(
 
   private def getNonDraftDescriptors(eService: CatalogProcess.EService): Seq[CatalogProcess.EServiceDescriptor] =
     eService.descriptors.filter(_.state != CatalogProcess.EServiceDescriptorState.DRAFT)
+
+  override def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
+    onComplete(result) {
+      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
+        suspendDescriptor204
+      }
+    }
+  }
+
+  override def cloneEServiceByDescriptor(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result: Future[CreatedResource] = for {
+      eServiceIdUUID   <- eServiceId.toFutureUUID
+      descriptorIdUUID <- descriptorId.toFutureUUID
+      eservice         <- catalogProcessService
+        .cloneEServiceByDescriptor(eServiceIdUUID, descriptorIdUUID)
+    } yield eservice.toApi
+
+    onComplete(result) {
+      handleError(s"Error cloning EService ${eServiceId} with descriptor ${descriptorId}") orElse {
+        case Success(eservice) =>
+          cloneEServiceByDescriptor200(eservice)
+      }
+    }
+  }
+
+  override def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      catalogProcessService.deleteEServiceDocumentById(eServiceId, descriptorId, documentId)(contexts)
+    onComplete(result) {
+      handleError(
+        s"Error deleting document ${documentId} for eService ${eServiceId} descriptor ${descriptorId}"
+      ) orElse { case Success(_) => deleteEServiceDocumentById204 }
+    }
+  }
 }

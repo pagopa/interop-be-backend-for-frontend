@@ -110,13 +110,22 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat5(ProducerEServiceDetails)
 
   implicit val compactPurposeVersionFormat: RootJsonFormat[CompactPurposeVersion] = jsonFormat4(CompactPurposeVersion)
-  implicit val purposeFormat: RootJsonFormat[Purpose]                             = jsonFormat6(Purpose)
+  implicit val compactEServiceFormat: RootJsonFormat[CompactEService]             = jsonFormat3(CompactEService)
+  implicit val purposeFormat: RootJsonFormat[Purpose]                             = jsonFormat8(Purpose)
   implicit val purposesFormat: RootJsonFormat[Purposes]                           = jsonFormat2(Purposes)
 
-  implicit val EServiceSeedFormat: RootJsonFormat[EServiceSeed] = jsonFormat5(EServiceSeed)
+  implicit val EServiceSeedFormat: RootJsonFormat[EServiceSeed]                           = jsonFormat5(EServiceSeed)
+  implicit val updateEServiceDescriptorSeed: RootJsonFormat[UpdateEServiceDescriptorSeed] = jsonFormat6(
+    UpdateEServiceDescriptorSeed
+  )
+  implicit val problemErrorFormat: RootJsonFormat[ProblemError]                           = jsonFormat2(ProblemError)
+  implicit val problemFormat: RootJsonFormat[Problem]                                     = jsonFormat6(Problem)
 
-  implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
-  implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat6(Problem)
+  implicit val EServiceDescriptorSeedFormat: RootJsonFormat[EServiceDescriptorSeed] = jsonFormat6(
+    EServiceDescriptorSeed
+  )
+  implicit val UpdateEServiceDescriptorDocumentSeedFormat: RootJsonFormat[UpdateEServiceDescriptorDocumentSeed] =
+    jsonFormat1(UpdateEServiceDescriptorDocumentSeed)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
