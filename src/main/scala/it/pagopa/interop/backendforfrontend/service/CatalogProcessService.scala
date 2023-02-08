@@ -7,6 +7,10 @@ import scala.concurrent.Future
 
 trait CatalogProcessService {
 
+  def cloneEServiceByDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService]
+
   def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService]
 
   def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
