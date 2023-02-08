@@ -9,22 +9,22 @@ import java.util.UUID
 object BFFErrors {
 
   final case class RelationshipNotFound(relationshipId: String)
-      extends ComponentError("0002", s"Relationship $relationshipId not found")
+      extends ComponentError("0001", s"Relationship $relationshipId not found")
 
   final case class MissingUserFields(userId: String, missingUserFields: String)
-      extends ComponentError("0003", s"Missing some fields for user $userId - $missingUserFields")
+      extends ComponentError("0002", s"Missing some fields for user $userId - $missingUserFields")
 
   final case class AgreementDescriptorNotFound(agreementId: UUID)
-      extends ComponentError("0005", s"Descriptor of agreement $agreementId not found")
+      extends ComponentError("0003", s"Descriptor of agreement $agreementId not found")
 
   final case class MissingSelfcareId(tenantId: UUID)
-      extends ComponentError("0006", s"SelfcareId in Tenant ${tenantId.toString()} not found")
+      extends ComponentError("0004", s"SelfcareId in Tenant ${tenantId.toString()} not found")
 
   final case class ContractNotFound(agreementId: String)
-      extends ComponentError("0007", s"Contract not found for agreement $agreementId")
+      extends ComponentError("0005", s"Contract not found for agreement $agreementId")
 
   final case class EServiceDescriptorNotFound(eServiceId: String, descriptorId: String)
-      extends ComponentError("0008", s"Descriptor ${descriptorId} not found in Eservice ${eServiceId}")
+      extends ComponentError("0006", s"Descriptor ${descriptorId} not found in Eservice ${eServiceId}")
 
   final case class InvalidContentType(
     contentType: String,
@@ -32,29 +32,35 @@ object BFFErrors {
     documentId: String,
     errors: List[ErrorInfo]
   ) extends ComponentError(
-        "0008",
+        "0007",
         s"Invalid contentType $contentType for document $documentId from agreement $agreementId - ${errors.map(_.detail).mkString(",")}"
       )
 
   final case class AttributeNotExists(id: UUID)
-      extends ComponentError("0009", s"Attribute ${id.toString} does not exist in the attribute registry")
+      extends ComponentError("0008", s"Attribute ${id.toString} does not exist in the attribute registry")
 
   final case class InvalidEServiceRequester(eServiceId: UUID, requesterId: UUID)
       extends ComponentError(
-        "0010",
+        "0009",
         s"EService ${eServiceId.toString} does not belong to producer ${requesterId.toString}"
       )
 
   final case class SessionTokenTooManyRequests(tenantId: UUID, rateLimitStatus: RateLimitStatus)
-      extends ComponentError("0011", s"Too many requests on Session Token requests for tenant $tenantId")
+      extends ComponentError("0010", s"Too many requests on Session Token requests for tenant $tenantId")
 
   final case class DownstreamError(errorCode: String, message: String) extends ComponentError(errorCode, message)
 
   final case class UnknownTenantOrigin(selfcareId: String)
-      extends ComponentError("0012", s"SelfcareID ${selfcareId} is not inside whitelist or related with IPA")
+      extends ComponentError("0011", s"SelfcareID ${selfcareId} is not inside whitelist or related with IPA")
 
-  final case class EServiceNotFound(eServiceId: UUID) extends ComponentError("0013", s"EService $eServiceId not found")
+  final case class EServiceNotFound(eServiceId: UUID) extends ComponentError("0012", s"EService $eServiceId not found")
 
-  final case class TenantNotFound(tenantId: UUID) extends ComponentError("0014", s"Tenant $tenantId not found")
+  final case class TenantNotFound(tenantId: UUID) extends ComponentError("0013", s"Tenant $tenantId not found")
+
+  final case class ContentTypeParsingError(contentType: String, documentPath: String, errors: List[String])
+      extends ComponentError(
+        "0014",
+        s"Error parsing content type $contentType for document $documentPath. Reasons: ${errors.mkString(",")}"
+      )
 
 }
