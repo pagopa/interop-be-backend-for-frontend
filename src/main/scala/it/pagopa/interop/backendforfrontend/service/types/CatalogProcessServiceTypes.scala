@@ -41,7 +41,7 @@ object CatalogProcessServiceTypes {
       CatalogProcess.AttributeSeed(single = e.single.map(_.toProcess), group = e.group.nested.map(_.toProcess).value)
   }
 
-  implicit class EServiceAttributesSeedConverter(private val esa: EServiceAttributes)      extends AnyVal {
+  implicit class EServiceAttributesSeedConverter(private val esa: EServiceAttributes) extends AnyVal {
     def toProcess: CatalogProcessAttributesSeed = CatalogProcess.AttributesSeed(
       certified = esa.certified.map(_.toProcess),
       declared = esa.declared.map(_.toProcess),
@@ -49,7 +49,7 @@ object CatalogProcessServiceTypes {
     )
   }
 
-  implicit class EServiceSeedConverter(private val es: EServiceSeed)                       extends AnyVal {
+  implicit class EServiceSeedConverter(private val es: EServiceSeed) extends AnyVal {
     def toProcess: CatalogProcessESeed = CatalogProcess.EServiceSeed(
       name = es.name,
       description = es.description,
@@ -185,7 +185,7 @@ object CatalogProcessServiceTypes {
           )
         )
   }
-  
+
   implicit class UpdateEServiceDescriptorSeedConverter(private val usds: UpdateEServiceDescriptorSeed) extends AnyVal {
     def toProcess: CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed(
       description = usds.description,
