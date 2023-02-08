@@ -353,7 +353,7 @@ final case class EServicesApiServiceImpl(
     activeDescriptor = activeDescriptor.map(_.toCompactDescriptor)
   )
 
-  private def enhanceProducerEService(eService: CatalogProcess.EService)                        = ProducerEService(
+  private def enhanceProducerEService(eService: CatalogProcess.EService) = ProducerEService(
     id = eService.id,
     name = eService.name,
     activeDescriptor = getActiveDescriptor(eService).map(_.toCompactDescriptor),
