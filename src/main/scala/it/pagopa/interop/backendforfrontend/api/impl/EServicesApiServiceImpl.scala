@@ -183,9 +183,10 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result = for {
-      producerId   <- getOrganizationIdFutureUUID(contexts)
-      eServicesIds <- getProducerEServicesIds(producerId, parseArrayParameters(consumersIds))
-      pagedResults <- catalogProcessService.getEServices(
+      producerId    <- getOrganizationIdFutureUUID(contexts)
+      consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
+      eServicesIds  <- getProducerEServicesIds(producerId, consumerUUIDs)
+      pagedResults  <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = eServicesIds,
         producersIds = List(producerId),
@@ -205,37 +206,32 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  private def getProducerEServicesIds(producerId: UUID, consumersIds: List[String])(implicit
+  private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
     contexts: Seq[(String, String)]
-  ): Future[List[UUID]] = {
-    for {
-      consumersIdsUUID <- Future.traverse(consumersIds)(_.toFutureUUID)
+  ): Future[List[UUID]] = getAllAgreements(producerId, consumersUUIDs)
+    .map(_.map(_.eserviceId).distinct)
 
-      agreements <- Future
-        .traverse(consumersIdsUUID)(consumerId => {
-          loop(List())(0) { offset =>
-            agreementProcessService.getAgreements(
-              consumersIds = Seq(consumerId),
-              producersIds = Seq(producerId),
-              states = Seq(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
-              limit = 50,
-              offset = offset
-            )
-          }
-        })
-        .map(_.flatten)
-    } yield {
-      agreements.map(_.eserviceId).distinct
-    }
-  }
-  // It's stack safe since every submission to an Execution context resets the stack, creating a trampoline effect
-  def loop(
-    acc: List[AgreementProcess.Agreement]
-  )(offset: Int)(f: Int => Future[AgreementProcess.Agreements]): Future[List[AgreementProcess.Agreement]] = {
-    f(offset).flatMap(res =>
-      if (res.totalCount < offset + 50) Future.successful(acc ++ res.results)
-      else loop(acc ++ res.results)(offset + 50)(f)
-    )
+  private def getAllAgreements(producerId: UUID, consumerUUIDs: List[UUID])(implicit
+    contexts: Seq[(String, String)]
+  ): Future[List[AgreementProcess.Agreement]] = {
+
+    def getAgreementsFrom(offset: Int): Future[List[AgreementProcess.Agreement]] =
+      agreementProcessService
+        .getAgreements(
+          producersIds = producerId :: Nil,
+          consumersIds = consumerUUIDs,
+          states = Seq(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
+          limit = 50,
+          offset = offset
+        )
+        .map(_.results.toList)
+
+    def go(start: Int)(as: List[AgreementProcess.Agreement]): Future[List[AgreementProcess.Agreement]] =
+      getAgreementsFrom(start).flatMap(agrs =>
+        if (agrs.isEmpty) Future.successful(as) else go(start + agrs.size)(as ++ agrs)
+      )
+
+    go(0)(Nil)
   }
 
   private def enhanceCatalogEService(
