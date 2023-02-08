@@ -126,6 +126,19 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
   }
+
+  override def cloneEServiceByDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EService] =
+      api.cloneEServiceByDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Cloning EService $eServiceId with descriptor $descriptorId")
+  }
   override def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
