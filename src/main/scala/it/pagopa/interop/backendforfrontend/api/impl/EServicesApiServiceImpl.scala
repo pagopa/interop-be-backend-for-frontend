@@ -463,7 +463,7 @@ final case class EServicesApiServiceImpl(
             serverUrls = serverUrls.some
           )
         )(contexts)
-    } yield eService.toApi
+    } yield CreatedResource(documentIdUuid)
 
     onComplete(result) {
       handleError(
