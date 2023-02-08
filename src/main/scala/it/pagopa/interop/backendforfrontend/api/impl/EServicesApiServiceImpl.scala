@@ -452,8 +452,8 @@ final case class EServicesApiServiceImpl(
         .createEServiceDocument(
           eServiceId = eserviceUUID,
           descriptorId = descriptorUUID,
-          documentId = documentIdUuid,
           documentSeed = CatalogProcess.CreateEServiceDescriptorDocumentSeed(
+            documentId = documentIdUuid,
             prettyName = prettyName,
             fileName = doc._1.getFileName,
             filePath = filePath,
@@ -468,8 +468,8 @@ final case class EServicesApiServiceImpl(
     onComplete(result) {
       handleError(
         s"Error creating eService document of kind $kind and name $prettyName for eService $eServiceId and descriptor $descriptorId"
-      ) orElse { case Success(eservice) =>
-        createDescriptor200(eservice)
+      ) orElse { case Success(document) =>
+        createDescriptor200(document)
       }
     }
   }

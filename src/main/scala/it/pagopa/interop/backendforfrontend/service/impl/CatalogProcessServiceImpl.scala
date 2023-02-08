@@ -130,7 +130,6 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
   override def createEServiceDocument(
     eServiceId: UUID,
     descriptorId: UUID,
-    documentId: UUID,
     documentSeed: CreateEServiceDescriptorDocumentSeed
   )(implicit contexts: Seq[(String, String)]): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
     val request: ApiRequest[EService] =
@@ -138,13 +137,12 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         xCorrelationId = correlationId,
         eServiceId = eServiceId.toString,
         descriptorId = descriptorId.toString,
-        documentId = documentId.toString,
         createEServiceDescriptorDocumentSeed = documentSeed,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
     invoker.invoke(
       request,
-      s"eService document ${documentId} of kind ${documentSeed.kind}, name ${documentSeed.fileName}, path ${documentSeed.filePath} for eService $eServiceId and descriptor $descriptorId"
+      s"Creating eService document ${documentSeed.documentId.toString} of kind ${documentSeed.kind}, name ${documentSeed.fileName}, path ${documentSeed.filePath} for eService $eServiceId and descriptor $descriptorId"
     )
   }
 

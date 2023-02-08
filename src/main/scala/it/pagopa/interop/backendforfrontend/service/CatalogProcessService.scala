@@ -35,10 +35,7 @@ trait CatalogProcessService {
     contexts: Seq[(String, String)]
   ): Future[Unit]
 
-  def createEServiceDocument(
-    eServiceId: UUID,
-    descriptorId: UUID,
-    documentId: UUID,
-    documentSeed: CreateEServiceDescriptorDocumentSeed
-  )(implicit contexts: Seq[(String, String)]): Future[EService]
+  def createEServiceDocument(eServiceId: UUID, descriptorId: UUID, documentSeed: CreateEServiceDescriptorDocumentSeed)(
+    implicit contexts: Seq[(String, String)]
+  ): Future[EService]
 }
