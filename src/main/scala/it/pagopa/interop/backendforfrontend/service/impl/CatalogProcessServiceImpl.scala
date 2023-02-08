@@ -186,4 +186,23 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         s"Update draft descriptor $descriptorId for EService $eServiceId with seed $updateEServiceDescriptorSeed"
       )
     }
+
+  override def createEServiceDocument(
+    eServiceId: UUID,
+    descriptorId: UUID,
+    documentSeed: CreateEServiceDescriptorDocumentSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EService] =
+      api.createEServiceDocument(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId.toString,
+        descriptorId = descriptorId.toString,
+        createEServiceDescriptorDocumentSeed = documentSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Creating eService document ${documentSeed.documentId.toString} of kind ${documentSeed.kind}, name ${documentSeed.fileName}, path ${documentSeed.filePath} for eService $eServiceId and descriptor $descriptorId"
+    )
+  }
 }

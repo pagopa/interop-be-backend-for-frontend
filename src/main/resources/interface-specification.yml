@@ -1839,7 +1839,7 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: '#/components/schemas/Problem'              
+                $ref: '#/components/schemas/Problem'
   /eservices/{eServiceId}/descriptors:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -2164,6 +2164,113 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Invalid input
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /eservices/{eServiceId}/descriptors/{descriptorId}/documents:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - eservices
+      summary: Add new e-service document
+      operationId: createEServiceDocument
+      parameters:
+        - name: eServiceId
+          in: path
+          description: the eservice id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: descriptorId
+          in: path
+          description: the descriptor Id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: E-Service document
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - kind
+                - prettyName
+                - doc
+              properties:
+                kind:
+                  type: string
+                  description: Document Type
+                  enum:
+                    - INTERFACE
+                    - DOCUMENT
+                prettyName:
+                  type: string
+                doc:
+                  type: string
+                  format: binary
+        required: true
+      responses:
+        '200':
+          description: EService Document created
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedResource'
         '400':
           description: Invalid input
           headers:
@@ -4372,7 +4479,7 @@ components:
           type: integer
           format: int32
         agreementApprovalPolicy:
-          $ref: '#/components/schemas/AgreementApprovalPolicy'      
+          $ref: '#/components/schemas/AgreementApprovalPolicy'
     Mail:
       type: object
       required:

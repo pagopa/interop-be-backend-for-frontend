@@ -204,4 +204,11 @@ object CatalogProcessServiceTypes {
       agreementApprovalPolicy = usds.agreementApprovalPolicy.toProcess
     )
   }
+
+  implicit class DocumentKindWrapper(private val str: String) extends AnyVal {
+    def toProcess: CatalogProcess.EServiceDocumentKind = str match {
+      case "DOCUMENT"  => CatalogProcess.EServiceDocumentKind.DOCUMENT
+      case "INTERFACE" => CatalogProcess.EServiceDocumentKind.INTERFACE
+    }
+  }
 }

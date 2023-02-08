@@ -4,7 +4,6 @@ import it.pagopa.interop.catalogprocess.client.model._
 
 import java.util.UUID
 import scala.concurrent.Future
-
 trait CatalogProcessService {
 
   def cloneEServiceByDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit
@@ -56,4 +55,8 @@ trait CatalogProcessService {
   def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
+
+  def createEServiceDocument(eServiceId: UUID, descriptorId: UUID, documentSeed: CreateEServiceDescriptorDocumentSeed)(
+    implicit contexts: Seq[(String, String)]
+  ): Future[EService]
 }
