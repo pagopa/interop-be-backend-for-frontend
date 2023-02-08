@@ -46,4 +46,8 @@ trait CatalogProcessService {
     documentId: String,
     updateEServiceDescriptorDocumentSeed: UpdateEServiceDescriptorDocumentSeed
   )(implicit contexts: Seq[(String, String)]): Future[EServiceDoc]
+
+  def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
 }
