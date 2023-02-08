@@ -469,7 +469,7 @@ final case class EServicesApiServiceImpl(
       handleError(
         s"Error creating eService document of kind $kind and name $prettyName for eService $eServiceId and descriptor $descriptorId"
       ) orElse { case Success(document) =>
-        createDescriptor200(document)
+        createEServiceDocument200(document)
       }
     }
   }
