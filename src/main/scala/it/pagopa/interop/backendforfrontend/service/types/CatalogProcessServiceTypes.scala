@@ -56,7 +56,17 @@ object CatalogProcessServiceTypes {
       attributes = es.attributes.toProcess
     )
   }
-  implicit class EServiceConverter(private val coes: CatalogProcessEService)          extends AnyVal {
+  implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed)             extends AnyVal {
+    def toProcess: CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
+      description = seed.description,
+      audience = seed.audience,
+      voucherLifespan = seed.voucherLifespan,
+      dailyCallsPerConsumer = seed.dailyCallsPerConsumer,
+      dailyCallsTotal = seed.dailyCallsTotal,
+      agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess
+    )
+  }
+  implicit class EServiceConverter(private val coes: CatalogProcessEService)               extends AnyVal {
     def toApi: CreatedResource = CreatedResource(id = coes.id)
   }
   implicit class EServiceDescriptorStateConverter(private val d: CatalogProcess.EServiceDescriptorState)
@@ -171,17 +181,6 @@ object CatalogProcessServiceTypes {
             explicitAttributeVerification = value.explicitAttributeVerification
           )
         )
-  }
-
-  implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed)             extends AnyVal {
-    def toProcess: CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
-      description = seed.description,
-      audience = seed.audience,
-      voucherLifespan = seed.voucherLifespan,
-      dailyCallsPerConsumer = seed.dailyCallsPerConsumer,
-      dailyCallsTotal = seed.dailyCallsTotal,
-      agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess
-    )
   }
   implicit class UpdateEServiceDescriptorSeedConverter(private val usds: UpdateEServiceDescriptorSeed) extends AnyVal {
     def toProcess: CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed(
