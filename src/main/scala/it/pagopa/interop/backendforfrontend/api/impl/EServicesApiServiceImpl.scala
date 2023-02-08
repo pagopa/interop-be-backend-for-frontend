@@ -204,12 +204,12 @@ final case class EServicesApiServiceImpl(
       producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
       agreement                      <- agreementProcessService
         .getAgreements(
-          consumerId = requesterId.toString.some,
-          eServiceId = eserviceId.some,
-          descriptorId = descriptorId.some,
-          states = Seq.empty
+          consumersIds = Seq(requesterId),
+          eservicesIds = Seq(UUID.fromString(eserviceId)),
+          descriptorsIds = Seq(UUID.fromString(descriptorId)),
+          limit = 1
         )
-        .map(_.headOption)
+        .map(_.results.headOption)
     } yield CatalogEServiceDescriptor(
       id = descriptor.id,
       version = descriptor.version,
@@ -270,9 +270,10 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result = for {
-      producerId   <- getOrganizationIdFutureUUID(contexts)
-      eServicesIds <- getProducerEServicesIds(producerId, parseArrayParameters(consumersIds))
-      pagedResults <- catalogProcessService.getEServices(
+      producerId    <- getOrganizationIdFutureUUID(contexts)
+      consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
+      eServicesIds  <- getProducerEServicesIds(producerId, consumerUUIDs)
+      pagedResults  <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = eServicesIds,
         producersIds = List(producerId),
@@ -292,19 +293,33 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  private def getProducerEServicesIds(producerId: UUID, consumersIds: List[String])(implicit
+  private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
     contexts: Seq[(String, String)]
-  ): Future[List[UUID]] =
-    Future
-      .traverse(consumersIds)(consumerId =>
-        // TODO This call will be paginated
-        agreementProcessService.getAgreements(
-          producerId = producerId.toString.some,
-          consumerId.some,
-          states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+  ): Future[List[UUID]] = getAllAgreements(producerId, consumersUUIDs)
+    .map(_.map(_.eserviceId).distinct)
+
+  private def getAllAgreements(producerId: UUID, consumerUUIDs: List[UUID])(implicit
+    contexts: Seq[(String, String)]
+  ): Future[List[AgreementProcess.Agreement]] = {
+
+    def getAgreementsFrom(offset: Int): Future[List[AgreementProcess.Agreement]] =
+      agreementProcessService
+        .getAgreements(
+          producersIds = producerId :: Nil,
+          consumersIds = consumerUUIDs,
+          states = Seq(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
+          limit = 50,
+          offset = offset
         )
+        .map(_.results.toList)
+
+    def go(start: Int)(as: List[AgreementProcess.Agreement]): Future[List[AgreementProcess.Agreement]] =
+      getAgreementsFrom(start).flatMap(agrs =>
+        if (agrs.size < 50) Future.successful(as ++ agrs) else go(start + 50)(as ++ agrs)
       )
-      .map(_.flatten.map(_.eserviceId).distinct)
+
+    go(0)(Nil)
+  }
 
   private def enhanceCatalogEService(
     requesterId: UUID
@@ -319,12 +334,12 @@ final case class EServicesApiServiceImpl(
     agreement <- activeDescriptor.flatTraverse(d =>
       agreementProcessService
         .getAgreements(
-          consumerId = requesterId.toString.some,
-          eServiceId = eService.id.toString.some,
-          descriptorId = d.id.toString.some,
-          states = Nil
+          consumersIds = Seq(requesterId),
+          eservicesIds = Seq(eService.id),
+          descriptorsIds = Seq(d.id),
+          limit = 1
         )
-        .map(_.headOption)
+        .map(_.results.headOption)
     )
   } yield CatalogEService(
     id = eService.id,
@@ -338,7 +353,7 @@ final case class EServicesApiServiceImpl(
     activeDescriptor = activeDescriptor.map(_.toCompactDescriptor)
   )
 
-  private def enhanceProducerEService(eService: CatalogProcess.EService)                        = ProducerEService(
+  private def enhanceProducerEService(eService: CatalogProcess.EService) = ProducerEService(
     id = eService.id,
     name = eService.name,
     activeDescriptor = getActiveDescriptor(eService).map(_.toCompactDescriptor),

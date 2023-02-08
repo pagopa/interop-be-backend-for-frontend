@@ -14,6 +14,8 @@ import scala.io.{BufferedSource, Codec}
 
 object AgreementsApiMarshallerImpl extends AgreementsApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
 
+  override implicit def toEntityMarshallerAgreements: ToEntityMarshaller[Agreements] = sprayJsonMarshaller[Agreements]
+
   override implicit def fromEntityUnmarshallerAgreementPayload: FromEntityUnmarshaller[AgreementPayload] =
     sprayJsonUnmarshaller[AgreementPayload]
 
@@ -23,9 +25,6 @@ object AgreementsApiMarshallerImpl extends AgreementsApiMarshaller with SprayJso
     sprayJsonMarshaller[CreatedResource]
 
   override implicit def toEntityMarshallerAgreement: ToEntityMarshaller[Agreement] = sprayJsonMarshaller[Agreement]
-
-  override implicit def toEntityMarshallerAgreementarray: ToEntityMarshaller[Seq[Agreement]] =
-    sprayJsonMarshaller[Seq[Agreement]]
 
   override implicit def fromEntityUnmarshallerAgreementRejectionPayload
     : FromEntityUnmarshaller[AgreementRejectionPayload] = sprayJsonUnmarshaller[AgreementRejectionPayload]

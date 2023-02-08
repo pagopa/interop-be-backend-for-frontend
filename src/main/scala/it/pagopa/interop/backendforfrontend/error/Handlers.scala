@@ -7,6 +7,7 @@ import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementP
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf, serviceCode}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
+  AgreementDescriptorNotFound,
   AttributeNotExists,
   DownstreamError,
   InvalidInterfaceFileDetected,
@@ -52,6 +53,7 @@ object Handlers {
     case Failure(err: AttributeNotExists)                       => internalServerError(err, logMessage)
     case Failure(err: UnknownTenantOrigin)                      => badRequest(err, logMessage)
     case Failure(err: InvalidInterfaceFileDetected)             => badRequest(err, logMessage)
+    case Failure(err: AgreementDescriptorNotFound)              => notFound(err, logMessage)
     case Failure(err)                                           => internalServerError(err, logMessage)
   }
 
