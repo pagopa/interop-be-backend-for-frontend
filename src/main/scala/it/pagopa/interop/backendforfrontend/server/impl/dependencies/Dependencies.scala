@@ -216,7 +216,8 @@ trait Dependencies {
         catalogProcess,
         tenantManagement,
         partyProcess,
-        fileManager(blockingEc)
+        fileManager(blockingEc),
+        UUIDSupplier
       ),
       EServicesApiMarshallerImpl,
       oauthAndRateLimitingDirective

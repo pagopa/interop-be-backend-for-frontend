@@ -5,7 +5,7 @@ import it.pagopa.interop.backendforfrontend.service.CatalogManagementService
 import it.pagopa.interop.catalogmanagement.client.invoker.ApiInvoker
 import it.pagopa.interop.catalogmanagement.client.api.{EServiceApi, EnumsSerializers}
 import it.pagopa.interop.catalogmanagement.client.invoker.BearerToken
-import it.pagopa.interop.catalogmanagement.client.model.{EService, EServiceDoc}
+import it.pagopa.interop.catalogmanagement.client.model.EService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 import java.util.UUID
@@ -32,20 +32,5 @@ class CatalogManagementServiceImpl(catalogManagementUrl: String, blockingEc: Exe
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Retrieving EService $eServiceId")
-    }
-
-  override def getEServiceDocument(eServiceId: String, descriptorId: String, documentId: String)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[EServiceDoc] =
-    withHeaders[EServiceDoc] { (bearerToken, correlationId, ip) =>
-      val request =
-        api.getEServiceDocument(
-          xCorrelationId = correlationId,
-          eServiceId = eServiceId,
-          descriptorId = descriptorId,
-          documentId = documentId,
-          xForwardedFor = ip
-        )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Getting document $documentId from eservice $eServiceId")
     }
 }

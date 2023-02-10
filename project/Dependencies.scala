@@ -30,6 +30,7 @@ object Dependencies {
     lazy val rateLimiter  = namespace %% "interop-commons-rate-limiter" % commonsVersion
     lazy val vault        = namespace %% "interop-commons-signer"       % commonsVersion
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
+    lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
     lazy val agreementProcessClient =
       namespace %% "interop-be-agreement-process-client" % agreementProcessVersion
@@ -101,6 +102,10 @@ object Dependencies {
     lazy val namespace = "org.scalamock"
     lazy val core      = namespace %% "scalamock" % scalaMockVersion
   }
+  private[this] object tika {
+    lazy val namespace = "org.apache.tika"
+    lazy val core      = namespace % "tika-core" % tikaVersion
+  }
 
   object Jars {
     lazy val overrides: Seq[ModuleID] =
@@ -137,6 +142,8 @@ object Dependencies {
       pagopa.attributeRegistryClient   % Compile,
       pagopa.vault                     % Compile,
       pagopa.fileManager               % Compile,
+      pagopa.parser                    % Compile,
+      tika.core                        % Compile,
       akka.httpTestkit                 % Test,
       akka.testkit                     % Test,
       akka.untypedTestkit              % Test,

@@ -5,15 +5,7 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.catalogprocess.client.model.{
-  EService,
-  EServiceDescriptor,
-  EServiceDescriptorSeed,
-  EServiceDescriptorState,
-  EServiceSeed,
-  EServices,
-  EServiceDoc
-}
+import it.pagopa.interop.catalogprocess.client.model._
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
@@ -125,6 +117,105 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         xForwardedFor = ip
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
+  }
+
+  def updateEServiceDocumentById(
+    eServiceId: String,
+    descriptorId: String,
+    documentId: String,
+    updateEServiceDescriptorDocumentSeed: UpdateEServiceDescriptorDocumentSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EServiceDoc] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EServiceDoc] =
+      api.updateEServiceDocumentById(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        documentId = documentId,
+        updateEServiceDescriptorDocumentSeed = updateEServiceDescriptorDocumentSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Updating document $documentId on eService $eServiceId for descriptor $descriptorId with seed $updateEServiceDescriptorDocumentSeed from Catalog Process"
+    )
+  }
+
+  override def cloneEServiceByDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EService] =
+      api.cloneEServiceByDescriptor(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Cloning EService $eServiceId with descriptor $descriptorId")
+  }
+
+  override def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.deleteEServiceDocumentById(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        documentId = documentId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Deleting document $documentId on eService $eServiceId for descriptor $descriptorId")
+  }
+
+  override def updateDraftDescriptor(
+    eServiceId: UUID,
+    descriptorId: UUID,
+    updateEServiceDescriptorSeed: UpdateEServiceDescriptorSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EService] =
+    withHeaders { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EService] =
+        api.updateDraftDescriptor(
+          xCorrelationId = correlationId,
+          eServiceId = eServiceId.toString,
+          descriptorId = descriptorId.toString,
+          updateEServiceDescriptorSeed = updateEServiceDescriptorSeed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(
+        request,
+        s"Update draft descriptor $descriptorId for EService $eServiceId with seed $updateEServiceDescriptorSeed"
+      )
+    }
+
+  override def createEServiceDocument(
+    eServiceId: UUID,
+    descriptorId: UUID,
+    documentSeed: CreateEServiceDescriptorDocumentSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EService] =
+      api.createEServiceDocument(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId.toString,
+        descriptorId = descriptorId.toString,
+        createEServiceDescriptorDocumentSeed = documentSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Creating eService document ${documentSeed.documentId.toString} of kind ${documentSeed.kind}, name ${documentSeed.fileName}, path ${documentSeed.filePath} for eService $eServiceId and descriptor $descriptorId"
+    )
+  }
+  override def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EService] =
+      api.updateEServiceById(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId.toString,
+        updateEServiceSeed = updateEServiceSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Updating EService with $eServiceId")
   }
 
   override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit

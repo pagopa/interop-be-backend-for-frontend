@@ -63,4 +63,10 @@ object BFFErrors {
         s"Error parsing content type $contentType for document $documentPath. Reasons: ${errors.mkString(",")}"
       )
 
+  final case class InvalidInterfaceFileDetected(eServiceId: String, contentType: String, technology: String)
+      extends ComponentError(
+        "0015",
+        s"The interface file for EService $eServiceId has a contentType $contentType not admitted for $technology technology"
+      )
+
 }
