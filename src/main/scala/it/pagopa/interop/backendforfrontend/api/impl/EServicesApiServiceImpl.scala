@@ -7,9 +7,11 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import io.circe.Json
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
+import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
@@ -18,16 +20,15 @@ import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServic
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
-import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
 import it.pagopa.interop.commons.utils.AkkaUtils._
+import it.pagopa.interop.commons.utils.Digester
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
-import it.pagopa.interop.backendforfrontend.common.system.FileManagerUtils
-import it.pagopa.interop.commons.files.service.FileManager
-import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.io.File
 import java.nio.file.Files
@@ -35,8 +36,6 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.xml.Elem
-import io.circe.Json
-import it.pagopa.interop.commons.utils.Digester
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -618,4 +617,31 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+
+  override def deleteEService(
+    eServiceId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+
+    def checkDraftDescriptorAndSize(eService: CatalogProcessEService): Future[Unit] =
+      getDraftDescriptor(eService) match {
+        case Some(draftDescriptor) => catalogProcessService.deleteDraft(eServiceId, draftDescriptor.id.toString)
+        case None                  => isEServiceDescriptorsEmpty(eService)
+      }
+
+    def isEServiceDescriptorsEmpty(eService: CatalogProcessEService): Future[Unit] = {
+      if (eService.descriptors.isEmpty) catalogProcessService.deleteEService(eService.id)
+      else Future.failed(EServiceCannotBeDeleted(eServiceId))
+    }
+
+    val result: Future[Unit] = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
+      _            <- checkDraftDescriptorAndSize(eService)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error deleting eservice with Id: $eServiceId") orElse { case Success(_) => deleteEService204 }
+    }
+  }
+
 }
