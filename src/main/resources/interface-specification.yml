@@ -2158,10 +2158,9 @@ paths:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
           content:
-            application/octet-stream:
+            application/json:
               schema:
-                type: string
-                format: binary
+                $ref: '#/components/schemas/EServiceDoc'
         '404':
           description: EService not found
           headers:

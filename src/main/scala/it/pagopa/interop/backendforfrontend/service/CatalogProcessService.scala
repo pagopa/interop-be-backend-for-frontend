@@ -2,7 +2,6 @@ package it.pagopa.interop.backendforfrontend.service
 
 import it.pagopa.interop.catalogprocess.client.model._
 
-import java.io.File
 import java.util.UUID
 import scala.concurrent.Future
 

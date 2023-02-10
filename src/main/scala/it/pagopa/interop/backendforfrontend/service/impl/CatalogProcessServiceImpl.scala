@@ -11,12 +11,12 @@ import it.pagopa.interop.catalogprocess.client.model.{
   EServiceDescriptorSeed,
   EServiceDescriptorState,
   EServiceSeed,
-  EServices
+  EServices,
+  EServiceDoc
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
-import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -129,8 +129,8 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
 
   override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)]
-  ): Future[File] = withHeaders { (bearerToken, correlationId, ip) =>
-    val request: ApiRequest[File] =
+  ): Future[EServiceDoc] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EServiceDoc] =
       api.getEServiceDocumentById(
         xCorrelationId = correlationId,
         eServiceId = eServiceId,

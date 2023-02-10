@@ -454,8 +454,8 @@ final case class EServicesApiServiceImpl(
 
   override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerFile: ToEntityMarshaller[File]
+    toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[MessageEntity] = for {
       document      <- catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)

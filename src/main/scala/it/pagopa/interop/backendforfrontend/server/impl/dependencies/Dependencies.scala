@@ -216,7 +216,6 @@ trait Dependencies {
         catalogProcess,
         tenantManagement,
         partyProcess,
-        catalogManagement,
         fileManager(blockingEc)
       ),
       EServicesApiMarshallerImpl,

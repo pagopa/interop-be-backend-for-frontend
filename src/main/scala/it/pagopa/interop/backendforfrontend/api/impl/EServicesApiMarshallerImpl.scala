@@ -1,16 +1,11 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.ContentTypes
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import it.pagopa.interop.backendforfrontend.api.EservicesApiMarshaller
 import it.pagopa.interop.backendforfrontend.model._
 import spray.json.DefaultJsonProtocol
-
-import java.io.File
-import java.nio.charset.StandardCharsets
-import scala.io.{BufferedSource, Codec}
 
 object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
 
@@ -40,11 +35,6 @@ object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonS
   override implicit def fromEntityUnmarshallerEServiceDescriptorSeed: FromEntityUnmarshaller[EServiceDescriptorSeed] =
     sprayJsonUnmarshaller[EServiceDescriptorSeed]
 
-  override implicit def toEntityMarshallerFile: ToEntityMarshaller[File] =
-    Marshaller.withFixedContentType(ContentTypes.`application/octet-stream`) { f =>
-      val source: BufferedSource = scala.io.Source.fromFile(f.getPath)(Codec(StandardCharsets.UTF_8.name))
-      val out: String            = source.mkString
-      source.close()
-      out.getBytes(StandardCharsets.UTF_8.name)
-    }
+  override implicit def toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc] =
+    sprayJsonMarshaller[EServiceDoc]
 }
