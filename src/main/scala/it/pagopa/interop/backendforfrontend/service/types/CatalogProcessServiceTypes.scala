@@ -23,7 +23,7 @@ object CatalogProcessServiceTypes {
   type CatalogProcessEService                     = CatalogProcess.EService
   type CatalogProcessEServiceDescriptorSeed       = CatalogProcess.EServiceDescriptorSeed
   type CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed
-  type CatalogProcessUpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed
+  type CatalogProcessUpdateEServiceSeed           = CatalogProcess.UpdateEServiceSeed
 
   implicit class UpdateEServiceSeedConverter(private val ues: UpdateEServiceSeed) extends AnyVal {
     def toProcess: CatalogProcessUpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed(
@@ -34,7 +34,6 @@ object CatalogProcessServiceTypes {
     )
   }
 
-  type CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcessETechnology = est match {
       case EServiceTechnology.REST => REST

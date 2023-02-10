@@ -6,15 +6,6 @@ import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
 import it.pagopa.interop.catalogprocess.client.model._
-import it.pagopa.interop.catalogprocess.client.model.{
-  EServiceDescriptor,
-  EService,
-  EServiceDescriptorState,
-  EServiceSeed,
-  EServiceDescriptorSeed,
-  EServices,
-  UpdateEServiceSeed
-}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
