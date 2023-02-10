@@ -129,7 +129,7 @@ paths:
             default: false
       responses:
         '200':
-          description: Agreement found
+          description: Agreements found
           content:
             application/json:
               schema:
@@ -4939,7 +4939,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/CompactAgreements'
+            $ref: '#/components/schemas/AgreementListEntry'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
@@ -5029,13 +5029,15 @@ components:
           type: boolean
         activeDescriptor:
           $ref: '#/components/schemas/CompactDescriptor'
-    CompactAgreements:
+    AgreementListEntry:
       type: object
       required:
         - id
         - eservice
         - consumer
         - canBeUpgraded
+        - state
+        - descriptor
       properties:
         id:
           type: string
@@ -5044,8 +5046,18 @@ components:
           $ref: '#/components/schemas/CompactOrganization'
         eservice:
           $ref: '#/components/schemas/CompactEService'
+        state:
+          $ref: '#/components/schemas/AgreementState'  
         canBeUpgraded:
           type: Boolean
+        suspendedByConsumer:
+          type: Boolean
+        suspendedByProducer:
+          type: Boolean
+        suspendedByPlatform:
+          type: Boolean
+        descriptor:
+          $ref: '#/components/schemas/CompactDescriptor'     
     CompactAgreement:
       type: object
       required:
