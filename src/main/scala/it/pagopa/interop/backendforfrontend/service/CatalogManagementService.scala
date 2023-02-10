@@ -9,8 +9,4 @@ trait CatalogManagementService {
 
   def getEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
 
-  def getEServiceDocument(eServiceId: String, descriptorId: String, documentId: String)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[EServiceDoc]
-
 }

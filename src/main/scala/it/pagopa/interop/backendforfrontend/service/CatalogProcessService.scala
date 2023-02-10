@@ -39,5 +39,5 @@ trait CatalogProcessService {
 
   def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)]
-  ): Future[File]
+  ): Future[EServiceDoc]
 }

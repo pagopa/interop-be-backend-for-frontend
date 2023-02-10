@@ -8,7 +8,7 @@ import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
-import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagementDependency}
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcessDependency}
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
@@ -38,7 +38,6 @@ final case class EServicesApiServiceImpl(
   catalogProcessService: CatalogProcessService,
   tenantManagementService: TenantManagementService,
   partyProcessService: PartyProcessService,
-  catalogManagementService: CatalogManagementService,
   fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends EservicesApiService {
@@ -431,7 +430,7 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  private def getDocumentContentType(document: CatalogManagementDependency.EServiceDoc): Future[ContentType] =
+  private def getDocumentContentType(document: CatalogProcessDependency.EServiceDoc): Future[ContentType] =
     ContentType
       .parse(document.contentType)
       .fold(
@@ -459,7 +458,7 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerFile: ToEntityMarshaller[File]
   ): Route = {
     val result: Future[MessageEntity] = for {
-      document      <- catalogManagementService.getEServiceDocument(eServiceId, descriptorId, documentId)
+      document      <- catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)
       contentType   <- getDocumentContentType(document)
       response      <- fileManager.get(ApplicationConfiguration.consumerDocumentsContainer)(document.path)
       messageEntity <- convertToMessageEntity(document.name, contentType, response)
