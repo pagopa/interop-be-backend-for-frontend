@@ -603,4 +603,19 @@ final case class EServicesApiServiceImpl(
       ) orElse { case Success(_) => deleteEServiceDocumentById204 }
     }
   }
+
+  override def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result: Future[CreatedResource] =
+      catalogProcessService.updateEServiceById(eServiceId, updateEServiceSeed.toProcess)(contexts).map(_.toApi)
+
+    onComplete(result) {
+      handleError(s"Error updating eservice with Id: $eServiceId") orElse { case Success(eservice) =>
+        updateEServiceById200(eservice)
+      }
+    }
+  }
 }

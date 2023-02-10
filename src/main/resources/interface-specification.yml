@@ -2604,6 +2604,90 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  /eservices/{eServiceId}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    put:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - eservices
+      summary: Updates EService general information
+      operationId: updateEServiceById
+      parameters:
+        - name: eServiceId
+          in: path
+          description: The E-Service id to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: An E-Service update seed containing the possible updatable fields
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEServiceSeed'
+      responses:
+        '200':
+          description: E-Service updated
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedResource'
+        '404':
+          description: E-Service not found
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad request
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/producers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -4458,6 +4542,22 @@ components:
       schema:
         type: string
   schemas:
+    UpdateEServiceSeed:
+      type: object
+      required:
+        - name
+        - description
+        - technology
+        - attributes
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        technology:
+          $ref: '#/components/schemas/EServiceTechnology'
+        attributes:
+          $ref: '#/components/schemas/EServiceAttributes'
     EServiceSeed:
       type: object
       required:
@@ -4844,7 +4944,7 @@ components:
           $ref: '#/components/schemas/Pagination'
       required:
         - results
-        - pagination    
+        - pagination
     AgreementPayload:
       type: object
       description: contains the information for agreement creation.
@@ -4945,7 +5045,7 @@ components:
         eservice:
           $ref: '#/components/schemas/CompactEService'
         canBeUpgraded:
-          type: Boolean  
+          type: Boolean
     CompactAgreement:
       type: object
       required:
