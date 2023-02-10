@@ -56,5 +56,10 @@ object BFFErrors {
   final case class EServiceNotFound(eServiceId: UUID) extends ComponentError("0013", s"EService $eServiceId not found")
 
   final case class TenantNotFound(tenantId: UUID) extends ComponentError("0014", s"Tenant $tenantId not found")
+  final case class InvalidInterfaceFileDetected(eServiceId: String, contentType: String, technology: String)
+      extends ComponentError(
+        "0015",
+        s"The interface file for EService $eServiceId has a contentType $contentType not admitted for $technology technology"
+      )
 
 }

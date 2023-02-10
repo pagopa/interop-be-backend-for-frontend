@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
@@ -27,11 +26,12 @@ import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServic
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.backendforfrontend.api.impl.Utils
+import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import java.io.File
 import java.util.UUID
@@ -97,29 +97,37 @@ final case class AgreementsApiServiceImpl(
   }
 
   override def getAgreements(
-    producerId: Option[String],
-    consumerId: Option[String],
-    eServiceId: Option[String],
-    descriptorId: Option[String],
+    offset: Int,
+    limit: Int,
+    eservicesIds: String,
+    producersIds: String,
+    consumersIds: String,
     states: String,
-    latest: Option[Boolean]
+    showOnlyUpgradeable: Boolean
   )(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerAgreementarray: ToEntityMarshaller[Seq[Agreement]],
+    toEntityMarshallerAgreement: ToEntityMarshaller[Agreements],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val agreements: Future[Seq[Agreement]] = for {
-      statesEnums   <- parseArrayParameters(states).traverse(AgreementState.fromValue).toFuture
-      agreements    <- agreementProcessService.getAgreements(
-        producerId = producerId,
-        consumerId = consumerId,
-        eServiceId = eServiceId,
-        descriptorId = descriptorId,
-        states = statesEnums.map(AgreementProcess.AgreementState.fromApi),
-        latest = latest
+    val agreements: Future[Agreements] = for {
+      producers    <- parseArrayParameters(producersIds).traverse(_.toFutureUUID)
+      eservices    <- parseArrayParameters(eservicesIds).traverse(_.toFutureUUID)
+      consumers    <- parseArrayParameters(consumersIds).traverse(_.toFutureUUID)
+      states       <- parseArrayParameters(states).traverse(AgreementProcess.AgreementState.fromValue).toFuture
+      pagedResults <- agreementProcessService.getAgreements(
+        producersIds = producers,
+        eservicesIds = eservices,
+        consumersIds = consumers,
+        states = states,
+        offset = offset,
+        limit = limit,
+        showOnlyUpgradeable = showOnlyUpgradeable.some
       )
-      apiAgreements <- Future.traverse(agreements)(enhanceAgreement)
-    } yield apiAgreements
+      agreements   <- Future.traverse(pagedResults.results)(enrichAgreements)
+    } yield Agreements(
+      results = agreements,
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
 
     onComplete(agreements) {
       handleError(s"Error retrieving agreements") orElse { case Success(agreements) => getAgreements200(agreements) }
@@ -236,19 +244,50 @@ final case class AgreementsApiServiceImpl(
 
   def parallelGet(agreement: AgreementProcess.Agreement)(implicit
     contexts: Seq[(String, String)]
-  ): Future[(String, String, TenantManagement.Tenant, CatalogManagement.EService)] =
-    for {
-      (consumerTenant, producerTenant) <- tenantManagementService
-        .getTenant(agreement.consumerId)
-        .zip(tenantManagementService.getTenant(agreement.producerId))
-      eService                         <- catalogManagementService.getEService(agreement.eserviceId)
-    } yield (producerTenant.name, consumerTenant.name, consumerTenant, eService)
+  ): Future[(TenantManagement.Tenant, TenantManagement.Tenant, CatalogManagement.EService)] =
+    tenantManagementService
+      .getTenant(agreement.consumerId)
+      .zip(tenantManagementService.getTenant(agreement.producerId))
+      .zip(catalogManagementService.getEService(agreement.eserviceId))
+      .map({ case ((consumer, producer), eservice) =>
+        (consumer, producer, eservice)
+      })
+
+  def enrichAgreements(
+    agreement: AgreementProcess.Agreement
+  )(implicit contexts: Seq[(String, String)]): Future[CompactAgreements] = for {
+    (consumerTenant, producerTenant, eService) <- parallelGet(agreement)
+    descriptor                                 <- eService.descriptors
+      .find(_.id == agreement.descriptorId)
+      .toFuture(AgreementDescriptorNotFound(agreement.id))
+
+  } yield CompactAgreements(
+    id = agreement.id,
+    consumer = CompactOrganization(consumerTenant.id, consumerTenant.name),
+    eservice = CompactEService(
+      id = eService.id,
+      name = eService.name,
+      producer = CompactOrganization(producerTenant.id, producerTenant.name)
+    ),
+    canBeUpgraded = isUpgradable(descriptor, eService.descriptors)
+  )
+
+  def isUpgradable(
+    descriptor: CatalogManagement.EServiceDescriptor,
+    descriptors: Seq[CatalogManagement.EServiceDescriptor]
+  ): Boolean =
+    descriptors
+      .filter(_.version.toInt > descriptor.version.toInt)
+      .exists(d =>
+        d.state == CatalogManagement.EServiceDescriptorState.PUBLISHED ||
+          d.state == CatalogManagement.EServiceDescriptorState.SUSPENDED
+      )
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement
   )(implicit contexts: Seq[(String, String)]): Future[Agreement] = for {
-    (producerDescription, consumerDescription, consumerTenant, eService) <- parallelGet(agreement)
-    currentDescriptor                                                    <- eService.descriptors
+    (consumerTenant, producerTenant, eService) <- parallelGet(agreement)
+    currentDescriptor                          <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(AgreementDescriptorNotFound(agreement.id))
     activeDescriptor = eService.descriptors.sortBy(_.version.toInt).lastOption
@@ -267,14 +306,14 @@ final case class AgreementsApiServiceImpl(
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
-    producer = CompactTenant(id = agreement.producerId, name = producerDescription),
+    producer = CompactTenant(id = agreement.producerId, name = producerTenant.name),
     consumer = Tenant(
       id = agreement.consumerId,
       selfcareId = consumerTenant.id.some,
       externalId = consumerTenant.externalId.toApi,
       createdAt = consumerTenant.createdAt,
       updatedAt = consumerTenant.updatedAt,
-      name = consumerDescription,
+      name = consumerTenant.name,
       attributes = tenantAttributes,
       contactMail = consumerTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
     ),
