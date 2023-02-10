@@ -42,4 +42,7 @@ object AgreementsApiMarshallerImpl extends AgreementsApiMarshaller with SprayJso
 
   override implicit def fromEntityUnmarshallerAgreementUpdatePayload: FromEntityUnmarshaller[AgreementUpdatePayload] =
     sprayJsonUnmarshaller[AgreementUpdatePayload]
+
+  implicit def toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations] =
+    sprayJsonMarshaller[CompactOrganizations]
 }

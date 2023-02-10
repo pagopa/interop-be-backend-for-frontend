@@ -486,4 +486,24 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  override def getAgreementProducers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations]
+  ): Route = {
+    val result: Future[CompactOrganizations] =
+      for {
+        pagedResults <- agreementProcessService.getAgreementProducers(q, offset = offset, limit = limit)
+      } yield CompactOrganizations(
+        results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+      )
+
+    onComplete(result) {
+      handleError(s"Error retrieving agreement producers for name $q, offset $offset, limit $limit") orElse {
+        case Success(producers) =>
+          getAgreementProducers200(producers)
+      }
+    }
+  }
 }

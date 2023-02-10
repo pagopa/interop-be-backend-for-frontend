@@ -45,4 +45,8 @@ trait AgreementProcessService {
   def removeConsumerDocument(agreementId: UUID, documentId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
+
+  def getAgreementProducers(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[CompactOrganizations]
 }

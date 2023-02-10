@@ -183,4 +183,18 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       )
       invoker.invoke(request, s"Cloning agreement $agreementId")
     }
+
+  override def getAgreementProducers(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId, ip) =>
+    val request =
+      api.getAgreementProducers(
+        xCorrelationId = correlationId,
+        q = name,
+        offset = offset,
+        limit = limit,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieve producers agreement with service name filter $name")
+  }
 }
