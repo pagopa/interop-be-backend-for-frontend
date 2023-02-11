@@ -500,9 +500,10 @@ final case class AgreementsApiServiceImpl(
       )
 
     onComplete(result) {
-      handleError(s"Error retrieving agreement producers for name $q, offset $offset, limit $limit") orElse {
-        case Success(producers) =>
-          getAgreementProducers200(producers)
+      handleError(
+        s"Error retrieving producers from agreement filtered by eservice name $q, offset $offset, limit $limit"
+      ) orElse { case Success(producers) =>
+        getAgreementProducers200(producers)
       }
     }
   }

@@ -256,7 +256,7 @@ paths:
         description: payload for agreement creation
         required: true
       description: creates the agreement between the involved parties.
-  '/agreements/a/producers':
+  '/agreements/filter/producers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
