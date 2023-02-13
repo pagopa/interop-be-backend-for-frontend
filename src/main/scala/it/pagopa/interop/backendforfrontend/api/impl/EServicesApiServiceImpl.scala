@@ -622,21 +622,16 @@ final case class EServicesApiServiceImpl(
     eServiceId: String
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
 
-    def checkDraftDescriptorAndSize(eService: CatalogProcessEService): Future[Unit] =
-      getDraftDescriptor(eService) match {
-        case Some(draftDescriptor) => catalogProcessService.deleteDraft(eServiceId, draftDescriptor.id.toString)
-        case None                  => isEServiceDescriptorsEmpty(eService)
-      }
-
-    def isEServiceDescriptorsEmpty(eService: CatalogProcessEService): Future[Unit] = {
+    def deleteEserviceIfEmpty(eService: CatalogProcessEService): Future[Unit] =
       if (eService.descriptors.isEmpty) catalogProcessService.deleteEService(eService.id)
-      else Future.failed(EServiceCannotBeDeleted(eServiceId))
-    }
+      else Future.failed(EServiceCannotBeDeleted(eService.id.toString))
 
     val result: Future[Unit] = for {
       eServiceUUID <- eServiceId.toFutureUUID
       eService     <- catalogProcessService.getEServiceById(eServiceUUID)
-      _            <- checkDraftDescriptorAndSize(eService)
+      _            <- getDraftDescriptor(eService).fold(deleteEserviceIfEmpty(eService))(draftDescriptor =>
+        catalogProcessService.deleteDraft(eServiceUUID, draftDescriptor.id)
+      )
     } yield ()
 
     onComplete(result) {

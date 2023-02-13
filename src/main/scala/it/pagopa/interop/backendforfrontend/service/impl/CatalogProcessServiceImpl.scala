@@ -218,14 +218,14 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     invoker.invoke(request, s"Updating EService with $eServiceId")
   }
 
-  override def deleteDraft(eServiceId: String, descriptorId: String)(implicit
+  override def deleteDraft(eServiceId: UUID, descriptorId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
     val request: ApiRequest[Unit] =
       api.deleteDraft(
         xCorrelationId = correlationId,
-        eServiceId = eServiceId,
-        descriptorId = descriptorId,
+        eServiceId = eServiceId.toString,
+        descriptorId = descriptorId.toString,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Updating EService with $eServiceId")
