@@ -263,8 +263,8 @@ paths:
     get:
       tags:
         - agreements
-      summary: retrieves a list of producers
-      description: retrieves a list of producers
+      summary: Retrieves Tenants that are producers with existing Agreements
+      description: Retrieves Tenants that are producers with existing Agreements
       operationId: getAgreementProducers
       parameters:
         - in: query
