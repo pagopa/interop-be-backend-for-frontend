@@ -13,7 +13,8 @@ import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfigurati
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
   AgreementDescriptorNotFound,
   ContractNotFound,
-  InvalidContentType
+  InvalidContentType,
+  InvalidQueryParameter
 }
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
@@ -36,7 +37,7 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -493,6 +494,7 @@ final case class AgreementsApiServiceImpl(
   ): Route = {
     val result: Future[CompactOrganizations] =
       for {
+        _            <- validateQueryName(q)
         pagedResults <- agreementProcessService.getAgreementProducers(q, offset = offset, limit = limit)
       } yield CompactOrganizations(
         results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
@@ -502,9 +504,21 @@ final case class AgreementsApiServiceImpl(
     onComplete(result) {
       handleError(
         s"Error retrieving producers from agreement filtered by eservice name $q, offset $offset, limit $limit"
-      ) orElse { case Success(producers) =>
-        getAgreementProducers200(producers)
+      ) orElse {
+        case Failure(_: InvalidQueryParameter) =>
+          getAgreementProducers200(
+            CompactOrganizations(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+          )
+        case Success(producers)                =>
+          getAgreementProducers200(producers)
       }
+    }
+  }
+
+  private def validateQueryName(q: Option[String]): Future[Unit] = {
+    q match {
+      case Some(value) if value.length < 3 => Future.failed(InvalidQueryParameter(value))
+      case _                               => Future.successful(())
     }
   }
 }

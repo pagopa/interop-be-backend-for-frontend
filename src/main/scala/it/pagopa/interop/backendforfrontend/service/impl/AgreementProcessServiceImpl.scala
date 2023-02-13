@@ -190,7 +190,7 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
     val request =
       api.getAgreementProducers(
         xCorrelationId = correlationId,
-        q = name,
+        eserviceName = name,
         offset = offset,
         limit = limit,
         xForwardedFor = ip

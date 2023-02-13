@@ -62,4 +62,7 @@ object BFFErrors {
         s"The interface file for EService $eServiceId has a contentType $contentType not admitted for $technology technology"
       )
 
+  final case class InvalidQueryParameter(query: String)
+      extends ComponentError("0016", s"The query parameter $query length must be greater or equal than 3")
+
 }
