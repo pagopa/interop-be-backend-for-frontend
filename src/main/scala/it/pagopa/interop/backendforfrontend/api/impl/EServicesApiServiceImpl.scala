@@ -200,14 +200,7 @@ final case class EServicesApiServiceImpl(
       eServiceAttributes             <- eService.attributes.toApi(attributes)
       requesterTenant                <- tenantManagementService.getTenant(requesterId)
       producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
-      agreement                      <- agreementProcessService
-        .getAgreements(
-          consumersIds = Seq(requesterId),
-          eservicesIds = Seq(UUID.fromString(eserviceId)),
-          descriptorsIds = Seq(UUID.fromString(descriptorId)),
-          limit = 1
-        )
-        .map(_.results.headOption)
+      agreement                      <- getLatestAgreement(requesterId, eService)
     } yield CatalogEServiceDescriptor(
       id = descriptor.id,
       version = descriptor.version,
@@ -330,6 +323,22 @@ final case class EServicesApiServiceImpl(
     go(0)(Nil)
   }
 
+  private def getLatestAgreement(requesterId: UUID, eService: CatalogProcess.EService)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Option[AgreementProcess.Agreement]] =
+    getAllAgreements(
+      consumersIds = requesterId :: Nil,
+      eServicesIds = eService.id :: Nil,
+      producersIds = Nil,
+      states = Nil
+    ).map(
+      _.map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
+        .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
+        .sortBy(_._2.version.toInt)(Ordering[Int].reverse)
+        .headOption
+        .map(_._1)
+    )
+
   private def enhanceCatalogEService(
     requesterId: UUID
   )(eService: CatalogProcess.EService)(implicit contexts: Seq[(String, String)]): Future[CatalogEService] = for {
@@ -339,21 +348,7 @@ final case class EServicesApiServiceImpl(
       else Future.successful(producerTenant)
 
     activeDescriptor = getActiveDescriptor(eService)
-
-    agreements <- getAllAgreements(
-      consumersIds = requesterId :: Nil,
-      eServicesIds = eService.id :: Nil,
-      producersIds = Nil,
-      states = Nil
-    )
-
-    latestAgreement = agreements
-      .map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
-      .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
-      .sortBy(_._2.version.toInt)(Ordering[Int].reverse)
-      .headOption
-      .map(_._1)
-
+    latestAgreement <- getLatestAgreement(requesterId, eService)
   } yield CatalogEService(
     id = eService.id,
     name = eService.name,

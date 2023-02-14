@@ -5049,13 +5049,13 @@ components:
         state:
           $ref: '#/components/schemas/AgreementState'  
         canBeUpgraded:
-          type: Boolean
+          type: boolean
         suspendedByConsumer:
-          type: Boolean
+          type: boolean
         suspendedByProducer:
-          type: Boolean
+          type: boolean
         suspendedByPlatform:
-          type: Boolean
+          type: boolean
         descriptor:
           $ref: '#/components/schemas/CompactDescriptor'     
     CompactAgreement:
