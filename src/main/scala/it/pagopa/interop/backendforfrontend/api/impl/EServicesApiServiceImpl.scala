@@ -295,19 +295,28 @@ final case class EServicesApiServiceImpl(
 
   private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
     contexts: Seq[(String, String)]
-  ): Future[List[UUID]] = getAllAgreements(producerId, consumersUUIDs)
+  ): Future[List[UUID]] = getAllAgreements(
+    producersIds = producerId :: Nil,
+    consumersIds = consumersUUIDs,
+    eServicesIds = Nil,
+    states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+  )
     .map(_.map(_.eserviceId).distinct)
 
-  private def getAllAgreements(producerId: UUID, consumerUUIDs: List[UUID])(implicit
-    contexts: Seq[(String, String)]
-  ): Future[List[AgreementProcess.Agreement]] = {
+  private def getAllAgreements(
+    producersIds: List[UUID],
+    consumersIds: List[UUID],
+    eServicesIds: List[UUID],
+    states: List[AgreementProcess.AgreementState]
+  )(implicit contexts: Seq[(String, String)]): Future[List[AgreementProcess.Agreement]] = {
 
     def getAgreementsFrom(offset: Int): Future[List[AgreementProcess.Agreement]] =
       agreementProcessService
         .getAgreements(
-          producersIds = producerId :: Nil,
-          consumersIds = consumerUUIDs,
-          states = Seq(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
+          producersIds = producersIds,
+          consumersIds = consumersIds,
+          eservicesIds = eServicesIds,
+          states = states,
           limit = 50,
           offset = offset
         )
@@ -331,22 +340,26 @@ final case class EServicesApiServiceImpl(
 
     activeDescriptor = getActiveDescriptor(eService)
 
-    agreement <- activeDescriptor.flatTraverse(d =>
-      agreementProcessService
-        .getAgreements(
-          consumersIds = Seq(requesterId),
-          eservicesIds = Seq(eService.id),
-          descriptorsIds = Seq(d.id),
-          limit = 1
-        )
-        .map(_.results.headOption)
+    agreements <- getAllAgreements(
+      consumersIds = requesterId :: Nil,
+      eServicesIds = eService.id :: Nil,
+      producersIds = Nil,
+      states = Nil
     )
+
+    latestAgreement = agreements
+      .map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
+      .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
+      .sortBy(_._2.version.toInt)(Ordering[Int].reverse)
+      .headOption
+      .map(_._1)
+
   } yield CatalogEService(
     id = eService.id,
     name = eService.name,
     description = eService.description,
     producer = CompactOrganization(id = eService.producerId, name = producerTenant.name),
-    agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
+    agreement = latestAgreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
     isMine = eService.producerId == requesterId,
     hasCertifiedAttributes =
       certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
