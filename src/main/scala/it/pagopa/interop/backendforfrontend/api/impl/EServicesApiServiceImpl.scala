@@ -271,7 +271,8 @@ final case class EServicesApiServiceImpl(
       producerId    <- getOrganizationIdFutureUUID(contexts)
       consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
       eServicesIds  <-
-        if (consumerUUIDs.isEmpty) Future.successful(Nil) else getProducerEServicesIds(producerId, consumerUUIDs)
+        if (consumerUUIDs.isEmpty) Future.successful(Nil)
+        else getProducerEServicesIds(producerId, consumerUUIDs)
       pagedResults  <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = eServicesIds,
@@ -295,8 +296,12 @@ final case class EServicesApiServiceImpl(
   private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
     contexts: Seq[(String, String)]
   ): Future[List[UUID]] =
-    getAllAgreements(producerId :: Nil, consumersUUIDs, Nil, Nil)
-      .map(_.map(_.eserviceId).distinct)
+    getAllAgreements(
+      producerId :: Nil,
+      consumersUUIDs,
+      Nil,
+      List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+    ).map(_.map(_.eserviceId).distinct)
 
   private def getAllAgreements(
     producersIds: List[UUID],
