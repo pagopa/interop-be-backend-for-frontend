@@ -2869,7 +2869,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CompactAgreementEServices'
+                $ref: '#/components/schemas/CompactEServicesLight'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -5265,7 +5265,7 @@ components:
       required:
         - results
         - pagination
-    CompactAgreementEService:
+    CompactEServiceLight:
       type: object
       required:
         - id
@@ -5276,13 +5276,13 @@ components:
           format: uuid
         name:
           type: string
-    CompactAgreementEServices:
+    CompactEServicesLight:
       type: object
       properties:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/CompactAgreementEService'
+            $ref: '#/components/schemas/CompactEServiceLight'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:

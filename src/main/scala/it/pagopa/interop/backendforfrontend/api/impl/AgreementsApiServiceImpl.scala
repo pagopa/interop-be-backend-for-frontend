@@ -14,7 +14,8 @@ import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfigurati
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
   AgreementDescriptorNotFound,
   ContractNotFound,
-  InvalidContentType
+  InvalidContentType,
+  InvalidQueryParameter
 }
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
@@ -37,7 +38,7 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.util.{Success, Failure}
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -493,30 +494,47 @@ final case class AgreementsApiServiceImpl(
 
   override def getAgreementEServiceProducers(q: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerCompactAgreementEServices: ToEntityMarshaller[CompactAgreementEServices],
+    toEntityMarshallerCompactAgreementEServices: ToEntityMarshaller[CompactEServicesLight],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    logger.info(s"Retrieve agreement tenants for eServices filtered by name: $q")
+    logger.info(s"Retrieving producers from agreement filtered by eservice name $q, offset $offset, limit $limit")
 
-    val result: Future[CompactAgreementEServices] = for {
+    val result: Future[CompactEServicesLight] = for {
+      _            <- validateQueryName(q)
       requesterId  <- getOrganizationIdFutureUUID(contexts)
       pagedResults <- agreementProcessService.getAgreementEServiceProducers(
-        q,
-        Seq(requesterId),
-        Seq.empty,
-        limit,
-        offset
+        eServiceName = q,
+        producersIds = Seq(requesterId),
+        consumersIds = Seq.empty,
+        limit = limit,
+        offset = offset
       )
-    } yield CompactAgreementEServices(
-      results = pagedResults.map(_.toApi),
+    } yield CompactEServicesLight(
+      results = pagedResults.results.map(t => CompactEServiceLight(id = t.id, name = t.name)),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
     onComplete(result) {
-      handleError(s"Retrieve agreement tenants for eServices filtered by name: $q") orElse { case Success(resource) =>
-        getAgreementEServiceProducers200(resource)
+      handleError(
+        s"Error retrieving producers from agreement filtered by eservice name $q, offset $offset, limit $limit"
+      ) orElse {
+        case Failure(_: InvalidQueryParameter) =>
+          getAgreementEServiceProducers200(
+            CompactEServicesLight(
+              results = Nil,
+              pagination = Pagination(offset = offset, limit = limit, totalCount = 0)
+            )
+          )
+        case Success(resource)                 =>
+          getAgreementEServiceProducers200(resource)
       }
     }
   }
 
+  private def validateQueryName(q: Option[String]): Future[Unit] = {
+    q match {
+      case Some(value) if value.length < 3 => Future.failed(InvalidQueryParameter(value))
+      case _                               => Future.successful(())
+    }
+  }
 }

@@ -23,13 +23,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val paginationFormat: RootJsonFormat[Pagination] = jsonFormat3(Pagination)
 
-  implicit val compactOrganizationFormat: RootJsonFormat[CompactOrganization] = jsonFormat2(CompactOrganization)
-  implicit val compactEServiceFormat: RootJsonFormat[CompactEService]         = jsonFormat3(CompactEService)
-  implicit val compactAgreementEServiceFormat: RootJsonFormat[CompactAgreementEService]   = jsonFormat2(
-    CompactAgreementEService
-  )
-  implicit val compactAgreementEServicesFormat: RootJsonFormat[CompactAgreementEServices] = jsonFormat2(
-    CompactAgreementEServices
+  implicit val compactOrganizationFormat: RootJsonFormat[CompactOrganization]       = jsonFormat2(CompactOrganization)
+  implicit val compactEServiceFormat: RootJsonFormat[CompactEService]               = jsonFormat3(CompactEService)
+  implicit val compactAgreementEServiceFormat: RootJsonFormat[CompactEServiceLight] = jsonFormat2(CompactEServiceLight)
+  implicit val compactAgreementEServicesFormat: RootJsonFormat[CompactEServicesLight] = jsonFormat2(
+    CompactEServicesLight
   )
   implicit val compactOrganizationsFormat: RootJsonFormat[CompactOrganizations] = jsonFormat2(CompactOrganizations)
   implicit val compactAgreementFormat: RootJsonFormat[CompactAgreement]         = jsonFormat2(CompactAgreement)
