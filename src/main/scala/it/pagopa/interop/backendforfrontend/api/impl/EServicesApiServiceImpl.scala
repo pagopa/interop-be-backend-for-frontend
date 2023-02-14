@@ -289,6 +289,33 @@ final case class EServicesApiServiceImpl(
     }
   }
 
+  private def getAllAgreements(
+    producersIds: List[UUID],
+    consumersIds: List[UUID],
+    eServicesIds: List[UUID],
+    states: List[AgreementProcess.AgreementState]
+  )(implicit contexts: Seq[(String, String)]): Future[List[AgreementProcess.Agreement]] = {
+
+    def getAgreementsFrom(offset: Int): Future[List[AgreementProcess.Agreement]] =
+      agreementProcessService
+        .getAgreements(
+          producersIds = producersIds,
+          consumersIds = consumersIds,
+          eservicesIds = eServicesIds,
+          states = states,
+          limit = 50,
+          offset = offset
+        )
+        .map(_.results.toList)
+
+    def go(start: Int)(as: List[AgreementProcess.Agreement]): Future[List[AgreementProcess.Agreement]] =
+      getAgreementsFrom(start).flatMap(agrs =>
+        if (agrs.size < 50) Future.successful(as ++ agrs) else go(start + 50)(as ++ agrs)
+      )
+
+    go(0)(Nil)
+  }
+
   private def enhanceCatalogEService(
     requesterId: UUID
   )(eService: CatalogProcess.EService)(implicit contexts: Seq[(String, String)]): Future[CatalogEService] = for {
@@ -299,22 +326,26 @@ final case class EServicesApiServiceImpl(
 
     activeDescriptor = getActiveDescriptor(eService)
 
-    agreement <- activeDescriptor.flatTraverse(d =>
-      agreementProcessService
-        .getAgreements(
-          consumersIds = Seq(requesterId),
-          eservicesIds = Seq(eService.id),
-          descriptorsIds = Seq(d.id),
-          limit = 1
-        )
-        .map(_.results.headOption)
+    agreements <- getAllAgreements(
+      consumersIds = requesterId :: Nil,
+      eServicesIds = eService.id :: Nil,
+      producersIds = Nil,
+      states = Nil
     )
+
+    latestAgreement = agreements
+      .map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
+      .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
+      .sortBy(_._2.version.toInt)(Ordering[Int].reverse)
+      .headOption
+      .map(_._1)
+
   } yield CatalogEService(
     id = eService.id,
     name = eService.name,
     description = eService.description,
     producer = CompactOrganization(id = eService.producerId, name = producerTenant.name),
-    agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
+    agreement = latestAgreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
     isMine = eService.producerId == requesterId,
     hasCertifiedAttributes =
       certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
