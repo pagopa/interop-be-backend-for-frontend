@@ -116,7 +116,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         descriptorId = descriptorId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
+    invoker.invoke(request, s"Suspending EService $eServiceId from Catalog Process")
   }
 
   def updateEServiceDocumentById(
