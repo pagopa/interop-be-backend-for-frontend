@@ -2769,16 +2769,6 @@ paths:
           schema:
             type: string
         - in: query
-          name: consumersIds
-          description: comma separated sequence of consumers IDs
-          schema:
-            type: array
-            items:
-              type: string
-              format: uuid
-            default: []
-          explode: false
-        - in: query
           name: offset
           required: true
           schema:
