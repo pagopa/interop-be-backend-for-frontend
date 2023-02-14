@@ -297,10 +297,10 @@ final case class EServicesApiServiceImpl(
     contexts: Seq[(String, String)]
   ): Future[List[UUID]] =
     getAllAgreements(
-      producerId :: Nil,
-      consumersUUIDs,
-      Nil,
-      List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+      producersIds = producerId :: Nil,
+      consumersIds = consumersUUIDs,
+      eServicesIds = Nil,
+      states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
     ).map(_.map(_.eserviceId).distinct)
 
   private def getAllAgreements(
