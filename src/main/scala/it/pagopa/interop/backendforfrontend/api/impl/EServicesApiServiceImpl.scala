@@ -262,16 +262,18 @@ final case class EServicesApiServiceImpl(
     fromSingle ++ fromGroup
   }
 
-  override def getProducerEServices(q: Option[String], offset: Int, limit: Int)(implicit
+  override def getProducerEServices(q: Option[String], consumersIds: String, offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProducerEServices: ToEntityMarshaller[ProducerEServices],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result = for {
-      producerId   <- getOrganizationIdFutureUUID(contexts)
-      pagedResults <- catalogProcessService.getEServices(
+      producerId    <- getOrganizationIdFutureUUID(contexts)
+      consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
+      eServicesIds  <- getProducerEServicesIds(producerId, consumerUUIDs)
+      pagedResults  <- catalogProcessService.getEServices(
         name = q,
-        eServicesIds = Nil,
+        eServicesIds = eServicesIds,
         producersIds = List(producerId),
         states = Nil,
         offset = offset,
@@ -288,6 +290,12 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+
+  private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
+    contexts: Seq[(String, String)]
+  ): Future[List[UUID]] =
+    getAllAgreements(producerId :: Nil, consumersUUIDs, Nil, Nil)
+      .map(_.map(_.eserviceId).distinct)
 
   private def getAllAgreements(
     producersIds: List[UUID],
