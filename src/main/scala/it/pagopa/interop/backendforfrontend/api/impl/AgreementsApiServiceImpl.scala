@@ -6,6 +6,7 @@ import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
+import it.pagopa.interop.commons.utils.AkkaUtils._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
@@ -486,6 +487,34 @@ final case class AgreementsApiServiceImpl(
     onComplete(result) {
       handleError(s"Error cloning agreement $agreementId") orElse { case Success(resource) =>
         cloneAgreement200(resource)
+      }
+    }
+  }
+
+  override def getAgreementEServiceProducers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCompactAgreementEServices: ToEntityMarshaller[CompactAgreementEServices],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Retrieve agreement tenants for eServices filtered by name: $q")
+
+    val result: Future[CompactAgreementEServices] = for {
+      requesterId  <- getOrganizationIdFutureUUID(contexts)
+      pagedResults <- agreementProcessService.getAgreementEServiceProducers(
+        q,
+        Seq(requesterId),
+        Seq.empty,
+        limit,
+        offset
+      )
+    } yield CompactAgreementEServices(
+      results = pagedResults.map(_.toApi),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    onComplete(result) {
+      handleError(s"Retrieve agreement tenants for eServices filtered by name: $q") orElse { case Success(resource) =>
+        getAgreementEServiceProducers200(resource)
       }
     }
   }
