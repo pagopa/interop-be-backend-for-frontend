@@ -270,7 +270,8 @@ final case class EServicesApiServiceImpl(
     val result = for {
       producerId    <- getOrganizationIdFutureUUID(contexts)
       consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
-      eServicesIds  <- getProducerEServicesIds(producerId, consumerUUIDs)
+      eServicesIds  <-
+        if (consumerUUIDs.isEmpty) Future.successful(Nil) else getProducerEServicesIds(producerId, consumerUUIDs)
       pagedResults  <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = eServicesIds,
