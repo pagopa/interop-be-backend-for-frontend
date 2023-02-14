@@ -497,12 +497,12 @@ final case class AgreementsApiServiceImpl(
     toEntityMarshallerCompactAgreementEServices: ToEntityMarshaller[CompactEServicesLight],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    logger.info(s"Retrieving producers from agreement filtered by eservice name $q, offset $offset, limit $limit")
+    logger.info(s"Retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit")
 
     val result: Future[CompactEServicesLight] = for {
       _            <- validateQueryName(q)
       requesterId  <- getOrganizationIdFutureUUID(contexts)
-      pagedResults <- agreementProcessService.getAgreementEServiceProducers(
+      pagedResults <- agreementProcessService.getAgreementEServices(
         eServiceName = q,
         producersIds = Seq(requesterId),
         consumersIds = Seq.empty,
@@ -516,7 +516,7 @@ final case class AgreementsApiServiceImpl(
 
     onComplete(result) {
       handleError(
-        s"Error retrieving producers from agreement filtered by eservice name $q, offset $offset, limit $limit"
+        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
       ) orElse {
         case Failure(_: InvalidQueryParameter) =>
           getAgreementEServiceProducers200(

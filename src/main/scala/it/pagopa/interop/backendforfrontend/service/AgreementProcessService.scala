@@ -46,7 +46,7 @@ trait AgreementProcessService {
     contexts: Seq[(String, String)]
   ): Future[Unit]
 
-  def getAgreementEServiceProducers(
+  def getAgreementEServices(
     eServiceName: Option[String],
     producersIds: Seq[UUID] = Seq.empty,
     consumersIds: Seq[UUID] = Seq.empty,
