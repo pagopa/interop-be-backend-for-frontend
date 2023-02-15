@@ -140,8 +140,7 @@ final case class EServicesApiServiceImpl(
       descriptorIdUUID <- descriptorId.toFutureUUID
       descriptor       <- catalogProcessService
         .updateDraftDescriptor(eServiceIdUUID, descriptorIdUUID, updateEServiceDescriptorSeed.toProcess)(contexts)
-
-    } yield (descriptor.toApi)
+    } yield descriptor.toApi
 
     onComplete(result) {
       handleError(
@@ -201,14 +200,7 @@ final case class EServicesApiServiceImpl(
       eServiceAttributes             <- eService.attributes.toApi(attributes)
       requesterTenant                <- tenantManagementService.getTenant(requesterId)
       producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
-      agreement                      <- agreementProcessService
-        .getAgreements(
-          consumersIds = Seq(requesterId),
-          eservicesIds = Seq(UUID.fromString(eserviceId)),
-          descriptorsIds = Seq(UUID.fromString(descriptorId)),
-          limit = 1
-        )
-        .map(_.results.headOption)
+      agreement                      <- getLatestAgreement(requesterId, eService)
     } yield CatalogEServiceDescriptor(
       id = descriptor.id,
       version = descriptor.version,
@@ -271,7 +263,9 @@ final case class EServicesApiServiceImpl(
     val result = for {
       producerId    <- getOrganizationIdFutureUUID(contexts)
       consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
-      eServicesIds  <- getProducerEServicesIds(producerId, consumerUUIDs)
+      eServicesIds  <-
+        if (consumerUUIDs.isEmpty) Future.successful(Nil)
+        else getProducerEServicesIds(producerId, consumerUUIDs)
       pagedResults  <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = eServicesIds,
@@ -294,19 +288,28 @@ final case class EServicesApiServiceImpl(
 
   private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
     contexts: Seq[(String, String)]
-  ): Future[List[UUID]] = getAllAgreements(producerId, consumersUUIDs)
-    .map(_.map(_.eserviceId).distinct)
+  ): Future[List[UUID]] =
+    getAllAgreements(
+      producersIds = producerId :: Nil,
+      consumersIds = consumersUUIDs,
+      eServicesIds = Nil,
+      states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+    ).map(_.map(_.eserviceId).distinct)
 
-  private def getAllAgreements(producerId: UUID, consumerUUIDs: List[UUID])(implicit
-    contexts: Seq[(String, String)]
-  ): Future[List[AgreementProcess.Agreement]] = {
+  private def getAllAgreements(
+    producersIds: List[UUID],
+    consumersIds: List[UUID],
+    eServicesIds: List[UUID],
+    states: List[AgreementProcess.AgreementState]
+  )(implicit contexts: Seq[(String, String)]): Future[List[AgreementProcess.Agreement]] = {
 
     def getAgreementsFrom(offset: Int): Future[List[AgreementProcess.Agreement]] =
       agreementProcessService
         .getAgreements(
-          producersIds = producerId :: Nil,
-          consumersIds = consumerUUIDs,
-          states = Seq(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
+          producersIds = producersIds,
+          consumersIds = consumersIds,
+          eservicesIds = eServicesIds,
+          states = states,
           limit = 50,
           offset = offset
         )
@@ -320,6 +323,22 @@ final case class EServicesApiServiceImpl(
     go(0)(Nil)
   }
 
+  private def getLatestAgreement(requesterId: UUID, eService: CatalogProcess.EService)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Option[AgreementProcess.Agreement]] =
+    getAllAgreements(
+      consumersIds = requesterId :: Nil,
+      eServicesIds = eService.id :: Nil,
+      producersIds = Nil,
+      states = Nil
+    ).map(
+      _.map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
+        .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
+        .sortBy(_._2.version.toInt)(Ordering[Int].reverse)
+        .headOption
+        .map(_._1)
+    )
+
   private def enhanceCatalogEService(
     requesterId: UUID
   )(eService: CatalogProcess.EService)(implicit contexts: Seq[(String, String)]): Future[CatalogEService] = for {
@@ -329,23 +348,13 @@ final case class EServicesApiServiceImpl(
       else Future.successful(producerTenant)
 
     activeDescriptor = getActiveDescriptor(eService)
-
-    agreement <- activeDescriptor.flatTraverse(d =>
-      agreementProcessService
-        .getAgreements(
-          consumersIds = Seq(requesterId),
-          eservicesIds = Seq(eService.id),
-          descriptorsIds = Seq(d.id),
-          limit = 1
-        )
-        .map(_.results.headOption)
-    )
+    latestAgreement <- getLatestAgreement(requesterId, eService)
   } yield CatalogEService(
     id = eService.id,
     name = eService.name,
     description = eService.description,
     producer = CompactOrganization(id = eService.producerId, name = producerTenant.name),
-    agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
+    agreement = latestAgreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
     isMine = eService.producerId == requesterId,
     hasCertifiedAttributes =
       certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
@@ -534,10 +543,9 @@ final case class EServicesApiServiceImpl(
       .map(_.toApi)
 
     onComplete(result) {
-      handleError(
-        s"Error updating document $documentId on eService $eServiceId for descriptor ${descriptorId}"
-      ) orElse { case Success(eServiceDoc) =>
-        updateEServiceDocumentById200(eServiceDoc)
+      handleError(s"Error updating document $documentId on eService $eServiceId for descriptor $descriptorId") orElse {
+        case Success(eServiceDoc) =>
+          updateEServiceDocumentById200(eServiceDoc)
       }
     }
   }
@@ -564,7 +572,7 @@ final case class EServicesApiServiceImpl(
     val result: Future[Unit] =
       catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
     onComplete(result) {
-      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
+      handleError(s"Error suspending descriptor $descriptorId") orElse { case Success(_) =>
         suspendDescriptor204
       }
     }
@@ -583,7 +591,7 @@ final case class EServicesApiServiceImpl(
     } yield eservice.toApi
 
     onComplete(result) {
-      handleError(s"Error cloning EService ${eServiceId} with descriptor ${descriptorId}") orElse {
+      handleError(s"Error cloning EService $eServiceId with descriptor $descriptorId") orElse {
         case Success(eservice) =>
           cloneEServiceByDescriptor200(eservice)
       }
@@ -597,9 +605,9 @@ final case class EServicesApiServiceImpl(
     val result: Future[Unit] =
       catalogProcessService.deleteEServiceDocumentById(eServiceId, descriptorId, documentId)(contexts)
     onComplete(result) {
-      handleError(
-        s"Error deleting document ${documentId} for eService ${eServiceId} descriptor ${descriptorId}"
-      ) orElse { case Success(_) => deleteEServiceDocumentById204 }
+      handleError(s"Error deleting document $documentId for eService $eServiceId descriptor $descriptorId") orElse {
+        case Success(_) => deleteEServiceDocumentById204
+      }
     }
   }
 
