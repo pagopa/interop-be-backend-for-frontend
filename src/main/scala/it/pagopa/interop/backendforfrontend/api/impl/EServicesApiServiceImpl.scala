@@ -1,15 +1,17 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MessageEntity, StatusCodes}
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import io.circe.Json
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
+import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
@@ -18,25 +20,22 @@ import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServic
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
-import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
 import it.pagopa.interop.commons.utils.AkkaUtils._
+import it.pagopa.interop.commons.utils.Digester
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
-import it.pagopa.interop.backendforfrontend.common.system.FileManagerUtils
-import it.pagopa.interop.commons.files.service.FileManager
-import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
-import java.io.File
-import java.nio.file.Files
+import java.io.{ByteArrayOutputStream, File, FileOutputStream}
+import java.nio.file.{Files, Path}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.xml.Elem
-import io.circe.Json
-import it.pagopa.interop.commons.utils.Digester
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -141,8 +140,7 @@ final case class EServicesApiServiceImpl(
       descriptorIdUUID <- descriptorId.toFutureUUID
       descriptor       <- catalogProcessService
         .updateDraftDescriptor(eServiceIdUUID, descriptorIdUUID, updateEServiceDescriptorSeed.toProcess)(contexts)
-
-    } yield (descriptor.toApi)
+    } yield descriptor.toApi
 
     onComplete(result) {
       handleError(
@@ -202,14 +200,7 @@ final case class EServicesApiServiceImpl(
       eServiceAttributes             <- eService.attributes.toApi(attributes)
       requesterTenant                <- tenantManagementService.getTenant(requesterId)
       producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
-      agreement                      <- agreementProcessService
-        .getAgreements(
-          consumersIds = Seq(requesterId),
-          eservicesIds = Seq(UUID.fromString(eserviceId)),
-          descriptorsIds = Seq(UUID.fromString(descriptorId)),
-          limit = 1
-        )
-        .map(_.results.headOption)
+      agreement                      <- getLatestAgreement(requesterId, eService)
     } yield CatalogEServiceDescriptor(
       id = descriptor.id,
       version = descriptor.version,
@@ -272,7 +263,9 @@ final case class EServicesApiServiceImpl(
     val result = for {
       producerId    <- getOrganizationIdFutureUUID(contexts)
       consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
-      eServicesIds  <- getProducerEServicesIds(producerId, consumerUUIDs)
+      eServicesIds  <-
+        if (consumerUUIDs.isEmpty) Future.successful(Nil)
+        else getProducerEServicesIds(producerId, consumerUUIDs)
       pagedResults  <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = eServicesIds,
@@ -295,19 +288,28 @@ final case class EServicesApiServiceImpl(
 
   private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
     contexts: Seq[(String, String)]
-  ): Future[List[UUID]] = getAllAgreements(producerId, consumersUUIDs)
-    .map(_.map(_.eserviceId).distinct)
+  ): Future[List[UUID]] =
+    getAllAgreements(
+      producersIds = producerId :: Nil,
+      consumersIds = consumersUUIDs,
+      eServicesIds = Nil,
+      states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+    ).map(_.map(_.eserviceId).distinct)
 
-  private def getAllAgreements(producerId: UUID, consumerUUIDs: List[UUID])(implicit
-    contexts: Seq[(String, String)]
-  ): Future[List[AgreementProcess.Agreement]] = {
+  private def getAllAgreements(
+    producersIds: List[UUID],
+    consumersIds: List[UUID],
+    eServicesIds: List[UUID],
+    states: List[AgreementProcess.AgreementState]
+  )(implicit contexts: Seq[(String, String)]): Future[List[AgreementProcess.Agreement]] = {
 
     def getAgreementsFrom(offset: Int): Future[List[AgreementProcess.Agreement]] =
       agreementProcessService
         .getAgreements(
-          producersIds = producerId :: Nil,
-          consumersIds = consumerUUIDs,
-          states = Seq(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
+          producersIds = producersIds,
+          consumersIds = consumersIds,
+          eservicesIds = eServicesIds,
+          states = states,
           limit = 50,
           offset = offset
         )
@@ -321,6 +323,22 @@ final case class EServicesApiServiceImpl(
     go(0)(Nil)
   }
 
+  private def getLatestAgreement(requesterId: UUID, eService: CatalogProcess.EService)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Option[AgreementProcess.Agreement]] =
+    getAllAgreements(
+      consumersIds = requesterId :: Nil,
+      eServicesIds = eService.id :: Nil,
+      producersIds = Nil,
+      states = Nil
+    ).map(
+      _.map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
+        .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
+        .sortBy(_._2.version.toInt)(Ordering[Int].reverse)
+        .headOption
+        .map(_._1)
+    )
+
   private def enhanceCatalogEService(
     requesterId: UUID
   )(eService: CatalogProcess.EService)(implicit contexts: Seq[(String, String)]): Future[CatalogEService] = for {
@@ -330,23 +348,13 @@ final case class EServicesApiServiceImpl(
       else Future.successful(producerTenant)
 
     activeDescriptor = getActiveDescriptor(eService)
-
-    agreement <- activeDescriptor.flatTraverse(d =>
-      agreementProcessService
-        .getAgreements(
-          consumersIds = Seq(requesterId),
-          eservicesIds = Seq(eService.id),
-          descriptorsIds = Seq(d.id),
-          limit = 1
-        )
-        .map(_.results.headOption)
-    )
+    latestAgreement <- getLatestAgreement(requesterId, eService)
   } yield CatalogEService(
     id = eService.id,
     name = eService.name,
     description = eService.description,
     producer = CompactOrganization(id = eService.producerId, name = producerTenant.name),
-    agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
+    agreement = latestAgreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
     isMine = eService.producerId == requesterId,
     hasCertifiedAttributes =
       certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
@@ -535,10 +543,9 @@ final case class EServicesApiServiceImpl(
       .map(_.toApi)
 
     onComplete(result) {
-      handleError(
-        s"Error updating document $documentId on eService $eServiceId for descriptor ${descriptorId}"
-      ) orElse { case Success(eServiceDoc) =>
-        updateEServiceDocumentById200(eServiceDoc)
+      handleError(s"Error updating document $documentId on eService $eServiceId for descriptor $descriptorId") orElse {
+        case Success(eServiceDoc) =>
+          updateEServiceDocumentById200(eServiceDoc)
       }
     }
   }
@@ -565,7 +572,7 @@ final case class EServicesApiServiceImpl(
     val result: Future[Unit] =
       catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
     onComplete(result) {
-      handleError(s"Error suspending descriptor ${descriptorId}") orElse { case Success(_) =>
+      handleError(s"Error suspending descriptor $descriptorId") orElse { case Success(_) =>
         suspendDescriptor204
       }
     }
@@ -584,7 +591,7 @@ final case class EServicesApiServiceImpl(
     } yield eservice.toApi
 
     onComplete(result) {
-      handleError(s"Error cloning EService ${eServiceId} with descriptor ${descriptorId}") orElse {
+      handleError(s"Error cloning EService $eServiceId with descriptor $descriptorId") orElse {
         case Success(eservice) =>
           cloneEServiceByDescriptor200(eservice)
       }
@@ -598,9 +605,9 @@ final case class EServicesApiServiceImpl(
     val result: Future[Unit] =
       catalogProcessService.deleteEServiceDocumentById(eServiceId, descriptorId, documentId)(contexts)
     onComplete(result) {
-      handleError(
-        s"Error deleting document ${documentId} for eService ${eServiceId} descriptor ${descriptorId}"
-      ) orElse { case Success(_) => deleteEServiceDocumentById204 }
+      handleError(s"Error deleting document $documentId for eService $eServiceId descriptor $descriptorId") orElse {
+        case Success(_) => deleteEServiceDocumentById204
+      }
     }
   }
 
@@ -615,6 +622,48 @@ final case class EServicesApiServiceImpl(
     onComplete(result) {
       handleError(s"Error updating eservice with Id: $eServiceId") orElse { case Success(eservice) =>
         updateEServiceById200(eservice)
+      }
+    }
+  }
+
+  private def getDocumentContentType(document: CatalogProcess.EServiceDoc): Future[ContentType] =
+    ContentType
+      .parse(document.contentType)
+      .fold(
+        ex => Future.failed(ContentTypeParsingError(document.contentType, document.path, ex.map(_.formatPretty))),
+        Future.successful
+      )
+
+  private def convertToMessageEntity(
+    name: String,
+    contentType: ContentType,
+    data: ByteArrayOutputStream
+  ): Future[MessageEntity] =
+    Future {
+      val randomPath: Path               = Files.createTempDirectory(s"document")
+      val temporaryFilePath: String      = s"${randomPath.toString}/${name}"
+      val file: File                     = new File(temporaryFilePath)
+      val outputStream: FileOutputStream = new FileOutputStream(file)
+      data.writeTo(outputStream)
+      HttpEntity.fromFile(contentType, file)
+    }
+
+  override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[MessageEntity] = for {
+      document      <- catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)
+      contentType   <- getDocumentContentType(document)
+      response      <- fileManager.get(ApplicationConfiguration.consumerDocumentsContainer)(document.path)
+      messageEntity <- convertToMessageEntity(document.name, contentType, response)
+    } yield messageEntity
+
+    onComplete(result) {
+      handleError(s"Error getting document $documentId of eservice $eServiceId") orElse {
+        case Success(documentEntity) =>
+          complete(documentEntity)
       }
     }
   }

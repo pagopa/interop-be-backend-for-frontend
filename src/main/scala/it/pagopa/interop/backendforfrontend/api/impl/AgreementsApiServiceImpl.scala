@@ -256,21 +256,25 @@ final case class AgreementsApiServiceImpl(
 
   def enrichAgreements(
     agreement: AgreementProcess.Agreement
-  )(implicit contexts: Seq[(String, String)]): Future[CompactAgreements] = for {
+  )(implicit contexts: Seq[(String, String)]): Future[AgreementListEntry] = for {
     (consumerTenant, producerTenant, eService) <- parallelGet(agreement)
-    descriptor                                 <- eService.descriptors
+    currentDescriptor                          <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(AgreementDescriptorNotFound(agreement.id))
-
-  } yield CompactAgreements(
+  } yield AgreementListEntry(
     id = agreement.id,
+    state = agreement.state.toApi,
     consumer = CompactOrganization(consumerTenant.id, consumerTenant.name),
     eservice = CompactEService(
       id = eService.id,
       name = eService.name,
       producer = CompactOrganization(producerTenant.id, producerTenant.name)
     ),
-    canBeUpgraded = isUpgradable(descriptor, eService.descriptors)
+    descriptor = currentDescriptor.toCompactDescriptor,
+    canBeUpgraded = isUpgradable(currentDescriptor, eService.descriptors),
+    suspendedByConsumer = agreement.suspendedByConsumer,
+    suspendedByProducer = agreement.suspendedByProducer,
+    suspendedByPlatform = agreement.suspendedByPlatform
   )
 
   def isUpgradable(
