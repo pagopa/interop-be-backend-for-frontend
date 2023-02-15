@@ -80,11 +80,9 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceConverter(private val coes: CatalogProcessEService) extends AnyVal {
-    def toApi: CreatedResource                               = CreatedResource(id = coes.id)
-    def toApiWithDescriptor: CreatedResourceWithDescriptorId = CreatedResourceWithDescriptorId(
-      id = coes.id,
-      descriptorId = coes.descriptors.headOption.fold(UUID.fromString(""))(_.id)
-    )
+    def toApi: CreatedResource                                                     = CreatedResource(id = coes.id)
+    def toApiWithDescriptorId(descriptorId: UUID): CreatedResourceWithDescriptorId =
+      CreatedResourceWithDescriptorId(id = coes.id, descriptorId = descriptorId)
   }
 
   implicit class UpdateEServiceDescriptorDocumentSeedConverter(private val seed: UpdateEServiceDescriptorDocumentSeed)
