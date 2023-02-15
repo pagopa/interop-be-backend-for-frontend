@@ -49,4 +49,8 @@ trait AgreementProcessService {
   def getAgreementProducers(name: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[CompactOrganizations]
+
+  def getAgreementConsumers(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[CompactOrganizations]
 }

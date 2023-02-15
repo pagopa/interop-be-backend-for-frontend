@@ -519,6 +519,34 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  def getAgreementConsumers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations]
+  ): Route = {
+    val result: Future[CompactOrganizations] =
+      for {
+        _            <- validateQueryName(q)
+        pagedResults <- agreementProcessService.getAgreementConsumers(q, offset = offset, limit = limit)
+      } yield CompactOrganizations(
+        results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+      )
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving consumers from agreement filtered by eservice name $q, offset $offset, limit $limit"
+      ) orElse {
+        case Failure(_: InvalidQueryParameter) =>
+          getAgreementConsumers200(
+            CompactOrganizations(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+          )
+        case Success(consumers)                =>
+          getAgreementConsumers200(consumers)
+      }
+    }
+  }
+
   private def validateQueryName(q: Option[String]): Future[Unit] = {
     q match {
       case Some(value) if value.length < 3 => Future.failed(InvalidQueryParameter(value))
