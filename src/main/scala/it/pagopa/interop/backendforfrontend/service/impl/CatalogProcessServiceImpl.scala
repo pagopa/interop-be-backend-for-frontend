@@ -217,4 +217,18 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Updating EService with $eServiceId")
   }
+
+  override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EServiceDoc] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EServiceDoc] =
+      api.getEServiceDocumentById(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        documentId = documentId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving document $documentId of EService $eServiceId from Catalog Process")
+  }
 }

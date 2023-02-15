@@ -261,7 +261,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         toEntityMarshallerSessionToken
       ) ~> check {
         status shouldEqual StatusCodes.BadRequest
-        responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0012")
+        responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0011")
       }
     }
 
@@ -560,7 +560,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         toEntityMarshallerSessionToken
       ) ~> check {
         status shouldEqual StatusCodes.BadRequest
-        responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0012")
+        responseAs[Problem].errors.map(_.code) should contain theSameElementsAs Seq("016-0011")
       }
     }
 
