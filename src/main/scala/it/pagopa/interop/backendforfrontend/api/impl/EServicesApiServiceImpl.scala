@@ -581,7 +581,8 @@ final case class EServicesApiServiceImpl(
       descriptorIdUUID <- descriptorId.toFutureUUID
       eservice         <- catalogProcessService
         .cloneEServiceByDescriptor(eServiceIdUUID, descriptorIdUUID)
-    } yield eservice.toApiWithDescriptor
+      descriptorId     <- eservice.descriptors.headOption.map(_.id).toFuture(NoDescriptorInEservice(eServiceIdUUID))
+    } yield eservice.toApiWithDescriptorId(descriptorId)
 
     onComplete(result) {
       handleError(s"Error cloning EService ${eServiceId} with descriptor ${descriptorId}") orElse {
