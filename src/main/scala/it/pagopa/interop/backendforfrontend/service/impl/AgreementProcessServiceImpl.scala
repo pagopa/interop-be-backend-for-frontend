@@ -195,6 +195,6 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
         limit = limit,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving producers from agrements with producers with name filtered by $producerName")
+    invoker.invoke(request, s"Retrieving producers from agrements with name $producerName")
   }
 }

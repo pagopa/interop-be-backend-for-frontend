@@ -269,7 +269,7 @@ paths:
       parameters:
         - in: query
           name: q
-          description: Query to filter producers by name
+          description: Query to filter Producers by name
           schema:
             type: string
         - in: query
