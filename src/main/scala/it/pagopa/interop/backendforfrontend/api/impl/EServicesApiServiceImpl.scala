@@ -580,15 +580,15 @@ final case class EServicesApiServiceImpl(
 
   override def cloneEServiceByDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResourceWithDescriptorId],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[CreatedResource] = for {
+    val result: Future[CreatedResourceWithDescriptorId] = for {
       eServiceIdUUID   <- eServiceId.toFutureUUID
       descriptorIdUUID <- descriptorId.toFutureUUID
       eservice         <- catalogProcessService
         .cloneEServiceByDescriptor(eServiceIdUUID, descriptorIdUUID)
-    } yield eservice.toApi
+    } yield eservice.toApiWithDescriptor
 
     onComplete(result) {
       handleError(s"Error cloning EService $eServiceId with descriptor $descriptorId") orElse {
