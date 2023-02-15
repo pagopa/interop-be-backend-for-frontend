@@ -535,7 +535,7 @@ final case class AgreementsApiServiceImpl(
 
     onComplete(result) {
       handleError(
-        s"Error retrieving consumers from agreement filtered by eservice name $q, offset $offset, limit $limit"
+        s"Error retrieving consumers from agreement filtered by consumer name $q, offset $offset, limit $limit"
       ) orElse {
         case Failure(_: InvalidQueryParameter) =>
           getAgreementConsumers200(

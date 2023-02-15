@@ -358,7 +358,7 @@ paths:
       parameters:
         - in: query
           name: q
-          description: Query to filter EServices by name
+          description: Query to filter Consumers by name
           schema:
             type: string
         - in: query

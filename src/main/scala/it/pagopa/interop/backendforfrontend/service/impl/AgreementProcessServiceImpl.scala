@@ -198,17 +198,17 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
     invoker.invoke(request, s"Retrieving producers from agrements with producers with name filtered by $producerName")
   }
 
-  override def getAgreementConsumers(name: Option[String], offset: Int, limit: Int)(implicit
+  override def getAgreementConsumers(consumerName: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId, ip) =>
     val request =
       api.getAgreementConsumers(
         xCorrelationId = correlationId,
-        eserviceName = name,
+        consumerName = consumerName,
         offset = offset,
         limit = limit,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving consumers from agrements with eservices with name filtered by $name")
+    invoker.invoke(request, s"Retrieving consumers from agrements with name $consumerName")
   }
 }
