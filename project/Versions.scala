@@ -15,15 +15,15 @@ object Versions {
 }
 
 object PagopaVersions {
-  lazy val commonsVersion           = "1.0.x-SNAPSHOT"
-  lazy val agreementProcessVersion  = "1.0.x-SNAPSHOT"
-  lazy val catalogManagementVersion = "1.0.x-SNAPSHOT"
-  lazy val catalogProcessVersion    = "1.0.x-SNAPSHOT"
-  lazy val partyProcessVersion      = "1.0.x-SNAPSHOT"
-  lazy val partyManagementVersion   = "1.0.x-SNAPSHOT"
-  lazy val tenantManagementVersion  = "1.0.x-SNAPSHOT"
-  lazy val tenantProcessVersion     = "1.0.x-SNAPSHOT"
-  lazy val purposeProcessVersion    = "1.0.x-SNAPSHOT"
-  lazy val userRegistryVersion      = "1.0.x-SNAPSHOT"
-  lazy val attributeRegistryVersion = "1.0.x-SNAPSHOT"
+  lazy val commonsVersion           = "1.0.13"
+  lazy val agreementProcessVersion  = "1.0.8"
+  lazy val catalogManagementVersion = "1.0.10"
+  lazy val catalogProcessVersion    = "1.0.7"
+  lazy val partyProcessVersion      = "1.0.3"
+  lazy val partyManagementVersion   = "1.0.3"
+  lazy val tenantManagementVersion  = "1.0.4"
+  lazy val tenantProcessVersion     = "1.0.3"
+  lazy val purposeProcessVersion    = "1.0.8"
+  lazy val userRegistryVersion      = "1.0.3"
+  lazy val attributeRegistryVersion = "1.0.8"
 }
