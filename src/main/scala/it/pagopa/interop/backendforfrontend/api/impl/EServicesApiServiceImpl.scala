@@ -573,10 +573,10 @@ final case class EServicesApiServiceImpl(
 
   override def cloneEServiceByDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResourceWithDescriptorId],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedEServiceDescriptor]
   ): Route = {
-    val result: Future[CreatedResourceWithDescriptorId] = for {
+    val result: Future[CreatedEServiceDescriptor] = for {
       eServiceIdUUID   <- eServiceId.toFutureUUID
       descriptorIdUUID <- descriptorId.toFutureUUID
       eservice         <- catalogProcessService
