@@ -1,7 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-
 import it.pagopa.interop.backendforfrontend.service.CatalogManagementService
 import it.pagopa.interop.catalogmanagement.client.invoker.ApiInvoker
 import it.pagopa.interop.catalogmanagement.client.api.{EServiceApi, EnumsSerializers}
@@ -12,6 +11,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import java.util.UUID
 import scala.concurrent.Future
 import akka.actor.typed.ActorSystem
+
 import scala.concurrent.ExecutionContextExecutor
 import it.pagopa.interop.commons.utils.withHeaders
 
@@ -33,5 +33,4 @@ class CatalogManagementServiceImpl(catalogManagementUrl: String, blockingEc: Exe
         )
       invoker.invoke(request, s"Retrieving EService $eServiceId")
     }
-
 }

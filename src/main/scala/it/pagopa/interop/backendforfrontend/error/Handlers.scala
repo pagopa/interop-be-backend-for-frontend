@@ -48,6 +48,7 @@ object Handlers {
     case Failure(err: UnknownTenantOrigin)                      => badRequest(err, logMessage)
     case Failure(err: InvalidInterfaceFileDetected)             => badRequest(err, logMessage)
     case Failure(err: AgreementDescriptorNotFound)              => notFound(err, logMessage)
+    case Failure(err: NoDescriptorInEservice)                   => notFound(err, logMessage)
     case Failure(err)                                           => internalServerError(err, logMessage)
   }
 
