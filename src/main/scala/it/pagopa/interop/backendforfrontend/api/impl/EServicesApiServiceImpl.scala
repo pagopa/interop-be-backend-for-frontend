@@ -19,6 +19,7 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
+import it.pagopa.interop.catalogprocess.client.model.EServiceDescriptorState.DRAFT
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -622,21 +623,22 @@ final case class EServicesApiServiceImpl(
     eServiceId: String
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
 
-    def deleteEserviceIfEmpty(eService: CatalogProcessEService, isDraftDeleted: Boolean = true): Future[Unit] =
-      if (eService.descriptors.isEmpty) {
-        catalogProcessService.deleteEService(eService.id)
-        Future.successful(()) // Adding this in case the eService is already empty in order to not repeat the delete
-        // Eservice at the end of the for
-      } else if (isDraftDeleted) Future.successful(())
-      else Future.failed(EServiceCannotBeDeleted(eService.id.toString))
+    def deleteEserviceIfEmpty(eService: CatalogProcessEService): Future[Boolean] =
+      if (!eService.descriptors.exists(_.state != DRAFT))
+        catalogProcessService.deleteEService(eService.id).map(_ => true)
+      else Future.successful(false)
 
     val result: Future[Unit] = for {
       eServiceUUID <- eServiceId.toFutureUUID
       eService     <- catalogProcessService.getEServiceById(eServiceUUID)
-      _ <- getDraftDescriptor(eService).fold(deleteEserviceIfEmpty(eService, isDraftDeleted = false))(draftDescriptor =>
+      maybeDraftDescriptor = getDraftDescriptor(eService)
+      _         <- Future.traverse(maybeDraftDescriptor.toList)(draftDescriptor =>
         catalogProcessService.deleteDraft(eServiceUUID, draftDescriptor.id)
       )
-      _ <- deleteEserviceIfEmpty(eService)
+      isDeleted <- deleteEserviceIfEmpty(eService)
+      _         <-
+        if (!isDeleted && maybeDraftDescriptor.isEmpty) Future.failed(EServiceCannotBeDeleted(eService.id.toString))
+        else Future.successful(())
     } yield ()
 
     onComplete(result) {
