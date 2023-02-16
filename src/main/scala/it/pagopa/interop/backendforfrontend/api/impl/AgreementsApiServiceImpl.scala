@@ -497,7 +497,9 @@ final case class AgreementsApiServiceImpl(
     toEntityMarshallerCompactAgreementEServices: ToEntityMarshaller[CompactEServicesLight],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    logger.info(s"Retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit")
+    logger.info(
+      s"Retrieving producer eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+    )
 
     val result: Future[CompactEServicesLight] = for {
       _            <- validateQueryName(q)

@@ -1781,7 +1781,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     put:
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       tags:
         - eservices
       summary: Updates a draft descriptor
@@ -2148,6 +2148,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+
   /eservices/{eServiceId}/descriptors/{descriptorId}/suspend:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -2228,6 +2229,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+
   /eservices/{eServiceId}/descriptors/{descriptorId}/documents:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -2335,13 +2337,14 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+
   /eservices/{eServiceId}/descriptors/{descriptorId}/documents/{documentId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       tags:
         - eservices
       summary: Deletes an e-service document
@@ -2386,6 +2389,90 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: E-Service descriptor document not found
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad request
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - eservices
+      summary: Get an e-service document
+      operationId: getEServiceDocumentById
+      parameters:
+        - name: eServiceId
+          in: path
+          description: the eservice id
+          required: true
+          schema:
+            type: string
+        - name: descriptorId
+          in: path
+          description: the descriptor Id
+          required: true
+          schema:
+            type: string
+        - name: documentId
+          in: path
+          description: the document id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: EService document retrieved
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EServiceDoc'
+        '404':
+          description: EService not found
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -2904,25 +2991,6 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '403':
           description: Forbidden
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '404':
-          description: Agreement not found
           content:
             application/problem+json:
               schema:
@@ -4815,15 +4883,11 @@ components:
     EServiceSeed:
       type: object
       required:
-        - producerId
         - name
         - description
         - technology
         - attributes
       properties:
-        producerId:
-          type: string
-          format: uuid
         name:
           type: string
         description:
@@ -5303,13 +5367,13 @@ components:
         state:
           $ref: '#/components/schemas/AgreementState'  
         canBeUpgraded:
-          type: Boolean
+          type: boolean
         suspendedByConsumer:
-          type: Boolean
+          type: boolean
         suspendedByProducer:
-          type: Boolean
+          type: boolean
         suspendedByPlatform:
-          type: Boolean
+          type: boolean
         descriptor:
           $ref: '#/components/schemas/CompactDescriptor'     
     CompactAgreement:
