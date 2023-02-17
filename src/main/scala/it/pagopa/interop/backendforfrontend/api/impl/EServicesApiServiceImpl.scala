@@ -657,7 +657,7 @@ final case class EServicesApiServiceImpl(
     val result: Future[MessageEntity] = for {
       document      <- catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)
       contentType   <- getDocumentContentType(document)
-      response      <- fileManager.get(ApplicationConfiguration.consumerDocumentsContainer)(document.path)
+      response      <- fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(document.path)
       messageEntity <- convertToMessageEntity(document.name, contentType, response)
     } yield messageEntity
 
