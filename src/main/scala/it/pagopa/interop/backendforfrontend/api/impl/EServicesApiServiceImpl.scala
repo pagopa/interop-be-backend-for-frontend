@@ -19,6 +19,7 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
+import it.pagopa.interop.catalogprocess.client.model.EServices
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -255,26 +256,32 @@ final case class EServicesApiServiceImpl(
     fromSingle ++ fromGroup
   }
 
+  // fix: se consumerUUIDs != [] e getProducerEServicesIds torna [], allora il risultato in uscita dovrà essere []
   override def getProducerEServices(q: Option[String], consumersIds: String, offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProducerEServices: ToEntityMarshaller[ProducerEServices],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result = for {
+
+    def getResults(producerId: UUID, eServicesIds: List[UUID]): Future[EServices] = catalogProcessService.getEServices(
+      name = q,
+      eServicesIds = eServicesIds,
+      producersIds = List(producerId),
+      states = Nil,
+      offset = offset,
+      limit = limit
+    )
+
+    val result: Future[ProducerEServices] = for {
       producerId    <- getOrganizationIdFutureUUID(contexts)
       consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
-      eServicesIds  <- getProducerEServicesIds(producerId, consumerUUIDs)
-      _             <-
-        if (consumerUUIDs.isEmpty || eServicesIds.isEmpty) Future.successful(Nil)
-        else Future(())
-      pagedResults  <- catalogProcessService.getEServices(
-        name = q,
-        eServicesIds = eServicesIds,
-        producersIds = List(producerId),
-        states = Nil,
-        offset = offset,
-        limit = limit
-      )
+      pagedResults  <-
+        if (consumerUUIDs.isEmpty) getResults(producerId, Nil)
+        else
+          getProducerEServicesIds(producerId, consumerUUIDs).flatMap {
+            case Nil => Future.successful(EServices(Nil, 0))
+            case xs  => getResults(producerId, xs)
+          }
     } yield ProducerEServices(
       results = pagedResults.results.map(enhanceProducerEService),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
