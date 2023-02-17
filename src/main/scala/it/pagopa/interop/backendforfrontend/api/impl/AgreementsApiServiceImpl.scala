@@ -334,6 +334,7 @@ final case class AgreementsApiServiceImpl(
     suspendedByConsumer = agreement.suspendedByConsumer,
     suspendedByProducer = agreement.suspendedByProducer,
     suspendedByPlatform = agreement.suspendedByPlatform,
+    contractDownload = agreement.contract.nonEmpty.some,
     consumerNotes = agreement.consumerNotes,
     rejectionReason = agreement.rejectionReason,
     consumerDocuments = agreement.consumerDocuments.map(_.toApi),
