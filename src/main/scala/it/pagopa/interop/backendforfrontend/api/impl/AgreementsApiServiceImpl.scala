@@ -13,8 +13,7 @@ import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfigurati
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
   AgreementDescriptorNotFound,
   ContractNotFound,
-  InvalidContentType,
-  InvalidQueryParameter
+  InvalidContentType
 }
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
@@ -37,7 +36,7 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -496,33 +495,32 @@ final case class AgreementsApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations]
   ): Route = {
-    val result: Future[CompactOrganizations] =
-      for {
-        _            <- validateQueryName(q)
-        pagedResults <- agreementProcessService.getAgreementProducers(q, offset = offset, limit = limit)
-      } yield CompactOrganizations(
-        results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
-        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
-      )
+
+    def emptyResponse: Future[CompactOrganizations] = Future.successful(
+      CompactOrganizations(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactOrganizations] =
+      agreementProcessService
+        .getAgreementProducers(q, offset = offset, limit = limit)
+        .map(pagedResults =>
+          CompactOrganizations(
+            results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+            pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+          )
+        )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
 
     onComplete(result) {
       handleError(
         s"Error retrieving producers from agreement filtered by producer name $q, offset $offset, limit $limit"
-      ) orElse {
-        case Failure(_: InvalidQueryParameter) =>
-          getAgreementProducers200(
-            CompactOrganizations(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
-          )
-        case Success(producers)                =>
-          getAgreementProducers200(producers)
+      ) orElse { case Success(producers) =>
+        getAgreementProducers200(producers)
       }
-    }
-  }
-
-  private def validateQueryName(q: Option[String]): Future[Unit] = {
-    q match {
-      case Some(value) if value.length < 3 => Future.failed(InvalidQueryParameter(value))
-      case _                               => Future.successful(())
     }
   }
 }
