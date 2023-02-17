@@ -256,7 +256,6 @@ final case class EServicesApiServiceImpl(
     fromSingle ++ fromGroup
   }
 
-  // fix: se consumerUUIDs != [] e getProducerEServicesIds torna [], allora il risultato in uscita dovrà essere []
   override def getProducerEServices(q: Option[String], consumersIds: String, offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProducerEServices: ToEntityMarshaller[ProducerEServices],
