@@ -14,8 +14,7 @@ import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfigurati
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
   AgreementDescriptorNotFound,
   ContractNotFound,
-  InvalidContentType,
-  InvalidQueryParameter
+  InvalidContentType
 }
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
@@ -38,7 +37,7 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import java.io.File
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Failure}
+import scala.util.Success
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -501,8 +500,11 @@ final case class AgreementsApiServiceImpl(
       s"Retrieving producer eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
     )
 
-    val result: Future[CompactEServicesLight] = for {
-      _            <- validateQueryName(q)
+    def emptyResponse: Future[CompactEServicesLight] = Future.successful(
+      CompactEServicesLight(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactEServicesLight] = for {
       requesterId  <- getOrganizationIdFutureUUID(contexts)
       pagedResults <- agreementProcessService.getAgreementEServices(
         eServiceName = q,
@@ -516,19 +518,16 @@ final case class AgreementsApiServiceImpl(
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
     onComplete(result) {
       handleError(
         s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
-      ) orElse {
-        case Failure(_: InvalidQueryParameter) =>
-          getAgreementEServiceProducers200(
-            CompactEServicesLight(
-              results = Nil,
-              pagination = Pagination(offset = offset, limit = limit, totalCount = 0)
-            )
-          )
-        case Success(resource)                 =>
-          getAgreementEServiceProducers200(resource)
+      ) orElse { case Success(producers) =>
+        getAgreementEServiceProducers200(producers)
       }
     }
   }
@@ -542,8 +541,11 @@ final case class AgreementsApiServiceImpl(
       s"Retrieving consumer eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
     )
 
-    val result: Future[CompactEServicesLight] = for {
-      _            <- validateQueryName(q)
+    def emptyResponse: Future[CompactEServicesLight] = Future.successful(
+      CompactEServicesLight(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactEServicesLight] = for {
       requesterId  <- getOrganizationIdFutureUUID(contexts)
       pagedResults <- agreementProcessService.getAgreementEServices(
         eServiceName = q,
@@ -557,27 +559,17 @@ final case class AgreementsApiServiceImpl(
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
     onComplete(result) {
       handleError(
         s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
-      ) orElse {
-        case Failure(_: InvalidQueryParameter) =>
-          getAgreementEServiceConsumers200(
-            CompactEServicesLight(
-              results = Nil,
-              pagination = Pagination(offset = offset, limit = limit, totalCount = 0)
-            )
-          )
-        case Success(resource)                 =>
-          getAgreementEServiceConsumers200(resource)
+      ) orElse { case Success(consumers) =>
+        getAgreementEServiceConsumers200(consumers)
       }
-    }
-  }
-
-  private def validateQueryName(q: Option[String]): Future[Unit] = {
-    q match {
-      case Some(value) if value.length < 3 => Future.failed(InvalidQueryParameter(value))
-      case _                               => Future.successful(())
     }
   }
 }
