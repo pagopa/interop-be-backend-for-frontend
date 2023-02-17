@@ -67,4 +67,8 @@ trait CatalogProcessService {
   def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[EServiceDoc]
+
+  def deleteDraft(eServiceId: UUID, descriptorId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
+
+  def deleteEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 }

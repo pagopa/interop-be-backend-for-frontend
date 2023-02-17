@@ -20,6 +20,7 @@ import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServic
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import CatalogProcess.EServiceDescriptorState.DRAFT
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
@@ -667,4 +668,32 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+
+  override def deleteEService(
+    eServiceId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+
+    def deleteEserviceIfEmpty(eService: CatalogProcessEService): Future[Boolean] =
+      if (!eService.descriptors.exists(_.state != DRAFT))
+        catalogProcessService.deleteEService(eService.id).map(_ => true)
+      else Future.successful(false)
+
+    val result: Future[Unit] = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
+      maybeDraftDescriptor = getDraftDescriptor(eService)
+      _         <- Future.traverse(maybeDraftDescriptor.toList)(draftDescriptor =>
+        catalogProcessService.deleteDraft(eServiceUUID, draftDescriptor.id)
+      )
+      isDeleted <- deleteEserviceIfEmpty(eService)
+      _         <-
+        if (!isDeleted && maybeDraftDescriptor.isEmpty) Future.failed(EServiceCannotBeDeleted(eService.id.toString))
+        else Future.successful(())
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error deleting eservice with Id: $eServiceId") orElse { case Success(_) => deleteEService204 }
+    }
+  }
+
 }

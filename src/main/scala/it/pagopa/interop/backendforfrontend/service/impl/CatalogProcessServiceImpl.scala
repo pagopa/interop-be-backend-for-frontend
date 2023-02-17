@@ -211,7 +211,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     val request: ApiRequest[EService] =
       api.updateEServiceById(
         xCorrelationId = correlationId,
-        eServiceId = eServiceId.toString,
+        eServiceId = eServiceId,
         updateEServiceSeed = updateEServiceSeed,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
@@ -230,5 +230,27 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         xForwardedFor = ip
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving document $documentId of EService $eServiceId from Catalog Process")
+  }
+
+  override def deleteDraft(eServiceId: UUID, descriptorId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.deleteDraft(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId.toString,
+        descriptorId = descriptorId.toString,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Updating EService with $eServiceId")
+  }
+
+  override def deleteEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] = withHeaders {
+    (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.deleteEService(xCorrelationId = correlationId, eServiceId = eServiceId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Updating EService with $eServiceId")
   }
 }
