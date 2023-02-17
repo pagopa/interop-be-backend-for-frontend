@@ -4992,6 +4992,8 @@ components:
           type: boolean
         suspendedByPlatform:
           type: boolean
+        contractDownload:
+          type: boolean
         consumerNotes:
           type: string
         rejectionReason:
