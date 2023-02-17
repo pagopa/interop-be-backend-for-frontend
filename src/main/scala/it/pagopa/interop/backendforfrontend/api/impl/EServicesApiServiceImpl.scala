@@ -328,10 +328,8 @@ final case class EServicesApiServiceImpl(
     contexts: Seq[(String, String)]
   ): Future[Option[AgreementProcess.Agreement]] = {
 
-    implicit val offsetDateTimeOrdering: Ordering[OffsetDateTime] = Ordering.by(_.toEpochSecond)
-
     val ordering: Ordering[(Int, OffsetDateTime)] =
-      Ordering.Tuple2(Ordering.Int.reverse, offsetDateTimeOrdering)
+      Ordering.Tuple2(Ordering.Int.reverse, Ordering.by(_.toEpochSecond))
 
     getAllAgreements(
       consumersIds = requesterId :: Nil,
