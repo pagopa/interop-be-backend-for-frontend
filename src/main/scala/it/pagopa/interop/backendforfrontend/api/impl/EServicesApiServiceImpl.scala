@@ -36,6 +36,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.xml.Elem
+import java.time.OffsetDateTime
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -325,7 +326,13 @@ final case class EServicesApiServiceImpl(
 
   private def getLatestAgreement(requesterId: UUID, eService: CatalogProcess.EService)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Option[AgreementProcess.Agreement]] =
+  ): Future[Option[AgreementProcess.Agreement]] = {
+
+    implicit val offsetDateTimeOrdering: Ordering[OffsetDateTime] = Ordering.by(_.toEpochSecond)
+
+    val ordering: Ordering[(Int, OffsetDateTime)] =
+      Ordering.Tuple2(Ordering.Int.reverse, offsetDateTimeOrdering)
+
     getAllAgreements(
       consumersIds = requesterId :: Nil,
       eServicesIds = eService.id :: Nil,
@@ -334,10 +341,11 @@ final case class EServicesApiServiceImpl(
     ).map(
       _.map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
         .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
-        .sortBy(_._2.version.toInt)(Ordering[Int].reverse)
+        .sortBy(s => (s._2.version.toInt, s._1.createdAt))(ordering)
         .headOption
         .map(_._1)
     )
+  }
 
   private def enhanceCatalogEService(
     requesterId: UUID
