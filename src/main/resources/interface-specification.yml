@@ -4988,7 +4988,7 @@ components:
           type: boolean
         suspendedByPlatform:
           type: boolean
-        contractDownload:
+        isContractPresent:
           type: boolean
         consumerNotes:
           type: string
@@ -5018,6 +5018,7 @@ components:
         - declaredAttributes
         - consumerDocuments
         - createdAt
+        - isContractPresent
     Agreements:
       type: object
       properties:
