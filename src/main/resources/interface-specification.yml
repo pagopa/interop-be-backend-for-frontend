@@ -2554,7 +2554,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedResource'
+                $ref: '#/components/schemas/CreatedEServiceDescriptor'
         '400':
           description: Invalid input
           headers:
@@ -5554,6 +5554,19 @@ components:
           format: uuid
       required:
         - id
+    CreatedEServiceDescriptor:
+      type: object
+      description: contains the id of the created resource with the descriptorId
+      properties:
+        id:
+          type: string
+          format: uuid
+        descriptorId:
+          type: string
+          format: uuid
+      required:
+        - id
+        - descriptorId
     Document:
       type: object
       required:
