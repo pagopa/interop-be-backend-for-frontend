@@ -6,6 +6,7 @@ import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
+import it.pagopa.interop.commons.utils.AkkaUtils._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
@@ -486,6 +487,88 @@ final case class AgreementsApiServiceImpl(
     onComplete(result) {
       handleError(s"Error cloning agreement $agreementId") orElse { case Success(resource) =>
         cloneAgreement200(resource)
+      }
+    }
+  }
+
+  override def getAgreementEServiceProducers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCompactAgreementEServices: ToEntityMarshaller[CompactEServicesLight],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(
+      s"Retrieving producer eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+    )
+
+    def emptyResponse: Future[CompactEServicesLight] = Future.successful(
+      CompactEServicesLight(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactEServicesLight] = for {
+      requesterId  <- getOrganizationIdFutureUUID(contexts)
+      pagedResults <- agreementProcessService.getAgreementEServices(
+        eServiceName = q,
+        producersIds = Seq(requesterId),
+        consumersIds = Seq.empty,
+        limit = limit,
+        offset = offset
+      )
+    } yield CompactEServicesLight(
+      results = pagedResults.results.map(t => CompactEServiceLight(id = t.id, name = t.name)),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+      ) orElse { case Success(producers) =>
+        getAgreementEServiceProducers200(producers)
+      }
+    }
+  }
+
+  def getAgreementEServiceConsumers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCompactEServicesLight: ToEntityMarshaller[CompactEServicesLight],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(
+      s"Retrieving consumer eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+    )
+
+    def emptyResponse: Future[CompactEServicesLight] = Future.successful(
+      CompactEServicesLight(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactEServicesLight] = for {
+      requesterId  <- getOrganizationIdFutureUUID(contexts)
+      pagedResults <- agreementProcessService.getAgreementEServices(
+        eServiceName = q,
+        producersIds = Seq.empty,
+        consumersIds = Seq(requesterId),
+        limit = limit,
+        offset = offset
+      )
+    } yield CompactEServicesLight(
+      results = pagedResults.results.map(t => CompactEServiceLight(id = t.id, name = t.name)),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+      ) orElse { case Success(consumers) =>
+        getAgreementEServiceConsumers200(consumers)
       }
     }
   }
