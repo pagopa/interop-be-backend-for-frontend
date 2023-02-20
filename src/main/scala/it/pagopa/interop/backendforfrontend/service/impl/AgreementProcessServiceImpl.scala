@@ -203,4 +203,18 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving eServices agreement with name $eServiceName")
     }
+
+  override def getAgreementProducers(producerName: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId, ip) =>
+    val request =
+      api.getAgreementProducers(
+        xCorrelationId = correlationId,
+        producerName = producerName,
+        offset = offset,
+        limit = limit,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving producers from agrements with name $producerName")
+  }
 }
