@@ -6,13 +6,7 @@ import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf, serviceCode}
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  AgreementDescriptorNotFound,
-  AttributeNotExists,
-  DownstreamError,
-  InvalidInterfaceFileDetected,
-  UnknownTenantOrigin
-}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.model.Problem
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiError => CatalogProcessError}
