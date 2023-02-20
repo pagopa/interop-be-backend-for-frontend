@@ -572,4 +572,72 @@ final case class AgreementsApiServiceImpl(
       }
     }
   }
+
+  override def getAgreementProducers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations]
+  ): Route = {
+
+    def emptyResponse: Future[CompactOrganizations] = Future.successful(
+      CompactOrganizations(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactOrganizations] =
+      agreementProcessService
+        .getAgreementProducers(q, offset = offset, limit = limit)
+        .map(pagedResults =>
+          CompactOrganizations(
+            results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+            pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+          )
+        )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving producers from agreement filtered by producer name $q, offset $offset, limit $limit"
+      ) orElse { case Success(producers) =>
+        getAgreementProducers200(producers)
+      }
+    }
+  }
+
+  def getAgreementConsumers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations]
+  ): Route = {
+
+    def emptyResponse: Future[CompactOrganizations] = Future.successful(
+      CompactOrganizations(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactOrganizations] =
+      agreementProcessService
+        .getAgreementConsumers(q, offset = offset, limit = limit)
+        .map(pagedResults =>
+          CompactOrganizations(
+            results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+            pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+          )
+        )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving consumers from agreement filtered by consumer name $q, offset $offset, limit $limit"
+      ) orElse { case Success(consumers) =>
+        getAgreementConsumers200(consumers)
+      }
+    }
+  }
 }
