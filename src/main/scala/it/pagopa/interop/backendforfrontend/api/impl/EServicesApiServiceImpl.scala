@@ -329,7 +329,7 @@ final case class EServicesApiServiceImpl(
   ): Future[Option[AgreementProcess.Agreement]] = {
 
     val ordering: Ordering[(Int, OffsetDateTime)] =
-      Ordering.Tuple2(Ordering.Int.reverse, Ordering.by(_.toEpochSecond).reverse)
+      Ordering.Tuple2(Ordering.Int.reverse, Ordering.by[OffsetDateTime, Long](_.toEpochSecond).reverse)
 
     getAllAgreements(
       consumersIds = requesterId :: Nil,
