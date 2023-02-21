@@ -4011,6 +4011,47 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /purposes/{purposeId}/versions/{versionId}/suspend:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: purposeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: versionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - purposes
+      summary: Suspend Purpose Version
+      operationId: suspendPurposeVersion
+      responses:
+        '200':
+          description: Purpose Version Suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurposeVersion'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Purpose Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      description: suspends the purpose version by id
   '/tenants/attributes/declared':
     post:
       tags:
@@ -5767,6 +5808,55 @@ components:
       required:
         - results
         - pagination
+    PurposeVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          $ref: '#/components/schemas/PurposeVersionState'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        firstActivationAt:
+          type: string
+          format: date-time
+        expectedApprovalDate:
+          type: string
+          format: date-time
+        dailyCalls:
+          description: 'maximum number of daily calls that this version can perform.'
+          type: integer
+          format: int32
+          minimum: 0
+        riskAnalysis:
+          $ref: '#/components/schemas/PurposeVersionDocument'
+      required:
+        - id
+        - state
+        - dailyCalls
+        - createdAt
+      description: business representation of a purpose version
+    PurposeVersionDocument:
+      type: object
+      required:
+        - id
+        - contentType
+        - path
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        contentType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
     PurposeVersionState:
       type: string
       description: Purpose State
