@@ -112,4 +112,27 @@ final case class PurposesApiServiceImpl(
     suspendedByConsumer = purpose.suspendedByConsumer,
     suspendedByProducer = purpose.suspendedByProducer
   )
+
+  override def updateDraftPurposeVersion(
+    purposeId: String,
+    versionId: String,
+    draftPurposeVersionUpdateContent: DraftPurposeVersionUpdateContent
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersion],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PurposeVersion] = for {
+      purposeUUID                <- purposeId.toFutureUUID
+      versionUUID                <- versionId.toFutureUUID
+      updatedDraftPurposeVersion <- purposeProcessService
+        .updateDraftPurposeVersion(purposeUUID, versionUUID, draftPurposeVersionUpdateContent.toProcess)
+    } yield updatedDraftPurposeVersion.toApi
+
+    onComplete(result) {
+      handleError(s"Error updating purpose's version in draft with Id: $purposeId") orElse { case Success(response) =>
+        updateDraftPurposeVersion200(response)
+      }
+    }
+  }
 }
