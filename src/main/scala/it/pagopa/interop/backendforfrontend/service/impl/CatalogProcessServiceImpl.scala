@@ -242,7 +242,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         descriptorId = descriptorId.toString,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Updating EService with $eServiceId")
+    invoker.invoke(request, s"Deleting Draft Descriptor $descriptorId of EService $eServiceId")
   }
 
   override def deleteEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] = withHeaders {
@@ -251,6 +251,6 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         api.deleteEService(xCorrelationId = correlationId, eServiceId = eServiceId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Updating EService with $eServiceId")
+      invoker.invoke(request, s"Deleting EService $eServiceId")
   }
 }

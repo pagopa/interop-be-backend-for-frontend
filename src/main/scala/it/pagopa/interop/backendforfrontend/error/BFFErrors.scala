@@ -72,6 +72,6 @@ object BFFErrors {
       extends ComponentError("0016", s"EService $eServiceId not deletable")
 
   final case class NoDescriptorInEservice(eServiceId: UUID)
-      extends ComponentError("0016", s"No descriptor found in eService $eServiceId")
+      extends ComponentError("0017", s"No descriptor found in eService $eServiceId")
 
 }
