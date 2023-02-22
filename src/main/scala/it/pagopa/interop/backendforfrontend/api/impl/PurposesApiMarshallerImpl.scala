@@ -12,6 +12,6 @@ object PurposesApiMarshallerImpl extends PurposesApiMarshaller with SprayJsonSup
 
   override implicit def toEntityMarshallerPurposes: ToEntityMarshaller[Purposes] = sprayJsonMarshaller[Purposes]
 
-  override implicit def toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersion] =
-    sprayJsonMarshaller[PurposeVersion]
+  override implicit def toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource] =
+    sprayJsonMarshaller[CreatedResource]
 }

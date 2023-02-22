@@ -24,15 +24,6 @@ object PurposeProcessServiceTypes {
   }
 
   implicit class PurposeVersionConverter(private val pvc: PurposeVersionProcess) extends AnyVal {
-    def toApi: PurposeVersion = PurposeVersion(
-      id = pvc.id,
-      state = pvc.state.toApi,
-      createdAt = pvc.createdAt,
-      updatedAt = pvc.updatedAt,
-      firstActivationAt = pvc.firstActivationAt,
-      expectedApprovalDate = pvc.expectedApprovalDate,
-      dailyCalls = pvc.dailyCalls,
-      riskAnalysis = pvc.riskAnalysis.map(_.toApi)
-    )
+    def toApi: CreatedResource = CreatedResource(id = pvc.id)
   }
 }

@@ -49,7 +49,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
 
   override def suspendPurposeVersion(purposeId: UUID, versionId: UUID)(implicit
     contexts: Seq[(String, String)]
-  ): Future[PurposeVersion] = withHeaders[PurposeVersion] { (bearerToken, correlationId, ip) =>
+  ): Future[PurposeVersion] = withHeaders { (bearerToken, correlationId, ip) =>
     val request: ApiRequest[PurposeVersion] =
       api.suspendPurposeVersion(
         xCorrelationId = correlationId,
