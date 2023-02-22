@@ -1,6 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes}
+import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes, Purpose}
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -17,4 +17,5 @@ trait PurposeProcessService {
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Purposes]
 
+  def clonePurpose(purposeUuid: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose]
 }

@@ -112,4 +112,23 @@ final case class PurposesApiServiceImpl(
     suspendedByConsumer = purpose.suspendedByConsumer,
     suspendedByProducer = purpose.suspendedByProducer
   )
+
+  override def clonePurpose(purposeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    logger.info(s"Cloning purpose $purposeId")
+
+    val result: Future[CreatedResource] = for {
+      purposeUuid <- purposeId.toFutureUUID
+      result      <- purposeProcessService.clonePurpose(purposeUuid)
+    } yield CreatedResource(result.id)
+
+    onComplete(result) {
+      handleError(s"Error cloning purpose $purposeId") orElse { case Success(resource) =>
+        clonePurpose200(resource)
+      }
+    }
+  }
 }

@@ -7,7 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.purposeprocess.client.api.{EnumsSerializers, PurposeApi}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes}
+import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes, Purpose}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -47,4 +47,12 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving Purposes")
     }
 
+  override def clonePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose] =
+    withHeaders[Purpose] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Purpose] =
+        api.clonePurpose(purposeId = purposeId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Cloning Purpose ${purposeId.toString}")
+    }
 }
