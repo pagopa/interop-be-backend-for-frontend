@@ -183,4 +183,52 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       )
       invoker.invoke(request, s"Cloning agreement $agreementId")
     }
+
+  override def getAgreementEServices(
+    eServiceName: Option[String],
+    producersIds: Seq[UUID],
+    consumersIds: Seq[UUID],
+    limit: Int,
+    offset: Int
+  )(implicit contexts: Seq[(String, String)]): Future[CompactEServices] =
+    withHeaders[CompactEServices] { (bearerToken, correlationId, ip) =>
+      val request = api.getAgreementEServices(
+        xCorrelationId = correlationId,
+        eServiceName = eServiceName,
+        producersIds = producersIds,
+        consumersIds = consumersIds,
+        offset = offset,
+        limit = limit,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving eServices agreement with name $eServiceName")
+    }
+
+  override def getAgreementProducers(producerName: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId, ip) =>
+    val request =
+      api.getAgreementProducers(
+        xCorrelationId = correlationId,
+        producerName = producerName,
+        offset = offset,
+        limit = limit,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving producers from agrements with name $producerName")
+  }
+
+  override def getAgreementConsumers(consumerName: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId, ip) =>
+    val request =
+      api.getAgreementConsumers(
+        xCorrelationId = correlationId,
+        consumerName = consumerName,
+        offset = offset,
+        limit = limit,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving consumers from agrements with name $consumerName")
+  }
 }
