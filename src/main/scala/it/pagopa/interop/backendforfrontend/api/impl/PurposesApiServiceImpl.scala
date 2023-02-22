@@ -128,7 +128,7 @@ final case class PurposesApiServiceImpl(
     } yield suspendedPurposeVersione.toApi
 
     onComplete(result) {
-      handleError(s"Error suspending Purpose with id $purposeId with version id $purposeId") orElse { case Success(r) =>
+      handleError(s"Error suspending Version $versionId of Purpose $purposeId") orElse { case Success(r) =>
         suspendPurposeVersion200(r)
       }
     }

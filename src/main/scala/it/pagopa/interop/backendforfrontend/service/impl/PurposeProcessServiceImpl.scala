@@ -57,6 +57,6 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
         versionId = versionId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Suspending Purpose Version")
+    invoker.invoke(request, s"Suspending Version $versionId of Purpose $purposeId")
   }
 }
