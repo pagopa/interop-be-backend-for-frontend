@@ -37,6 +37,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.xml.Elem
+import java.time.OffsetDateTime
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -332,7 +333,11 @@ final case class EServicesApiServiceImpl(
 
   private def getLatestAgreement(requesterId: UUID, eService: CatalogProcess.EService)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Option[AgreementProcess.Agreement]] =
+  ): Future[Option[AgreementProcess.Agreement]] = {
+
+    val ordering: Ordering[(Int, OffsetDateTime)] =
+      Ordering.Tuple2(Ordering.Int.reverse, Ordering.by[OffsetDateTime, Long](_.toEpochSecond).reverse)
+
     getAllAgreements(
       consumersIds = requesterId :: Nil,
       eServicesIds = eService.id :: Nil,
@@ -341,10 +346,11 @@ final case class EServicesApiServiceImpl(
     ).map(
       _.map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
         .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
-        .sortBy(_._2.version.toInt)(Ordering[Int].reverse)
+        .sortBy(s => (s._2.version.toInt, s._1.createdAt))(ordering)
         .headOption
         .map(_._1)
     )
+  }
 
   private def enhanceCatalogEService(
     requesterId: UUID
@@ -588,17 +594,18 @@ final case class EServicesApiServiceImpl(
   override def cloneEServiceByDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedEServiceDescriptor]
   ): Route = {
-    val result: Future[CreatedResource] = for {
+    val result: Future[CreatedEServiceDescriptor] = for {
       eServiceIdUUID   <- eServiceId.toFutureUUID
       descriptorIdUUID <- descriptorId.toFutureUUID
       eservice         <- catalogProcessService
         .cloneEServiceByDescriptor(eServiceIdUUID, descriptorIdUUID)
-    } yield eservice.toApi
+      descriptorId     <- eservice.descriptors.headOption.map(_.id).toFuture(NoDescriptorInEservice(eServiceIdUUID))
+    } yield eservice.toApiWithDescriptorId(descriptorId)
 
     onComplete(result) {
-      handleError(s"Error cloning EService $eServiceId with descriptor $descriptorId") orElse {
+      handleError(s"Error cloning EService ${eServiceId} with descriptor ${descriptorId}") orElse {
         case Success(eservice) =>
           cloneEServiceByDescriptor200(eservice)
       }
@@ -663,7 +670,7 @@ final case class EServicesApiServiceImpl(
     val result: Future[MessageEntity] = for {
       document      <- catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)
       contentType   <- getDocumentContentType(document)
-      response      <- fileManager.get(ApplicationConfiguration.consumerDocumentsContainer)(document.path)
+      response      <- fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(document.path)
       messageEntity <- convertToMessageEntity(document.name, contentType, response)
     } yield messageEntity
 
