@@ -59,4 +59,17 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Suspending Version $versionId of Purpose $purposeId")
   }
+
+  override def activatePurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[PurposeVersion] =
+      api.activatePurposeVersion(
+        xCorrelationId = correlationId,
+        purposeId = purposeId,
+        versionId = versionId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Activating Version $versionId of Purpose $purposeId")
+  }
 }
