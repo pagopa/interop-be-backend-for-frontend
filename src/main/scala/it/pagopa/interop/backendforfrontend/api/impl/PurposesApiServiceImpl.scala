@@ -79,6 +79,16 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  override def updateWaitingForApprovalPurposeVersion(
+    purposeId: String,
+    versionId: String,
+    waitingForApprovalPurposeVersionUpdateContent: WaitingForApprovalPurposeVersionUpdateContent
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactPurposeVersion: ToEntityMarshaller[CompactPurposeVersion]
+  ): Route = ???
+
   private def enhancePurpose(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],
