@@ -72,4 +72,25 @@ object BFFErrors {
   final case class NoDescriptorInEservice(eServiceId: UUID)
       extends ComponentError("0016", s"No descriptor found in eService $eServiceId")
 
+  final case class InvalidRiskAnalysisContentType(
+    contentType: String,
+    purposeId: String,
+    versionId: String,
+    documentId: String,
+    errors: List[ErrorInfo]
+  ) extends ComponentError(
+        "0016",
+        s"Invalid contentType $contentType for document $documentId from purpose $purposeId and version $versionId - ${errors.map(_.detail).mkString(",")}"
+      )
+
+  final case class InvalidRiskAnalysisFile(
+    contentType: String,
+    purposeId: String,
+    versionId: String,
+    documentId: String,
+    throwable: Throwable
+  ) extends ComponentError(
+        "0017",
+        s"Invalid file with contentType $contentType for document $documentId from purpose $purposeId and version $versionId - $throwable.message}"
+      )
 }

@@ -47,6 +47,8 @@ object Handlers {
     case Failure(err: AttributeNotExists)                       => internalServerError(err, logMessage)
     case Failure(err: UnknownTenantOrigin)                      => badRequest(err, logMessage)
     case Failure(err: InvalidInterfaceFileDetected)             => badRequest(err, logMessage)
+    case Failure(err: InvalidRiskAnalysisContentType)           => badRequest(err, logMessage)
+    case Failure(err: InvalidRiskAnalysisFile)                  => badRequest(err, logMessage)
     case Failure(err: AgreementDescriptorNotFound)              => notFound(err, logMessage)
     case Failure(err)                                           => internalServerError(err, logMessage)
   }

@@ -1,12 +1,18 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import cats.syntax.all._
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{EServiceNotFound, TenantNotFound}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
+  EServiceNotFound,
+  TenantNotFound,
+  InvalidRiskAnalysisFile,
+  InvalidRiskAnalysisContentType
+}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
@@ -17,14 +23,18 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
+import it.pagopa.interop.commons.files.service.FileManager
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
+import java.io.{File, FileInputStream}
+import scala.util.{Try, Using}
 
 final case class PurposesApiServiceImpl(
   catalogProcessService: CatalogProcessService,
   purposeProcessService: PurposeProcessService,
-  tenantProcessService: TenantProcessService
+  tenantProcessService: TenantProcessService,
+  fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends PurposesApiService {
 
@@ -76,6 +86,60 @@ final case class PurposesApiServiceImpl(
       handleError(
         s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
       ) orElse { case Success(r) => getPurposes200(r) }
+    }
+  }
+
+  override def getRiskAnalysisDocument(purposeId: String, versionId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+    logger.info(s"Downloading risk analysis document $documentId from purpose $purposeId with version $versionId")
+
+    def readFile(file: File): Try[Array[Byte]] = {
+      Using(new FileInputStream(file)) { reader =>
+        reader.readAllBytes
+      }
+    }
+
+    def parseMediaType(
+      contentType: String,
+      purposeId: String,
+      versionId: String,
+      documentId: String
+    ): Future[ContentType] =
+      ContentType
+        .parse(contentType)
+        .leftMap(errors => InvalidRiskAnalysisContentType(contentType, purposeId, versionId, documentId, errors))
+        .toFuture
+
+    val result: Future[HttpEntity.Strict] =
+      for {
+        purposeUUID  <- purposeId.toFutureUUID
+        documentUUID <- documentId.toFutureUUID
+        versionUUID  <- versionId.toFutureUUID
+        file         <- purposeProcessService.getRiskAnalysisDocument(purposeUUID, versionUUID, documentUUID)
+        contentType  <- parseMediaType(
+          ContentType(MediaTypes.`application/pdf`).toString,
+          purposeId,
+          versionId,
+          documentId
+        )
+        byteArray    <- readFile(file).toEither
+          .fold(
+            left =>
+              Future.failed(InvalidRiskAnalysisFile(contentType.toString, purposeId, versionId, documentId, left)),
+            right => Future.successful(right)
+          )
+
+      } yield HttpEntity(contentType, byteArray)
+
+    onComplete(result) {
+      handleError(
+        s"Error downloading risk analysis document $documentId from purpose $purposeId with version $versionId"
+      ) orElse { case Success(document) =>
+        complete(document)
+      }
     }
   }
 

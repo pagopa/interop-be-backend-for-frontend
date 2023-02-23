@@ -10,6 +10,7 @@ import it.pagopa.interop.purposeprocess.client.invoker.{ApiInvoker, ApiRequest, 
 import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes}
 
 import java.util.UUID
+import java.io.File
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
@@ -46,5 +47,22 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving Purposes")
     }
+
+  override def getRiskAnalysisDocument(purposeId: UUID, versionId: UUID, documentId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[File] = withHeaders[File] { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[File] =
+      api.getRiskAnalysisDocument(
+        purposeId = purposeId.toString,
+        versionId = versionId.toString,
+        documentId = documentId.toString,
+        xCorrelationId = correlationId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Downloading Risk Analysis document $documentId for Purpose $purposeId and Version $versionId"
+    )
+  }
 
 }
