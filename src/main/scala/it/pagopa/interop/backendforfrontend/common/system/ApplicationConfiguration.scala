@@ -64,7 +64,10 @@ object ApplicationConfiguration {
   val tenantProcessURL: String     = config.getString("backend-for-frontend.services.tenant-process")
   val purposeProcessURL: String    = config.getString("backend-for-frontend.services.purpose-process")
 
-  val storageKind: String                = config.getString("backend-for-frontend.storage.kind")
+  val storageKind: String                    = config.getString("backend-for-frontend.storage.kind")
+  val riskAnalysisDocumentsContainer: String =
+    config.getString("backend-for-frontend.storage.risk-analysis-documents.container")
+  val riskAnalysisDocumentsPath: String  = config.getString("backend-for-frontend.storage.risk-analysis-documents.path")
   val consumerDocumentsContainer: String = config.getString("backend-for-frontend.storage.consumer-documents.container")
   val consumerDocumentsPath: String      = config.getString("backend-for-frontend.storage.consumer-documents.path")
   val eServiceDocumentsContainer: String = config.getString("backend-for-frontend.storage.eservice-documents.container")

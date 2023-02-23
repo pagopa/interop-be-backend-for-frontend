@@ -83,14 +83,4 @@ object BFFErrors {
         s"Invalid contentType $contentType for document $documentId from purpose $purposeId and version $versionId - ${errors.map(_.detail).mkString(",")}"
       )
 
-  final case class InvalidRiskAnalysisFile(
-    contentType: String,
-    purposeId: String,
-    versionId: String,
-    documentId: String,
-    throwable: Throwable
-  ) extends ComponentError(
-        "0017",
-        s"Invalid file with contentType $contentType for document $documentId from purpose $purposeId and version $versionId - $throwable.message}"
-      )
 }

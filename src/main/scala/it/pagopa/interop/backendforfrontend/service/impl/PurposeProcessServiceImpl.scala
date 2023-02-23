@@ -7,10 +7,9 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.purposeprocess.client.api.{EnumsSerializers, PurposeApi}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes}
+import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes, PurposeVersionDocument}
 
 import java.util.UUID
-import java.io.File
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
@@ -50,8 +49,8 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
 
   override def getRiskAnalysisDocument(purposeId: UUID, versionId: UUID, documentId: UUID)(implicit
     contexts: Seq[(String, String)]
-  ): Future[File] = withHeaders[File] { (bearerToken, correlationId, ip) =>
-    val request: ApiRequest[File] =
+  ): Future[PurposeVersionDocument] = withHeaders[PurposeVersionDocument] { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[PurposeVersionDocument] =
       api.getRiskAnalysisDocument(
         purposeId = purposeId.toString,
         versionId = versionId.toString,

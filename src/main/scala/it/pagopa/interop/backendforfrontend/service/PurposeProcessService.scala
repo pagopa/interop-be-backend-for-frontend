@@ -1,9 +1,8 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes}
+import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes, PurposeVersionDocument}
 
 import java.util.UUID
-import java.io.File
 import scala.concurrent.Future
 
 trait PurposeProcessService {
@@ -20,6 +19,6 @@ trait PurposeProcessService {
 
   def getRiskAnalysisDocument(purposeId: UUID, versionId: UUID, documentId: UUID)(implicit
     contexts: Seq[(String, String)]
-  ): Future[File]
+  ): Future[PurposeVersionDocument]
 
 }
