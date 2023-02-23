@@ -79,6 +79,26 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  def deletePurposeVersion(purposeId: String, versionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Deleting purpose $purposeId, version $versionId")
+
+    val result: Future[Unit] =
+      for {
+        purposeUUID <- purposeId.toFutureUUID
+        versionUUID <- versionId.toFutureUUID
+        result      <- purposeProcessService.deletePurposeVersion(purposeUUID, versionUUID)
+      } yield result
+
+    onComplete(result) {
+      handleError(s"Error deleting purpose $purposeId, version $versionId") orElse { case Success(_) =>
+        deletePurposeVersion204
+      }
+    }
+  }
+
   private def enhancePurpose(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],
