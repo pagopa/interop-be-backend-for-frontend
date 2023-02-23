@@ -687,18 +687,29 @@ final case class EServicesApiServiceImpl(
     eServiceId: String
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
 
-    def deleteEserviceIfEmpty(eService: CatalogProcessEService): Future[Boolean] =
-      if (!eService.descriptors.exists(_.state != DRAFT))
+    /*
+      Eservice = [Draft, Active+] -> Eservice = [Active+]
+      EService = [Draft]          -> NOEservice
+      EService = [Active+]        -> Errore (EService = [Active+])
+      EService = []               -> NOEservice
+     */
+
+    def deleteEserviceIfEmpty(eService: CatalogProcessEService): Future[Boolean] = {
+      if (eService.descriptors.forall(_.state == DRAFT))
         catalogProcessService.deleteEService(eService.id).map(_ => true)
       else Future.successful(false)
+    }
 
     val result: Future[Unit] = for {
       eServiceUUID <- eServiceId.toFutureUUID
       eService     <- catalogProcessService.getEServiceById(eServiceUUID)
       maybeDraftDescriptor = getDraftDescriptor(eService)
-      _         <- Future.traverse(maybeDraftDescriptor.toList)(draftDescriptor =>
+      _   <-  maybeDraftDescriptor.fold(Future.unit)(draftDescriptor =>
         catalogProcessService.deleteDraft(eServiceUUID, draftDescriptor.id)
       )
+//      _         <- Future.traverse(maybeDraftDescriptor.toList)(draftDescriptor =>
+//        catalogProcessService.deleteDraft(eServiceUUID, draftDescriptor.id)
+//      )
       isDeleted <- deleteEserviceIfEmpty(eService)
       _         <-
         if (!isDeleted && maybeDraftDescriptor.isEmpty) Future.failed(EServiceCannotBeDeleted(eService.id.toString))
