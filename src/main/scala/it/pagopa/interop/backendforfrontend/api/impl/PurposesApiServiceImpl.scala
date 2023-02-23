@@ -82,12 +82,34 @@ final case class PurposesApiServiceImpl(
   override def updateWaitingForApprovalPurposeVersion(
     purposeId: String,
     versionId: String,
-    waitingForApprovalPurposeVersionUpdateContent: WaitingForApprovalPurposeVersionUpdateContent
+    seed: WaitingForApprovalPurposeVersionUpdateContentSeed
   )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCompactPurposeVersion: ToEntityMarshaller[CompactPurposeVersion]
-  ): Route = ???
+  ): Route = {
+    val result: Future[CompactPurposeVersion] = for {
+      purposeUuid    <- purposeId.toFutureUUID
+      versionUuid    <- versionId.toFutureUUID
+      purposeVersion <- purposeProcessService.updateWaitingForApprovalPurposeVersion(
+        purposeUuid,
+        versionUuid,
+        seed.toSeed
+      )
+    } yield CompactPurposeVersion(
+      id = purposeVersion.id,
+      state = purposeVersion.state.toApi,
+      dailyCalls = purposeVersion.dailyCalls,
+      expectedApprovalDate = purposeVersion.expectedApprovalDate
+    )
+
+    onComplete(result) {
+      handleError(s"Error updating purpose $purposeId with version $versionId in waiting for approval state") orElse {
+        case Success(compactPurposeVersion) =>
+          updateWaitingForApprovalPurposeVersion200(compactPurposeVersion)
+      }
+    }
+  }
 
   private def enhancePurpose(
     purpose: PurposeProcess.Purpose,

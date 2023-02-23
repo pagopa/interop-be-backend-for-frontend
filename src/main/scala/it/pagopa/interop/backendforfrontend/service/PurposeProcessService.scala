@@ -1,6 +1,11 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes}
+import it.pagopa.interop.purposeprocess.client.model.{
+  PurposeVersionState,
+  Purposes,
+  PurposeVersion,
+  WaitingForApprovalPurposeVersionUpdateContent
+}
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -16,5 +21,11 @@ trait PurposeProcessService {
     offset: Int,
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Purposes]
+
+  def updateWaitingForApprovalPurposeVersion(
+    purposeId: UUID,
+    versionId: UUID,
+    waitingForApprovalPurposeVersionUpdateContent: WaitingForApprovalPurposeVersionUpdateContent
+  )(implicit contexts: Seq[(String, String)]): Future[PurposeVersion]
 
 }

@@ -4036,7 +4036,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WaitingForApprovalPurposeVersionUpdateContent'
+              $ref: '#/components/schemas/WaitingForApprovalPurposeVersionUpdateContentSeed'
         required: true
       responses:
         '200':
@@ -5647,7 +5647,7 @@ components:
         expectedApprovalDate:
           type: string
           format: date-time
-    WaitingForApprovalPurposeVersionUpdateContent:
+    WaitingForApprovalPurposeVersionUpdateContentSeed:
       type: object
       description: contains the expected payload for purpose version update.
       properties:

@@ -14,4 +14,11 @@ object PurposeProcessServiceTypes {
       case PurposeProcess.PurposeVersionState.ARCHIVED             => PurposeVersionState.ARCHIVED
     }
   }
+
+  implicit class PurposeVersionUpdateSeedConverter(private val seed: WaitingForApprovalPurposeVersionUpdateContentSeed)
+      extends AnyVal {
+    def toSeed: PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent =
+      PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent(expectedApprovalDate = seed.expectedApprovalDate)
+  }
+
 }
