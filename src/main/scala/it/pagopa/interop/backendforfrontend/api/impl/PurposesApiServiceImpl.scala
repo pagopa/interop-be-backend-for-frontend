@@ -79,6 +79,30 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  override def archivePurposeVersion(purposeId: String, versionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactPurposeVersion: ToEntityMarshaller[CompactPurposeVersion]
+  ): Route = {
+    val result: Future[CompactPurposeVersion] = for {
+      purposeUuid <- purposeId.toFutureUUID
+      versionUuid <- versionId.toFutureUUID
+      purpose     <- purposeProcessService.archivePurposeVersion(purposeUuid, versionUuid)
+    } yield CompactPurposeVersion(
+      id = purpose.id,
+      state = purpose.state.toApi,
+      dailyCalls = purpose.dailyCalls,
+      expectedApprovalDate = purpose.expectedApprovalDate
+    )
+
+    onComplete(result) {
+      handleError(s"Error archiving purpose $purposeId with version $versionId") orElse {
+        case Success(compactPurpose) =>
+          archivePurposeVersion200(compactPurpose)
+      }
+    }
+  }
+
   private def enhancePurpose(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],
@@ -112,4 +136,5 @@ final case class PurposesApiServiceImpl(
     suspendedByConsumer = purpose.suspendedByConsumer,
     suspendedByProducer = purpose.suspendedByProducer
   )
+
 }

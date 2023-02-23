@@ -7,7 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.purposeprocess.client.api.{EnumsSerializers, PurposeApi}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes}
+import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes, PurposeVersion}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -47,4 +47,17 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving Purposes")
     }
 
+  override def archivePurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion] =
+    withHeaders[PurposeVersion] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[PurposeVersion] =
+        api.archivePurposeVersion(
+          purposeId = purposeId,
+          versionId = versionId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Archive Purpose $purposeId with version $versionId")
+    }
 }
