@@ -21,7 +21,6 @@ import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceT
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.catalogprocess.client.model.EServices
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
-import CatalogProcess.EServiceDescriptorState.DRAFT
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
@@ -34,11 +33,11 @@ import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.io.{ByteArrayOutputStream, File, FileOutputStream}
 import java.nio.file.{Files, Path}
+import java.time.OffsetDateTime
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.xml.Elem
-import java.time.OffsetDateTime
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -683,41 +682,35 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  override def deleteEService(
+  /**
+    * @return
+    *  eService = [Draft, Active+] -> 200 - eService = [Active+]
+    *  eService = [Draft]          -> 200 - NOeService
+    *  eService = [Active+]        -> 204 - eService = [Active+]
+    *  eService = []               -> 200 - NOeService
+    */
+  override def pruneEService(
     eServiceId: String
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
 
-    /*
-      Eservice = [Draft, Active+] -> Eservice = [Active+]
-      EService = [Draft]          -> NOEservice
-      EService = [Active+]        -> Errore (EService = [Active+])
-      EService = []               -> NOEservice
-     */
-
-    def deleteEserviceIfEmpty(eService: CatalogProcessEService): Future[Boolean] = {
-      if (eService.descriptors.forall(_.state == DRAFT))
-        catalogProcessService.deleteEService(eService.id).map(_ => true)
-      else Future.successful(false)
-    }
-
-    val result: Future[Unit] = for {
-      eServiceUUID <- eServiceId.toFutureUUID
-      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
-      maybeDraftDescriptor = getDraftDescriptor(eService)
-      _   <-  maybeDraftDescriptor.fold(Future.unit)(draftDescriptor =>
+    val result: Future[Boolean] = for {
+      eServiceUUID      <- eServiceId.toFutureUUID
+      eService          <- catalogProcessService.getEServiceById(eServiceUUID)
+      isDraftDeleted    <- getDraftDescriptor(eService).fold(Future.successful(false)) { draftDescriptor =>
         catalogProcessService.deleteDraft(eServiceUUID, draftDescriptor.id)
-      )
-//      _         <- Future.traverse(maybeDraftDescriptor.toList)(draftDescriptor =>
-//        catalogProcessService.deleteDraft(eServiceUUID, draftDescriptor.id)
-//      )
-      isDeleted <- deleteEserviceIfEmpty(eService)
-      _         <-
-        if (!isDeleted && maybeDraftDescriptor.isEmpty) Future.failed(EServiceCannotBeDeleted(eService.id.toString))
-        else Future.successful(())
-    } yield ()
+        Future.successful(true)
+      }
+      isEserviceDeleted <- getNonDraftDescriptors(eService).length match {
+        case 0 => catalogProcessService.deleteEService(eService.id).map(_ => true)
+        case _ => Future.successful(false)
+      }
+    } yield isDraftDeleted || isEserviceDeleted
 
     onComplete(result) {
-      handleError(s"Error deleting eservice with Id: $eServiceId") orElse { case Success(_) => deleteEService204 }
+      handleError(s"Error pruning eservice with Id: $eServiceId") orElse {
+        case Success(true)  => pruneEService200
+        case Success(false) => pruneEService204
+      }
     }
   }
 

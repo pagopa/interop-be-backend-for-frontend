@@ -68,10 +68,8 @@ object BFFErrors {
         "0015",
         s"The interface file for EService $eServiceId has a contentType $contentType not admitted for $technology technology"
       )
-  final case class EServiceCannotBeDeleted(eServiceId: String)
-      extends ComponentError("0016", s"EService $eServiceId not deletable")
 
   final case class NoDescriptorInEservice(eServiceId: UUID)
-      extends ComponentError("0017", s"No descriptor found in eService $eServiceId")
+      extends ComponentError("0016", s"No descriptor found in eService $eServiceId")
 
 }
