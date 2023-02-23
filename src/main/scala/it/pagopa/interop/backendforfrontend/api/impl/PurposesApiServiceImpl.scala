@@ -79,6 +79,31 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  override def createPurposeVersion(purposeId: String, purposeVersionSeed: PurposeVersionSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactPurposeVersion: ToEntityMarshaller[CompactPurposeVersion]
+  ): Route = {
+    logger.info(s"Create purpose version $purposeId with seed $purposeVersionSeed")
+
+    val result: Future[CompactPurposeVersion] = for {
+      purposeUuid    <- purposeId.toFutureUUID
+      purposeVersion <- purposeProcessService.createPurposeVersion(purposeUuid, purposeVersionSeed.toProcess)
+    } yield CompactPurposeVersion(
+      id = purposeVersion.id,
+      state = purposeVersion.state.toApi,
+      dailyCalls = purposeVersion.dailyCalls,
+      expectedApprovalDate = purposeVersion.expectedApprovalDate
+    )
+
+    onComplete(result) {
+      handleError(s"Error creating purpose version $purposeId with seed $purposeVersionSeed") orElse {
+        case Success(compactVersion) =>
+          createPurposeVersion201(compactVersion)
+      }
+    }
+  }
+
   private def enhancePurpose(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],

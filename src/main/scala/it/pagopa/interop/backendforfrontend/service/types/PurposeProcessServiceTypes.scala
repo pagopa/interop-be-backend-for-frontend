@@ -14,4 +14,9 @@ object PurposeProcessServiceTypes {
       case PurposeProcess.PurposeVersionState.ARCHIVED             => PurposeVersionState.ARCHIVED
     }
   }
+
+  implicit class PurposeVersionSeedConverter(private val seed: PurposeVersionSeed) extends AnyVal {
+    def toProcess: PurposeProcess.PurposeVersionSeed = PurposeProcess.PurposeVersionSeed(dailyCalls = seed.dailyCalls)
+  }
+
 }
