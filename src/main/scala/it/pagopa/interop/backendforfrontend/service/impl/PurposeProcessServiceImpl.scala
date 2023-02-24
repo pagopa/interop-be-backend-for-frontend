@@ -58,6 +58,6 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
           xCorrelationId = correlationId,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Creating purpose version $purposeId")
+      invoker.invoke(request, s"Creating version for purpose $purposeId")
     }
 }

@@ -4034,12 +4034,12 @@ paths:
               $ref: '#/components/schemas/PurposeVersionSeed'
         required: true
       responses:
-        '201':
+        '200':
           description: Purpose created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CompactPurposeVersion'
+                $ref: '#/components/schemas/CreatedResource'
           headers:
             'X-Rate-Limit-Limit':
               schema:
