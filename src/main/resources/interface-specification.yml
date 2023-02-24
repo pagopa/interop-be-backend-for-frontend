@@ -4039,7 +4039,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedResource'
+                $ref: '#/components/schemas/PurposeVersionResource'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -5705,7 +5705,20 @@ components:
           description: 'maximum number of daily calls that this version can perform.'
           type: integer
           format: int32
-          minimum: 0      
+          minimum: 0
+    PurposeVersionResource:
+      type: object
+      description: contains the purposeId and the versionId of the created resource
+      properties:
+        purposeId:
+          type: string
+          format: uuid
+        versionId:
+          type: string
+          format: uuid
+      required:
+        - purposeId
+        - versionId            
     CompactPurposeVersion:
       type: object
       required:

@@ -81,15 +81,15 @@ final case class PurposesApiServiceImpl(
 
   override def createPurposeVersion(purposeId: String, purposeVersionSeed: PurposeVersionSeed)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     logger.info(s"Create purpose version $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}")
 
-    val result: Future[CreatedResource] = for {
+    val result: Future[PurposeVersionResource] = for {
       purposeUuid    <- purposeId.toFutureUUID
       purposeVersion <- purposeProcessService.createPurposeVersion(purposeUuid, purposeVersionSeed.toProcess)
-    } yield CreatedResource(id = purposeVersion.id)
+    } yield PurposeVersionResource(purposeId = purposeVersion.id, versionId = purposeVersion.id)
 
     onComplete(result) {
       handleError(
