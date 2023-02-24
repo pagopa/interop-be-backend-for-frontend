@@ -79,7 +79,7 @@ object BFFErrors {
     documentId: String,
     errors: List[ErrorInfo]
   ) extends ComponentError(
-        "0016",
+        "0017",
         s"Invalid contentType $contentType for document $documentId from purpose $purposeId and version $versionId - ${errors.map(_.detail).mkString(",")}"
       )
 
