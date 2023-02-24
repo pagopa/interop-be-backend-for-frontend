@@ -83,7 +83,7 @@ final case class PurposesApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    logger.info(s"Deleting purpose $purposeId, version $versionId")
+    logger.info(s"Deleting version $versionId of purpose $purposeId")
 
     val result: Future[Unit] =
       for {
@@ -93,7 +93,7 @@ final case class PurposesApiServiceImpl(
       } yield result
 
     onComplete(result) {
-      handleError(s"Error deleting purpose $purposeId, version $versionId") orElse { case Success(_) =>
+      handleError(s"Error deleting version $versionId of purpose $purposeId") orElse { case Success(_) =>
         deletePurposeVersion204
       }
     }

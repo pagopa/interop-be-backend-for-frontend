@@ -58,6 +58,6 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
           xCorrelationId = correlationId,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Deleting Purpose $purposeId version $versionId")
+      invoker.invoke(request, s"Deleting version $versionId of Purpose $purposeId")
     }
 }
