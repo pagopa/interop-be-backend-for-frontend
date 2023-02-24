@@ -86,9 +86,9 @@ final case class PurposesApiServiceImpl(
   )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCompactPurposeVersion: ToEntityMarshaller[CompactPurposeVersion]
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
-    val result: Future[CompactPurposeVersion] = for {
+    val result: Future[CreatedResource] = for {
       purposeUuid    <- purposeId.toFutureUUID
       versionUuid    <- versionId.toFutureUUID
       purposeVersion <- purposeProcessService.updateWaitingForApprovalPurposeVersion(
@@ -96,17 +96,12 @@ final case class PurposesApiServiceImpl(
         versionUuid,
         seed.toSeed
       )
-    } yield CompactPurposeVersion(
-      id = purposeVersion.id,
-      state = purposeVersion.state.toApi,
-      dailyCalls = purposeVersion.dailyCalls,
-      expectedApprovalDate = purposeVersion.expectedApprovalDate
-    )
+    } yield CreatedResource(id = purposeVersion.id)
 
     onComplete(result) {
       handleError(s"Error updating purpose $purposeId with version $versionId in waiting for approval state") orElse {
-        case Success(compactPurposeVersion) =>
-          updateWaitingForApprovalPurposeVersion200(compactPurposeVersion)
+        case Success(resource) =>
+          updateWaitingForApprovalPurposeVersion200(resource)
       }
     }
   }

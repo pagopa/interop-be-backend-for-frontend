@@ -4044,7 +4044,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CompactPurposeVersion'
+                $ref: '#/components/schemas/CreatedResource'
         '400':
           description: Invalid input
           content:
