@@ -72,4 +72,7 @@ object BFFErrors {
   final case class NoDescriptorInEservice(eServiceId: UUID)
       extends ComponentError("0016", s"No descriptor found in eService $eServiceId")
 
+  final case class PurposeVersionDraftNotFound(purposeId: UUID)
+      extends ComponentError("0017", s"Version in DRAFT state for Purpose $purposeId not found")
+
 }

@@ -6,7 +6,11 @@ import akka.http.scaladsl.server.Route
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{EServiceNotFound, TenantNotFound}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
+  EServiceNotFound,
+  TenantNotFound,
+  PurposeVersionDraftNotFound
+}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
@@ -115,15 +119,18 @@ final case class PurposesApiServiceImpl(
 
   override def clonePurpose(purposeId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     logger.info(s"Cloning purpose $purposeId")
 
-    val result: Future[CreatedResource] = for {
-      purposeUuid <- purposeId.toFutureUUID
-      result      <- purposeProcessService.clonePurpose(purposeUuid)
-    } yield CreatedResource(result.id)
+    val result: Future[PurposeVersionResource] = for {
+      purposeUuid  <- purposeId.toFutureUUID
+      purpose      <- purposeProcessService.clonePurpose(purposeUuid)
+      draftVersion <- purpose.versions
+        .find(_.state == PurposeProcess.PurposeVersionState.DRAFT)
+        .toFuture(PurposeVersionDraftNotFound(purpose.id))
+    } yield PurposeVersionResource(purpose.id, draftVersion.id)
 
     onComplete(result) {
       handleError(s"Error cloning purpose $purposeId") orElse { case Success(resource) =>

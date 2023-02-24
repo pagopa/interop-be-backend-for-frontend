@@ -4033,7 +4033,7 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: '#/components/schemas/CreatedResource'
+                $ref: '#/components/schemas/PurposeVersionResource'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -5943,6 +5943,19 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RelationshipInfo'
+    PurposeVersionResource:
+      type: object
+      description: contains the purposeId and the versionId of the created resource
+      properties:
+        purposeId:
+          type: string
+          format: uuid
+        versionId:
+          type: string
+          format: uuid
+      required:
+        - purposeId
+        - versionId
     CreatedResource:
       type: object
       description: contains the id of the created resource
