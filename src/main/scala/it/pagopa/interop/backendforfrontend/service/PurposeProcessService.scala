@@ -17,4 +17,5 @@ trait PurposeProcessService {
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Purposes]
 
+  def deletePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 }
