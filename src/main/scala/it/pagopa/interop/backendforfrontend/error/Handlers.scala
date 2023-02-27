@@ -3,6 +3,7 @@ package it.pagopa.interop.backendforfrontend.error
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.StandardRoute
 import com.typesafe.scalalogging.LoggerTakingImplicit
+import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}

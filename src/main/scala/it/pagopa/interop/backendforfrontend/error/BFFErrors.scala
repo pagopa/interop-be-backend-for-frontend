@@ -74,4 +74,19 @@ object BFFErrors {
 
   final case class InvalidInterfaceFileDetected(eServiceId: String)
       extends ComponentError("0017", s"The interface file for EService $eServiceId is invalid")
+
+  final case class InvalidRiskAnalysisContentType(
+    contentType: String,
+    purposeId: String,
+    versionId: String,
+    documentId: String,
+    errors: List[ErrorInfo]
+  ) extends ComponentError(
+        "0018",
+        s"Invalid contentType $contentType for document $documentId from purpose $purposeId and version $versionId - ${errors.map(_.detail).mkString(",")}"
+      )
+
+  final case class PurposeVersionDraftNotFound(purposeId: UUID)
+      extends ComponentError("0019", s"Version in DRAFT state for Purpose $purposeId not found")
+
 }
