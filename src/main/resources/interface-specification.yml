@@ -1971,6 +1971,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: descriptorId
           in: path
           description: The Descriptor Id
