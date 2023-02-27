@@ -1,6 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes, PurposeVersion}
+import it.pagopa.interop.purposeprocess.client.model.{PurposeVersion, PurposeVersionState, Purposes}
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -21,4 +21,7 @@ trait PurposeProcessService {
     contexts: Seq[(String, String)]
   ): Future[PurposeVersion]
 
+  def suspendPurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion]
 }

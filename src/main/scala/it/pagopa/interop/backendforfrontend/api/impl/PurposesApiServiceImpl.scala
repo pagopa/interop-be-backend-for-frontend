@@ -81,19 +81,14 @@ final case class PurposesApiServiceImpl(
 
   override def archivePurposeVersion(purposeId: String, versionId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCompactPurposeVersion: ToEntityMarshaller[CompactPurposeVersion]
+    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[CompactPurposeVersion] = for {
+    val result: Future[PurposeVersionResource] = for {
       purposeUuid <- purposeId.toFutureUUID
       versionUuid <- versionId.toFutureUUID
-      purpose     <- purposeProcessService.archivePurposeVersion(purposeUuid, versionUuid)
-    } yield CompactPurposeVersion(
-      id = purpose.id,
-      state = purpose.state.toApi,
-      dailyCalls = purpose.dailyCalls,
-      expectedApprovalDate = purpose.expectedApprovalDate
-    )
+      _           <- purposeProcessService.archivePurposeVersion(purposeUuid, versionUuid)
+    } yield PurposeVersionResource(purposeId = purposeUuid, versionId = versionUuid)
 
     onComplete(result) {
       handleError(s"Error archiving purpose $purposeId with version $versionId") orElse {
@@ -136,5 +131,23 @@ final case class PurposesApiServiceImpl(
     suspendedByConsumer = purpose.suspendedByConsumer,
     suspendedByProducer = purpose.suspendedByProducer
   )
+
+  override def suspendPurposeVersion(purposeId: String, versionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID <- purposeId.toFutureUUID
+      versionUUID <- versionId.toFutureUUID
+      _           <- purposeProcessService.suspendPurposeVersion(purposeId = purposeUUID, versionId = versionUUID)
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
+
+    onComplete(result) {
+      handleError(s"Error suspending Version $versionId of Purpose $purposeId") orElse { case Success(r) =>
+        suspendPurposeVersion200(r)
+      }
+    }
+  }
 
 }
