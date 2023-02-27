@@ -683,4 +683,45 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+
+  override def deleteDraft(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    def deleteEServiceIfEmpty(eService: CatalogProcess.EService): Future[Unit] =
+      if (eService.descriptors.exists(_.id.toString != descriptorId))
+        Future.unit
+      else
+        catalogProcessService.deleteEService(eService.id)
+
+    val result: Future[Unit] = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
+      _            <- catalogProcessService.deleteDraft(eServiceId, descriptorId)
+      _            <- deleteEServiceIfEmpty(eService)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error while deleting draft descriptor $descriptorId for E-Service $eServiceId") orElse {
+        case Success(_) =>
+          deleteDraft204
+      }
+    }
+  }
+
+  override def deleteEService(
+    eServiceId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      _            <- catalogProcessService.deleteEService(eServiceUUID)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error while deleting E-Service $eServiceId") orElse { case Success(_) =>
+        deleteEService204
+      }
+    }
+  }
 }
