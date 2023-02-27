@@ -115,17 +115,14 @@ final case class PurposesApiServiceImpl(
 
   override def suspendPurposeVersion(purposeId: String, versionId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerPurposeVersion: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[CreatedResource] = for {
-      purposeUUID             <- purposeId.toFutureUUID
-      versionUUID             <- versionId.toFutureUUID
-      suspendedPurposeVersion <- purposeProcessService.suspendPurposeVersion(
-        purposeId = purposeUUID,
-        versionId = versionUUID
-      )
-    } yield suspendedPurposeVersion.toApi
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID <- purposeId.toFutureUUID
+      versionUUID <- versionId.toFutureUUID
+      _           <- purposeProcessService.suspendPurposeVersion(purposeId = purposeUUID, versionId = versionUUID)
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
 
     onComplete(result) {
       handleError(s"Error suspending Version $versionId of Purpose $purposeId") orElse { case Success(r) =>
