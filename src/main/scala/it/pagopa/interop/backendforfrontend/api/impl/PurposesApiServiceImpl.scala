@@ -9,14 +9,14 @@ import it.pagopa.interop.backendforfrontend.api.PurposesApiService
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{EServiceNotFound, TenantNotFound}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
-import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
-import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{CatalogProcessService, PurposeProcessService, TenantProcessService}
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
+import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -76,6 +76,27 @@ final case class PurposesApiServiceImpl(
       handleError(
         s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
       ) orElse { case Success(r) => getPurposes200(r) }
+    }
+  }
+
+  override def createPurposeVersion(purposeId: String, purposeVersionSeed: PurposeVersionSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}")
+
+    val result: Future[PurposeVersionResource] = for {
+      purposeUuid    <- purposeId.toFutureUUID
+      purposeVersion <- purposeProcessService.createPurposeVersion(purposeUuid, purposeVersionSeed.toProcess)
+    } yield PurposeVersionResource(purposeId = purposeVersion.id, versionId = purposeVersion.id)
+
+    onComplete(result) {
+      handleError(
+        s"Error creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}"
+      ) orElse { case Success(resource) =>
+        createPurposeVersion200(resource)
+      }
     }
   }
 
