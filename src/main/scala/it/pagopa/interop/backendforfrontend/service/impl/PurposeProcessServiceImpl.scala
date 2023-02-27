@@ -61,6 +61,20 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Creating version for purpose $purposeId")
     }
 
+  override def deletePurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.deletePurposeVersion(
+          purposeId = purposeId,
+          versionId = versionId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Deleting version $versionId of Purpose $purposeId")
+    }
+
   override def suspendPurposeVersion(purposeId: UUID, versionId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[PurposeVersion] = withHeaders { (bearerToken, correlationId, ip) =>
