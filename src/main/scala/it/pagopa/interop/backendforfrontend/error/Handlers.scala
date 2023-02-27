@@ -3,9 +3,7 @@ package it.pagopa.interop.backendforfrontend.error
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.StandardRoute
 import com.typesafe.scalalogging.LoggerTakingImplicit
-import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
-import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf, serviceCode}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
@@ -18,6 +16,7 @@ import it.pagopa.interop.commons.ratelimiter.model.Headers
 import it.pagopa.interop.commons.utils.errors.AkkaResponses._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
 import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors, ServiceCode}
+import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
