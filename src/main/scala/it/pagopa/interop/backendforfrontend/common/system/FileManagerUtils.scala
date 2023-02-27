@@ -3,7 +3,7 @@ package it.pagopa.interop.backendforfrontend.common.system
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.InvalidInterfaceFileDetected
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.InvalidInterfaceContentTypeDetected
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import org.apache.tika.Tika
 
@@ -37,7 +37,9 @@ object FileManagerUtils {
         case EServiceTechnology.REST => restContentTypes.contains(detectedContentTypes)
         case EServiceTechnology.SOAP => soapContentTypes.contains(detectedContentTypes)
       }
-      _ <- Left(InvalidInterfaceFileDetected(eService.id.toString, detectedContentTypes, eService.technology.toString))
+      _ <- Left(
+        InvalidInterfaceContentTypeDetected(eService.id.toString, detectedContentTypes, eService.technology.toString)
+      )
         .withRight[Unit]
         .unlessA(isValidTechnology)
     } yield ()

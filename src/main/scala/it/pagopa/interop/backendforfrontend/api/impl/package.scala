@@ -81,7 +81,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val externalIdFormat: RootJsonFormat[ExternalId]                 = jsonFormat2(ExternalId)
   implicit val mailFormat: RootJsonFormat[Mail]                             = jsonFormat2(Mail)
   implicit val institutionFormat: RootJsonFormat[Tenant]                    = jsonFormat8(Tenant)
-  implicit val agreementFormat: RootJsonFormat[Agreement]                   = jsonFormat17(Agreement)
+  implicit val agreementFormat: RootJsonFormat[Agreement]                   = jsonFormat18(Agreement)
   implicit val agreementListEntryFormat: RootJsonFormat[AgreementListEntry] = jsonFormat9(AgreementListEntry)
   implicit val agreementsFormat: RootJsonFormat[Agreements]                 = jsonFormat2(Agreements)
 
@@ -117,9 +117,12 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] =
     jsonFormat5(ProducerEServiceDetails)
 
-  implicit val compactPurposeVersionFormat: RootJsonFormat[CompactPurposeVersion] = jsonFormat4(CompactPurposeVersion)
-  implicit val purposeFormat: RootJsonFormat[Purpose]                             = jsonFormat8(Purpose)
-  implicit val purposesFormat: RootJsonFormat[Purposes]                           = jsonFormat2(Purposes)
+  implicit val compactPurposeVersionFormat: RootJsonFormat[CompactPurposeVersion]   = jsonFormat4(CompactPurposeVersion)
+  implicit val PurposeVersionResourceFormat: RootJsonFormat[PurposeVersionResource] = jsonFormat2(
+    PurposeVersionResource
+  )
+  implicit val purposeFormat: RootJsonFormat[Purpose]                               = jsonFormat8(Purpose)
+  implicit val purposesFormat: RootJsonFormat[Purposes]                             = jsonFormat2(Purposes)
 
   implicit val EServiceSeedFormat: RootJsonFormat[EServiceSeed]                           = jsonFormat4(EServiceSeed)
   implicit val updateEServiceDescriptorSeed: RootJsonFormat[UpdateEServiceDescriptorSeed] = jsonFormat6(
