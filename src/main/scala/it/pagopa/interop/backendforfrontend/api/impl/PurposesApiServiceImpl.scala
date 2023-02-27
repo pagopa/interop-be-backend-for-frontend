@@ -8,7 +8,11 @@ import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{EServiceNotFound, InvalidRiskAnalysisContentType, TenantNotFound}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
+  EServiceNotFound,
+  InvalidRiskAnalysisContentType,
+  TenantNotFound
+}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
