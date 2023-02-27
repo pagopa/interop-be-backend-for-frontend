@@ -20,4 +20,6 @@ trait PurposeProcessService {
   def suspendPurposeVersion(purposeId: UUID, versionId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[PurposeVersion]
+
+  def deletePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 }
