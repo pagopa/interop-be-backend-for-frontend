@@ -87,6 +87,6 @@ object BFFErrors {
       )
 
   final case class PurposeVersionDraftNotFound(purposeId: UUID)
-    extends ComponentError("0019", s"Version in DRAFT state for Purpose $purposeId not found")
+      extends ComponentError("0019", s"Version in DRAFT state for Purpose $purposeId not found")
 
 }
