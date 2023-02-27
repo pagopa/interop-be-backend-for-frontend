@@ -22,4 +22,7 @@ object PurposesApiMarshallerImpl extends PurposesApiMarshaller with SprayJsonSup
 
   override implicit def toEntityMarshallerFile: ToEntityMarshaller[File] = entityMarshallerFile
 
+  override implicit def fromEntityUnmarshallerWaitingForApprovalPurposeVersionUpdateContentSeed
+    : FromEntityUnmarshaller[WaitingForApprovalPurposeVersionUpdateContentSeed] =
+    sprayJsonUnmarshaller[WaitingForApprovalPurposeVersionUpdateContentSeed]
 }
