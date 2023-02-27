@@ -815,6 +815,25 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '409':
+          description: Agreement already exists with conflicting state
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '429':
           description: Too Many Requests
           content:
@@ -4129,6 +4148,86 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /purposes/{purposeId}/versions/{versionId}/suspend:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: purposeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: versionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - purposes
+      summary: Suspend Purpose Version
+      operationId: suspendPurposeVersion
+      responses:
+        '200':
+          description: Purpose Version Suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurposeVersionResource'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Purpose Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+      description: suspends the purpose version by id
   '/tenants/attributes/declared':
     post:
       tags:
@@ -4248,6 +4347,117 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '429':
           description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /purposes/{purposeId}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: purposeId
+        in: path
+        description: the purpose id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+        - $ref: '#/components/parameters/IpAddress'
+      tags:
+        - purposes
+      operationId: deletePurpose
+      description: Deletes a specific purpose if there are no version and just a draft version or a waiting for approval version
+      responses:
+        '204':
+          description: Purpose deleted
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Purpose Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '409':
+          description: Conflict
           content:
             application/problem+json:
               schema:
@@ -5718,7 +5928,7 @@ components:
           format: uuid
       required:
         - purposeId
-        - versionId            
+        - versionId
     CompactPurposeVersion:
       type: object
       required:
@@ -5912,6 +6122,19 @@ components:
       required:
         - results
         - pagination
+    PurposeVersionResource:
+      type: object
+      description: contains the purposeId and the versionId of the created resource
+      properties:
+        purposeId:
+          type: string
+          format: uuid
+        versionId:
+          type: string
+          format: uuid
+      required:
+        - purposeId
+        - versionId
     PurposeVersionState:
       type: string
       description: Purpose State

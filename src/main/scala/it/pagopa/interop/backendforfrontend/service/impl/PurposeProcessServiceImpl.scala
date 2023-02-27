@@ -7,7 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.purposeprocess.client.api.{EnumsSerializers, PurposeApi}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes, PurposeVersionSeed, PurposeVersion}
+import it.pagopa.interop.purposeprocess.client.model.{PurposeVersion, PurposeVersionSeed, PurposeVersionState, Purposes}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -59,5 +59,25 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
           xForwardedFor = ip
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Creating version for purpose $purposeId")
+    }
+
+  override def suspendPurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[PurposeVersion] =
+      api.suspendPurposeVersion(
+        xCorrelationId = correlationId,
+        purposeId = purposeId,
+        versionId = versionId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Suspending Version $versionId of Purpose $purposeId")
+  }
+
+  override def deletePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.deletePurpose(id = purposeId, xCorrelationId = correlationId, xForwardedFor = ip)(BearerToken(bearerToken))
+      invoker.invoke(request, s"Deleting Purposes $purposeId")
     }
 }
