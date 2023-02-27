@@ -84,7 +84,7 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerCreatedResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    logger.info(s"Create purpose version $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}")
+    logger.info(s"Creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}")
 
     val result: Future[PurposeVersionResource] = for {
       purposeUuid    <- purposeId.toFutureUUID
