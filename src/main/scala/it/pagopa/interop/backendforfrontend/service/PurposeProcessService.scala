@@ -22,6 +22,9 @@ trait PurposeProcessService {
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Purposes]
 
+  def suspendPurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion]
   def updateWaitingForApprovalPurposeVersion(
     purposeId: UUID,
     versionId: UUID,

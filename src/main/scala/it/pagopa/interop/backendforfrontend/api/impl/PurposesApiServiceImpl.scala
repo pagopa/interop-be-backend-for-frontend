@@ -85,10 +85,10 @@ final case class PurposesApiServiceImpl(
     seed: WaitingForApprovalPurposeVersionUpdateContentSeed
   )(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[CreatedResource] = for {
+    val result: Future[PurposeVersionResource] = for {
       purposeUuid    <- purposeId.toFutureUUID
       versionUuid    <- versionId.toFutureUUID
       purposeVersion <- purposeProcessService.updateWaitingForApprovalPurposeVersion(
@@ -96,7 +96,7 @@ final case class PurposesApiServiceImpl(
         versionUuid,
         seed.toSeed
       )
-    } yield CreatedResource(id = purposeVersion.id)
+    } yield PurposeVersionResource(purposeId = purposeUuid, versionId = purposeVersion.id)
 
     onComplete(result) {
       handleError(s"Error updating purpose $purposeId with version $versionId in waiting for approval state") orElse {
@@ -139,4 +139,23 @@ final case class PurposesApiServiceImpl(
     suspendedByConsumer = purpose.suspendedByConsumer,
     suspendedByProducer = purpose.suspendedByProducer
   )
+
+  override def suspendPurposeVersion(purposeId: String, versionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID <- purposeId.toFutureUUID
+      versionUUID <- versionId.toFutureUUID
+      _           <- purposeProcessService.suspendPurposeVersion(purposeId = purposeUUID, versionId = versionUUID)
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
+
+    onComplete(result) {
+      handleError(s"Error suspending Version $versionId of Purpose $purposeId") orElse { case Success(r) =>
+        suspendPurposeVersion200(r)
+      }
+    }
+  }
+
 }
