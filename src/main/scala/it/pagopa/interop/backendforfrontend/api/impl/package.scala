@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.marshalling.{ToEntityMarshaller, Marshaller}
 import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.jwt.JWTConfiguration
@@ -12,6 +12,10 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClai
 import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
+import akka.http.scaladsl.model.ContentTypes
+import java.nio.charset.StandardCharsets
+import scala.io.{BufferedSource, Codec}
+import java.io.File
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -81,7 +85,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val externalIdFormat: RootJsonFormat[ExternalId]                 = jsonFormat2(ExternalId)
   implicit val mailFormat: RootJsonFormat[Mail]                             = jsonFormat2(Mail)
   implicit val institutionFormat: RootJsonFormat[Tenant]                    = jsonFormat8(Tenant)
-  implicit val agreementFormat: RootJsonFormat[Agreement]                   = jsonFormat17(Agreement)
+  implicit val agreementFormat: RootJsonFormat[Agreement]                   = jsonFormat18(Agreement)
   implicit val agreementListEntryFormat: RootJsonFormat[AgreementListEntry] = jsonFormat9(AgreementListEntry)
   implicit val agreementsFormat: RootJsonFormat[Agreements]                 = jsonFormat2(Agreements)
 
@@ -134,7 +138,24 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val UpdateEServiceDescriptorDocumentSeedFormat: RootJsonFormat[UpdateEServiceDescriptorDocumentSeed] =
     jsonFormat1(UpdateEServiceDescriptorDocumentSeed)
 
+  implicit val purposeVersionSeedFormat: RootJsonFormat[PurposeVersionSeed]         =
+    jsonFormat1(PurposeVersionSeed)
+  implicit val purposeVersionResourceFormat: RootJsonFormat[PurposeVersionResource] =
+    jsonFormat2(PurposeVersionResource)
+
+  implicit val waitingForApprovalPurposeVersionUpdateContentSeed
+    : RootJsonFormat[WaitingForApprovalPurposeVersionUpdateContentSeed] =
+    jsonFormat1(WaitingForApprovalPurposeVersionUpdateContentSeed)
+
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
+
+  final val entityMarshallerFile: ToEntityMarshaller[File] =
+    Marshaller.withFixedContentType(ContentTypes.`application/octet-stream`) { f =>
+      val source: BufferedSource = scala.io.Source.fromFile(f.getPath)(Codec(StandardCharsets.UTF_8.name))
+      val out: String            = source.mkString
+      source.close()
+      out.getBytes(StandardCharsets.UTF_8.name)
+    }
 
   final val serviceErrorCodePrefix: String    = "016"
   final implicit val serviceCode: ServiceCode = ServiceCode(serviceErrorCodePrefix)

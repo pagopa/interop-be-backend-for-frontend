@@ -63,7 +63,7 @@ object BFFErrors {
         s"Error parsing content type $contentType for document $documentPath. Reasons: ${errors.mkString(",")}"
       )
 
-  final case class InvalidInterfaceFileDetected(eServiceId: String, contentType: String, technology: String)
+  final case class InvalidInterfaceContentTypeDetected(eServiceId: String, contentType: String, technology: String)
       extends ComponentError(
         "0015",
         s"The interface file for EService $eServiceId has a contentType $contentType not admitted for $technology technology"
@@ -71,5 +71,22 @@ object BFFErrors {
 
   final case class NoDescriptorInEservice(eServiceId: UUID)
       extends ComponentError("0016", s"No descriptor found in eService $eServiceId")
+
+  final case class InvalidInterfaceFileDetected(eServiceId: String)
+      extends ComponentError("0017", s"The interface file for EService $eServiceId is invalid")
+
+  final case class InvalidRiskAnalysisContentType(
+    contentType: String,
+    purposeId: String,
+    versionId: String,
+    documentId: String,
+    errors: List[ErrorInfo]
+  ) extends ComponentError(
+        "0018",
+        s"Invalid contentType $contentType for document $documentId from purpose $purposeId and version $versionId - ${errors.map(_.detail).mkString(",")}"
+      )
+
+  final case class PurposeVersionDraftNotFound(purposeId: UUID)
+      extends ComponentError("0019", s"Version in DRAFT state for Purpose $purposeId not found")
 
 }

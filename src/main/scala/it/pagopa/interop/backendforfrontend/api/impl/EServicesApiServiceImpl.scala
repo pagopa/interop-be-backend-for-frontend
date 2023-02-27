@@ -19,6 +19,7 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
+import it.pagopa.interop.catalogprocess.client.model.EServices
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -261,20 +262,26 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProducerEServices: ToEntityMarshaller[ProducerEServices],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result = for {
+
+    def getResults(producerId: UUID, eServicesIds: List[UUID]): Future[EServices] = catalogProcessService.getEServices(
+      name = q,
+      eServicesIds = eServicesIds,
+      producersIds = List(producerId),
+      states = Nil,
+      offset = offset,
+      limit = limit
+    )
+
+    val result: Future[ProducerEServices] = for {
       producerId    <- getOrganizationIdFutureUUID(contexts)
       consumerUUIDs <- Future.traverse(parseArrayParameters(consumersIds))(_.toFutureUUID)
-      eServicesIds  <-
-        if (consumerUUIDs.isEmpty) Future.successful(Nil)
-        else getProducerEServicesIds(producerId, consumerUUIDs)
-      pagedResults  <- catalogProcessService.getEServices(
-        name = q,
-        eServicesIds = eServicesIds,
-        producersIds = List(producerId),
-        states = Nil,
-        offset = offset,
-        limit = limit
-      )
+      pagedResults  <-
+        if (consumerUUIDs.isEmpty) getResults(producerId, Nil)
+        else
+          getProducerEServicesIds(producerId, consumerUUIDs).flatMap {
+            case Nil => Future.successful(EServices(Nil, 0))
+            case xs  => getResults(producerId, xs)
+          }
     } yield ProducerEServices(
       results = pagedResults.results.map(enhanceProducerEService),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
@@ -484,10 +491,12 @@ final case class EServicesApiServiceImpl(
       case _         => false
     }
 
-    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (isInterface)
-      InterfaceParser.parseOpenApi(bytes).flatMap(InterfaceParserUtils.getUrls[Json]) orElse
-        InterfaceParser.parseWSDL(bytes).flatMap(InterfaceParserUtils.getUrls[Elem])
-    else Right(List.empty)
+    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] =
+      if (isInterface)
+        (InterfaceParser.parseOpenApi(bytes).flatMap(InterfaceParserUtils.getUrls[Json]) orElse
+          InterfaceParser.parseWSDL(bytes).flatMap(InterfaceParserUtils.getUrls[Elem]))
+          .leftMap(_ => InvalidInterfaceFileDetected(eServiceId))
+      else Right(List.empty)
 
     val documentIdUuid: UUID = uuidSupplier.get()
 
@@ -671,6 +680,47 @@ final case class EServicesApiServiceImpl(
       handleError(s"Error getting document $documentId of eservice $eServiceId") orElse {
         case Success(documentEntity) =>
           complete(documentEntity)
+      }
+    }
+  }
+
+  override def deleteDraft(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    def deleteEServiceIfEmpty(eService: CatalogProcess.EService): Future[Unit] =
+      if (eService.descriptors.exists(_.id.toString != descriptorId))
+        Future.unit
+      else
+        catalogProcessService.deleteEService(eService.id)
+
+    val result: Future[Unit] = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
+      _            <- catalogProcessService.deleteDraft(eServiceId, descriptorId)
+      _            <- deleteEServiceIfEmpty(eService)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error while deleting draft descriptor $descriptorId for E-Service $eServiceId") orElse {
+        case Success(_) =>
+          deleteDraft204
+      }
+    }
+  }
+
+  override def deleteEService(
+    eServiceId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      _            <- catalogProcessService.deleteEService(eServiceUUID)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error while deleting E-Service $eServiceId") orElse { case Success(_) =>
+        deleteEService204
       }
     }
   }

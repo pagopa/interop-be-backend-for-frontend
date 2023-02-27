@@ -23,7 +23,6 @@ import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServic
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -31,7 +30,6 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
-import it.pagopa.interop.backendforfrontend.api.impl.Utils
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import java.io.File
@@ -335,6 +333,7 @@ final case class AgreementsApiServiceImpl(
     suspendedByConsumer = agreement.suspendedByConsumer,
     suspendedByProducer = agreement.suspendedByProducer,
     suspendedByPlatform = agreement.suspendedByPlatform,
+    isContractPresent = agreement.contract.nonEmpty,
     consumerNotes = agreement.consumerNotes,
     rejectionReason = agreement.rejectionReason,
     consumerDocuments = agreement.consumerDocuments.map(_.toApi),
