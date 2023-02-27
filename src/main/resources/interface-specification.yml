@@ -1978,6 +1978,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '204':
           description: E-Service or draft Descriptor deleted
