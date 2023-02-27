@@ -7,7 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.purposeprocess.client.api.{EnumsSerializers, PurposeApi}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersion, PurposeVersionSeed, PurposeVersionState, Purposes}
+import it.pagopa.interop.purposeprocess.client.model._
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -80,4 +80,21 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
         api.deletePurpose(id = purposeId, xCorrelationId = correlationId, xForwardedFor = ip)(BearerToken(bearerToken))
       invoker.invoke(request, s"Deleting Purposes $purposeId")
     }
+
+  override def getRiskAnalysisDocument(purposeId: UUID, versionId: UUID, documentId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersionDocument] = withHeaders[PurposeVersionDocument] { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[PurposeVersionDocument] =
+      api.getRiskAnalysisDocument(
+        purposeId = purposeId.toString,
+        versionId = versionId.toString,
+        documentId = documentId.toString,
+        xCorrelationId = correlationId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Downloading Risk Analysis document $documentId for Purpose $purposeId and Version $versionId"
+    )
+  }
 }
