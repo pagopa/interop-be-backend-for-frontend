@@ -1,34 +1,35 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.model.{ContentType, HttpEntity}
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  EServiceNotFound,
-  TenantNotFound,
-  PurposeVersionDraftNotFound
-}
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
-import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
-import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{CatalogProcessService, PurposeProcessService, TenantProcessService}
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
+import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
+import java.io.File
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 final case class PurposesApiServiceImpl(
   catalogProcessService: CatalogProcessService,
   purposeProcessService: PurposeProcessService,
-  tenantProcessService: TenantProcessService
+  tenantProcessService: TenantProcessService,
+  fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends PurposesApiService {
 
@@ -80,6 +81,102 @@ final case class PurposesApiServiceImpl(
       handleError(
         s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
       ) orElse { case Success(r) => getPurposes200(r) }
+    }
+  }
+
+  override def getRiskAnalysisDocument(purposeId: String, versionId: String, documentId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+    logger.info(s"Downloading risk analysis document $documentId from purpose $purposeId with version $versionId")
+
+    def parseMediaType(
+      contentType: String,
+      purposeId: String,
+      versionId: String,
+      documentId: String
+    ): Future[ContentType] =
+      ContentType
+        .parse(contentType)
+        .leftMap(errors => InvalidRiskAnalysisContentType(contentType, purposeId, versionId, documentId, errors))
+        .toFuture
+
+    val result: Future[HttpEntity.Strict] =
+      for {
+        purposeUUID  <- purposeId.toFutureUUID
+        documentUUID <- documentId.toFutureUUID
+        versionUUID  <- versionId.toFutureUUID
+        document     <- purposeProcessService.getRiskAnalysisDocument(purposeUUID, versionUUID, documentUUID)
+        contentType  <- parseMediaType(document.contentType, purposeId, versionId, documentId)
+        byteStream   <- fileManager.get(ApplicationConfiguration.riskAnalysisDocumentsContainer)(document.path)
+      } yield HttpEntity(contentType, byteStream.toByteArray())
+
+    onComplete(result) {
+      handleError(
+        s"Error downloading risk analysis document $documentId from purpose $purposeId with version $versionId"
+      ) orElse { case Success(document) =>
+        complete(document)
+      }
+    }
+  }
+
+  override def createPurposeVersion(purposeId: String, purposeVersionSeed: PurposeVersionSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}")
+
+    val result: Future[PurposeVersionResource] = for {
+      purposeUuid    <- purposeId.toFutureUUID
+      purposeVersion <- purposeProcessService.createPurposeVersion(purposeUuid, purposeVersionSeed.toProcess)
+    } yield PurposeVersionResource(purposeId = purposeVersion.id, versionId = purposeVersion.id)
+
+    onComplete(result) {
+      handleError(
+        s"Error creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}"
+      ) orElse { case Success(resource) =>
+        createPurposeVersion200(resource)
+      }
+    }
+  }
+
+  def deletePurposeVersion(purposeId: String, versionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Deleting version $versionId of purpose $purposeId")
+
+    val result: Future[Unit] =
+      for {
+        purposeUUID <- purposeId.toFutureUUID
+        versionUUID <- versionId.toFutureUUID
+        result      <- purposeProcessService.deletePurposeVersion(purposeUUID, versionUUID)
+      } yield result
+
+    onComplete(result) {
+      handleError(s"Error deleting version $versionId of purpose $purposeId") orElse { case Success(_) =>
+        deletePurposeVersion204
+      }
+    }
+  }
+
+  def deletePurpose(
+    purposeId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    logger.info(s"Deleting purpose $purposeId")
+
+    val result: Future[Unit] =
+      for {
+        purposeUUID <- purposeId.toFutureUUID
+        _           <- purposeProcessService.deletePurpose(purposeUUID)
+      } yield ()
+
+    onComplete(result) {
+      handleError(s"Error deleting purpose $purposeId") orElse { case Success(_) =>
+        deletePurpose204
+      }
     }
   }
 
@@ -138,4 +235,23 @@ final case class PurposesApiServiceImpl(
       }
     }
   }
+
+  override def suspendPurposeVersion(purposeId: String, versionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID <- purposeId.toFutureUUID
+      versionUUID <- versionId.toFutureUUID
+      _           <- purposeProcessService.suspendPurposeVersion(purposeId = purposeUUID, versionId = versionUUID)
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
+
+    onComplete(result) {
+      handleError(s"Error suspending Version $versionId of Purpose $purposeId") orElse { case Success(r) =>
+        suspendPurposeVersion200(r)
+      }
+    }
+  }
+
 }

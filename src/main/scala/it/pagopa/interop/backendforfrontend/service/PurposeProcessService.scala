@@ -1,6 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purposes, Purpose}
+import it.pagopa.interop.purposeprocess.client.model._
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -17,5 +17,22 @@ trait PurposeProcessService {
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Purposes]
 
+  def createPurposeVersion(purposeId: UUID, seed: PurposeVersionSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion]
+
   def clonePurpose(purposeUuid: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose]
+
+  def deletePurposeVersion(purposeId: UUID, versionId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
+
+  def suspendPurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion]
+
+  def deletePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
+
+  def getRiskAnalysisDocument(purposeId: UUID, versionId: UUID, documentId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersionDocument]
+
 }
