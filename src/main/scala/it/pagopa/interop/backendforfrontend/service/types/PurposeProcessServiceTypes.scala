@@ -20,7 +20,7 @@ object PurposeProcessServiceTypes {
   }
 
   implicit class PurposeVersionUpdateSeedConverter(private val seed: WaitingForApprovalPurposeVersionUpdateContentSeed)
-    extends AnyVal {
+      extends AnyVal {
     def toSeed: PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent =
       PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent(expectedApprovalDate = seed.expectedApprovalDate)
   }
