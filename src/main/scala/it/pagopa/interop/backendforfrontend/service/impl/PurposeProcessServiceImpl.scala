@@ -154,4 +154,17 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       s"Downloading Risk Analysis document $documentId for Purpose $purposeId and Version $versionId"
     )
   }
+
+  override def activatePurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[PurposeVersion] =
+      api.activatePurposeVersion(
+        xCorrelationId = correlationId,
+        purposeId = purposeId,
+        versionId = versionId,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Activating Version $versionId of Purpose $purposeId")
+  }
 }

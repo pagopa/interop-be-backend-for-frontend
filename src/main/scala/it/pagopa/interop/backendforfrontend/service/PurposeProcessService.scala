@@ -45,4 +45,8 @@ trait PurposeProcessService {
     contexts: Seq[(String, String)]
   ): Future[PurposeVersionDocument]
 
+
+  def activatePurposeVersion(purposeId: UUID, versionId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PurposeVersion]
 }
