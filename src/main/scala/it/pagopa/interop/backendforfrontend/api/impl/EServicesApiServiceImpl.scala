@@ -491,10 +491,12 @@ final case class EServicesApiServiceImpl(
       case _         => false
     }
 
-    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (isInterface)
-      InterfaceParser.parseOpenApi(bytes).flatMap(InterfaceParserUtils.getUrls[Json]) orElse
-        InterfaceParser.parseWSDL(bytes).flatMap(InterfaceParserUtils.getUrls[Elem])
-    else Right(List.empty)
+    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] =
+      if (isInterface)
+        (InterfaceParser.parseOpenApi(bytes).flatMap(InterfaceParserUtils.getUrls[Json]) orElse
+          InterfaceParser.parseWSDL(bytes).flatMap(InterfaceParserUtils.getUrls[Elem]))
+          .leftMap(_ => InvalidInterfaceFileDetected(eServiceId))
+      else Right(List.empty)
 
     val documentIdUuid: UUID = uuidSupplier.get()
 
@@ -678,6 +680,47 @@ final case class EServicesApiServiceImpl(
       handleError(s"Error getting document $documentId of eservice $eServiceId") orElse {
         case Success(documentEntity) =>
           complete(documentEntity)
+      }
+    }
+  }
+
+  override def deleteDraft(eServiceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    def deleteEServiceIfEmpty(eService: CatalogProcess.EService): Future[Unit] =
+      if (eService.descriptors.exists(_.id.toString != descriptorId))
+        Future.unit
+      else
+        catalogProcessService.deleteEService(eService.id)
+
+    val result: Future[Unit] = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
+      _            <- catalogProcessService.deleteDraft(eServiceId, descriptorId)
+      _            <- deleteEServiceIfEmpty(eService)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error while deleting draft descriptor $descriptorId for E-Service $eServiceId") orElse {
+        case Success(_) =>
+          deleteDraft204
+      }
+    }
+  }
+
+  override def deleteEService(
+    eServiceId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      _            <- catalogProcessService.deleteEService(eServiceUUID)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error while deleting E-Service $eServiceId") orElse { case Success(_) =>
+        deleteEService204
       }
     }
   }

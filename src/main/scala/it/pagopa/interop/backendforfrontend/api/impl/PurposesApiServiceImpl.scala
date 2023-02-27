@@ -1,32 +1,28 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.server.Route
-import cats.syntax.all._
 import akka.http.scaladsl.model.{ContentType, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
+import akka.http.scaladsl.server.Route
+import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  EServiceNotFound,
-  TenantNotFound,
-  InvalidRiskAnalysisContentType
-}
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{EServiceNotFound, InvalidRiskAnalysisContentType, TenantNotFound}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
-import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
-import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{CatalogProcessService, PurposeProcessService, TenantProcessService}
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.commons.files.service.FileManager
+import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
-import scala.concurrent.{ExecutionContext, Future}
 import java.io.File
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 final case class PurposesApiServiceImpl(
@@ -125,6 +121,45 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  override def createPurposeVersion(purposeId: String, purposeVersionSeed: PurposeVersionSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}")
+
+    val result: Future[PurposeVersionResource] = for {
+      purposeUuid    <- purposeId.toFutureUUID
+      purposeVersion <- purposeProcessService.createPurposeVersion(purposeUuid, purposeVersionSeed.toProcess)
+    } yield PurposeVersionResource(purposeId = purposeVersion.id, versionId = purposeVersion.id)
+
+    onComplete(result) {
+      handleError(
+        s"Error creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}"
+      ) orElse { case Success(resource) =>
+        createPurposeVersion200(resource)
+      }
+    }
+  }
+
+  def deletePurpose(
+    purposeId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    logger.info(s"Deleting purpose $purposeId")
+
+    val result: Future[Unit] =
+      for {
+        purposeUUID <- purposeId.toFutureUUID
+        _           <- purposeProcessService.deletePurpose(purposeUUID)
+      } yield ()
+
+    onComplete(result) {
+      handleError(s"Error deleting purpose $purposeId") orElse { case Success(_) =>
+        deletePurpose204
+      }
+    }
+  }
+
   private def enhancePurpose(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],
@@ -158,4 +193,23 @@ final case class PurposesApiServiceImpl(
     suspendedByConsumer = purpose.suspendedByConsumer,
     suspendedByProducer = purpose.suspendedByProducer
   )
+
+  override def suspendPurposeVersion(purposeId: String, versionId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID <- purposeId.toFutureUUID
+      versionUUID <- versionId.toFutureUUID
+      _           <- purposeProcessService.suspendPurposeVersion(purposeId = purposeUUID, versionId = versionUUID)
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
+
+    onComplete(result) {
+      handleError(s"Error suspending Version $versionId of Purpose $purposeId") orElse { case Success(r) =>
+        suspendPurposeVersion200(r)
+      }
+    }
+  }
+
 }
