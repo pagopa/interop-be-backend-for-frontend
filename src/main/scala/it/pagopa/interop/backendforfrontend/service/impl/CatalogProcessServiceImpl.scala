@@ -251,6 +251,6 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         api.deleteEService(xCorrelationId = correlationId, eServiceId = eServiceId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"")
+      invoker.invoke(request, s"Deleting E-Service $eServiceId")
     }
 }
