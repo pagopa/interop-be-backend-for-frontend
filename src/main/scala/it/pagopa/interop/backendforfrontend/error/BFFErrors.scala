@@ -86,4 +86,7 @@ object BFFErrors {
         s"Invalid contentType $contentType for document $documentId from purpose $purposeId and version $versionId - ${errors.map(_.detail).mkString(",")}"
       )
 
+  final case class PurposeVersionDraftNotFound(purposeId: UUID)
+      extends ComponentError("0019", s"Version in DRAFT state for Purpose $purposeId not found")
+
 }

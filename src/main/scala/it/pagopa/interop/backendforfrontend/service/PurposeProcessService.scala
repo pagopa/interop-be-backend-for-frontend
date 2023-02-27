@@ -21,6 +21,8 @@ trait PurposeProcessService {
     contexts: Seq[(String, String)]
   ): Future[PurposeVersion]
 
+  def clonePurpose(purposeUuid: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose]
+
   def deletePurposeVersion(purposeId: UUID, versionId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
   def suspendPurposeVersion(purposeId: UUID, versionId: UUID)(implicit

@@ -8,11 +8,7 @@ import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  EServiceNotFound,
-  InvalidRiskAnalysisContentType,
-  TenantNotFound
-}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
@@ -217,6 +213,28 @@ final case class PurposesApiServiceImpl(
     suspendedByConsumer = purpose.suspendedByConsumer,
     suspendedByProducer = purpose.suspendedByProducer
   )
+
+  override def clonePurpose(purposeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Cloning purpose $purposeId")
+
+    val result: Future[PurposeVersionResource] = for {
+      purposeUuid  <- purposeId.toFutureUUID
+      purpose      <- purposeProcessService.clonePurpose(purposeUuid)
+      draftVersion <- purpose.versions
+        .find(_.state == PurposeProcess.PurposeVersionState.DRAFT)
+        .toFuture(PurposeVersionDraftNotFound(purpose.id))
+    } yield PurposeVersionResource(purpose.id, draftVersion.id)
+
+    onComplete(result) {
+      handleError(s"Error cloning purpose $purposeId") orElse { case Success(resource) =>
+        clonePurpose200(resource)
+      }
+    }
+  }
 
   override def suspendPurposeVersion(purposeId: String, versionId: String)(implicit
     contexts: Seq[(String, String)],

@@ -47,6 +47,15 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving Purposes")
     }
 
+  override def clonePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose] =
+    withHeaders[Purpose] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Purpose] =
+        api.clonePurpose(purposeId = purposeId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Cloning Purpose ${purposeId.toString}")
+    }
+
   override def createPurposeVersion(purposeId: UUID, seed: PurposeVersionSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[PurposeVersion] =
