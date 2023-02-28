@@ -11,8 +11,13 @@ import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.UnknownTenantOrigin
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
-import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
-import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantManagementService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken, Problem}
+import it.pagopa.interop.backendforfrontend.service.{
+  PartyProcessService,
+  TenantManagementService,
+  TenantProcessService,
+  AuthorizationProcessService
+}
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -35,6 +40,7 @@ final case class AuthorizationApiServiceImpl(
   tenantManagement: TenantManagementService,
   tenantProcess: TenantProcessService,
   partyProcess: PartyProcessService,
+  authorizationProcessService: AuthorizationProcessService,
   allowList: List[String],
   rateLimiter: RateLimiter
 )(implicit ec: ExecutionContext)
@@ -76,6 +82,16 @@ final case class AuthorizationApiServiceImpl(
       handleError(s"Error creating a session token") orElse { case Success((token, rateLimitStatus)) =>
         complete(StatusCodes.OK, Headers.headersFromStatus(rateLimitStatus), token)
       }
+    }
+  }
+
+  override def deleteClient(
+    clientId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] = authorizationProcessService.deleteClient(clientId)
+
+    onComplete(result) {
+      handleError(s"Error deleting client $clientId") orElse { case Success(_) => deleteClient204 }
     }
   }
 

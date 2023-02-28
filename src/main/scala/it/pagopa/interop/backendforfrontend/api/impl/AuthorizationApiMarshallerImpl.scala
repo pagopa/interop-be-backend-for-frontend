@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiMarshaller
-import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
+import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken, Problem}
 import spray.json._
 
 object AuthorizationApiMarshallerImpl
@@ -17,5 +17,7 @@ object AuthorizationApiMarshallerImpl
 
   override implicit def toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken] =
     sprayJsonMarshaller[SessionToken]
+
+  override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
 
 }

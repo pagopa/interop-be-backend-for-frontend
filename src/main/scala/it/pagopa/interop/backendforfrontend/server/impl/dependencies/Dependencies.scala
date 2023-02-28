@@ -143,6 +143,8 @@ trait Dependencies {
       new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
     val purposeProcess: PurposeProcessService                 =
       new PurposeProcessServiceImpl(ApplicationConfiguration.purposeProcessURL, blockingEc)
+    val authorizationProcess: AuthorizationProcessService     =
+      new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
 
@@ -170,6 +172,7 @@ trait Dependencies {
         tenantManagement,
         tenantProcess,
         partyProcess,
+        authorizationProcess,
         allowList,
         rateLimiter
       ),
