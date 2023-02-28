@@ -19,6 +19,16 @@ object PurposeProcessServiceTypes {
     }
   }
 
+  implicit class PurposeVersionSeedConverter(private val seed: PurposeVersionSeed) extends AnyVal {
+    def toProcess: PurposeProcess.PurposeVersionSeed = PurposeProcess.PurposeVersionSeed(dailyCalls = seed.dailyCalls)
+  }
+
+  implicit class PurposeVersionUpdateSeedConverter(private val seed: WaitingForApprovalPurposeVersionUpdateContentSeed)
+      extends AnyVal {
+    def toSeed: PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent =
+      PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent(expectedApprovalDate = seed.expectedApprovalDate)
+  }
+
   implicit class DraftPurposeVersionUpdateContentConverter(private val dpvc: DraftPurposeVersionUpdateContent)
       extends AnyVal {
     def toProcess: DraftPurposeVersionProcess =

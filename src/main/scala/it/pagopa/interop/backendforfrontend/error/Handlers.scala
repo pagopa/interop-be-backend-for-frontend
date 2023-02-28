@@ -16,6 +16,7 @@ import it.pagopa.interop.commons.ratelimiter.model.Headers
 import it.pagopa.interop.commons.utils.errors.AkkaResponses._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
 import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors, ServiceCode}
+import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
@@ -30,6 +31,7 @@ object Handlers {
     contexts: Seq[(String, String)],
     logger: LoggerTakingImplicit[ContextFieldsToLog]
   ): PartialFunction[Try[_], StandardRoute] = {
+    case Failure(err: PurposeProcessError[_])    => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: AgreementProcessError[_])  => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: AttributeRegistryError[_]) => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: CatalogManagementError[_]) => completeWithError(err.code, err.responseContent, logMessage)
@@ -46,6 +48,7 @@ object Handlers {
       )
     case Failure(err: AttributeNotExists)                       => internalServerError(err, logMessage)
     case Failure(err: UnknownTenantOrigin)                      => badRequest(err, logMessage)
+    case Failure(err: InvalidInterfaceContentTypeDetected)      => badRequest(err, logMessage)
     case Failure(err: InvalidInterfaceFileDetected)             => badRequest(err, logMessage)
     case Failure(err: AgreementDescriptorNotFound)              => notFound(err, logMessage)
     case Failure(err)                                           => internalServerError(err, logMessage)
