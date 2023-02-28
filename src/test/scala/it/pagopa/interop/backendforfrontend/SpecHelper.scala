@@ -19,9 +19,13 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.util.Base64URL
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
-import it.pagopa.interop.backendforfrontend.service.TenantManagementService
-import it.pagopa.interop.backendforfrontend.service.TenantProcessService
-import it.pagopa.interop.backendforfrontend.service.PartyProcessService
+import it.pagopa.interop.backendforfrontend.service.{
+  TenantManagementService,
+  TenantProcessService,
+  PartyProcessService,
+  ClientProcessService
+}
+
 import it.pagopa.interop.commons.jwt.model.Token
 
 import java.util.UUID
@@ -56,6 +60,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   val mockTenantManagement: TenantManagementService    = mock[TenantManagementService]
   val mockTenantProcess: TenantProcessService          = mock[TenantProcessService]
   val mockPartyProcess: PartyProcessService            = mock[PartyProcessService]
+  val mockClientProcess: ClientProcessService          = mock[ClientProcessService]
   final val allowList: List[String]                    = List(UUID.randomUUID().toString, UUID.randomUUID().toString)
   final val bearerToken: String                        = "token"
   val service: AuthorizationApiService                 = AuthorizationApiServiceImpl(
