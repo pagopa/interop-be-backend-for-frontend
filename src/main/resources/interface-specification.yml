@@ -4175,6 +4175,56 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+    post:
+      tags:
+        - purposes
+      operationId: createPurpose
+      description: Creates the Purpose
+      responses:
+        '201':
+          description: Purpose created
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedResource'
+        '400':
+          description: Bad Request
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurposeSeed'
+        required: true
   /purposes/{purposeId}/clone:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -6629,6 +6679,31 @@ components:
           type: integer
           format: int32
           minimum: 0
+    PurposeSeed:
+      type: object
+      description: contains the expected payload for purpose creation.
+      properties:
+        eserviceId:
+          type: string
+          format: uuid
+        consumerId:
+          type: string
+          format: uuid
+        riskAnalysisForm:
+          $ref: '#/components/schemas/RiskAnalysisForm'
+        title:
+          type: string
+          minLength: 5
+          maxLength: 60
+        description:
+          type: string
+          minLength: 10
+          maxLength: 250
+      required:
+        - eserviceId
+        - consumerId
+        - title
+        - description
     CompactPurposeVersion:
       type: object
       required:
@@ -6909,6 +6984,23 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RelationshipInfo'
+    RiskAnalysisForm:
+      type: object
+      properties:
+        version:
+          type: string
+          minLength: 1
+          maxLength: 250
+        answers:
+          additionalProperties:
+            type: array
+            items:
+              type: string
+              minLength: 1
+              maxLength: 250
+      required:
+        - version
+        - answers
     CreatedResource:
       type: object
       description: contains the id of the created resource

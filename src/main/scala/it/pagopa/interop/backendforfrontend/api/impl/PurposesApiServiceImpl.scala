@@ -317,4 +317,30 @@ final case class PurposesApiServiceImpl(
       }
     }
   }
+
+  override def createPurpose(
+    q: Option[String],
+    eservicesIds: String,
+    consumersIds: String,
+    producersIds: String,
+    states: String,
+    offset: Int,
+    limit: Int,
+    purposeSeed: PurposeSeed
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    logger.info(s"Creating purpose with seed $purposeSeed")
+
+    val result: Future[CreatedResource] =
+      purposeProcessService.createPurpose(purposeSeed.toProcess)(contexts).map(_.toApi)
+
+    onComplete(result) {
+      handleError(s"Error creating Purpose with seed: $purposeSeed") orElse { case Success(purpose) =>
+        createPurpose201(purpose)
+      }
+    }
+  }
 }
