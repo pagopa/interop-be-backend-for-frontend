@@ -375,12 +375,12 @@ final case class AgreementsApiServiceImpl(
     logger.info(s"Adding consumer document to agreement $agreementId")
 
     val documentId: UUID         = uuidSupplier.get()
-    val documentPath: String     = s"${ApplicationConfiguration.consumerDocumentsPath}/$agreementId/$documentId"
+    val documentPath: String     = s"${ApplicationConfiguration.consumerDocumentsPath}/$agreementId"
     val result: Future[Document] =
       for {
         agreementUUID <- agreementId.toFutureUUID
         seed          <- fileManager
-          .store(ApplicationConfiguration.consumerDocumentsContainer, documentPath)(doc._1.fileName, doc)
+          .store(ApplicationConfiguration.consumerDocumentsContainer, documentPath)(documentId.toString, doc)
           .map(path =>
             AgreementProcess.DocumentSeed(
               id = documentId,
