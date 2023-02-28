@@ -4873,7 +4873,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PurposeVersion'
+                $ref: '#/components/schemas/PurposeVersionResource'
         '400':
           description: Invalid input
           headers:

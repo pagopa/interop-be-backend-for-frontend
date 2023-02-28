@@ -181,6 +181,6 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
           draftPurposeVersionUpdateContent = updateContent,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Updating purpose's version in draft")
+      invoker.invoke(request, s"Updating draft version $versionId of purpose $purposeId")
   }
 }

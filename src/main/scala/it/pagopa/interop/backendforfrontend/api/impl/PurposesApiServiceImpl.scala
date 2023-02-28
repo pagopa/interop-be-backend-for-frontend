@@ -324,18 +324,18 @@ final case class PurposesApiServiceImpl(
     draftPurposeVersionUpdateContent: DraftPurposeVersionUpdateContent
   )(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersion],
+    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[PurposeVersion] = for {
-      purposeUUID                <- purposeId.toFutureUUID
-      versionUUID                <- versionId.toFutureUUID
-      updatedDraftPurposeVersion <- purposeProcessService
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID <- purposeId.toFutureUUID
+      versionUUID <- versionId.toFutureUUID
+      _           <- purposeProcessService
         .updateDraftPurposeVersion(purposeUUID, versionUUID, draftPurposeVersionUpdateContent.toProcess)
-    } yield updatedDraftPurposeVersion.toApi
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
 
     onComplete(result) {
-      handleError(s"Error updating purpose's version in draft with Id: $purposeId") orElse { case Success(response) =>
+      handleError(s"Error updating draft version $versionId of purpose $purposeId") orElse { case Success(response) =>
         updateDraftPurposeVersion200(response)
       }
     }
