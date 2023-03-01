@@ -18,6 +18,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   AttributesApiServiceImpl,
   AuthorizationApiMarshallerImpl,
   AuthorizationApiServiceImpl,
+  ClientsApiMarshallerImpl,
+  ClientsApiServiceImpl,
   EServicesApiMarshallerImpl,
   EServicesApiServiceImpl,
   HealthApiMarshallerImpl,
@@ -143,6 +145,8 @@ trait Dependencies {
       new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
     val purposeProcess: PurposeProcessService                 =
       new PurposeProcessServiceImpl(ApplicationConfiguration.purposeProcessURL, blockingEc)
+    val authorizationProcess: AuthorizationProcessService     =
+      new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
 
@@ -229,6 +233,13 @@ trait Dependencies {
       oauthAndRateLimitingDirective
     )
 
+    val clientsApi: ClientsApi =
+      new ClientsApi(
+        ClientsApiServiceImpl(authorizationProcess),
+        ClientsApiMarshallerImpl,
+        oauthAndRateLimitingDirective
+      )
+
     new Controller(
       attributes = attributesApi,
       authorization = authorizationApi,
@@ -236,6 +247,7 @@ trait Dependencies {
       tenants = tenantsApi,
       eservices = eServicesApi,
       purposes = purposesApi,
+      clients = clientsApi,
       party = partyApi,
       health = healthApi,
       validationExceptionToRoute = validationExceptionToRoute.some

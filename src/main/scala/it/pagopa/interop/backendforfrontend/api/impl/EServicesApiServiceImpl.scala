@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MessageEntity, StatusCodes}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MessageEntity}
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
@@ -33,11 +33,11 @@ import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.io.{ByteArrayOutputStream, File, FileOutputStream}
 import java.nio.file.{Files, Path}
+import java.time.OffsetDateTime
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.Success
 import scala.xml.Elem
-import java.time.OffsetDateTime
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -237,10 +237,7 @@ final case class EServicesApiServiceImpl(
 
     onComplete(result) {
       handleError(s"Error retrieving descriptor $descriptorId of eservice $eserviceId from catalog") orElse {
-        case Failure(x: EServiceDescriptorNotFound) =>
-          logger.warn(x.getMessage)
-          getCatalogEServiceDescriptor404(problemOf(StatusCodes.NotFound, x))
-        case Success(descriptor)                    => getCatalogEServiceDescriptor200(descriptor)
+        case Success(descriptor) => getCatalogEServiceDescriptor200(descriptor)
       }
     }
   }
@@ -405,14 +402,8 @@ final case class EServicesApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error retrieving producer eservice $eserviceId") orElse {
-        case Failure(x: EServiceDescriptorNotFound) =>
-          logger.warn(x.getMessage)
-          getProducerEServiceDetails404(problemOf(StatusCodes.NotFound, x))
-        case Failure(x: InvalidEServiceRequester)   =>
-          logger.warn(x.getMessage)
-          getProducerEServiceDetails403(problemOf(StatusCodes.Forbidden, x))
-        case Success(eService)                      => getProducerEServiceDetails200(eService)
+      handleError(s"Error retrieving producer eservice $eserviceId") orElse { case Success(eService) =>
+        getProducerEServiceDetails200(eService)
       }
     }
   }
@@ -462,13 +453,7 @@ final case class EServicesApiServiceImpl(
 
     onComplete(result) {
       handleError(s"Error retrieving producer descriptor $descriptorId of eservice $eserviceId") orElse {
-        case Failure(x: EServiceDescriptorNotFound) =>
-          logger.warn(x.getMessage)
-          getProducerEServiceDescriptor404(problemOf(StatusCodes.NotFound, x))
-        case Failure(x: InvalidEServiceRequester)   =>
-          logger.warn(x.getMessage)
-          getProducerEServiceDescriptor403(problemOf(StatusCodes.Forbidden, x))
-        case Success(descriptor)                    => getProducerEServiceDescriptor200(descriptor)
+        case Success(descriptor) => getProducerEServiceDescriptor200(descriptor)
       }
     }
   }
