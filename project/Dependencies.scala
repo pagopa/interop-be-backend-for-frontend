@@ -32,6 +32,10 @@ object Dependencies {
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
     lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
+    
+    lazy val authorizationProcessClient =
+      namespace %% "interop-be-authorization-process-client" % authorizationProcessVersion
+
     lazy val agreementProcessClient =
       namespace %% "interop-be-agreement-process-client" % agreementProcessVersion
 
@@ -114,41 +118,42 @@ object Dependencies {
       // For making Java 12 happy
       "javax.annotation"               % "javax.annotation-api" % "1.3.2" % "compile",
       //
-      akka.actor                       % Compile,
-      akka.actorTyped                  % Compile,
-      akka.http                        % Compile,
-      akka.httpJson                    % Compile,
-      akka.management                  % Compile,
-      akka.managementLogLevels         % Compile,
-      akka.persistence                 % Compile,
-      akka.slf4j                       % Compile,
-      akka.stream                      % Compile,
-      cats.core                        % Compile,
-      logback.classic                  % Compile,
-      mustache.mustache                % Compile,
-      pagopa.commonsUtils              % Compile,
-      pagopa.jwt                       % Compile,
-      pagopa.rateLimiter               % Compile,
-      pagopa.agreementProcessClient    % Compile,
-      pagopa.agreementProcessLifecycle % Compile,
-      pagopa.catalogManagementClient   % Compile,
-      pagopa.catalogProcessClient      % Compile,
-      pagopa.partyProcessClient        % Compile,
-      pagopa.partyManagementClient     % Compile,
-      pagopa.tenantManagementClient    % Compile,
-      pagopa.tenantProcessClient       % Compile,
-      pagopa.purposeProcessClient      % Compile,
-      pagopa.userRegistryClient        % Compile,
-      pagopa.attributeRegistryClient   % Compile,
-      pagopa.vault                     % Compile,
-      pagopa.fileManager               % Compile,
-      pagopa.parser                    % Compile,
-      tika.core                        % Compile,
-      akka.httpTestkit                 % Test,
-      akka.testkit                     % Test,
-      akka.untypedTestkit              % Test,
-      scalamock.core                   % Test,
-      scalatest.core                   % Test
+      akka.actor                        % Compile,
+      akka.actorTyped                   % Compile,
+      akka.http                         % Compile,
+      akka.httpJson                     % Compile,
+      akka.management                   % Compile,
+      akka.managementLogLevels          % Compile,
+      akka.persistence                  % Compile,
+      akka.slf4j                        % Compile,
+      akka.stream                       % Compile,
+      cats.core                         % Compile,
+      logback.classic                   % Compile,
+      mustache.mustache                 % Compile,
+      pagopa.commonsUtils               % Compile,
+      pagopa.jwt                        % Compile,
+      pagopa.rateLimiter                % Compile,
+      pagopa.authorizationProcessClient % Compile,
+      pagopa.agreementProcessClient     % Compile,
+      pagopa.agreementProcessLifecycle  % Compile,
+      pagopa.catalogManagementClient    % Compile,
+      pagopa.catalogProcessClient       % Compile,
+      pagopa.partyProcessClient         % Compile,
+      pagopa.partyManagementClient      % Compile,
+      pagopa.tenantManagementClient     % Compile,
+      pagopa.tenantProcessClient        % Compile,
+      pagopa.purposeProcessClient       % Compile,
+      pagopa.userRegistryClient         % Compile,
+      pagopa.attributeRegistryClient    % Compile,
+      pagopa.vault                      % Compile,
+      pagopa.fileManager                % Compile,
+      pagopa.parser                     % Compile,
+      tika.core                         % Compile,
+      akka.httpTestkit                  % Test,
+      akka.testkit                      % Test,
+      akka.untypedTestkit               % Test,
+      scalamock.core                    % Test,
+      scalatest.core                    % Test
     )
 
     lazy val client: Seq[ModuleID] = Seq(
