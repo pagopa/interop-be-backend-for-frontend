@@ -340,4 +340,21 @@ final case class PurposesApiServiceImpl(
       }
     }
   }
+
+  override def updatePurpose(purposeId: String, purposeUpdateContent: PurposeUpdateContent)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Purpose] = for {
+      purposeUUID    <- purposeId.toFutureUUID
+      updatedPurpose <- purposeProcessService.updatePurpose(purposeUUID, purposeUpdateContent.toProcess)
+    } yield updatedPurpose.toApi
+
+    onComplete(result) {
+      handleError(s"Error updating Purpose $purposeId") orElse { case Success(response) =>
+        updatePurpose200(response)
+      }
+    }
+  }
 }

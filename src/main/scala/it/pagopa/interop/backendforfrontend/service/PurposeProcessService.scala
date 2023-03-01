@@ -52,4 +52,8 @@ trait PurposeProcessService {
   def updateDraftPurposeVersion(purposeId: UUID, versionId: UUID, updateContent: DraftPurposeVersionUpdateContent)(
     implicit contexts: Seq[(String, String)]
   ): Future[PurposeVersion]
+
+  def updatePurpose(id: UUID, purposeUpdateContent: PurposeUpdateContent)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Purpose]
 }

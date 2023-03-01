@@ -33,4 +33,17 @@ object PurposeProcessServiceTypes {
       PurposeProcess.DraftPurposeVersionUpdateContent(dailyCalls = dpvc.dailyCalls)
   }
 
+  implicit class RiskAnalysisFormConverter(private val raf: RiskAnalysisForm) extends AnyVal {
+    def toProcess: PurposeProcess.RiskAnalysisForm =
+      PurposeProcess.RiskAnalysisForm(version = raf.version, answers = raf.answers)
+  }
+
+  implicit class PurposeUpdateContentConverter(private val puc: PurposeUpdateContent) extends AnyVal {
+    def toProcess: PurposeProcess.PurposeUpdateContent =
+      PurposeProcess.PurposeUpdateContent(
+        title = puc.title,
+        description = puc.description,
+        riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess)
+      )
+  }
 }

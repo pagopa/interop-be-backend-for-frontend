@@ -183,4 +183,8 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Updating draft version $versionId of purpose $purposeId")
   }
+
+  override def updatePurpose(id: UUID, purposeUpdateContent: PurposeUpdateContent)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Purpose] = ???
 }
