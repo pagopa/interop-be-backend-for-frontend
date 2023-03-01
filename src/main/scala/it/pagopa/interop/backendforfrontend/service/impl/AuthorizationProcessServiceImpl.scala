@@ -55,6 +55,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
           xCorrelationId = correlationId,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Removing client ${clientId.toString} operator with relationship $relationshipId")
+      invoker.invoke(request, s"Removing operator relationship $relationshipId of client ${clientId.toString}")
     }
 }

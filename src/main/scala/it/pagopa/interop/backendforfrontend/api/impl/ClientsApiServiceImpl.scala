@@ -61,7 +61,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error removing client $clientId operator with relationship $relationshipId") orElse {
+      handleError(s"Error removing operator relationship $relationshipId of client $clientId") orElse {
         case Success(_) =>
           removeClientOperatorRelationship204
       }
