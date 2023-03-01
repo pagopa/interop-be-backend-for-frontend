@@ -5211,7 +5211,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purpose'
+                $ref: '#/components/schemas/PurposeVersionResource'
         '400':
           description: Bad Request
           headers:
@@ -7172,12 +7172,8 @@ components:
       properties:
         title:
           type: string
-          minLength: 5
-          maxLength: 60
         description:
           type: string
-          minLength: 10
-          maxLength: 250
         riskAnalysisForm:
           $ref: '#/components/schemas/RiskAnalysisForm'
       required:
@@ -7277,15 +7273,11 @@ components:
       properties:
         version:
           type: string
-          minLength: 1
-          maxLength: 250
         answers:
           additionalProperties:
             type: array
             items:
               type: string
-              minLength: 1
-              maxLength: 250
       required:
         - version
         - answers

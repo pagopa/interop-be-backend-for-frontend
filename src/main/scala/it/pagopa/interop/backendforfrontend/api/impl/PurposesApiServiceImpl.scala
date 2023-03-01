@@ -343,13 +343,14 @@ final case class PurposesApiServiceImpl(
 
   override def updatePurpose(purposeId: String, purposeUpdateContent: PurposeUpdateContent)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
+    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Purpose] = for {
+    val result: Future[PurposeVersionResource] = for {
       purposeUUID    <- purposeId.toFutureUUID
-      updatedPurpose <- purposeProcessService.updatePurpose(purposeUUID, purposeUpdateContent.toProcess)
-    } yield updatedPurpose.toApi
+      updatedPurpose <- purposeProcessService
+        .updatePurpose(purposeUUID, purposeUpdateContent.toProcess)
+    } yield PurposeVersionResource(purposeUUID, updatedPurpose.currentVersion.id)
 
     onComplete(result) {
       handleError(s"Error updating Purpose $purposeId") orElse { case Success(response) =>
