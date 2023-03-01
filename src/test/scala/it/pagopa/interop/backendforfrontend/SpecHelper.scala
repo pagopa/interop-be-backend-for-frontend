@@ -23,7 +23,7 @@ import it.pagopa.interop.backendforfrontend.service.{
   TenantManagementService,
   TenantProcessService,
   PartyProcessService,
-  ClientProcessService
+  AuthorizationProcessService
 }
 
 import it.pagopa.interop.commons.jwt.model.Token
@@ -53,17 +53,17 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
     .parseResourcesAnySyntax("application-test")
     .withFallback(testData)
 
-  val mockJwtReader: JWTReader                         = mock[JWTReader]
-  val mockSessionTokenGenerator: SessionTokenGenerator = mock[SessionTokenGenerator]
-  val mockInteropTokenGenerator: InteropTokenGenerator = mock[InteropTokenGenerator]
-  val mockRateLimiter: RateLimiter                     = mock[RateLimiter]
-  val mockTenantManagement: TenantManagementService    = mock[TenantManagementService]
-  val mockTenantProcess: TenantProcessService          = mock[TenantProcessService]
-  val mockPartyProcess: PartyProcessService            = mock[PartyProcessService]
-  val mockClientProcess: ClientProcessService          = mock[ClientProcessService]
-  final val allowList: List[String]                    = List(UUID.randomUUID().toString, UUID.randomUUID().toString)
-  final val bearerToken: String                        = "token"
-  val service: AuthorizationApiService                 = AuthorizationApiServiceImpl(
+  val mockJwtReader: JWTReader                              = mock[JWTReader]
+  val mockSessionTokenGenerator: SessionTokenGenerator      = mock[SessionTokenGenerator]
+  val mockInteropTokenGenerator: InteropTokenGenerator      = mock[InteropTokenGenerator]
+  val mockRateLimiter: RateLimiter                          = mock[RateLimiter]
+  val mockTenantManagement: TenantManagementService         = mock[TenantManagementService]
+  val mockTenantProcess: TenantProcessService               = mock[TenantProcessService]
+  val mockPartyProcess: PartyProcessService                 = mock[PartyProcessService]
+  val mockAuthorizationProcess: AuthorizationProcessService = mock[AuthorizationProcessService]
+  final val allowList: List[String]    = List(UUID.randomUUID().toString, UUID.randomUUID().toString)
+  final val bearerToken: String        = "token"
+  val service: AuthorizationApiService = AuthorizationApiServiceImpl(
     mockJwtReader,
     mockSessionTokenGenerator,
     mockInteropTokenGenerator,

@@ -145,8 +145,8 @@ trait Dependencies {
       new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
     val purposeProcess: PurposeProcessService                 =
       new PurposeProcessServiceImpl(ApplicationConfiguration.purposeProcessURL, blockingEc)
-    val clientProcess: ClientProcessService                   =
-      new ClientProcessServiceImpl(ApplicationConfiguration.clientProcessURL, blockingEc)
+    val authorizationProcess: AuthorizationProcessService     =
+      new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
 
@@ -234,7 +234,11 @@ trait Dependencies {
     )
 
     val clientsApi: ClientsApi =
-      new ClientsApi(ClientsApiServiceImpl(clientProcess), ClientsApiMarshallerImpl, oauthAndRateLimitingDirective)
+      new ClientsApi(
+        ClientsApiServiceImpl(authorizationProcess),
+        ClientsApiMarshallerImpl,
+        oauthAndRateLimitingDirective
+      )
 
     new Controller(
       attributes = attributesApi,
