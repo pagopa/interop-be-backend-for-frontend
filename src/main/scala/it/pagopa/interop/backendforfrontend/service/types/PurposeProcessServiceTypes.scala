@@ -5,6 +5,8 @@ import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 
 object PurposeProcessServiceTypes {
 
+  type DraftPurposeVersionProcess = PurposeProcess.DraftPurposeVersionUpdateContent
+
   implicit class PurposeVersionStateConverter(private val v: PurposeProcess.PurposeVersionState) extends AnyVal {
     def toApi: PurposeVersionState = v match {
       case PurposeProcess.PurposeVersionState.ACTIVE               => PurposeVersionState.ACTIVE
@@ -39,6 +41,13 @@ object PurposeProcessServiceTypes {
     def toSeed: PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent =
       PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent(expectedApprovalDate = seed.expectedApprovalDate)
   }
+
+  implicit class DraftPurposeVersionUpdateContentConverter(private val dpvc: DraftPurposeVersionUpdateContent)
+      extends AnyVal {
+    def toProcess: DraftPurposeVersionProcess =
+      PurposeProcess.DraftPurposeVersionUpdateContent(dailyCalls = dpvc.dailyCalls)
+  }
+
 
   implicit class PurposeConverter(private val p: PurposeProcess.Purpose) extends AnyVal {
     def toApi: CreatedResource = CreatedResource(id = p.id)

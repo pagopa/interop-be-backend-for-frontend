@@ -167,6 +167,22 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Activating Version $versionId of Purpose $purposeId")
   }
+  override def updateDraftPurposeVersion(
+    purposeId: UUID,
+    versionId: UUID,
+    updateContent: DraftPurposeVersionUpdateContent
+  )(implicit contexts: Seq[(String, String)]): Future[PurposeVersion] = withHeaders[PurposeVersion] {
+    (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[PurposeVersion] =
+        api.updateDraftPurposeVersion(
+          xCorrelationId = correlationId,
+          purposeId = purposeId,
+          versionId = versionId,
+          draftPurposeVersionUpdateContent = updateContent,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Updating draft version $versionId of purpose $purposeId")
+  }
 
   override def createPurpose(seed: PurposeSeed)(implicit contexts: Seq[(String, String)]): Future[Purpose] =
     withHeaders { (bearerToken, correlationId, ip) =>

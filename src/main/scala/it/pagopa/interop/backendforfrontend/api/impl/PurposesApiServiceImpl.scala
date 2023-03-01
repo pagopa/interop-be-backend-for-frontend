@@ -318,6 +318,29 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  override def updateDraftPurposeVersion(
+    purposeId: String,
+    versionId: String,
+    draftPurposeVersionUpdateContent: DraftPurposeVersionUpdateContent
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID <- purposeId.toFutureUUID
+      versionUUID <- versionId.toFutureUUID
+      _           <- purposeProcessService
+        .updateDraftPurposeVersion(purposeUUID, versionUUID, draftPurposeVersionUpdateContent.toProcess)
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
+
+    onComplete(result) {
+      handleError(s"Error updating draft version $versionId of purpose $purposeId") orElse { case Success(response) =>
+        updateDraftPurposeVersion200(response)
+      }
+    }
+  }
+
   override def createPurpose(
     q: Option[String],
     eservicesIds: String,
