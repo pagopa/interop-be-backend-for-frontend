@@ -48,7 +48,6 @@ object PurposeProcessServiceTypes {
       PurposeProcess.DraftPurposeVersionUpdateContent(dailyCalls = dpvc.dailyCalls)
   }
 
-
   implicit class PurposeConverter(private val p: PurposeProcess.Purpose) extends AnyVal {
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
   }

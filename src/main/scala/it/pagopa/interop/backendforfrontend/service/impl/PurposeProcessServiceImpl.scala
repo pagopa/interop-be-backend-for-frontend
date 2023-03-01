@@ -190,6 +190,6 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
         api.createPurpose(xCorrelationId = correlationId, purposeSeed = seed, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Creating Purpose with seed $seed")
+      invoker.invoke(request, s"Creating Purpose")
     }
 }
