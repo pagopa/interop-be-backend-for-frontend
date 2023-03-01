@@ -6239,7 +6239,7 @@ paths:
         - clients
       summary: Removes a purpose from a client
       description: Removes a purpose from a client
-      operationId: deleteClientPurpose
+      operationId: removeClientPurpose
       parameters:
         - name: clientId
           in: path
@@ -6257,7 +6257,7 @@ paths:
             format: uuid
       responses:
         '204':
-          description: Client deleted
+          description: Purpose removed from Client
           headers:
             'X-Rate-Limit-Limit':
               schema:

@@ -31,7 +31,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     }
   }
 
-  override def deleteClientPurpose(clientId: String, purposeId: String)(implicit
+  override def removeClientPurpose(clientId: String, purposeId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
@@ -39,12 +39,12 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     val result: Future[Unit] = for {
       clientUuid  <- clientId.toFutureUUID
       purposeUuid <- purposeId.toFutureUUID
-      _           <- authorizationProcessService.deleteClientPurpose(clientUuid, purposeUuid)
+      _           <- authorizationProcessService.removeClientPurpose(clientUuid, purposeUuid)
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error deleting purpose $purposeId for client $clientId") orElse { case Success(_) =>
-        deleteClientPurpose204
+      handleError(s"Error removing purpose $purposeId for client $clientId") orElse { case Success(_) =>
+        removeClientPurpose204
       }
     }
   }

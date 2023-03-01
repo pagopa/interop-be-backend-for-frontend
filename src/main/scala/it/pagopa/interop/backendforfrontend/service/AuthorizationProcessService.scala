@@ -7,6 +7,6 @@ trait AuthorizationProcessService {
 
   def deleteClient(clientId: String)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
-  def deleteClientPurpose(clientId: UUID, purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
+  def removeClientPurpose(clientId: UUID, purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
 }

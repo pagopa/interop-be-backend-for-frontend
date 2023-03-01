@@ -30,7 +30,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Deleting client $clientId")
     }
 
-  override def deleteClientPurpose(clientId: UUID, purposeId: UUID)(implicit
+  override def removeClientPurpose(clientId: UUID, purposeId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit] =
     withHeaders[Unit] { (bearerToken, correlationId, ip) =>
@@ -41,6 +41,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
           xCorrelationId = correlationId,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Deleting purpose ${purposeId.toString} for client ${clientId.toString}")
+      invoker.invoke(request, s"Removing purpose ${purposeId.toString} for client ${clientId.toString}")
     }
 }
