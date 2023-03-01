@@ -50,6 +50,6 @@ object PurposeProcessServiceTypes {
 
 
   implicit class PurposeConverter(private val p: PurposeProcess.Purpose) extends AnyVal {
-    def toApi: CreatedResource = CreatedResource(id = p.id)
+    def toApiResource: CreatedResource = CreatedResource(id = p.id)
   }
 }
