@@ -60,7 +60,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error deleting client $clientId by key $keyId") orElse { case Success(_) =>
+      handleError(s"Error deleting key $keyId of client $clientId") orElse { case Success(_) =>
         deleteClientKeyById204
       }
     }

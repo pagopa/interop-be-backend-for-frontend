@@ -52,6 +52,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         api.deleteClientKeyById(clientId = clientId, keyId = keyId, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Deleting client ${clientId.toString} by key $keyId")
+      invoker.invoke(request, s"Deleting key $keyId of client ${clientId.toString}")
     }
 }
