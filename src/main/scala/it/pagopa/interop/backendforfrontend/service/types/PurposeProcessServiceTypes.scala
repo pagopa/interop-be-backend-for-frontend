@@ -5,9 +5,7 @@ import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 
 object PurposeProcessServiceTypes {
 
-  type DraftPurposeVersionProcess    = PurposeProcess.DraftPurposeVersionUpdateContent
-  type PurposeVersionProcess         = PurposeProcess.PurposeVersion
-  type PurposeVersionDocumentProcess = PurposeProcess.PurposeVersionDocument
+  type DraftPurposeVersionProcess = PurposeProcess.DraftPurposeVersionUpdateContent
 
   implicit class PurposeVersionStateConverter(private val v: PurposeProcess.PurposeVersionState) extends AnyVal {
     def toApi: PurposeVersionState = v match {
