@@ -43,4 +43,15 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Removing purpose ${purposeId.toString} for client ${clientId.toString}")
     }
+
+  override def deleteClientKeyById(clientId: UUID, keyId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.deleteClientKeyById(clientId = clientId, keyId = keyId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Deleting client ${clientId.toString} by key $keyId")
+    }
 }
