@@ -8,6 +8,7 @@ import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.authorizationprocess.client.api.{EnumsSerializers, ClientApi}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
@@ -29,4 +30,17 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Deleting client $clientId")
     }
 
+  override def deleteClientPurpose(clientId: UUID, purposeId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.removeClientPurpose(
+          clientId = clientId,
+          purposeId = purposeId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Deleting purpose ${purposeId.toString} for client ${clientId.toString}")
+    }
 }
