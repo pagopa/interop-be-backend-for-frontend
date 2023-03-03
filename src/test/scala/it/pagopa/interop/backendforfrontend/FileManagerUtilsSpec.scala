@@ -1,6 +1,6 @@
 import akka.http.scaladsl.model.{ContentTypes, HttpCharsets, MediaType}
 import akka.http.scaladsl.server.directives.FileInfo
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.InvalidInterfaceFileDetected
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.InvalidInterfaceContentTypeDetected
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -108,7 +108,7 @@ class FileManagerUtilsSpec() extends AnyWordSpec with Matchers with ScalaFutures
 
       FileManagerUtils
         .verify(fileParts = fileParts, eService = eServiceSoap, isInterface = true)(Seq.empty) shouldBe Left(
-        InvalidInterfaceFileDetected(eServiceSoap.id.toString, "text/x-config", eServiceSoap.technology.toString)
+        InvalidInterfaceContentTypeDetected(eServiceSoap.id.toString, "text/x-config", eServiceSoap.technology.toString)
       )
     }
 

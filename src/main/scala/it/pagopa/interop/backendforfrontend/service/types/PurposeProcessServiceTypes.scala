@@ -5,6 +5,8 @@ import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 
 object PurposeProcessServiceTypes {
 
+  type DraftPurposeVersionProcess = PurposeProcess.DraftPurposeVersionUpdateContent
+
   implicit class PurposeVersionStateConverter(private val v: PurposeProcess.PurposeVersionState) extends AnyVal {
     def toApi: PurposeVersionState = v match {
       case PurposeProcess.PurposeVersionState.ACTIVE               => PurposeVersionState.ACTIVE
@@ -14,4 +16,21 @@ object PurposeProcessServiceTypes {
       case PurposeProcess.PurposeVersionState.ARCHIVED             => PurposeVersionState.ARCHIVED
     }
   }
+
+  implicit class PurposeVersionSeedConverter(private val seed: PurposeVersionSeed) extends AnyVal {
+    def toProcess: PurposeProcess.PurposeVersionSeed = PurposeProcess.PurposeVersionSeed(dailyCalls = seed.dailyCalls)
+  }
+
+  implicit class PurposeVersionUpdateSeedConverter(private val seed: WaitingForApprovalPurposeVersionUpdateContentSeed)
+      extends AnyVal {
+    def toSeed: PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent =
+      PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent(expectedApprovalDate = seed.expectedApprovalDate)
+  }
+
+  implicit class DraftPurposeVersionUpdateContentConverter(private val dpvc: DraftPurposeVersionUpdateContent)
+      extends AnyVal {
+    def toProcess: DraftPurposeVersionProcess =
+      PurposeProcess.DraftPurposeVersionUpdateContent(dailyCalls = dpvc.dailyCalls)
+  }
+
 }

@@ -57,14 +57,18 @@ object ApplicationConfiguration {
   val attributeRegistryManagementURL: String =
     config.getString("backend-for-frontend.services.attribute-registry-management")
 
-  val agreementProcessURL: String  = config.getString("backend-for-frontend.services.agreement-process")
-  val catalogManagementURL: String = config.getString("backend-for-frontend.services.catalog-management")
-  val catalogProcessURL: String    = config.getString("backend-for-frontend.services.catalog-process")
-  val tenantManagementURL: String  = config.getString("backend-for-frontend.services.tenant-management")
-  val tenantProcessURL: String     = config.getString("backend-for-frontend.services.tenant-process")
-  val purposeProcessURL: String    = config.getString("backend-for-frontend.services.purpose-process")
+  val agreementProcessURL: String     = config.getString("backend-for-frontend.services.agreement-process")
+  val catalogManagementURL: String    = config.getString("backend-for-frontend.services.catalog-management")
+  val catalogProcessURL: String       = config.getString("backend-for-frontend.services.catalog-process")
+  val tenantManagementURL: String     = config.getString("backend-for-frontend.services.tenant-management")
+  val tenantProcessURL: String        = config.getString("backend-for-frontend.services.tenant-process")
+  val purposeProcessURL: String       = config.getString("backend-for-frontend.services.purpose-process")
+  val authorizationProcessURL: String = config.getString("backend-for-frontend.services.authorization-process")
 
-  val storageKind: String                = config.getString("backend-for-frontend.storage.kind")
+  val storageKind: String                    = config.getString("backend-for-frontend.storage.kind")
+  val riskAnalysisDocumentsContainer: String =
+    config.getString("backend-for-frontend.storage.risk-analysis-documents.container")
+  val riskAnalysisDocumentsPath: String  = config.getString("backend-for-frontend.storage.risk-analysis-documents.path")
   val consumerDocumentsContainer: String = config.getString("backend-for-frontend.storage.consumer-documents.container")
   val consumerDocumentsPath: String      = config.getString("backend-for-frontend.storage.consumer-documents.path")
   val eServiceDocumentsContainer: String = config.getString("backend-for-frontend.storage.eservice-documents.container")

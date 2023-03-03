@@ -6,6 +6,7 @@ import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
+import it.pagopa.interop.commons.utils.AkkaUtils._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
@@ -22,7 +23,6 @@ import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServic
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -30,7 +30,6 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
-import it.pagopa.interop.backendforfrontend.api.impl.Utils
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import java.io.File
@@ -334,6 +333,7 @@ final case class AgreementsApiServiceImpl(
     suspendedByConsumer = agreement.suspendedByConsumer,
     suspendedByProducer = agreement.suspendedByProducer,
     suspendedByPlatform = agreement.suspendedByPlatform,
+    isContractPresent = agreement.contract.nonEmpty,
     consumerNotes = agreement.consumerNotes,
     rejectionReason = agreement.rejectionReason,
     consumerDocuments = agreement.consumerDocuments.map(_.toApi),
@@ -375,12 +375,12 @@ final case class AgreementsApiServiceImpl(
     logger.info(s"Adding consumer document to agreement $agreementId")
 
     val documentId: UUID         = uuidSupplier.get()
-    val documentPath: String     = s"${ApplicationConfiguration.consumerDocumentsPath}/$agreementId/$documentId"
+    val documentPath: String     = s"${ApplicationConfiguration.consumerDocumentsPath}/$agreementId"
     val result: Future[Document] =
       for {
         agreementUUID <- agreementId.toFutureUUID
         seed          <- fileManager
-          .store(ApplicationConfiguration.consumerDocumentsContainer, documentPath)(doc._1.fileName, doc)
+          .store(ApplicationConfiguration.consumerDocumentsContainer, documentPath)(documentId.toString, doc)
           .map(path =>
             AgreementProcess.DocumentSeed(
               id = documentId,
@@ -490,4 +490,153 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
+  override def getAgreementEServiceProducers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCompactAgreementEServices: ToEntityMarshaller[CompactEServicesLight],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(
+      s"Retrieving producer eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+    )
+
+    def emptyResponse: Future[CompactEServicesLight] = Future.successful(
+      CompactEServicesLight(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactEServicesLight] = for {
+      requesterId  <- getOrganizationIdFutureUUID(contexts)
+      pagedResults <- agreementProcessService.getAgreementEServices(
+        eServiceName = q,
+        producersIds = Seq(requesterId),
+        consumersIds = Seq.empty,
+        limit = limit,
+        offset = offset
+      )
+    } yield CompactEServicesLight(
+      results = pagedResults.results.map(t => CompactEServiceLight(id = t.id, name = t.name)),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+      ) orElse { case Success(producers) =>
+        getAgreementEServiceProducers200(producers)
+      }
+    }
+  }
+
+  def getAgreementEServiceConsumers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCompactEServicesLight: ToEntityMarshaller[CompactEServicesLight],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(
+      s"Retrieving consumer eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+    )
+
+    def emptyResponse: Future[CompactEServicesLight] = Future.successful(
+      CompactEServicesLight(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactEServicesLight] = for {
+      requesterId  <- getOrganizationIdFutureUUID(contexts)
+      pagedResults <- agreementProcessService.getAgreementEServices(
+        eServiceName = q,
+        producersIds = Seq.empty,
+        consumersIds = Seq(requesterId),
+        limit = limit,
+        offset = offset
+      )
+    } yield CompactEServicesLight(
+      results = pagedResults.results.map(t => CompactEServiceLight(id = t.id, name = t.name)),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+      ) orElse { case Success(consumers) =>
+        getAgreementEServiceConsumers200(consumers)
+      }
+    }
+  }
+
+  override def getAgreementProducers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations]
+  ): Route = {
+
+    def emptyResponse: Future[CompactOrganizations] = Future.successful(
+      CompactOrganizations(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactOrganizations] =
+      agreementProcessService
+        .getAgreementProducers(q, offset = offset, limit = limit)
+        .map(pagedResults =>
+          CompactOrganizations(
+            results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+            pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+          )
+        )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving producers from agreement filtered by producer name $q, offset $offset, limit $limit"
+      ) orElse { case Success(producers) =>
+        getAgreementProducers200(producers)
+      }
+    }
+  }
+
+  def getAgreementConsumers(q: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations]
+  ): Route = {
+
+    def emptyResponse: Future[CompactOrganizations] = Future.successful(
+      CompactOrganizations(results = Nil, pagination = Pagination(offset = offset, limit = limit, totalCount = 0))
+    )
+
+    def validResponse: Future[CompactOrganizations] =
+      agreementProcessService
+        .getAgreementConsumers(q, offset = offset, limit = limit)
+        .map(pagedResults =>
+          CompactOrganizations(
+            results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+            pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+          )
+        )
+
+    val result = q match {
+      case Some(value) if value.length < 3 => emptyResponse
+      case _                               => validResponse
+    }
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving consumers from agreement filtered by consumer name $q, offset $offset, limit $limit"
+      ) orElse { case Success(consumers) =>
+        getAgreementConsumers200(consumers)
+      }
+    }
+  }
 }

@@ -6,13 +6,7 @@ import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf, serviceCode}
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  AgreementDescriptorNotFound,
-  AttributeNotExists,
-  DownstreamError,
-  InvalidInterfaceFileDetected,
-  UnknownTenantOrigin
-}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.model.Problem
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiError => CatalogProcessError}
@@ -22,12 +16,13 @@ import it.pagopa.interop.commons.ratelimiter.model.Headers
 import it.pagopa.interop.commons.utils.errors.AkkaResponses._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
 import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors, ServiceCode}
+import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
+import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => AuthorizationProcessError}
 import spray.json._
-
 import scala.util.{Failure, Try}
 
 object Handlers {
@@ -36,14 +31,16 @@ object Handlers {
     contexts: Seq[(String, String)],
     logger: LoggerTakingImplicit[ContextFieldsToLog]
   ): PartialFunction[Try[_], StandardRoute] = {
-    case Failure(err: AgreementProcessError[_])  => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: AttributeRegistryError[_]) => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: CatalogManagementError[_]) => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: CatalogProcessError[_])    => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: TenantManagementError[_])  => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: TenantProcessError[_])     => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: PartyProcessError[_])      => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: UserRegistryError[_])      => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: AuthorizationProcessError[_]) => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: PurposeProcessError[_])       => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: AgreementProcessError[_])     => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: AttributeRegistryError[_])    => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: CatalogManagementError[_])    => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: CatalogProcessError[_])       => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: TenantManagementError[_])     => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: TenantProcessError[_])        => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: PartyProcessError[_])         => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: UserRegistryError[_])         => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(tmr: ratelimiter.error.Errors.TooManyRequests) =>
       tooManyRequests(
         GenericComponentErrors.TooManyRequests,
@@ -52,8 +49,11 @@ object Handlers {
       )
     case Failure(err: AttributeNotExists)                       => internalServerError(err, logMessage)
     case Failure(err: UnknownTenantOrigin)                      => badRequest(err, logMessage)
+    case Failure(err: InvalidInterfaceContentTypeDetected)      => badRequest(err, logMessage)
     case Failure(err: InvalidInterfaceFileDetected)             => badRequest(err, logMessage)
+    case Failure(err: InvalidEServiceRequester)                 => forbidden(err, logMessage)
     case Failure(err: AgreementDescriptorNotFound)              => notFound(err, logMessage)
+    case Failure(err: EServiceDescriptorNotFound)               => notFound(err, logMessage)
     case Failure(err)                                           => internalServerError(err, logMessage)
   }
 
