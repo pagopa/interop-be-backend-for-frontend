@@ -264,7 +264,7 @@ final case class EServicesApiServiceImpl(
       name = q,
       eServicesIds = eServicesIds,
       producersIds = List(producerId),
-      states = Nil,
+      states = ACTIVE_DESCRIPTOR_STATES_FILTER,
       offset = offset,
       limit = limit
     )
