@@ -54,4 +54,18 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         )
       invoker.invoke(request, s"Deleting key $keyId of client ${clientId.toString}")
     }
+
+  override def removeClientOperatorRelationship(clientId: UUID, relationshipId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.removeClientOperatorRelationship(
+          clientId = clientId,
+          relationshipId = relationshipId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Removing operator relationship $relationshipId of client ${clientId.toString}")
+    }
 }
