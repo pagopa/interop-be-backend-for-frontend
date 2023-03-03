@@ -48,4 +48,23 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       }
     }
   }
+
+  override def removeClientOperatorRelationship(clientId: String, relationshipId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[Unit] = for {
+      clientUuid       <- clientId.toFutureUUID
+      relationshipUuid <- relationshipId.toFutureUUID
+      _                <- authorizationProcessService.removeClientOperatorRelationship(clientUuid, relationshipUuid)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error removing operator relationship $relationshipId of client $clientId") orElse {
+        case Success(_) =>
+          removeClientOperatorRelationship204
+      }
+    }
+  }
 }
