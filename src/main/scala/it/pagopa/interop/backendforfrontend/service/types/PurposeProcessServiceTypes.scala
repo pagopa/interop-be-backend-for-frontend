@@ -21,6 +21,21 @@ object PurposeProcessServiceTypes {
     def toProcess: PurposeProcess.PurposeVersionSeed = PurposeProcess.PurposeVersionSeed(dailyCalls = seed.dailyCalls)
   }
 
+  implicit class PurposeSeedConverter(private val seed: PurposeSeed) extends AnyVal {
+    def toProcess: PurposeProcess.PurposeSeed = PurposeProcess.PurposeSeed(
+      eserviceId = seed.eserviceId,
+      consumerId = seed.consumerId,
+      riskAnalysisForm = seed.riskAnalysisForm.map(_.toProcess),
+      title = seed.title,
+      description = seed.description
+    )
+  }
+
+  implicit class RiskAnalysisFormConverter(private val raf: RiskAnalysisForm) extends AnyVal {
+    def toProcess: PurposeProcess.RiskAnalysisForm =
+      PurposeProcess.RiskAnalysisForm(version = raf.version, answers = raf.answers)
+  }
+
   implicit class PurposeVersionUpdateSeedConverter(private val seed: WaitingForApprovalPurposeVersionUpdateContentSeed)
       extends AnyVal {
     def toSeed: PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent =
@@ -33,4 +48,7 @@ object PurposeProcessServiceTypes {
       PurposeProcess.DraftPurposeVersionUpdateContent(dailyCalls = dpvc.dailyCalls)
   }
 
+  implicit class PurposeConverter(private val p: PurposeProcess.Purpose) extends AnyVal {
+    def toApiResource: CreatedResource = CreatedResource(id = p.id)
+  }
 }
