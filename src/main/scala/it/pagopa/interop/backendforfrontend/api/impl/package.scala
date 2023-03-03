@@ -34,7 +34,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     CompactEServicesLight
   )
   implicit val compactOrganizationsFormat: RootJsonFormat[CompactOrganizations] = jsonFormat2(CompactOrganizations)
-  implicit val compactAgreementFormat: RootJsonFormat[CompactAgreement]         = jsonFormat2(CompactAgreement)
+  implicit val compactAgreementFormat: RootJsonFormat[CompactAgreement]         = jsonFormat3(CompactAgreement)
   implicit val compactDescriptorFormat: RootJsonFormat[CompactDescriptor]       = jsonFormat3(CompactDescriptor)
   implicit val catalogEServiceFormat: RootJsonFormat[CatalogEService]           = jsonFormat8(CatalogEService)
   implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]         = jsonFormat2(CatalogEServices)
@@ -121,9 +121,16 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] =
     jsonFormat5(ProducerEServiceDetails)
 
-  implicit val compactPurposeVersionFormat: RootJsonFormat[CompactPurposeVersion] = jsonFormat4(CompactPurposeVersion)
-  implicit val purposeFormat: RootJsonFormat[Purpose]                             = jsonFormat8(Purpose)
-  implicit val purposesFormat: RootJsonFormat[Purposes]                           = jsonFormat2(Purposes)
+  implicit val PurposeVersionDocumentFormat: RootJsonFormat[PurposeVersionDocument] = jsonFormat3(
+    PurposeVersionDocument
+  )
+  implicit val PurposeVersionFormat: RootJsonFormat[PurposeVersion]                 = jsonFormat8(PurposeVersion)
+  implicit val compactPurposeVersionFormat: RootJsonFormat[CompactPurposeVersion]   = jsonFormat4(CompactPurposeVersion)
+  implicit val clientFormat: RootJsonFormat[Client]                                 = jsonFormat3(Client)
+  implicit val riskAnalysisFormFormat: RootJsonFormat[RiskAnalysisForm]             = jsonFormat2(RiskAnalysisForm)
+
+  implicit val purposeFormat: RootJsonFormat[Purpose]   = jsonFormat13(Purpose)
+  implicit val purposesFormat: RootJsonFormat[Purposes] = jsonFormat2(Purposes)
 
   implicit val DraftPurposeVersionUpdateContentFormat: RootJsonFormat[DraftPurposeVersionUpdateContent] = jsonFormat1(
     DraftPurposeVersionUpdateContent

@@ -64,6 +64,9 @@ object Dependencies {
 
     lazy val attributeRegistryClient =
       namespace %% "interop-be-attribute-registry-management-client" % attributeRegistryVersion
+
+    lazy val authorizationManagementClient =
+      namespace %% "interop-be-authorization-management-client" % authorizationManagementVersion
   }
 
   private[this] object cats {
@@ -140,6 +143,7 @@ object Dependencies {
       pagopa.purposeProcessClient      % Compile,
       pagopa.userRegistryClient        % Compile,
       pagopa.attributeRegistryClient   % Compile,
+      pagopa.authorizationManagementClient % Compile,
       pagopa.vault                     % Compile,
       pagopa.fileManager               % Compile,
       pagopa.parser                    % Compile,

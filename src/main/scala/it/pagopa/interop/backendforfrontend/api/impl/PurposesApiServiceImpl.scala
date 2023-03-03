@@ -7,21 +7,30 @@ import akka.http.scaladsl.server.Route
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{getLatestAgreement, isUpgradable}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{CatalogProcessService, PurposeProcessService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.{
+  AgreementProcessService,
+  AuthorizationManagementService,
+  CatalogProcessService,
+  PurposeProcessService,
+  TenantProcessService
+}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
 import java.io.File
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
@@ -29,6 +38,8 @@ final case class PurposesApiServiceImpl(
   catalogProcessService: CatalogProcessService,
   purposeProcessService: PurposeProcessService,
   tenantProcessService: TenantProcessService,
+  agreementProcessService: AgreementProcessService,
+  authorizationManagementService: AuthorizationManagementService,
   fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends PurposesApiService {
@@ -51,6 +62,7 @@ final case class PurposesApiServiceImpl(
   ): Route = {
     val result: Future[Purposes] =
       for {
+        requesterId    <- getOrganizationIdFutureUUID(contexts)
         statesEnum     <- parseArrayParameters(states).distinct
           .traverse(PurposeProcess.PurposeVersionState.fromValue)
           .toFuture
@@ -71,7 +83,9 @@ final case class PurposesApiServiceImpl(
         eServices       <- actualEServicesIds.traverse(catalogProcessService.getEServiceById)
         producers       <- eServices.map(_.producerId).distinct.traverse(tenantProcessService.getTenant)
         consumers       <- actualConsumersIds.traverse(tenantProcessService.getTenant)
-        enhancedResults <- pagedResults.results.traverse(enhancePurpose(_, eServices, producers, consumers))
+        enhancedResults <- pagedResults.results.traverse(
+          enhancePurpose(_, eServices, producers, consumers, requesterId)
+        )
       } yield Purposes(
         results = enhancedResults,
         pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
@@ -230,11 +244,14 @@ final case class PurposesApiServiceImpl(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],
     producers: Seq[TenantProcess.Tenant],
-    consumers: Seq[TenantProcess.Tenant]
-  ): Future[Purpose] = for {
-    eService <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
-    producer <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
-    consumer <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
+    consumers: Seq[TenantProcess.Tenant],
+    requesterId: UUID
+  )(implicit context: Seq[(String, String)]): Future[Purpose] = for {
+    eService  <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
+    agreement <- getLatestAgreement(requesterId, eService, ec, agreementProcessService)(context)
+    clients   <- authorizationManagementService.getClients(Some(purpose.id))(context)
+    producer  <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
+    consumer  <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
     currentVersion            = purpose.versions
       .filter(v => v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
       .sortBy(_.createdAt)
@@ -242,22 +259,15 @@ final case class PurposesApiServiceImpl(
     waitingForApprovalVersion = purpose.versions.find(
       _.state == PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL
     )
-  } yield Purpose(
-    id = purpose.id,
-    title = purpose.title,
-    consumer = CompactOrganization(id = consumer.id, name = consumer.name),
-    eservice = CompactEService(
-      id = eService.id,
-      name = eService.name,
-      producer = CompactOrganization(id = producer.id, name = producer.name)
-    ),
-    currentVersion =
-      currentVersion.map(v => CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls)),
-    waitingForApprovalVersion = waitingForApprovalVersion.map(v =>
-      CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls, v.expectedApprovalDate)
-    ),
-    suspendedByConsumer = purpose.suspendedByConsumer,
-    suspendedByProducer = purpose.suspendedByProducer
+  } yield purpose.toApi(
+    purpose,
+    eService,
+    agreement,
+    currentVersion,
+    producer,
+    consumer,
+    clients,
+    waitingForApprovalVersion
   )
 
   override def clonePurpose(purposeId: String)(implicit
@@ -337,6 +347,25 @@ final case class PurposesApiServiceImpl(
     onComplete(result) {
       handleError(s"Error updating draft version $versionId of purpose $purposeId") orElse { case Success(response) =>
         updateDraftPurposeVersion200(response)
+      }
+    }
+  }
+
+  override def getPurpose(purposeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Purpose] = for {
+      purposeUUID     <- purposeId.toFutureUUID
+      requesterId     <- getOrganizationIdFutureUUID(contexts)
+      purpose         <- purposeProcessService.getPurpose(purposeUUID)
+      enhancedPurpose <- enhancePurpose(purpose, eServices, producers, consumers, requesterId)
+    } yield enhancedPurpose
+
+    onComplete(result) {
+      handleError(s"Error updating draft version of purpose $purposeId") orElse { case Success(response) =>
+        getPurpose200(response)
       }
     }
   }
