@@ -49,6 +49,23 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     }
   }
 
+  override def deleteClientKeyById(clientId: String, keyId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[Unit] = for {
+      clientUuid <- clientId.toFutureUUID
+      _          <- authorizationProcessService.deleteClientKeyById(clientUuid, keyId)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error deleting key $keyId of client $clientId") orElse { case Success(_) =>
+        deleteClientKeyById204
+      }
+    }
+  }
+
   override def removeClientOperatorRelationship(clientId: String, relationshipId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
