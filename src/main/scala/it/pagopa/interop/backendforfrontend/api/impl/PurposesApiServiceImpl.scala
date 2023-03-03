@@ -355,14 +355,15 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
-    logger.info(s"Creating purpose")
+    logger.info(s"Creating purpose with eService $eservicesIds and consumer $consumersIds")
 
     val result: Future[CreatedResource] =
       purposeProcessService.createPurpose(purposeSeed.toProcess)(contexts).map(_.toApiResource)
 
     onComplete(result) {
-      handleError(s"Error creating Purpose") orElse { case Success(purpose) =>
-        createPurpose200(purpose)
+      handleError(s"Error creating Purpose with eService $eservicesIds and consumer $consumersIds") orElse {
+        case Success(purpose) =>
+          createPurpose200(purpose)
       }
     }
   }
