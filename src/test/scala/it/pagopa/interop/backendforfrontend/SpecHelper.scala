@@ -9,30 +9,17 @@ import com.typesafe.config.{Config, ConfigFactory}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.api.impl._
 import it.pagopa.interop.backendforfrontend.model.{Problem, SessionToken}
-import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantManagementService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.{
+  AuthorizationProcessService,
+  PartyProcessService,
+  TenantManagementService,
+  TenantProcessService
+}
 import it.pagopa.interop.commons.jwt.model.Token
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import com.nimbusds.jose.util.JSONObjectUtils
-import com.nimbusds.jose.util.JSONArrayUtils
-
-import java.{util => ju}
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jose.Payload
-import com.nimbusds.jose.util.Base64URL
-import it.pagopa.interop.commons.ratelimiter.RateLimiter
-import it.pagopa.interop.backendforfrontend.service.{
-  TenantManagementService,
-  TenantProcessService,
-  PartyProcessService,
-  AuthorizationProcessService
-}
-
-import it.pagopa.interop.commons.jwt.model.Token
 
 import java.util.UUID
 import java.{util => ju}

@@ -7540,15 +7540,11 @@ components:
       properties:
         version:
           type: string
-          minLength: 1
-          maxLength: 250
         answers:
           additionalProperties:
             type: array
             items:
               type: string
-              minLength: 1
-              maxLength: 250
       required:
         - version
         - answers
@@ -7686,19 +7682,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RelationshipInfo'
-    RiskAnalysisForm:
-      type: object
-      properties:
-        version:
-          type: string
-        answers:
-          additionalProperties:
-            type: array
-            items:
-              type: string
-      required:
-        - version
-        - answers
     CreatedResource:
       type: object
       description: contains the id of the created resource

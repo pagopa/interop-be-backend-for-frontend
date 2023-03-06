@@ -38,6 +38,10 @@ object PurposeProcessServiceTypes {
     )
   }
 
+  implicit class ProcessRiskAnalysisFormConverter(private val raf: PurposeProcess.RiskAnalysisForm) extends AnyVal {
+    def toApi: RiskAnalysisForm = RiskAnalysisForm(version = raf.version, answers = raf.answers)
+  }
+
   implicit class RiskAnalysisFormConverter(private val raf: RiskAnalysisForm) extends AnyVal {
     def toProcess: PurposeProcess.RiskAnalysisForm =
       PurposeProcess.RiskAnalysisForm(version = raf.version, answers = raf.answers)
@@ -90,13 +94,6 @@ object PurposeProcessServiceTypes {
       PurposeVersionDocument(id = rad.id, contentType = rad.contentType, createdAt = rad.createdAt)
   }
 
-  implicit class RiskAnalysisFormConverter(private val raf: Option[PurposeProcess.RiskAnalysisForm]) extends AnyVal {
-    def toApi: RiskAnalysisForm = raf match {
-      case Some(value) => RiskAnalysisForm(version = value.version, answers = value.answers)
-      case None        => RiskAnalysisForm(version = "v1", answers = Map.empty)
-    }
-  }
-
   implicit class PurposeConverter(private val p: PurposeProcess.Purpose) extends AnyVal {
     def toApi(
       eService: CatalogProcess.EService,
@@ -113,7 +110,8 @@ object PurposeProcessServiceTypes {
       title = p.title,
       description = p.description,
       consumer = CompactOrganization(id = consumer.id, name = consumer.name),
-      riskAnalysisForm = p.riskAnalysisForm.toApi,
+      riskAnalysisForm =
+        p.riskAnalysisForm.getOrElse(PurposeProcess.RiskAnalysisForm(version = "v1", answers = Map.empty)).toApi,
       eservice = CompactEService(
         id = eService.id,
         name = eService.name,
