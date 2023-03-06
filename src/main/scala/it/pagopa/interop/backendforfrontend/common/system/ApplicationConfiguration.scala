@@ -57,12 +57,13 @@ object ApplicationConfiguration {
   val attributeRegistryManagementURL: String =
     config.getString("backend-for-frontend.services.attribute-registry-management")
 
-  val agreementProcessURL: String        = config.getString("backend-for-frontend.services.agreement-process")
-  val catalogManagementURL: String       = config.getString("backend-for-frontend.services.catalog-management")
-  val catalogProcessURL: String          = config.getString("backend-for-frontend.services.catalog-process")
-  val tenantManagementURL: String        = config.getString("backend-for-frontend.services.tenant-management")
-  val tenantProcessURL: String           = config.getString("backend-for-frontend.services.tenant-process")
-  val purposeProcessURL: String          = config.getString("backend-for-frontend.services.purpose-process")
+  val agreementProcessURL: String     = config.getString("backend-for-frontend.services.agreement-process")
+  val catalogManagementURL: String    = config.getString("backend-for-frontend.services.catalog-management")
+  val catalogProcessURL: String       = config.getString("backend-for-frontend.services.catalog-process")
+  val tenantManagementURL: String     = config.getString("backend-for-frontend.services.tenant-management")
+  val tenantProcessURL: String        = config.getString("backend-for-frontend.services.tenant-process")
+  val purposeProcessURL: String       = config.getString("backend-for-frontend.services.purpose-process")
+  val authorizationProcessURL: String = config.getString("backend-for-frontend.services.authorization-process")
   val authorizationManagementURL: String = config.getString("backend-for-frontend.services.authorization-management")
 
   val storageKind: String                    = config.getString("backend-for-frontend.storage.kind")
@@ -76,4 +77,5 @@ object ApplicationConfiguration {
   val allowListContainer: String         = config.getString("backend-for-frontend.storage.allow-list.container")
   val allowListPath: String              = config.getString("backend-for-frontend.storage.allow-list.path")
   val allowListFilename: String          = config.getString("backend-for-frontend.storage.allow-list.filename")
+  val selfcareProductId: String          = config.getString("backend-for-frontend.selfcare-product-id")
 }

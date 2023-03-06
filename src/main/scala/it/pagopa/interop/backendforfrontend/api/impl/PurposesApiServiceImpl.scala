@@ -358,6 +358,33 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  override def createPurpose(
+    q: Option[String],
+    eservicesIds: String,
+    consumersIds: String,
+    producersIds: String,
+    states: String,
+    offset: Int,
+    limit: Int,
+    purposeSeed: PurposeSeed
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    logger.info(s"Creating purpose with eService $eservicesIds and consumer $consumersIds")
+
+    val result: Future[CreatedResource] =
+      purposeProcessService.createPurpose(purposeSeed.toProcess)(contexts).map(_.toApiResource)
+
+    onComplete(result) {
+      handleError(s"Error creating Purpose with eService $eservicesIds and consumer $consumersIds") orElse {
+        case Success(purpose) =>
+          createPurpose200(purpose)
+      }
+    }
+  }
+
   override def getPurpose(purposeId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
@@ -370,7 +397,7 @@ final case class PurposesApiServiceImpl(
       eService          <- catalogProcessService.getEServiceById(purpose.eserviceId)
       agreement         <- getLatestAgreement(requesterId, eService, ec, agreementProcessService).flatMap(
         _.toFuture(new Exception())
-      ) // TODO AgreementNotFound
+      )
       consumer          <- tenantProcessService.getTenant(agreement.consumerId)
       producer          <- tenantProcessService.getTenant(agreement.producerId)
       clients           <- authorizationManagementService.getClients(Some(purpose.id))
@@ -393,7 +420,7 @@ final case class PurposesApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error updating draft version of purpose $purposeId") orElse { case Success(response) =>
+      handleError(s"Error retrieving purpose $purposeId") orElse { case Success(response) =>
         getPurpose200(response)
       }
     }
