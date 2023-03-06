@@ -10,6 +10,7 @@ import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.backendforfrontend.model.{Problem, CreatedResource}
+import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
@@ -95,7 +96,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       clientUuid       <- clientId.toFutureUUID
       relationshipUuid <- relationshipId.toFutureUUID
       result           <- authorizationProcessService.clientOperatorRelationshipBinding(clientUuid, relationshipUuid)
-    } yield (CreatedResource(result.id))
+    } yield (result.toCreatedResource)
 
     onComplete(result) {
       handleError(s"Error binding operator relationship $relationshipId to client $clientId") orElse {
