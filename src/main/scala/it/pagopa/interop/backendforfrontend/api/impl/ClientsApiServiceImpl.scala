@@ -98,9 +98,9 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     } yield (CreatedResource(result.id))
 
     onComplete(result) {
-      handleError(s"Error binding operator relationship $relationshipId of client $clientId") orElse {
+      handleError(s"Error binding operator relationship $relationshipId to client $clientId") orElse {
         case Success(resource) =>
-          clientOperatorRelationshipBinding201(resource)
+          clientOperatorRelationshipBinding200(resource)
       }
     }
   }

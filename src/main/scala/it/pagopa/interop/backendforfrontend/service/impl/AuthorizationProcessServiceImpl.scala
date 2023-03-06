@@ -81,6 +81,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
           xCorrelationId = correlationId,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Binding operator relationship $relationshipId of client ${clientId.toString}")
+      invoker.invoke(request, s"Binding operator relationship $relationshipId to client ${clientId.toString}")
     }
 }
