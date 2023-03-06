@@ -7,6 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.authorizationprocess.client.api.{EnumsSerializers, ClientApi}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
+import it.pagopa.interop.authorizationprocess.client.model.Client
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -67,5 +68,19 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
           xForwardedFor = ip
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Removing operator relationship $relationshipId of client ${clientId.toString}")
+    }
+
+  override def clientOperatorRelationshipBinding(clientId: UUID, relationshipId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.clientOperatorRelationshipBinding(
+          clientId = clientId,
+          relationshipId = relationshipId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Binding operator relationship $relationshipId of client ${clientId.toString}")
     }
 }
