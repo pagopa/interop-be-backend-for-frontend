@@ -267,7 +267,13 @@ final case class AgreementsApiServiceImpl(
     eservice = CompactEService(
       id = eService.id,
       name = eService.name,
-      producer = CompactOrganization(producerTenant.id, producerTenant.name)
+      producer = CompactOrganization(producerTenant.id, producerTenant.name),
+      descriptor = CompactDescriptor(
+        id = currentDescriptor.id,
+        state = currentDescriptor.state.toApi,
+        version = currentDescriptor.version,
+        audience = currentDescriptor.audience
+      )
     ),
     descriptor = currentDescriptor.toCompactDescriptor,
     canBeUpgraded = isUpgradable(currentDescriptor, eService.descriptors),

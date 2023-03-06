@@ -156,7 +156,8 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceDescriptorWrapper(private val esd: CatalogProcess.EServiceDescriptor) extends AnyVal {
-    def toCompactDescriptor: CompactDescriptor = CompactDescriptor(id = esd.id, state = esd.state.toApi, esd.version)
+    def toCompactDescriptor: CompactDescriptor =
+      CompactDescriptor(id = esd.id, state = esd.state.toApi, esd.version, esd.audience)
     def toApi: CreatedResource                 = CreatedResource(id = esd.id)
   }
 

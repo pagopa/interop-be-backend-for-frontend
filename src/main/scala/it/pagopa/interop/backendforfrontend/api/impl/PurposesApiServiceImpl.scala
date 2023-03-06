@@ -7,19 +7,13 @@ import akka.http.scaladsl.server.Route
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{getLatestAgreement, isUpgradable}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.getLatestAgreement
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{
-  AgreementProcessService,
-  AuthorizationManagementService,
-  CatalogProcessService,
-  PurposeProcessService,
-  TenantProcessService
-}
+import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -240,6 +234,15 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  def getCurrentVersion(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] =
+    purpose.versions
+      .filter(v => v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
+      .sortBy(_.createdAt)
+      .lastOption
+
+  def getWaitingForApproval(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] =
+    purpose.versions.find(_.state == PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
+
   private def enhancePurpose(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],
@@ -247,26 +250,30 @@ final case class PurposesApiServiceImpl(
     consumers: Seq[TenantProcess.Tenant],
     requesterId: UUID
   )(implicit context: Seq[(String, String)]): Future[Purpose] = for {
-    eService  <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
-    agreement <- getLatestAgreement(requesterId, eService, ec, agreementProcessService)(context)
-    clients   <- authorizationManagementService.getClients(Some(purpose.id))(context)
-    producer  <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
-    consumer  <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
-    currentVersion            = purpose.versions
-      .filter(v => v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
-      .sortBy(_.createdAt)
-      .lastOption
-    waitingForApprovalVersion = purpose.versions.find(
-      _.state == PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL
+    eService          <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
+    producer          <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
+    consumer          <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
+    agreement         <- getLatestAgreement(requesterId, eService, ec, agreementProcessService).flatMap(
+      _.toFuture(AgreementNotFound(requesterId))
     )
+    currentDescriptor <- eService.descriptors
+      .find(_.id == agreement.descriptorId)
+      .toFuture(EServiceDescriptorNotFound(eService.id.toString, agreement.descriptorId.toString))
+    clients           <- authorizationManagementService.getClients(Some(purpose.id))
+    currentVersion            = getCurrentVersion(purpose)
+    waitingForApprovalVersion = getWaitingForApproval(purpose)
+    hasKeys <- Future
+      .traverse(clients.map(_.id))(authorizationManagementService.getClientKeys)
+      .map(ks => ks.flatMap(_.keys).nonEmpty)
   } yield purpose.toApi(
-    purpose,
     eService,
     agreement,
+    currentDescriptor,
     currentVersion,
     producer,
     consumer,
     clients,
+    hasKeys,
     waitingForApprovalVersion
   )
 
@@ -357,11 +364,33 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[Purpose] = for {
-      purposeUUID     <- purposeId.toFutureUUID
-      requesterId     <- getOrganizationIdFutureUUID(contexts)
-      purpose         <- purposeProcessService.getPurpose(purposeUUID)
-      enhancedPurpose <- enhancePurpose(purpose, eServices, producers, consumers, requesterId)
-    } yield enhancedPurpose
+      purposeUUID       <- purposeId.toFutureUUID
+      requesterId       <- getOrganizationIdFutureUUID(contexts)
+      purpose           <- purposeProcessService.getPurpose(purposeUUID)
+      eService          <- catalogProcessService.getEServiceById(purpose.eserviceId)
+      agreement         <- getLatestAgreement(requesterId, eService, ec, agreementProcessService).flatMap(
+        _.toFuture(new Exception())
+      ) // TODO AgreementNotFound
+      consumer          <- tenantProcessService.getTenant(agreement.consumerId)
+      producer          <- tenantProcessService.getTenant(agreement.producerId)
+      clients           <- authorizationManagementService.getClients(Some(purpose.id))
+      hasKeys           <- Future
+        .traverse(clients.map(_.id))(authorizationManagementService.getClientKeys)
+        .map(ks => ks.flatMap(_.keys).nonEmpty)
+      currentDescriptor <- eService.descriptors
+        .find(_.id == agreement.descriptorId)
+        .toFuture(EServiceDescriptorNotFound(eService.id.toString, agreement.descriptorId.toString))
+    } yield purpose.toApi(
+      eService,
+      agreement,
+      currentDescriptor,
+      getCurrentVersion(purpose),
+      producer,
+      consumer,
+      clients,
+      hasKeys,
+      getWaitingForApproval(purpose)
+    )
 
     onComplete(result) {
       handleError(s"Error updating draft version of purpose $purposeId") orElse { case Success(response) =>

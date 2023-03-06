@@ -8,7 +8,7 @@ object CatalogManagementServiceTypes {
 
   implicit class EServiceDescriptorConverter(private val d: CatalogManagement.EServiceDescriptor) extends AnyVal {
     def toCompactDescriptor: CompactDescriptor =
-      CompactDescriptor(id = d.id, state = d.state.toApi, version = d.version)
+      CompactDescriptor(id = d.id, state = d.state.toApi, version = d.version, audience = d.audience)
   }
 
   implicit class EServiceDescriptorStateConverter(private val d: CatalogManagement.EServiceDescriptorState)

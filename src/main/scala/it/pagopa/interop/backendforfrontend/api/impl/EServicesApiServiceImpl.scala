@@ -34,7 +34,6 @@ import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.io.{ByteArrayOutputStream, File, FileOutputStream}
 import java.nio.file.{Files, Path}
-import java.time.OffsetDateTime
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -236,7 +235,7 @@ final case class EServicesApiServiceImpl(
         ),
         isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
         activeDescriptor =
-          getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version)),
+          getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
         mail = producerTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
       )
     )
@@ -420,7 +419,8 @@ final case class EServicesApiServiceImpl(
         technology = eService.technology.toApi,
         attributes = eServiceAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
-        draftDescriptor = getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version)),
+        draftDescriptor =
+          getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
         mail = requesterTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
       )
     )
