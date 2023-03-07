@@ -81,9 +81,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
           xCorrelationId = correlationId,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(
-        request,
-        s"Adding client ${clientId.toString} purpose with details ${purposeAdditionDetails.purposeId}"
-      )
+      invoker.invoke(request, s"Adding purpose ${purposeAdditionDetails.purposeId} to client ${clientId.toString}")
     }
 }

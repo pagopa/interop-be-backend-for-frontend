@@ -97,10 +97,9 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     } yield ()
 
     onComplete(result) {
-      handleError(
-        s"Error adding client $clientId purpose with details: ${purposeAdditionDetailsSeed.purposeId}"
-      ) orElse { case Success(_) =>
-        addClientPurpose204
+      handleError(s"Error adding purpose ${purposeAdditionDetailsSeed.purposeId} to client $clientId") orElse {
+        case Success(_) =>
+          addClientPurpose204
       }
     }
   }
