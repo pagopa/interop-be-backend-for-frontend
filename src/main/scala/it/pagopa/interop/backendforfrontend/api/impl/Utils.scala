@@ -2,20 +2,15 @@ package it.pagopa.interop.backendforfrontend.api.impl
 
 import cats.syntax.all._
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
-import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
-import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
-import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 
 import java.util.UUID
-import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.backendforfrontend.service.AgreementProcessService
-
-import java.time.OffsetDateTime
-import scala.concurrent.{ExecutionContext, Future}
 
 object Utils {
 
@@ -65,13 +60,12 @@ object Utils {
   def isUpgradable(
     descriptor: CatalogManagement.EServiceDescriptor,
     descriptors: Seq[CatalogManagement.EServiceDescriptor]
-  ): Boolean =
-    descriptors
-      .filter(_.version.toInt > descriptor.version.toInt)
-      .exists(d =>
-        d.state == CatalogManagement.EServiceDescriptorState.PUBLISHED ||
-          d.state == CatalogManagement.EServiceDescriptorState.SUSPENDED
-      )
+  ): Boolean = descriptors
+    .filter(_.version.toInt > descriptor.version.toInt)
+    .exists(d =>
+      d.state == CatalogManagement.EServiceDescriptorState.PUBLISHED ||
+        d.state == CatalogManagement.EServiceDescriptorState.SUSPENDED
+    )
 
   def isUpgradable(
     descriptor: CatalogProcess.EServiceDescriptor,
@@ -83,59 +77,4 @@ object Utils {
         d.state == CatalogProcess.EServiceDescriptorState.PUBLISHED ||
           d.state == CatalogProcess.EServiceDescriptorState.SUSPENDED
       )
-
-  def getAllAgreements(
-    producersIds: List[UUID],
-    consumersIds: List[UUID],
-    eServicesIds: List[UUID],
-    states: List[AgreementProcess.AgreementState],
-    ec: ExecutionContext,
-    agreementProcessService: AgreementProcessService
-  )(implicit contexts: Seq[(String, String)]): Future[List[AgreementProcess.Agreement]] = {
-
-    def getAgreementsFrom(offset: Int): Future[List[AgreementProcess.Agreement]] =
-      agreementProcessService
-        .getAgreements(
-          producersIds = producersIds,
-          consumersIds = consumersIds,
-          eservicesIds = eServicesIds,
-          states = states,
-          limit = 50,
-          offset = offset
-        )
-        .map(_.results.toList)(ec)
-
-    def go(start: Int)(as: List[AgreementProcess.Agreement]): Future[List[AgreementProcess.Agreement]] =
-      getAgreementsFrom(start).flatMap(agrs =>
-        if (agrs.size < 50) Future.successful(as ++ agrs) else go(start + 50)(as ++ agrs)
-      )(ec)
-
-    go(0)(Nil)
-  }
-
-  def getLatestAgreement(
-    consumerId: UUID,
-    eService: CatalogProcess.EService,
-    ec: ExecutionContext,
-    agreementProcessService: AgreementProcessService
-  )(implicit contexts: Seq[(String, String)]): Future[Option[AgreementProcess.Agreement]] = {
-
-    val ordering: Ordering[(Int, OffsetDateTime)] =
-      Ordering.Tuple2(Ordering.Int.reverse, Ordering.by[OffsetDateTime, Long](_.toEpochSecond).reverse)
-
-    getAllAgreements(
-      consumersIds = requesterId :: Nil,
-      eServicesIds = eService.id :: Nil,
-      producersIds = Nil,
-      states = Nil,
-      ec = ec,
-      agreementProcessService = agreementProcessService
-    ).map(
-      _.map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
-        .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
-        .sortBy(s => (s._2.version.toInt, s._1.createdAt))(ordering)
-        .headOption
-        .map(_._1)
-    )(ec)
-  }
 }

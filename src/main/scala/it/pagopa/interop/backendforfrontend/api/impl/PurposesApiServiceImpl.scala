@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Route
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.getLatestAgreement
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -17,14 +16,12 @@ import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
 import java.io.File
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
@@ -56,7 +53,6 @@ final case class PurposesApiServiceImpl(
   ): Route = {
     val result: Future[Purposes] =
       for {
-        requesterId    <- getOrganizationIdFutureUUID(contexts)
         statesEnum     <- parseArrayParameters(states).distinct
           .traverse(PurposeProcess.PurposeVersionState.fromValue)
           .toFuture
@@ -77,9 +73,7 @@ final case class PurposesApiServiceImpl(
         eServices       <- actualEServicesIds.traverse(catalogProcessService.getEServiceById)
         producers       <- eServices.map(_.producerId).distinct.traverse(tenantProcessService.getTenant)
         consumers       <- actualConsumersIds.traverse(tenantProcessService.getTenant)
-        enhancedResults <- pagedResults.results.traverse(
-          enhancePurpose(_, eServices, producers, consumers, requesterId)
-        )
+        enhancedResults <- pagedResults.results.traverse(enhancePurpose(_, eServices, producers, consumers))
       } yield Purposes(
         results = enhancedResults,
         pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
@@ -247,15 +241,14 @@ final case class PurposesApiServiceImpl(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],
     producers: Seq[TenantProcess.Tenant],
-    consumers: Seq[TenantProcess.Tenant],
-    requesterId: UUID
+    consumers: Seq[TenantProcess.Tenant]
   )(implicit context: Seq[(String, String)]): Future[Purpose] = for {
     eService          <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
     producer          <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
     consumer          <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
-    agreement         <- getLatestAgreement(purpose.consumerId, eService, ec, agreementProcessService).flatMap(
-      _.toFuture(AgreementNotFound(purpose.consumerId))
-    )
+    agreement         <- agreementProcessService
+      .getLatestAgreement(purpose.consumerId, eService)
+      .flatMap(_.toFuture(AgreementNotFound(purpose.consumerId)))
     currentDescriptor <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(EServiceDescriptorNotFound(eService.id.toString, agreement.descriptorId.toString))
@@ -394,9 +387,9 @@ final case class PurposesApiServiceImpl(
       purposeUUID       <- purposeId.toFutureUUID
       purpose           <- purposeProcessService.getPurpose(purposeUUID)
       eService          <- catalogProcessService.getEServiceById(purpose.eserviceId)
-      agreement         <- getLatestAgreement(purpose.consumerId, eService, ec, agreementProcessService).flatMap(
-        _.toFuture(new Exception())
-      )
+      agreement         <- agreementProcessService
+        .getLatestAgreement(purpose.consumerId, eService)
+        .flatMap(_.toFuture(AgreementNotFound(purpose.consumerId)))
       consumer          <- tenantProcessService.getTenant(agreement.consumerId)
       producer          <- tenantProcessService.getTenant(agreement.producerId)
       clients           <- authorizationManagementService.getClients(Some(purpose.id))

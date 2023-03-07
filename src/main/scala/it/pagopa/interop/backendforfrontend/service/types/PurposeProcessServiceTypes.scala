@@ -60,15 +60,15 @@ object PurposeProcessServiceTypes {
   }
 
   implicit class PurposeCompactVersionsConverter(private val pv: PurposeProcess.PurposeVersion) extends AnyVal {
-    def toCompactVersion = {
+    def toCompactVersion: CompactPurposeVersion = {
       CompactPurposeVersion(
         id = pv.id,
         state = pv.state.toApi,
         dailyCalls = pv.dailyCalls,
-        expectedApprovalDate = pv.expectedApprovalDate.get, // TODO
-        riskAnalysisDocument = pv.riskAnalysis.get.toApi,
+        expectedApprovalDate = pv.expectedApprovalDate,
+        riskAnalysisDocument = pv.riskAnalysis.map(_.toApi),
         createdAt = pv.createdAt,
-        firstActivationAt = pv.firstActivationAt.get
+        firstActivationAt = pv.firstActivationAt
       )
     }
   }
@@ -110,8 +110,7 @@ object PurposeProcessServiceTypes {
       title = p.title,
       description = p.description,
       consumer = CompactOrganization(id = consumer.id, name = consumer.name),
-      riskAnalysisForm =
-        p.riskAnalysisForm.getOrElse(PurposeProcess.RiskAnalysisForm(version = "v1", answers = Map.empty)).toApi,
+      riskAnalysisForm = p.riskAnalysisForm.map(_.toApi),
       eservice = CompactEService(
         id = eService.id,
         name = eService.name,

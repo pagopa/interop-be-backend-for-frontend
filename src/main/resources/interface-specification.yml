@@ -7531,19 +7531,6 @@ components:
         - id
         - name
         - hasKeys
-    RiskAnalysisForm:
-      type: object
-      properties:
-        version:
-          type: string
-        answers:
-          additionalProperties:
-            type: array
-            items:
-              type: string
-      required:
-        - version
-        - answers
     Purposes:
       type: object
       properties:
@@ -7677,6 +7664,19 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RelationshipInfo'
+    RiskAnalysisForm:
+      type: object
+      properties:
+        version:
+          type: string
+        answers:
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      required:
+        - version
+        - answers
     CreatedResource:
       type: object
       description: contains the id of the created resource

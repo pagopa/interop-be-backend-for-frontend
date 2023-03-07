@@ -11,15 +11,15 @@ import io.circe.Json
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{getAllAgreements, getLatestAgreement, isUpgradable}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
-import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.catalogprocess.client.model.EServices
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
@@ -184,6 +184,10 @@ final case class EServicesApiServiceImpl(
     }
   }
 
+  def canBeUpgraded(eService: CatalogProcessEService, a: AgreementProcess.Agreement): Boolean = {
+    eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, eService.descriptors))
+  }
+
   override def getCatalogEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -202,7 +206,7 @@ final case class EServicesApiServiceImpl(
       eServiceAttributes             <- eService.attributes.toApi(attributes)
       requesterTenant                <- tenantManagementService.getTenant(requesterId)
       producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
-      agreement                      <- getLatestAgreement(requesterId, eService, ec, agreementProcessService)
+      agreement                      <- agreementProcessService.getLatestAgreement(requesterId, eService)
     } yield CatalogEServiceDescriptor(
       id = descriptor.id,
       version = descriptor.version,
@@ -223,10 +227,7 @@ final case class EServicesApiServiceImpl(
         attributes = eServiceAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         agreement = agreement.map { a =>
-          val canBeUpgraded: Boolean = eService.descriptors
-            .find(_.id == a.descriptorId)
-            .exists(isUpgradable(_, eService.descriptors))
-          CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded)
+          CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded(eService, a))
         },
         isMine = eService.producerId == requesterId,
         hasCertifiedAttributes = certifiedAttributesSatisfied(
@@ -299,14 +300,14 @@ final case class EServicesApiServiceImpl(
   private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
     contexts: Seq[(String, String)]
   ): Future[List[UUID]] =
-    getAllAgreements(
-      producersIds = producerId :: Nil,
-      consumersIds = consumersUUIDs,
-      eServicesIds = Nil,
-      states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED),
-      ec,
-      agreementProcessService
-    ).map(_.map(_.eserviceId).distinct)
+    agreementProcessService
+      .getAllAgreements(
+        producersIds = producerId :: Nil,
+        consumersIds = consumersUUIDs,
+        eServicesIds = Nil,
+        states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
+      )
+      .map(_.map(_.eserviceId).distinct)
 
   private def enhanceCatalogEService(
     requesterId: UUID
@@ -317,7 +318,7 @@ final case class EServicesApiServiceImpl(
       else Future.successful(producerTenant)
 
     activeDescriptor = getActiveDescriptor(eService)
-    latestAgreement <- getLatestAgreement(requesterId, eService, ec, agreementProcessService)
+    latestAgreement <- agreementProcessService.getLatestAgreement(requesterId, eService)
   } yield CatalogEService(
     id = eService.id,
     name = eService.name,
