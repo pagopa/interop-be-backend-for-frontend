@@ -29,7 +29,7 @@ class AuthorizationManagementServiceImpl(authorizationManagementURL: String, blo
         api.listClients(xCorrelationId = correlationId, xForwardedFor = ip, purposeId = purposeId)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Retrieving clients")
+      invoker.invoke(request, s"Retrieving clients for purpose $purposeId")
     }
 
   override def getClientKeys(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[KeysResponse] =
@@ -38,6 +38,6 @@ class AuthorizationManagementServiceImpl(authorizationManagementURL: String, blo
         keyApi.getClientKeys(xCorrelationId = correlationId, clientId = clientId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Retrieving client keys")
+      invoker.invoke(request, s"Retrieving keys for client $clientId")
     }
 }

@@ -253,8 +253,8 @@ final case class PurposesApiServiceImpl(
     eService          <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
     producer          <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
     consumer          <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
-    agreement         <- getLatestAgreement(requesterId, eService, ec, agreementProcessService).flatMap(
-      _.toFuture(AgreementNotFound(requesterId))
+    agreement         <- getLatestAgreement(purpose.consumerId, eService, ec, agreementProcessService).flatMap(
+      _.toFuture(AgreementNotFound(purpose.consumerId))
     )
     currentDescriptor <- eService.descriptors
       .find(_.id == agreement.descriptorId)
@@ -392,10 +392,9 @@ final case class PurposesApiServiceImpl(
   ): Route = {
     val result: Future[Purpose] = for {
       purposeUUID       <- purposeId.toFutureUUID
-      requesterId       <- getOrganizationIdFutureUUID(contexts)
       purpose           <- purposeProcessService.getPurpose(purposeUUID)
       eService          <- catalogProcessService.getEServiceById(purpose.eserviceId)
-      agreement         <- getLatestAgreement(requesterId, eService, ec, agreementProcessService).flatMap(
+      agreement         <- getLatestAgreement(purpose.consumerId, eService, ec, agreementProcessService).flatMap(
         _.toFuture(new Exception())
       )
       consumer          <- tenantProcessService.getTenant(agreement.consumerId)

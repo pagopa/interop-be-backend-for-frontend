@@ -114,7 +114,7 @@ object Utils {
   }
 
   def getLatestAgreement(
-    requesterId: UUID,
+    consumerId: UUID,
     eService: CatalogProcess.EService,
     ec: ExecutionContext,
     agreementProcessService: AgreementProcessService

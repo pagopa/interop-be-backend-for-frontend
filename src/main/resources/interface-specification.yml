@@ -7305,10 +7305,7 @@ components:
         - id
         - state
         - dailyCalls
-        - expectedApprovalDate
-        - riskAnalysisDocument
         - createdAt
-        - firstActivationAt
       properties:
         id:
           type: string
@@ -7516,7 +7513,6 @@ components:
         - title
         - description
         - consumer
-        - riskAnalysisForm
         - versions
         - clients
         - eservice
@@ -7581,7 +7577,6 @@ components:
           description: 'maximum number of daily calls that this version can perform.'
           type: integer
           format: int32
-          minimum: 0
         riskAnalysisDocument:
           $ref: '#/components/schemas/PurposeVersionDocument'
       required:
