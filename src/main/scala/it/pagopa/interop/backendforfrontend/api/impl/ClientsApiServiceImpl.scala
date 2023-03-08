@@ -1,5 +1,6 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
+import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
@@ -9,7 +10,9 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.model.Problem
+import it.pagopa.interop.backendforfrontend.model.{Problem, Clients, Pagination}
+import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
+import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
@@ -82,6 +85,29 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
         case Success(_) =>
           removeClientOperatorRelationship204
       }
+    }
+  }
+
+  override def getClients(q: Option[String], relationshipIds: String, offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerClients: ToEntityMarshaller[Clients],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Clients] = for {
+      relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
+      pagedResults      <- authorizationProcessService.getClients(
+        name = q,
+        relationshipIds = relationshipsUuid,
+        offset = offset,
+        limit = limit
+      )
+    } yield Clients(
+      results = pagedResults.results.map(_.toApi),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    onComplete(result) {
+      handleError(s"Error retrieving clients") orElse { case Success(clients) => getClients200(clients) }
     }
   }
 }

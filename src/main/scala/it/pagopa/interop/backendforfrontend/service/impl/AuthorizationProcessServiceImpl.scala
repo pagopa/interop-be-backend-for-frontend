@@ -7,6 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.authorizationprocess.client.api.{EnumsSerializers, ClientApi}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
+import it.pagopa.interop.authorizationprocess.client.model.ClientList
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -68,4 +69,18 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Removing operator relationship $relationshipId of client ${clientId.toString}")
     }
+
+  def getClients(name: Option[String], relationshipIds: Seq[UUID], limit: Int, offset: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[ClientList] = withHeaders[ClientList] { (bearerToken, correlationId, ip) =>
+    val request = api.getClients(
+      xCorrelationId = correlationId,
+      name = name,
+      relationshipIds = relationshipIds,
+      offset = offset,
+      limit = limit,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving clients")
+  }
 }

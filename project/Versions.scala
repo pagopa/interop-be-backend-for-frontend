@@ -26,5 +26,5 @@ object PagopaVersions {
   lazy val purposeProcessVersion        = "1.0.x-SNAPSHOT"
   lazy val userRegistryVersion          = "1.0.x-SNAPSHOT"
   lazy val attributeRegistryVersion     = "1.0.x-SNAPSHOT"
-  lazy val authorizationProcessVersion  = "1.0.x-SNAPSHOT"
+  lazy val authorizationProcessVersion  = "PIN-1315-SNAPSHOT"//"1.0.x-SNAPSHOT"
 }
