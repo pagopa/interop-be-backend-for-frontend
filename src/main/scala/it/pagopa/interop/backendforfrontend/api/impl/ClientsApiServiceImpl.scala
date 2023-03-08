@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.model.{Problem, ReadClientKeys}
+import it.pagopa.interop.backendforfrontend.model.{Problem, ReadClientKeys, ReadClientKey}
 import it.pagopa.interop.backendforfrontend.service.PartyProcessService
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 
@@ -103,6 +103,24 @@ final case class ClientsApiServiceImpl(
     onComplete(result) {
       handleError(s"Error retrieving keys of client $clientId") orElse { case Success(keys) =>
         getClientKeys200(keys)
+      }
+    }
+  }
+
+  override def getClientKeyById(clientId: String, keyId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerReadClientKey: ToEntityMarshaller[ReadClientKey]
+  ): Route = {
+
+    val result: Future[ReadClientKey] = for {
+      clientUuid    <- clientId.toFutureUUID
+      readClientKey <- authorizationProcessService.getClientKeyById(clientUuid, keyId)
+    } yield readClientKey.toApi
+
+    onComplete(result) {
+      handleError(s"Error retrieving key $keyId of client $clientId") orElse { case Success(key) =>
+        getClientKeyById200(key)
       }
     }
   }

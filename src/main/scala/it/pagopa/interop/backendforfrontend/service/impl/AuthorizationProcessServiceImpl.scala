@@ -7,7 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.authorizationprocess.client.api.{EnumsSerializers, ClientApi}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.authorizationprocess.client.model.ReadClientKeys
+import it.pagopa.interop.authorizationprocess.client.model.{ReadClientKeys, ReadClientKey}
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -78,4 +78,14 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Retrieve keys of client ${clientId.toString}")
     }
 
+  override def getClientKeyById(clientId: UUID, keyId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[ReadClientKey] =
+    withHeaders[ReadClientKey] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[ReadClientKey] =
+        api.getClientKeyById(clientId = clientId, keyId = keyId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Retrieve key ${keyId} of client ${clientId.toString}")
+    }
 }
