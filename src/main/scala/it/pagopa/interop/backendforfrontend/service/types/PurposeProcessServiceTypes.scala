@@ -1,7 +1,8 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
-import it.pagopa.interop.authorizationmanagement.client.{model => AuthorizationManagement}
+import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
+import it.pagopa.interop.authorizationprocess.client.model.Clients
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.AgreementStateConverter
@@ -85,7 +86,7 @@ object PurposeProcessServiceTypes {
     )
   }
 
-  implicit class ClientConverter(private val c: AuthorizationManagement.Client) extends AnyVal {
+  implicit class ClientConverter(private val c: AuthorizationProcess.Client) extends AnyVal {
     def toApi(hasKeys: Boolean): Client = Client(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
@@ -102,7 +103,7 @@ object PurposeProcessServiceTypes {
       currentVersion: Option[PurposeProcess.PurposeVersion],
       producer: TenantProcess.Tenant,
       consumer: TenantProcess.Tenant,
-      clients: Seq[AuthorizationManagement.Client],
+      processClients: Clients,
       hasKeys: Boolean,
       waitingForApprovalVersion: Option[PurposeProcess.PurposeVersion]
     ): Purpose = Purpose(
@@ -130,7 +131,7 @@ object PurposeProcessServiceTypes {
       },
       currentVersion = currentVersion.map(_.toCompactVersion),
       versions = p.versions.map(_.toApi),
-      clients = clients.map(_.toApi(hasKeys)),
+      clients = processClients.clients.map(_.toApi(hasKeys)),
       waitingForApprovalVersion = waitingForApprovalVersion.map(_.toCompactVersion),
       suspendedByConsumer = p.suspendedByConsumer,
       suspendedByProducer = p.suspendedByProducer

@@ -11,7 +11,7 @@ import io.circe.Json
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.canBeUpgraded
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -184,10 +184,6 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  def canBeUpgraded(eService: CatalogProcessEService, a: AgreementProcess.Agreement): Boolean = {
-    eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, eService.descriptors))
-  }
-
   override def getCatalogEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -325,10 +321,7 @@ final case class EServicesApiServiceImpl(
     description = eService.description,
     producer = CompactOrganization(id = eService.producerId, name = producerTenant.name),
     agreement = latestAgreement.map { a =>
-      val canBeUpgraded: Boolean = eService.descriptors
-        .find(_.id == a.descriptorId)
-        .exists(isUpgradable(_, eService.descriptors))
-      CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded)
+      CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded(eService, a))
     },
     isMine = eService.producerId == requesterId,
     hasCertifiedAttributes =

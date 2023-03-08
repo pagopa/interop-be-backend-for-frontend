@@ -30,7 +30,7 @@ final case class PurposesApiServiceImpl(
   purposeProcessService: PurposeProcessService,
   tenantProcessService: TenantProcessService,
   agreementProcessService: AgreementProcessService,
-  authorizationManagementService: AuthorizationManagementService,
+  authorizationProcessService: AuthorizationProcessService,
   fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends PurposesApiService {
@@ -252,11 +252,11 @@ final case class PurposesApiServiceImpl(
     currentDescriptor <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(EServiceDescriptorNotFound(eService.id.toString, agreement.descriptorId.toString))
-    clients           <- authorizationManagementService.getClients(Some(purpose.id))
+    processClients    <- authorizationProcessService.getClients(purpose.consumerId, Some(purpose.id))
     currentVersion            = getCurrentVersion(purpose)
     waitingForApprovalVersion = getWaitingForApproval(purpose)
     hasKeys <- Future
-      .traverse(clients.map(_.id))(authorizationManagementService.getClientKeys)
+      .traverse(processClients.clients.map(_.id))(authorizationProcessService.getClientKeys)
       .map(ks => ks.flatMap(_.keys).nonEmpty)
   } yield purpose.toApi(
     eService,
@@ -265,7 +265,7 @@ final case class PurposesApiServiceImpl(
     currentVersion,
     producer,
     consumer,
-    clients,
+    processClients,
     hasKeys,
     waitingForApprovalVersion
   )
@@ -392,9 +392,9 @@ final case class PurposesApiServiceImpl(
         .flatMap(_.toFuture(AgreementNotFound(purpose.consumerId)))
       consumer          <- tenantProcessService.getTenant(agreement.consumerId)
       producer          <- tenantProcessService.getTenant(agreement.producerId)
-      clients           <- authorizationManagementService.getClients(Some(purpose.id))
+      processClients    <- authorizationProcessService.getClients(purpose.consumerId, Some(purpose.id))
       hasKeys           <- Future
-        .traverse(clients.map(_.id))(authorizationManagementService.getClientKeys)
+        .traverse(processClients.clients.map(_.id))(authorizationProcessService.getClientKeys)
         .map(ks => ks.flatMap(_.keys).nonEmpty)
       currentDescriptor <- eService.descriptors
         .find(_.id == agreement.descriptorId)
@@ -406,7 +406,7 @@ final case class PurposesApiServiceImpl(
       getCurrentVersion(purpose),
       producer,
       consumer,
-      clients,
+      processClients,
       hasKeys,
       getWaitingForApproval(purpose)
     )

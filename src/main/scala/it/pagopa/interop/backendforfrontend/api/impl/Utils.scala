@@ -8,6 +8,7 @@ import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServic
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.util.UUID
@@ -56,6 +57,9 @@ object Utils {
     tenant.attributes.mapFilter(_.verified.map(_.id)) ++
       tenant.attributes.mapFilter(_.certified.map(_.id)) ++
       tenant.attributes.mapFilter(_.declared.map(_.id))
+
+  def canBeUpgraded(eService: CatalogProcess.EService, a: AgreementProcess.Agreement): Boolean =
+    eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, eService.descriptors))
 
   def isUpgradable(
     descriptor: CatalogManagement.EServiceDescriptor,
