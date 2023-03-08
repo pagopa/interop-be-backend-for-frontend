@@ -9,14 +9,18 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.model.Problem
+import it.pagopa.interop.backendforfrontend.model.{Problem, ReadClientKeys}
+import it.pagopa.interop.backendforfrontend.service.PartyProcessService
+import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
 
-final case class ClientsApiServiceImpl(authorizationProcessService: AuthorizationProcessService)(implicit
-  ec: ExecutionContext
-) extends ClientsApiService {
+final case class ClientsApiServiceImpl(
+  authorizationProcessService: AuthorizationProcessService,
+  partyProcessService: PartyProcessService
+)(implicit ec: ExecutionContext)
+    extends ClientsApiService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
@@ -84,4 +88,23 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       }
     }
   }
+
+  override def getClientKeys(clientId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerReadClientKeys: ToEntityMarshaller[ReadClientKeys],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[ReadClientKeys] = for {
+      clientUuid     <- clientId.toFutureUUID
+      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
+    } yield ReadClientKeys(keys = readClientKeys.keys.map(_.toApi))
+
+    onComplete(result) {
+      handleError(s"Error retrieving keys of client $clientId") orElse { case Success(keys) =>
+        getClientKeys200(keys)
+      }
+    }
+  }
+
 }
