@@ -7256,6 +7256,20 @@ components:
         - id
         - name
         - producer
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        producer:
+          $ref: '#/components/schemas/CompactOrganization'
+    CompactPurposeEService:
+      type: object
+      required:
+        - id
+        - name
+        - producer
         - descriptor
       properties:
         id:
@@ -7489,7 +7503,7 @@ components:
         riskAnalysisForm:
           $ref: '#/components/schemas/RiskAnalysisForm'
         eservice:
-          $ref: '#/components/schemas/CompactEService'
+          $ref: '#/components/schemas/CompactPurposeEService'
         agreement:
           $ref: '#/components/schemas/CompactAgreement'
         currentVersion:

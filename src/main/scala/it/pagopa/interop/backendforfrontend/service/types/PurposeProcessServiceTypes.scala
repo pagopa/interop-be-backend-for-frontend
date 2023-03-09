@@ -112,7 +112,7 @@ object PurposeProcessServiceTypes {
       description = p.description,
       consumer = CompactOrganization(id = consumer.id, name = consumer.name),
       riskAnalysisForm = p.riskAnalysisForm.map(_.toApi),
-      eservice = CompactEService(
+      eservice = CompactPurposeEService(
         id = eService.id,
         name = eService.name,
         producer = CompactOrganization(id = producer.id, name = producer.name),
