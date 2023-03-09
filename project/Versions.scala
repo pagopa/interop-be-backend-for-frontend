@@ -27,5 +27,4 @@ object PagopaVersions {
   lazy val userRegistryVersion            = "1.0.x-SNAPSHOT"
   lazy val attributeRegistryVersion       = "1.0.x-SNAPSHOT"
   lazy val authorizationProcessVersion    = "1.0.x-SNAPSHOT"
-  lazy val authorizationManagementVersion = "1.0.x-SNAPSHOT"
 }

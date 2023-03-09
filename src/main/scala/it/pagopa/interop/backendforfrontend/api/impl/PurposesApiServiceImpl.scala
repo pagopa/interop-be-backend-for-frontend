@@ -384,32 +384,16 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[Purpose] = for {
-      purposeUUID       <- purposeId.toFutureUUID
-      purpose           <- purposeProcessService.getPurpose(purposeUUID)
-      eService          <- catalogProcessService.getEServiceById(purpose.eserviceId)
-      agreement         <- agreementProcessService
+      purposeUUID     <- purposeId.toFutureUUID
+      purpose         <- purposeProcessService.getPurpose(purposeUUID)
+      eService        <- catalogProcessService.getEServiceById(purpose.eserviceId)
+      agreement       <- agreementProcessService
         .getLatestAgreement(purpose.consumerId, eService)
         .flatMap(_.toFuture(AgreementNotFound(purpose.consumerId)))
-      consumer          <- tenantProcessService.getTenant(agreement.consumerId)
-      producer          <- tenantProcessService.getTenant(agreement.producerId)
-      processClients    <- authorizationProcessService.getClients(purpose.consumerId, Some(purpose.id))
-      hasKeys           <- Future
-        .traverse(processClients.clients.map(_.id))(authorizationProcessService.getClientKeys)
-        .map(ks => ks.flatMap(_.keys).nonEmpty)
-      currentDescriptor <- eService.descriptors
-        .find(_.id == agreement.descriptorId)
-        .toFuture(EServiceDescriptorNotFound(eService.id.toString, agreement.descriptorId.toString))
-    } yield purpose.toApi(
-      eService,
-      agreement,
-      currentDescriptor,
-      getCurrentVersion(purpose),
-      producer,
-      consumer,
-      processClients,
-      hasKeys,
-      getWaitingForApproval(purpose)
-    )
+      consumer        <- tenantProcessService.getTenant(agreement.consumerId)
+      producer        <- tenantProcessService.getTenant(agreement.producerId)
+      enhancedPurpose <- enhancePurpose(purpose, Seq(eService), Seq(producer), Seq(consumer))
+    } yield enhancedPurpose
 
     onComplete(result) {
       handleError(s"Error retrieving purpose $purposeId") orElse { case Success(response) =>

@@ -60,25 +60,12 @@ object PurposeProcessServiceTypes {
       PurposeProcess.DraftPurposeVersionUpdateContent(dailyCalls = dpvc.dailyCalls)
   }
 
-  implicit class PurposeCompactVersionsConverter(private val pv: PurposeProcess.PurposeVersion) extends AnyVal {
-    def toCompactVersion: CompactPurposeVersion = {
-      CompactPurposeVersion(
-        id = pv.id,
-        state = pv.state.toApi,
-        dailyCalls = pv.dailyCalls,
-        expectedApprovalDate = pv.expectedApprovalDate,
-        riskAnalysisDocument = pv.riskAnalysis.map(_.toApi),
-        createdAt = pv.createdAt,
-        firstActivationAt = pv.firstActivationAt
-      )
-    }
-  }
-
   implicit class PurposeVersionsConverter(private val pv: PurposeProcess.PurposeVersion) extends AnyVal {
     def toApi: PurposeVersion = PurposeVersion(
       id = pv.id,
       state = pv.state.toApi,
       createdAt = pv.createdAt,
+      expectedApprovalDate = pv.expectedApprovalDate,
       updatedAt = pv.updatedAt,
       firstActivationAt = pv.firstActivationAt,
       dailyCalls = pv.dailyCalls,
@@ -129,10 +116,10 @@ object PurposeProcessServiceTypes {
           .exists(isUpgradable(_, eService.descriptors))
         CompactAgreement(id = agreement.id, state = agreement.state.toApi, canBeUpgraded = canBeUpgraded)
       },
-      currentVersion = currentVersion.map(_.toCompactVersion),
+      currentVersion = currentVersion.map(_.toApi),
       versions = p.versions.map(_.toApi),
       clients = processClients.clients.map(_.toApi(hasKeys)),
-      waitingForApprovalVersion = waitingForApprovalVersion.map(_.toCompactVersion),
+      waitingForApprovalVersion = waitingForApprovalVersion.map(_.toApi),
       suspendedByConsumer = p.suspendedByConsumer,
       suspendedByProducer = p.suspendedByProducer
     )

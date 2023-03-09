@@ -7313,33 +7313,6 @@ components:
         - consumerId
         - title
         - description
-    CompactPurposeVersion:
-      type: object
-      required:
-        - id
-        - state
-        - dailyCalls
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        state:
-          $ref: '#/components/schemas/PurposeVersionState'
-        dailyCalls:
-          type: integer
-          format: int32
-        expectedApprovalDate:
-          type: string
-          format: date-time
-        riskAnalysisDocument:
-          $ref: '#/components/schemas/PurposeVersionDocument'
-        createdAt:
-          type: string
-          format: date-time
-        firstActivationAt:
-          type: string
-          format: date-time
     WaitingForApprovalPurposeVersionUpdateContentSeed:
       type: object
       description: contains the expected payload for purpose version update.
@@ -7507,7 +7480,7 @@ components:
         agreement:
           $ref: '#/components/schemas/CompactAgreement'
         currentVersion:
-          $ref: '#/components/schemas/CompactPurposeVersion'
+          $ref: '#/components/schemas/PurposeVersion'
         versions:
           type: array
           items:
@@ -7517,7 +7490,7 @@ components:
           items:
             $ref: '#/components/schemas/Client'
         waitingForApprovalVersion:
-          $ref: '#/components/schemas/CompactPurposeVersion'
+          $ref: '#/components/schemas/PurposeVersion'
         suspendedByConsumer:
           type: boolean
         suspendedByProducer:
@@ -7566,6 +7539,9 @@ components:
         state:
           $ref: '#/components/schemas/PurposeVersionState'
         createdAt:
+          type: string
+          format: date-time
+        expectedApprovalDate:
           type: string
           format: date-time
         updatedAt:
