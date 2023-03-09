@@ -7230,27 +7230,23 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/ClientEntry'
+            $ref: '#/components/schemas/CompactClient'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
         - results
         - pagination    
-    ClientEntry:
+    CompactClient:
       type: object
       required:
         - id
         - name
-        - creationDate
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
-        creationDate:
-          type: string
-          format: date-time    
     AgreementListEntry:
       type: object
       required:

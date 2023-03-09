@@ -7,7 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.authorizationprocess.client.api.{EnumsSerializers, ClientApi}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.authorizationprocess.client.model.ClientList
+import it.pagopa.interop.authorizationprocess.client.model.Clients
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -72,7 +72,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
 
   def getClients(name: Option[String], relationshipIds: Seq[UUID], limit: Int, offset: Int)(implicit
     contexts: Seq[(String, String)]
-  ): Future[ClientList] = withHeaders[ClientList] { (bearerToken, correlationId, ip) =>
+  ): Future[Clients] = withHeaders[Clients] { (bearerToken, correlationId, ip) =>
     val request = api.getClients(
       xCorrelationId = correlationId,
       name = name,

@@ -2,7 +2,7 @@ package it.pagopa.interop.backendforfrontend.service
 
 import java.util.UUID
 import scala.concurrent.Future
-import it.pagopa.interop.authorizationprocess.client.model.ClientList
+import it.pagopa.interop.authorizationprocess.client.model.Clients
 
 trait AuthorizationProcessService {
 
@@ -18,5 +18,5 @@ trait AuthorizationProcessService {
 
   def getClients(name: Option[String] = None, relationshipIds: Seq[UUID] = Seq.empty, limit: Int, offset: Int = 0)(
     implicit contexts: Seq[(String, String)]
-  ): Future[ClientList]
+  ): Future[Clients]
 }
