@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.model.{Problem, PurposeAdditionDetailsSeed}
+import it.pagopa.interop.backendforfrontend.model.{Problem, PurposeAdditionDetailsSeed, CreatedResource}
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 
 import scala.concurrent.{Future, ExecutionContext}
@@ -82,6 +82,26 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       handleError(s"Error removing operator relationship $relationshipId of client $clientId") orElse {
         case Success(_) =>
           removeClientOperatorRelationship204
+      }
+    }
+  }
+
+  override def clientOperatorRelationshipBinding(clientId: String, relationshipId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+
+    val result: Future[CreatedResource] = for {
+      clientUuid       <- clientId.toFutureUUID
+      relationshipUuid <- relationshipId.toFutureUUID
+      result           <- authorizationProcessService.clientOperatorRelationshipBinding(clientUuid, relationshipUuid)
+    } yield (result.toCreatedResource)
+
+    onComplete(result) {
+      handleError(s"Error binding operator relationship $relationshipId to client $clientId") orElse {
+        case Success(resource) =>
+          clientOperatorRelationshipBinding200(resource)
       }
     }
   }
