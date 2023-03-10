@@ -12,7 +12,7 @@ import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{CatalogProcessService, PurposeProcessService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -29,6 +29,8 @@ final case class PurposesApiServiceImpl(
   catalogProcessService: CatalogProcessService,
   purposeProcessService: PurposeProcessService,
   tenantProcessService: TenantProcessService,
+  agreementProcessService: AgreementProcessService,
+  authorizationProcessService: AuthorizationProcessService,
   fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends PurposesApiService {
@@ -226,38 +228,46 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  def getCurrentVersion(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] =
+    purpose.versions
+      .filter(v => v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
+      .sortBy(_.createdAt)
+      .lastOption
+
+  def getWaitingForApproval(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] =
+    purpose.versions.find(_.state == PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
+
   private def enhancePurpose(
     purpose: PurposeProcess.Purpose,
     eServices: Seq[CatalogProcess.EService],
     producers: Seq[TenantProcess.Tenant],
     consumers: Seq[TenantProcess.Tenant]
-  ): Future[Purpose] = for {
-    eService <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
-    producer <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
-    consumer <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
-    currentVersion            = purpose.versions
-      .filter(v => v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
-      .sortBy(_.createdAt)
-      .lastOption
-    waitingForApprovalVersion = purpose.versions.find(
-      _.state == PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL
-    )
-  } yield Purpose(
-    id = purpose.id,
-    title = purpose.title,
-    consumer = CompactOrganization(id = consumer.id, name = consumer.name),
-    eservice = CompactEService(
-      id = eService.id,
-      name = eService.name,
-      producer = CompactOrganization(id = producer.id, name = producer.name)
-    ),
-    currentVersion =
-      currentVersion.map(v => CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls)),
-    waitingForApprovalVersion = waitingForApprovalVersion.map(v =>
-      CompactPurposeVersion(id = v.id, state = v.state.toApi, dailyCalls = v.dailyCalls, v.expectedApprovalDate)
-    ),
-    suspendedByConsumer = purpose.suspendedByConsumer,
-    suspendedByProducer = purpose.suspendedByProducer
+  )(implicit context: Seq[(String, String)]): Future[Purpose] = for {
+    eService          <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
+    producer          <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
+    consumer          <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
+    agreement         <- agreementProcessService
+      .getLatestAgreement(purpose.consumerId, eService)
+      .flatMap(_.toFuture(AgreementNotFound(purpose.consumerId)))
+    currentDescriptor <- eService.descriptors
+      .find(_.id == agreement.descriptorId)
+      .toFuture(EServiceDescriptorNotFound(eService.id.toString, agreement.descriptorId.toString))
+    processClients    <- authorizationProcessService.getClients(purpose.consumerId, Some(purpose.id))
+    currentVersion            = getCurrentVersion(purpose)
+    waitingForApprovalVersion = getWaitingForApproval(purpose)
+    hasKeys <- Future
+      .traverse(processClients.clients.map(_.id))(authorizationProcessService.getClientKeys)
+      .map(ks => ks.flatMap(_.keys).nonEmpty)
+  } yield purpose.toApi(
+    eService,
+    agreement,
+    currentDescriptor,
+    currentVersion,
+    producer,
+    consumer,
+    processClients,
+    hasKeys,
+    waitingForApprovalVersion
   )
 
   override def clonePurpose(purposeId: String)(implicit
@@ -337,6 +347,57 @@ final case class PurposesApiServiceImpl(
     onComplete(result) {
       handleError(s"Error updating draft version $versionId of purpose $purposeId") orElse { case Success(response) =>
         updateDraftPurposeVersion200(response)
+      }
+    }
+  }
+
+  override def createPurpose(
+    q: Option[String],
+    eservicesIds: String,
+    consumersIds: String,
+    producersIds: String,
+    states: String,
+    offset: Int,
+    limit: Int,
+    purposeSeed: PurposeSeed
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    logger.info(s"Creating purpose with eService $eservicesIds and consumer $consumersIds")
+
+    val result: Future[CreatedResource] =
+      purposeProcessService.createPurpose(purposeSeed.toProcess)(contexts).map(_.toApiResource)
+
+    onComplete(result) {
+      handleError(s"Error creating Purpose with eService $eservicesIds and consumer $consumersIds") orElse {
+        case Success(purpose) =>
+          createPurpose200(purpose)
+      }
+    }
+  }
+
+  override def getPurpose(purposeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Purpose] = for {
+      purposeUUID     <- purposeId.toFutureUUID
+      purpose         <- purposeProcessService.getPurpose(purposeUUID)
+      eService        <- catalogProcessService.getEServiceById(purpose.eserviceId)
+      agreement       <- agreementProcessService
+        .getLatestAgreement(purpose.consumerId, eService)
+        .flatMap(_.toFuture(AgreementNotFound(purpose.consumerId)))
+      consumer        <- tenantProcessService.getTenant(agreement.consumerId)
+      producer        <- tenantProcessService.getTenant(agreement.producerId)
+      enhancedPurpose <- enhancePurpose(purpose, Seq(eService), Seq(producer), Seq(consumer))
+    } yield enhancedPurpose
+
+    onComplete(result) {
+      handleError(s"Error retrieving purpose $purposeId") orElse { case Success(response) =>
+        getPurpose200(response)
       }
     }
   }

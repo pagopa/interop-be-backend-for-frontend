@@ -8,23 +8,22 @@ import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.PartyApiService
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.RelationshipNotFound
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
 import it.pagopa.interop.backendforfrontend.service.{
   AttributeRegistryManagementService,
   PartyProcessService,
+  TenantManagementService,
   UserRegistryService
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.error.BFFErrors._
-import it.pagopa.interop.commons.utils.INTEROP_PRODUCT_NAME
 import it.pagopa.interop.commons.utils.OpenapiUtils._
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, ResourceNotFoundError}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
-import it.pagopa.interop.backendforfrontend.service.TenantManagementService
 
 final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
@@ -92,7 +91,7 @@ final case class PartyApiServiceImpl(
         personIdUUID,
         rolesParams,
         statesParams,
-        List(INTEROP_PRODUCT_NAME),
+        List(ApplicationConfiguration.selfcareProductId),
         productRolesParams
       )
       relationshipsInfo <- Future.traverse(relationships) { relationship =>

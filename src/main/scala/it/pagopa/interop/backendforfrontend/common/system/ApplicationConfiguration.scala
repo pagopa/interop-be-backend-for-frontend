@@ -76,4 +76,5 @@ object ApplicationConfiguration {
   val allowListContainer: String         = config.getString("backend-for-frontend.storage.allow-list.container")
   val allowListPath: String              = config.getString("backend-for-frontend.storage.allow-list.path")
   val allowListFilename: String          = config.getString("backend-for-frontend.storage.allow-list.filename")
+  val selfcareProductId: String          = config.getString("backend-for-frontend.selfcare-product-id")
 }
