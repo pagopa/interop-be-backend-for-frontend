@@ -32,7 +32,7 @@ object Dependencies {
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
     lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
-    
+
     lazy val authorizationProcessClient =
       namespace %% "interop-be-authorization-process-client" % authorizationProcessVersion
 

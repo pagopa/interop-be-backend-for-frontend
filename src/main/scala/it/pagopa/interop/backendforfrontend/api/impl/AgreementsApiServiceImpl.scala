@@ -30,6 +30,7 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import java.io.File
@@ -274,17 +275,6 @@ final case class AgreementsApiServiceImpl(
     suspendedByProducer = agreement.suspendedByProducer,
     suspendedByPlatform = agreement.suspendedByPlatform
   )
-
-  def isUpgradable(
-    descriptor: CatalogManagement.EServiceDescriptor,
-    descriptors: Seq[CatalogManagement.EServiceDescriptor]
-  ): Boolean =
-    descriptors
-      .filter(_.version.toInt > descriptor.version.toInt)
-      .exists(d =>
-        d.state == CatalogManagement.EServiceDescriptorState.PUBLISHED ||
-          d.state == CatalogManagement.EServiceDescriptorState.SUSPENDED
-      )
 
   def enhanceAgreement(
     agreement: AgreementProcess.Agreement

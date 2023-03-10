@@ -232,7 +232,14 @@ trait Dependencies {
     )
 
     val purposesApi: PurposesApi = new PurposesApi(
-      PurposesApiServiceImpl(catalogProcess, purposeProcess, tenantProcess, fileManager(blockingEc)),
+      PurposesApiServiceImpl(
+        catalogProcess,
+        purposeProcess,
+        tenantProcess,
+        agreementProcess,
+        authorizationProcess,
+        fileManager(blockingEc)
+      ),
       PurposesApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )

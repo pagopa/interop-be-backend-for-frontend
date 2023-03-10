@@ -11,14 +11,15 @@ import io.circe.Json
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.canBeUpgraded
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
-import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.catalogprocess.client.model.EServices
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
@@ -33,7 +34,6 @@ import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.io.{ByteArrayOutputStream, File, FileOutputStream}
 import java.nio.file.{Files, Path}
-import java.time.OffsetDateTime
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -202,7 +202,7 @@ final case class EServicesApiServiceImpl(
       eServiceAttributes             <- eService.attributes.toApi(attributes)
       requesterTenant                <- tenantManagementService.getTenant(requesterId)
       producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
-      agreement                      <- getLatestAgreement(requesterId, eService)
+      agreement                      <- agreementProcessService.getLatestAgreement(requesterId, eService)
     } yield CatalogEServiceDescriptor(
       id = descriptor.id,
       version = descriptor.version,
@@ -222,7 +222,9 @@ final case class EServicesApiServiceImpl(
         technology = eService.technology.toApi,
         attributes = eServiceAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
-        agreement = agreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
+        agreement = agreement.map { a =>
+          CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded(eService, a))
+        },
         isMine = eService.producerId == requesterId,
         hasCertifiedAttributes = certifiedAttributesSatisfied(
           eService.attributes.toManagement,
@@ -230,7 +232,7 @@ final case class EServicesApiServiceImpl(
         ),
         isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
         activeDescriptor =
-          getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version)),
+          getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
         mail = producerTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
       )
     )
@@ -294,60 +296,14 @@ final case class EServicesApiServiceImpl(
   private def getProducerEServicesIds(producerId: UUID, consumersUUIDs: List[UUID])(implicit
     contexts: Seq[(String, String)]
   ): Future[List[UUID]] =
-    getAllAgreements(
-      producersIds = producerId :: Nil,
-      consumersIds = consumersUUIDs,
-      eServicesIds = Nil,
-      states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
-    ).map(_.map(_.eserviceId).distinct)
-
-  private def getAllAgreements(
-    producersIds: List[UUID],
-    consumersIds: List[UUID],
-    eServicesIds: List[UUID],
-    states: List[AgreementProcess.AgreementState]
-  )(implicit contexts: Seq[(String, String)]): Future[List[AgreementProcess.Agreement]] = {
-
-    def getAgreementsFrom(offset: Int): Future[List[AgreementProcess.Agreement]] =
-      agreementProcessService
-        .getAgreements(
-          producersIds = producersIds,
-          consumersIds = consumersIds,
-          eservicesIds = eServicesIds,
-          states = states,
-          limit = 50,
-          offset = offset
-        )
-        .map(_.results.toList)
-
-    def go(start: Int)(as: List[AgreementProcess.Agreement]): Future[List[AgreementProcess.Agreement]] =
-      getAgreementsFrom(start).flatMap(agrs =>
-        if (agrs.size < 50) Future.successful(as ++ agrs) else go(start + 50)(as ++ agrs)
+    agreementProcessService
+      .getAllAgreements(
+        producersIds = producerId :: Nil,
+        consumersIds = consumersUUIDs,
+        eServicesIds = Nil,
+        states = List(AgreementProcess.AgreementState.ACTIVE, AgreementProcess.AgreementState.SUSPENDED)
       )
-
-    go(0)(Nil)
-  }
-
-  private def getLatestAgreement(requesterId: UUID, eService: CatalogProcess.EService)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Option[AgreementProcess.Agreement]] = {
-
-    val ordering: Ordering[(Int, OffsetDateTime)] =
-      Ordering.Tuple2(Ordering.Int.reverse, Ordering.by[OffsetDateTime, Long](_.toEpochSecond).reverse)
-
-    getAllAgreements(
-      consumersIds = requesterId :: Nil,
-      eServicesIds = eService.id :: Nil,
-      producersIds = Nil,
-      states = Nil
-    ).map(
-      _.map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
-        .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
-        .sortBy(s => (s._2.version.toInt, s._1.createdAt))(ordering)
-        .headOption
-        .map(_._1)
-    )
-  }
+      .map(_.map(_.eserviceId).distinct)
 
   private def enhanceCatalogEService(
     requesterId: UUID
@@ -358,13 +314,15 @@ final case class EServicesApiServiceImpl(
       else Future.successful(producerTenant)
 
     activeDescriptor = getActiveDescriptor(eService)
-    latestAgreement <- getLatestAgreement(requesterId, eService)
+    latestAgreement <- agreementProcessService.getLatestAgreement(requesterId, eService)
   } yield CatalogEService(
     id = eService.id,
     name = eService.name,
     description = eService.description,
     producer = CompactOrganization(id = eService.producerId, name = producerTenant.name),
-    agreement = latestAgreement.map(a => CompactAgreement(id = a.id, state = a.state.toApi)),
+    agreement = latestAgreement.map { a =>
+      CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded(eService, a))
+    },
     isMine = eService.producerId == requesterId,
     hasCertifiedAttributes =
       certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
@@ -446,7 +404,8 @@ final case class EServicesApiServiceImpl(
         technology = eService.technology.toApi,
         attributes = eServiceAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
-        draftDescriptor = getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version)),
+        draftDescriptor =
+          getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
         mail = requesterTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
       )
     )

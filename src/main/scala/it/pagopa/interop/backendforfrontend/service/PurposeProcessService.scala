@@ -54,4 +54,6 @@ trait PurposeProcessService {
   ): Future[PurposeVersion]
 
   def createPurpose(seed: PurposeSeed)(implicit contexts: Seq[(String, String)]): Future[Purpose]
+
+  def getPurpose(id: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose]
 }

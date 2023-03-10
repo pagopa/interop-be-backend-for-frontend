@@ -1,9 +1,10 @@
 package it.pagopa.interop.backendforfrontend.service
 
 import it.pagopa.interop.agreementprocess.client.model._
-
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import java.time.OffsetDateTime
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait AgreementProcessService {
 
@@ -61,4 +62,52 @@ trait AgreementProcessService {
   def getAgreementConsumers(consumerName: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[CompactOrganizations]
+
+  def getAllAgreements(
+    producersIds: List[UUID],
+    consumersIds: List[UUID],
+    eServicesIds: List[UUID],
+    states: List[AgreementState]
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[List[Agreement]] = {
+
+    def getAgreementsFrom(offset: Int): Future[List[Agreement]] =
+      getAgreements(
+        producersIds = producersIds,
+        consumersIds = consumersIds,
+        eservicesIds = eServicesIds,
+        states = states,
+        limit = 50,
+        offset = offset
+      )
+        .map(_.results.toList)
+
+    def go(start: Int)(as: List[Agreement]): Future[List[Agreement]] =
+      getAgreementsFrom(start).flatMap(agrs =>
+        if (agrs.size < 50) Future.successful(as ++ agrs) else go(start + 50)(as ++ agrs)
+      )
+
+    go(0)(Nil)
+  }
+
+  def getLatestAgreement(consumerId: UUID, eService: CatalogProcess.EService)(implicit
+    contexts: Seq[(String, String)],
+    ec: ExecutionContext
+  ): Future[Option[Agreement]] = {
+
+    val ordering: Ordering[(Int, OffsetDateTime)] =
+      Ordering.Tuple2(Ordering.Int.reverse, Ordering.by[OffsetDateTime, Long](_.toEpochSecond).reverse)
+
+    getAllAgreements(
+      consumersIds = consumerId :: Nil,
+      eServicesIds = eService.id :: Nil,
+      producersIds = Nil,
+      states = Nil
+    ).map(
+      _.map(agreement => (agreement, eService.descriptors.find(_.id == agreement.descriptorId)))
+        .collect { case (agreement, Some(descriptor)) => (agreement, descriptor) }
+        .sortBy(s => (s._2.version.toInt, s._1.createdAt))(ordering)
+        .headOption
+        .map(_._1)
+    )
+  }
 }
