@@ -92,4 +92,6 @@ object BFFErrors {
   final case class AgreementNotFound(consumerId: UUID)
       extends ComponentError("0020", s"Agreement of consumer $consumerId not found")
 
+  final case class PurposeNotFound(purposeId: UUID) extends ComponentError("0021", s"Purpose $purposeId not found")
+
 }

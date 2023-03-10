@@ -411,7 +411,8 @@ final case class PurposesApiServiceImpl(
       purposeUUID    <- purposeId.toFutureUUID
       updatedPurpose <- purposeProcessService
         .updatePurpose(purposeUUID, purposeUpdateContent.toProcess)
-    } yield PurposeVersionResource(purposeUUID, updatedPurpose.currentVersion.id)
+      versionUUID    <- getCurrentVersion(updatedPurpose).map(_.id).toFuture(PurposeNotFound(purposeUUID))
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
 
     onComplete(result) {
       handleError(s"Error updating Purpose $purposeId") orElse { case Success(response) =>

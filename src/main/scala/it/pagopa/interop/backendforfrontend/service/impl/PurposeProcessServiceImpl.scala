@@ -2,7 +2,6 @@ package it.pagopa.interop.backendforfrontend.service.impl
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.backendforfrontend.model.PurposeVersionResource
 import it.pagopa.interop.backendforfrontend.service.PurposeProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
@@ -203,15 +202,14 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
 
   override def updatePurpose(id: UUID, purposeUpdateContent: PurposeUpdateContent)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Purpose] = withHeaders[Purpose] {
-    (bearerToken, correlationId, ip) =>
-      val request: ApiRequest[Purpose] =
-        api.updatePurpose(
-          xCorrelationId = correlationId,
-          id = id,
-          purposeUpdateContent = purposeUpdateContent,
-          xForwardedFor = ip
-        )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Updating purpose $id")
+  ): Future[Purpose] = withHeaders[Purpose] { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Purpose] =
+      api.updatePurpose(
+        xCorrelationId = correlationId,
+        id = id,
+        purposeUpdateContent = purposeUpdateContent,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Updating purpose $id")
   }
 }
