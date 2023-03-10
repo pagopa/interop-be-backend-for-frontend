@@ -54,6 +54,9 @@ object ApplicationConfiguration {
   val userRegistryURL: String    = config.getString("backend-for-frontend.services.user-registry")
   val userRegistryApiKey: String = config.getString("backend-for-frontend.api-keys.user-registry")
 
+  val selfcareV2URL: String    = config.getString("backend-for-frontend.services.selfcare-v2")
+  val selfcareV2ApiKey: String = config.getString("backend-for-frontend.api-keys.selfcare-v2")
+
   val attributeRegistryManagementURL: String =
     config.getString("backend-for-frontend.services.attribute-registry-management")
 
