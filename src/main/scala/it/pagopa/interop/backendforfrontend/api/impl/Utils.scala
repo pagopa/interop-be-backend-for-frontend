@@ -2,13 +2,16 @@ package it.pagopa.interop.backendforfrontend.api.impl
 
 import cats.syntax.all._
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
-import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.util.UUID
-import it.pagopa.interop.backendforfrontend.model._
 
 object Utils {
 
@@ -55,4 +58,27 @@ object Utils {
       tenant.attributes.mapFilter(_.certified.map(_.id)) ++
       tenant.attributes.mapFilter(_.declared.map(_.id))
 
+  def canBeUpgraded(eService: CatalogProcess.EService, a: AgreementProcess.Agreement): Boolean =
+    eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, eService.descriptors))
+
+  def isUpgradable(
+    descriptor: CatalogManagement.EServiceDescriptor,
+    descriptors: Seq[CatalogManagement.EServiceDescriptor]
+  ): Boolean = descriptors
+    .filter(_.version.toInt > descriptor.version.toInt)
+    .exists(d =>
+      d.state == CatalogManagement.EServiceDescriptorState.PUBLISHED ||
+        d.state == CatalogManagement.EServiceDescriptorState.SUSPENDED
+    )
+
+  def isUpgradable(
+    descriptor: CatalogProcess.EServiceDescriptor,
+    descriptors: Seq[CatalogProcess.EServiceDescriptor]
+  ): Boolean =
+    descriptors
+      .filter(_.version.toInt > descriptor.version.toInt)
+      .exists(d =>
+        d.state == CatalogProcess.EServiceDescriptorState.PUBLISHED ||
+          d.state == CatalogProcess.EServiceDescriptorState.SUSPENDED
+      )
 }
