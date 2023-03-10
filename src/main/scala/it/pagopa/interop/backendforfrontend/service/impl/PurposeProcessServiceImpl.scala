@@ -192,4 +192,11 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
         )
       invoker.invoke(request, s"Creating Purpose")
     }
+
+  override def getPurpose(id: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose] = withHeaders[Purpose] {
+    (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Purpose] =
+        api.getPurpose(xCorrelationId = correlationId, id = id, xForwardedFor = ip)(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retriving purpose with purposeId $id")
+  }
 }

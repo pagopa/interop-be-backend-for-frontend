@@ -5,6 +5,15 @@ import it.pagopa.interop.backendforfrontend.model._
 
 object AuthorizationProcessServiceTypes {
 
+  implicit class PurposeAdditionDetailsSeedConverter(private val seed: PurposeAdditionDetailsSeed) extends AnyVal {
+    def toProcess: AuthorizationProcess.PurposeAdditionDetails =
+      AuthorizationProcess.PurposeAdditionDetails(purposeId = seed.purposeId)
+  }
+
+  implicit class ClientConverter(private val client: AuthorizationProcess.Client) extends AnyVal {
+    def toCreatedResource: CreatedResource = CreatedResource(id = client.id)
+  }
+
   implicit class ClientConverter(private val client: AuthorizationProcess.ClientEntry) extends AnyVal {
     def toApi: CompactClient =
       CompactClient(id = client.id, name = client.name)
