@@ -20,4 +20,12 @@ trait AuthorizationProcessService {
   def clientOperatorRelationshipBinding(clientId: UUID, relationshipId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Client]
+
+  def addClientPurpose(clientId: UUID, purposeAdditionDetails: PurposeAdditionDetails)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
+
+  def getClients(consumerId: UUID, purposeId: Option[UUID])(implicit contexts: Seq[(String, String)]): Future[Clients]
+
+  def getClientKeys(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[ReadClientKeys]
 }
