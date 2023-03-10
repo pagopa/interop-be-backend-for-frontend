@@ -2,6 +2,7 @@ package it.pagopa.interop.backendforfrontend.service
 
 import java.util.UUID
 import scala.concurrent.Future
+import it.pagopa.interop.authorizationprocess.client.model.{Clients, ReadClientKeys}
 
 trait AuthorizationProcessService {
 
@@ -13,4 +14,8 @@ trait AuthorizationProcessService {
   def removeClientOperatorRelationship(clientId: UUID, relationshipId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
+
+  def getClients(consumerId: UUID, purposeId: Option[UUID])(implicit contexts: Seq[(String, String)]): Future[Clients]
+
+  def getClientKeys(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[ReadClientKeys]
 }
