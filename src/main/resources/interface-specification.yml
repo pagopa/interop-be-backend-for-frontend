@@ -6890,7 +6890,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ClientSeed'
       responses:
-        '201':
+        '200':
           description: Client created
           content:
             application/json:

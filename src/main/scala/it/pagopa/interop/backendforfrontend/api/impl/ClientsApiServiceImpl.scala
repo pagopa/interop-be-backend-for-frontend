@@ -130,13 +130,12 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     toEntityMarshallerClient: ToEntityMarshaller[CreatedResource]
   ): Route = {
 
-    val result: Future[CreatedResource] = for {
-      clients <- authorizationProcessService.createConsumerClient(clientSeed.toProcess)
-    } yield (clients.toCreatedResource)
+    val result: Future[CreatedResource] =
+      authorizationProcessService.createConsumerClient(clientSeed.toProcess) map (_.toCreatedResource)
 
     onComplete(result) {
-      handleError(s"Error creating consumer client with name ${clientSeed.name}") orElse { case Success(_) =>
-        addClientPurpose204
+      handleError(s"Error creating consumer client with name ${clientSeed.name}") orElse { case Success(resource) =>
+        createConsumerClient200(resource)
       }
     }
   }
