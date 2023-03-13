@@ -8,6 +8,7 @@ import it.pagopa.interop.authorizationprocess.client.model.{Clients, ReadClientK
 import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
+import it.pagopa.interop.authorizationprocess.client.model.{PurposeAdditionDetails, Client}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -70,6 +71,20 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Removing operator relationship $relationshipId of client ${clientId.toString}")
     }
 
+  override def addClientPurpose(clientId: UUID, purposeAdditionDetails: PurposeAdditionDetails)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.addClientPurpose(
+          clientId = clientId,
+          purposeAdditionDetails = purposeAdditionDetails,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Adding purpose ${purposeAdditionDetails.purposeId} to client ${clientId.toString}")
+    }
+
   override def getClientKeys(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[ReadClientKeys] =
     withHeaders[ReadClientKeys] { (bearerToken, correlationId, ip) =>
       val request =
@@ -91,4 +106,18 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving clients for purpose $purposeId")
   }
+
+  override def clientOperatorRelationshipBinding(clientId: UUID, relationshipId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.clientOperatorRelationshipBinding(
+          clientId = clientId,
+          relationshipId = relationshipId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Binding operator relationship $relationshipId to client ${clientId.toString}")
+    }
 }
