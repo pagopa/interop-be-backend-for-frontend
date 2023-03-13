@@ -28,4 +28,6 @@ trait AuthorizationProcessService {
   def getClients(consumerId: UUID, purposeId: Option[UUID])(implicit contexts: Seq[(String, String)]): Future[Clients]
 
   def getClientKeys(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[ReadClientKeys]
+
+  def createConsumerClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client]
 }

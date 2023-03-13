@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.model.{Problem, PurposeAdditionDetailsSeed, CreatedResource}
+import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 
 import scala.concurrent.{Future, ExecutionContext}
@@ -120,6 +120,23 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       handleError(s"Error adding purpose ${purposeAdditionDetailsSeed.purposeId} to client $clientId") orElse {
         case Success(_) =>
           addClientPurpose204
+      }
+    }
+  }
+
+  override def createConsumerClient(clientSeed: ClientSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerClient: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+
+    val result: Future[CreatedResource] = for {
+      clients <- authorizationProcessService.createConsumerClient(clientSeed.toProcess)
+    } yield (clients.toCreatedResource)
+
+    onComplete(result) {
+      handleError(s"Error creating consumer client with name ${clientSeed.name}") orElse { case Success(_) =>
+        addClientPurpose204
       }
     }
   }
