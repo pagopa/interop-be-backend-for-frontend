@@ -10,8 +10,8 @@ object SelfcareApiMarshallerImpl extends SelfcareApiMarshaller with SprayJsonSup
 
   override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
 
-  override implicit def toEntityMarshallerCompactProductarray: ToEntityMarshaller[Seq[CompactProduct]] =
-    sprayJsonMarshaller[Seq[CompactProduct]]
+  override implicit def toEntityMarshallerSelfcareProductarray: ToEntityMarshaller[Seq[SelfcareProduct]] =
+    sprayJsonMarshaller[Seq[SelfcareProduct]]
 
   override implicit def toEntityMarshallerInstitutionResourcearray: ToEntityMarshaller[Seq[InstitutionResource]] =
     sprayJsonMarshaller[Seq[InstitutionResource]]

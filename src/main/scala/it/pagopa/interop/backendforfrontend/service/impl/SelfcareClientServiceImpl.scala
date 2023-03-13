@@ -30,7 +30,7 @@ class SelfcareClientServiceImpl(selfcareClientServiceURL: String, selfcareClient
         apiKeyValue,
         apiKeyValue
       )
-    invoker.invoke(request, s"Retrieving Institution $institutionId for User $userId")
+    invoker.invoke(request, s"Retrieving Products for Institution $institutionId and User $userId")
   }
 
   override def getInstitutions(
