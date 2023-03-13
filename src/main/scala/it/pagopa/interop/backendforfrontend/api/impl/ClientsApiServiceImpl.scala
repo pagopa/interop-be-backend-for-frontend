@@ -135,7 +135,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
 
     onComplete(result) {
       handleError(s"Error creating api client with name ${clientSeed.name}") orElse { case Success(resource) =>
-        createApiClient201(resource)
+        createApiClient200(resource)
       }
     }
   }
