@@ -34,7 +34,7 @@ class SelfcareClientServiceImpl(selfcareClientServiceURL: String, selfcareClient
     userId: UUID
   )(implicit contexts: Seq[(String, String)]): Future[Seq[InstitutionResource]] = {
     val request =
-      institutionsApi.getInstitutionsUsingGET(userIdForAuth = userId.toString)(apiKeyValue, apiKeyValue)
+      institutionsApi.getInstitutionsUsingGET(userIdForAuth = userId.toString)
     invoker.invoke(request, s"Retrieving Institutions for User $userId")
   }
 
