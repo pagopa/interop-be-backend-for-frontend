@@ -9,7 +9,8 @@ import spray.json._
 object SelfcareApiMarshallerImpl extends SelfcareApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
 
   override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
-  override implicit def toEntityMarshallerCompactProductarray: ToEntityMarshaller[Seq[CompactProduct]] =
-    sprayJsonMarshaller[Seq[CompactProduct]]
+
+  override implicit def toEntityMarshallerSelfcareProductarray: ToEntityMarshaller[Seq[SelfcareProduct]] =
+    sprayJsonMarshaller[Seq[SelfcareProduct]]
 
 }

@@ -252,7 +252,11 @@ trait Dependencies {
       )
 
     val selfcareApi: SelfcareApi =
-      new SelfcareApi(SelfcareApiServiceImpl(selfcareClient), SelfcareApiMarshallerImpl, oauthAndRateLimitingDirective)
+      new SelfcareApi(
+        SelfcareApiServiceImpl(selfcareClient, tenantProcess),
+        SelfcareApiMarshallerImpl,
+        oauthAndRateLimitingDirective
+      )
 
     new Controller(
       attributes = attributesApi,

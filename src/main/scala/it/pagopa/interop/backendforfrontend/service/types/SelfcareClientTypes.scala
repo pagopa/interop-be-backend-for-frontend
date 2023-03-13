@@ -6,6 +6,6 @@ import it.pagopa.interop.selfcare.v2.client.{model => SelfcareClient}
 object SelfcareClientTypes {
 
   implicit class ProductResourceConverter(private val p: SelfcareClient.ProductResource) extends AnyVal {
-    def toApi: CompactProduct = CompactProduct(id = p.id, name = p.title)
+    def toApi: SelfcareProduct = SelfcareProduct(id = p.id, name = p.title)
   }
 }

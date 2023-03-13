@@ -6873,26 +6873,13 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/institutions/{institutionId}/products':
+  '/selfcare/institutions/products':
     get:
       tags:
         - selfcare
       summary: getInstitutionUserProducts
       description: Service to retrieve all active products for given institution and user
       operationId: getInstitutionUserProducts
-      parameters:
-        - name: institutionId
-          in: path
-          description: Institution's unique internal Id
-          required: true
-          schema:
-            type: string
-        - name: userId
-          in: query
-          description: User's unique identifier
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: OK
@@ -6901,7 +6888,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CompactProduct'
+                  $ref: '#/components/schemas/SelfcareProduct'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -7760,7 +7747,7 @@ components:
         - id
         - role
         - createdAt
-    CompactProduct:
+    SelfcareProduct:
       type: object
       properties:
         id:
