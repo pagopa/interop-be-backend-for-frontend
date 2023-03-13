@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import it.pagopa.interop.backendforfrontend.api.ClientsApiMarshaller
-import it.pagopa.interop.backendforfrontend.model.{Problem, PurposeAdditionDetailsSeed, CreatedResource}
+import it.pagopa.interop.backendforfrontend.model._
 import spray.json.DefaultJsonProtocol
 
 object ClientsApiMarshallerImpl extends ClientsApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
@@ -17,4 +17,6 @@ object ClientsApiMarshallerImpl extends ClientsApiMarshaller with SprayJsonSuppo
   override implicit def fromEntityUnmarshallerPurposeAdditionDetailsSeed
     : FromEntityUnmarshaller[PurposeAdditionDetailsSeed] = sprayJsonUnmarshaller[PurposeAdditionDetailsSeed]
 
+  override implicit def fromEntityUnmarshallerKeySeedList: FromEntityUnmarshaller[Seq[KeySeed]] =
+    sprayJsonUnmarshaller[Seq[KeySeed]]
 }
