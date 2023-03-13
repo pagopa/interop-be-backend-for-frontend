@@ -6959,20 +6959,13 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  /institutions:
+  '/selfcare/institutions':
     get:
       tags:
         - selfcare
       summary: getInstitutions
       description: The service retrieves all the onboarded institutions related to the provided user and the product retrieved from Subscription Key
       operationId: getInstitutions
-      parameters:
-        - name: userId
-          in: query
-          description: User's unique identifier
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: OK
@@ -6981,7 +6974,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/InstitutionResource'
+                  $ref: '#/components/schemas/SelfcareInstitution'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -7850,7 +7843,7 @@ components:
       required:
         - id
         - name
-    InstitutionResource:
+    SelfcareInstitution:
       type: object
       properties:
         id:

@@ -52,20 +52,21 @@ final case class SelfcareApiServiceImpl(
     }
   }
 
-  override def getInstitutions(userId: String)(implicit
+  override def getInstitutions()(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerInstitutionResourcearray: ToEntityMarshaller[Seq[InstitutionResource]]
+    toEntityMarshallerSelfcareInstitutionarray: ToEntityMarshaller[Seq[SelfcareInstitution]],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Seq[InstitutionResource]] =
+    val result: Future[Seq[SelfcareInstitution]] =
       for {
-        userUuid <- userId.toFutureUUID
-        results  <- selfcareClientService.getInstitutions(userId = userUuid)
+        userUuid <- getUidFutureUUID(contexts)
+        _ = logger.info(s"Retrieving institutions of user ${userUuid.toString}")
+        results <- selfcareClientService.getInstitutions(userId = userUuid)
         apiResults = results.map(_.toApi)
       } yield apiResults
 
     onComplete(result) {
-      handleError(s"Error retrieving institutions for user $userId") orElse { case Success(resources) =>
+      handleError(s"Error retrieving institutions") orElse { case Success(resources) =>
         getInstitutions200(resources)
       }
     }

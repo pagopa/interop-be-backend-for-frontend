@@ -164,8 +164,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     : RootJsonFormat[WaitingForApprovalPurposeVersionUpdateContentSeed] =
     jsonFormat1(WaitingForApprovalPurposeVersionUpdateContentSeed)
 
-  implicit val compactProductFormat: RootJsonFormat[SelfcareProduct]          = jsonFormat2(SelfcareProduct)
-  implicit val institutionResourceFormat: RootJsonFormat[InstitutionResource] = jsonFormat3(InstitutionResource)
+  implicit val selfcareProductFormat: RootJsonFormat[SelfcareProduct]         = jsonFormat2(SelfcareProduct)
+  implicit val selfcareInstitutionFormat: RootJsonFormat[SelfcareInstitution] = jsonFormat3(SelfcareInstitution)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
