@@ -6873,6 +6873,88 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/clients/{clientId}/operators/{operatorId}/keys':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: clientId
+        in: path
+        description: ID of the client holding the key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: operatorId
+        in: path
+        required: true
+        description: ID of the Opeartor that the added keys MUST belong to
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - clients
+      summary: Returns a set of keys by operator ID and client ID.
+      description: 'Given an operator and a client it returns its corresponding set of keys, if any'
+      operationId: getClientOperatorKeys
+      responses:
+        '200':
+          description: returns the corresponding array of keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientKeys'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Client id not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/status':
     get:
       security: []
@@ -7712,6 +7794,106 @@ components:
           format: uuid
       required:
         - purposeId    
+    Key:
+      description: 'Models a JWK'
+      type: object
+      properties:
+        kty:
+          type: string
+        key_ops:
+          type: array
+          items:
+            type: string
+        use:
+          type: string
+        alg:
+          type: string
+        kid:
+          type: string
+        x5u:
+          type: string
+          minLength: 1
+        x5t:
+          type: string
+        'x5t#S256':
+          type: string
+        x5c:
+          type: array
+          items:
+            type: string
+        crv:
+          type: string
+        x:
+          type: string
+        'y':
+          type: string
+        d:
+          type: string
+        k:
+          type: string
+        'n':
+          type: string
+        e:
+          type: string
+        p:
+          type: string
+        q:
+          type: string
+        dp:
+          type: string
+        dq:
+          type: string
+        qi:
+          type: string
+        oth:
+          uniqueItems: false
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/OtherPrimeInfo'
+      required:
+        - kty
+        - kid
+    OtherPrimeInfo:
+      title: OtherPrimeInfo
+      type: object
+      properties:
+        r:
+          type: string
+        d:
+          type: string
+        t:
+          type: string
+      required:
+        - r
+        - d
+        - t
+    ClientKeys:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientKey'
+      required:
+        - keys
+    ClientKey:
+      type: object
+      properties:
+        key:
+          $ref: '#/components/schemas/Key'
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        isOrphan:
+          type: boolean  
+      required:
+        - key
+        - name
+        - createdAt
+        - isOrphan
     Client:
       type: object
       properties:

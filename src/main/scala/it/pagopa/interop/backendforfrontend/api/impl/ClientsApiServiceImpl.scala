@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.model.{Problem, PurposeAdditionDetailsSeed, CreatedResource}
+import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 
 import scala.concurrent.{Future, ExecutionContext}
@@ -120,6 +120,25 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       handleError(s"Error adding purpose ${purposeAdditionDetailsSeed.purposeId} to client $clientId") orElse {
         case Success(_) =>
           addClientPurpose204
+      }
+    }
+  }
+
+  override def getClientOperatorKeys(clientId: String, operatorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerClientKeys: ToEntityMarshaller[ClientKeys],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[ClientKeys] = for {
+      clientUuid   <- clientId.toFutureUUID
+      operatorUuid <- operatorId.toFutureUUID
+      clientKeys   <- authorizationProcessService.getClientOperatorKeys(clientUuid, operatorUuid)
+    } yield clientKeys.toApi
+
+    onComplete(result) {
+      handleError(s"Error retrieving keys to client $clientId and operator $operatorId") orElse { case Success(keys) =>
+        getClientOperatorKeys200(keys)
       }
     }
   }
