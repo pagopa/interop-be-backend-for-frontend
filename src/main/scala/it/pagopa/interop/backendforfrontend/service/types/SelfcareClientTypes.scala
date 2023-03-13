@@ -8,4 +8,9 @@ object SelfcareClientTypes {
   implicit class ProductResourceConverter(private val p: SelfcareClient.ProductResource) extends AnyVal {
     def toApi: CompactProduct = CompactProduct(id = p.id, name = p.title)
   }
+
+  implicit class InstitutionResourceConverter(private val i: SelfcareClient.InstitutionResource) extends AnyVal {
+    def toApi: InstitutionResource =
+      InstitutionResource(id = i.id, description = i.description, userProductRoles = i.userProductRoles)
+  }
 }
