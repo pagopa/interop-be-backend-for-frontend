@@ -26,10 +26,7 @@ class SelfcareClientServiceImpl(selfcareClientServiceURL: String, selfcareClient
     contexts: Seq[(String, String)]
   ): Future[Seq[ProductResource]] = {
     val request =
-      institutionsApi.getInstitutionUserProductsUsingGET(institutionId = institutionId, userId = userId.toString)(
-        apiKeyValue,
-        apiKeyValue
-      )
+      institutionsApi.getInstitutionUserProductsUsingGET(institutionId = institutionId, userId = userId.toString)
     invoker.invoke(request, s"Retrieving Products for Institution $institutionId and User $userId")
   }
 
