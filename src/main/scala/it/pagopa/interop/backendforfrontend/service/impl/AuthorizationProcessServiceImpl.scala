@@ -4,11 +4,10 @@ import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.authorizationprocess.client.api.{ClientApi, EnumsSerializers}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.authorizationprocess.client.model.{Clients, ReadClientKeys}
+import it.pagopa.interop.authorizationprocess.client.model._
 import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
-import it.pagopa.interop.authorizationprocess.client.model.{PurposeAdditionDetails, Client}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -120,4 +119,19 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Binding operator relationship $relationshipId to client ${clientId.toString}")
     }
+
+  override def getEncodedClientKeyById(clientId: UUID, keyId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EncodedClientKey] =
+    withHeaders[EncodedClientKey] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EncodedClientKey] =
+        api.getEncodedClientKeyById(
+          clientId = clientId,
+          keyId = keyId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving encoding key $keyId for client ${clientId.toString}")
+    }
+
 }

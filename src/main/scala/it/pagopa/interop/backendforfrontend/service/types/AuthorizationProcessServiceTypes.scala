@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
-import it.pagopa.interop.backendforfrontend.model.{PurposeAdditionDetailsSeed, CreatedResource}
+import it.pagopa.interop.backendforfrontend.model._
 
 object AuthorizationProcessServiceTypes {
 
@@ -12,6 +12,10 @@ object AuthorizationProcessServiceTypes {
 
   implicit class ClientConverter(private val client: AuthorizationProcess.Client) extends AnyVal {
     def toCreatedResource: CreatedResource = CreatedResource(id = client.id)
+  }
+
+  implicit class EncodedClientKeyConverter(private val eck: AuthorizationProcess.EncodedClientKey) extends AnyVal {
+    def toApi: EncodedClientKey = EncodedClientKey(key = eck.key)
   }
 
 }
