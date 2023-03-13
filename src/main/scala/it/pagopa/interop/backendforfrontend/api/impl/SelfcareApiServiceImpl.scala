@@ -60,8 +60,7 @@ final case class SelfcareApiServiceImpl(
     val result: Future[Seq[SelfcareInstitution]] =
       for {
         userUuid <- getUidFutureUUID(contexts)
-        _ = logger.info(s"Retrieving institutions of user ${userUuid.toString}")
-        results <- selfcareClientService.getInstitutions(userId = userUuid)
+        results  <- selfcareClientService.getInstitutions(userId = userUuid)
         apiResults = results.map(_.toApi)
       } yield apiResults
 
