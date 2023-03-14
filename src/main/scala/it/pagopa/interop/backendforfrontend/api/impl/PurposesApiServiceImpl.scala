@@ -401,4 +401,23 @@ final case class PurposesApiServiceImpl(
       }
     }
   }
+
+  override def updatePurpose(purposeId: String, purposeUpdateContent: PurposeUpdateContent)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID    <- purposeId.toFutureUUID
+      updatedPurpose <- purposeProcessService
+        .updatePurpose(purposeUUID, purposeUpdateContent.toProcess)
+      versionUUID    <- getCurrentVersion(updatedPurpose).map(_.id).toFuture(PurposeNotFound(purposeUUID))
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
+
+    onComplete(result) {
+      handleError(s"Error updating Purpose $purposeId") orElse { case Success(response) =>
+        updatePurpose200(response)
+      }
+    }
+  }
 }
