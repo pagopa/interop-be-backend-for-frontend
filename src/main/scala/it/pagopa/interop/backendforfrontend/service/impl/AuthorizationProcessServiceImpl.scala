@@ -128,6 +128,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         api.createKeys(clientId = clientId, keySeed = keySeed, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Create keys to client ${clientId.toString}")
+      invoker.invoke(request, s"Create keys for client ${clientId.toString}")
     }
 }
