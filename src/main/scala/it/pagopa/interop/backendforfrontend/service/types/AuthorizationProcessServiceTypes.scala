@@ -52,13 +52,13 @@ object AuthorizationProcessServiceTypes {
   }
 
   implicit class ReadClientKeyConverter(private val rck: AuthorizationProcess.ReadClientKey) extends AnyVal {
-    def toApi: ReadClientKey =
+    def toApi(isOrphan: Boolean): ReadClientKey =
       ReadClientKey(
         key = rck.key.toApi,
         name = rck.name,
         operator = rck.operator.toApi,
         createdAt = rck.createdAt,
-        isOrphan = false
+        isOrphan = isOrphan
       )
   }
 }

@@ -141,13 +141,13 @@ final case class ClientsApiServiceImpl(
         .getRelationship(key.operator.relationshipId)
         .map(relationship => {
           relationship.state match {
-            case ACTIVE => key.toApi
-            case _      => key.toApi.copy(isOrphan = true)
+            case ACTIVE => key.toApi(isOrphan = false)
+            case _      => key.toApi(isOrphan = true)
           }
         })
         .recoverWith(apiError =>
           apiError match {
-            case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi.copy(isOrphan = true))
+            case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true))
             case other                                 => Future.failed(other)
           }
         )
