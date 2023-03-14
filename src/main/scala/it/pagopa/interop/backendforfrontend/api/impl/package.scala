@@ -139,6 +139,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     PurposeAdditionDetailsSeed
   )
 
+  implicit val purposeUpdateContentFormat: RootJsonFormat[PurposeUpdateContent] = jsonFormat3(PurposeUpdateContent)
+
   implicit val DraftPurposeVersionUpdateContentFormat: RootJsonFormat[DraftPurposeVersionUpdateContent] = jsonFormat1(
     DraftPurposeVersionUpdateContent
   )
