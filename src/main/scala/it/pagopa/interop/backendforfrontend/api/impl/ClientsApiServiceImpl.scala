@@ -135,7 +135,8 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error creating keys for client $clientId") orElse { case Success(_) => createKeys204(_) }
+        handleError(s"Error creating keys for client $clientId") orElse { case Success(_) => createKeys204(_)
+      }
     }
   }
 }
