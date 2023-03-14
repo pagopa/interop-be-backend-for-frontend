@@ -14,7 +14,7 @@ object AuthorizationProcessServiceTypes {
     def toCreatedResource: CreatedResource = CreatedResource(id = client.id)
   }
 
-  implicit class ClientConverter(private val client: AuthorizationProcess.ClientEntry) extends AnyVal {
+  implicit class ClientEntryConverter(private val client: AuthorizationProcess.ClientEntry) extends AnyVal {
     def toApi: CompactClient =
       CompactClient(id = client.id, name = client.name)
   }
