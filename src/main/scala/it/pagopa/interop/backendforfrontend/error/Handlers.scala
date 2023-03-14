@@ -19,6 +19,7 @@ import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentE
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
+import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareV2Error}
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => AuthorizationProcessError}
@@ -41,6 +42,7 @@ object Handlers {
     case Failure(err: TenantProcessError[_])        => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: PartyProcessError[_])         => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: UserRegistryError[_])         => completeWithError(err.code, err.responseContent, logMessage)
+    case Failure(err: SelfcareV2Error[_])           => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(tmr: ratelimiter.error.Errors.TooManyRequests) =>
       tooManyRequests(
         GenericComponentErrors.TooManyRequests,
