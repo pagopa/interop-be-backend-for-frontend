@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcessModel}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.PartyProcessService
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
@@ -133,10 +134,18 @@ final case class ClientsApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
+    def getRelationship(key: AuthorizationProcessModel.ReadClientKey): Future[ReadClientKey] = for {
+      apiKey <- partyProcessService
+        .getRelationship(key.operator.relationshipId)
+        .flatMap(_ => Future.successful(key.toApi))
+        .recoverWith(_ => Future.successful(key.toApi.copy(isOrphan = true)))
+    } yield apiKey
+
     val result: Future[ReadClientKeys] = for {
       clientUuid     <- clientId.toFutureUUID
       readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
-    } yield ReadClientKeys(keys = readClientKeys.keys.map(_.toApi))
+      keys           <- Future.traverse(readClientKeys.keys)(getRelationship)
+    } yield ReadClientKeys(keys)
 
     onComplete(result) {
       handleError(s"Error retrieving keys of client $clientId") orElse { case Success(keys) =>
