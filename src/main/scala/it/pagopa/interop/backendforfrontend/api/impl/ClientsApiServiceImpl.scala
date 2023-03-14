@@ -10,7 +10,7 @@ import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcessModel}
-import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ ApiError => PartyProcessApiError}
+import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessApiError}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.PartyProcessService
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
@@ -139,14 +139,18 @@ final case class ClientsApiServiceImpl(
     def getRelationship(key: AuthorizationProcessModel.ReadClientKey): Future[ReadClientKey] =
       partyProcessService
         .getRelationship(key.operator.relationshipId)
-        .map(relationship => { relationship.state match {
-          case ACTIVE => key.toApi
-          case _ => key.toApi.copy(isOrphan = true)
-        }})
-        .recoverWith( apiError => apiError match {
-          case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi.copy(isOrphan = true))
-          case other => Future.failed(other)
+        .map(relationship => {
+          relationship.state match {
+            case ACTIVE => key.toApi
+            case _      => key.toApi.copy(isOrphan = true)
+          }
         })
+        .recoverWith(apiError =>
+          apiError match {
+            case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi.copy(isOrphan = true))
+            case other                                 => Future.failed(other)
+          }
+        )
 
     val result: Future[ReadClientKeys] = for {
       clientUuid     <- clientId.toFutureUUID
