@@ -126,7 +126,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         api.createApiClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"create api client with name ${clientSeed.name}")
+      invoker.invoke(request, s"Create api client with name ${clientSeed.name}")
     }
 
 }

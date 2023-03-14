@@ -6873,7 +6873,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  /clients/api:
+  /clientsApi:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
@@ -7792,12 +7792,8 @@ components:
       properties:
         name:
           type: string
-          minLength: 5
-          maxLength: 60
         description:
           type: string
-          minLength: 10
-          maxLength: 250
       required:
         - name
     Client:
