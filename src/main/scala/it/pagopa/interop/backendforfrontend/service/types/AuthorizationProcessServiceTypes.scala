@@ -47,20 +47,25 @@ object AuthorizationProcessServiceTypes {
     )
   }
 
-  implicit class KeyUseConverter(private val ku: KeyUse)                                           extends AnyVal {
+  implicit class KeyUseConverter(private val ku: KeyUse) extends AnyVal {
     def toProcess: AuthorizationProcess.KeyUse = ku match {
       case KeyUse.SIG => AuthorizationProcess.KeyUse.SIG
       case KeyUse.ENC => AuthorizationProcess.KeyUse.ENC
     }
   }
-  
-  implicit class KeySeedConverter(private val seed: KeySeed)                                       extends AnyVal {
+
+  implicit class KeySeedConverter(private val seed: KeySeed) extends AnyVal {
     def toProcess: AuthorizationProcess.KeySeed =
       AuthorizationProcess.KeySeed(key = seed.key, use = seed.use.toProcess, alg = seed.alg, name = seed.name)
   }
 
   implicit class EncodedClientKeyConverter(private val eck: AuthorizationProcess.EncodedClientKey) extends AnyVal {
     def toApi: EncodedClientKey = EncodedClientKey(key = eck.key)
+  }
+
+  implicit class ClientSeedConverter(private val seed: ClientSeed) extends AnyVal {
+    def toProcess: AuthorizationProcess.ClientSeed =
+      AuthorizationProcess.ClientSeed(name = seed.name, description = seed.description)
   }
 
 }

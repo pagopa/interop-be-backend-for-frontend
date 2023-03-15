@@ -174,4 +174,20 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       }
     }
   }
+
+  override def createConsumerClient(clientSeed: ClientSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerClient: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+
+    val result: Future[CreatedResource] =
+      authorizationProcessService.createConsumerClient(clientSeed.toProcess) map (_.toCreatedResource)
+
+    onComplete(result) {
+      handleError(s"Error creating consumer client with name ${clientSeed.name}") orElse { case Success(resource) =>
+        createConsumerClient200(resource)
+      }
+    }
+  }
 }
