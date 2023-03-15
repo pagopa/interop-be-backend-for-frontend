@@ -53,10 +53,12 @@ object AuthorizationProcessServiceTypes {
       case KeyUse.ENC => AuthorizationProcess.KeyUse.ENC
     }
   }
+  
   implicit class KeySeedConverter(private val seed: KeySeed)                                       extends AnyVal {
     def toProcess: AuthorizationProcess.KeySeed =
       AuthorizationProcess.KeySeed(key = seed.key, use = seed.use.toProcess, alg = seed.alg, name = seed.name)
   }
+
   implicit class EncodedClientKeyConverter(private val eck: AuthorizationProcess.EncodedClientKey) extends AnyVal {
     def toApi: EncodedClientKey = EncodedClientKey(key = eck.key)
   }
