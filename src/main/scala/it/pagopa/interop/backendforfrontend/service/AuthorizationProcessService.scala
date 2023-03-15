@@ -38,4 +38,6 @@ trait AuthorizationProcessService {
   ): Future[EncodedClientKey]
 
   def createConsumerClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client]
+
+  def createApiClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client]
 }

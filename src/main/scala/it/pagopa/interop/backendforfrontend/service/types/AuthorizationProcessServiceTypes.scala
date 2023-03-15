@@ -67,5 +67,4 @@ object AuthorizationProcessServiceTypes {
     def toProcess: AuthorizationProcess.ClientSeed =
       AuthorizationProcess.ClientSeed(name = seed.name, description = seed.description)
   }
-
 }

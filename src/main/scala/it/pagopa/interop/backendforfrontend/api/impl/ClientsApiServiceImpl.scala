@@ -190,4 +190,20 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       }
     }
   }
+
+  override def createApiClient(clientSeed: ClientSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+
+    val result: Future[CreatedResource] =
+      authorizationProcessService.createApiClient(clientSeed.toProcess) map (_.toCreatedResource)
+
+    onComplete(result) {
+      handleError(s"Error creating api client with name ${clientSeed.name}") orElse { case Success(resource) =>
+        createApiClient200(resource)
+      }
+    }
+  }
 }

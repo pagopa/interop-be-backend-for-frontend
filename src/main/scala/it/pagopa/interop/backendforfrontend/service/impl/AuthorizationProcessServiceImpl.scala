@@ -162,4 +162,14 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         )
       invoker.invoke(request, s"Creating consumer client with name ${clientSeed.name}")
     }
+
+  override def createApiClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.createApiClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Create api client with name ${clientSeed.name}")
+    }
+
 }
