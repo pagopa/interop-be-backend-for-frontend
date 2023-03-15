@@ -169,14 +169,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val selfcareProductFormat: RootJsonFormat[SelfcareProduct]         = jsonFormat2(SelfcareProduct)
   implicit val selfcareInstitutionFormat: RootJsonFormat[SelfcareInstitution] = jsonFormat3(SelfcareInstitution)
 
-  implicit val otherPrimeInfoFormat: RootJsonFormat[OtherPrimeInfo]   = jsonFormat3(OtherPrimeInfo)
-  implicit val operatorDetailsFormat: RootJsonFormat[OperatorDetails] = jsonFormat3(OperatorDetails)
-  implicit val keyFormat: RootJsonFormat[Key]                         =
-    jsonFormat22(Key)
-  implicit val readClientKeyFormat: RootJsonFormat[ReadClientKey]     =
-    jsonFormat5(ReadClientKey)
-  implicit val readClientKeysFormat: RootJsonFormat[ReadClientKeys]   =
-    jsonFormat1(ReadClientKeys)
+  implicit val selfcareUserFormat: RootJsonFormat[SelfcareUser] = jsonFormat3(SelfcareUser)
+  implicit val publicKeyFormat: RootJsonFormat[PublicKey]       =
+    jsonFormat5(PublicKey)
+  implicit val publicKeysFormat: RootJsonFormat[PublicKeys]     =
+    jsonFormat1(PublicKeys)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 

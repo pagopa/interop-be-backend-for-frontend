@@ -132,11 +132,11 @@ final case class ClientsApiServiceImpl(
 
   override def getClientKeys(clientId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerReadClientKeys: ToEntityMarshaller[ReadClientKeys],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
   ): Route = {
 
-    def getRelationship(key: AuthorizationProcessModel.ReadClientKey): Future[ReadClientKey] =
+    def getRelationship(key: AuthorizationProcessModel.ReadClientKey): Future[PublicKey] =
       partyProcessService
         .getRelationship(key.operator.relationshipId)
         .map(relationship => {
@@ -152,11 +152,11 @@ final case class ClientsApiServiceImpl(
           }
         )
 
-    val result: Future[ReadClientKeys] = for {
+    val result: Future[PublicKeys] = for {
       clientUuid     <- clientId.toFutureUUID
       readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
       keys           <- Future.traverse(readClientKeys.keys)(getRelationship)
-    } yield ReadClientKeys(keys)
+    } yield PublicKeys(keys)
 
     onComplete(result) {
       handleError(s"Error retrieving keys of client $clientId") orElse { case Success(keys) =>

@@ -6537,7 +6537,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadClientKeys'
+                $ref: '#/components/schemas/PublicKeys'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -8738,101 +8738,27 @@ components:
         - verificationDate
         - renewal
         - revocationDate
-    Key:
-      description: 'Models a JWK'
+    PublicKey:
       type: object
       properties:
-        kty:
+        keyId:
           type: string
-        key_ops:
-          type: array
-          items:
-            type: string
-        use:
-          type: string
-        alg:
-          type: string
-        kid:
-          type: string
-        x5u:
-          type: string
-          minLength: 1
-        x5t:
-          type: string
-        'x5t#S256':
-          type: string
-        x5c:
-          type: array
-          items:
-            type: string
-        crv:
-          type: string
-        x:
-          type: string
-        'y':
-          type: string
-        d:
-          type: string
-        k:
-          type: string
-        'n':
-          type: string
-        e:
-          type: string
-        p:
-          type: string
-        q:
-          type: string
-        dp:
-          type: string
-        dq:
-          type: string
-        qi:
-          type: string
-        oth:
-          uniqueItems: false
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/OtherPrimeInfo'
-      required:
-        - kty
-        - kid
-    OtherPrimeInfo:
-      title: OtherPrimeInfo
-      type: object
-      properties:
-        r:
-          type: string
-        d:
-          type: string
-        t:
-          type: string
-      required:
-        - r
-        - d
-        - t
-    ReadClientKey:
-      type: object
-      properties:
-        key:
-          $ref: '#/components/schemas/Key'
         name:
           type: string
         operator:
-          $ref: '#/components/schemas/OperatorDetails'
+          $ref: '#/components/schemas/SelfcareUser'
         createdAt:
           type: string
           format: date-time
         isOrphan:
           type: boolean    
       required:
-        - key
+        - keyId
         - name
         - createdAt
         - operator
         - isOrphan
-    OperatorDetails:
+    SelfcareUser:
       description: Contains some details about operator
       type: object
       properties:
@@ -8847,13 +8773,13 @@ components:
         - relationshipId
         - name
         - familyName    
-    ReadClientKeys:
+    PublicKeys:
       type: object
       properties:
         keys:
           type: array
           items:
-            $ref: '#/components/schemas/ReadClientKey'
+            $ref: '#/components/schemas/PublicKey'
       required:
         - keys    
     Problem:
