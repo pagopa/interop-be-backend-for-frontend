@@ -134,6 +134,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val relationshipProductFormat: RootJsonFormat[RelationshipProduct]       = jsonFormat3(RelationshipProduct)
   implicit val operatorFormat: RootJsonFormat[Operator]                             = jsonFormat7(Operator)
   implicit val keySeedFormat: RootJsonFormat[KeySeed]                               = jsonFormat4(KeySeed)
+  implicit val encodedClientKeyFormat: RootJsonFormat[EncodedClientKey]             = jsonFormat1(EncodedClientKey)
 
   implicit val purposeFormat: RootJsonFormat[Purpose]                                 = jsonFormat13(Purpose)
   implicit val purposesFormat: RootJsonFormat[Purposes]                               = jsonFormat2(Purposes)

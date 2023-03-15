@@ -156,4 +156,22 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       handleError(s"Error creating keys for client $clientId") orElse { case Success(_) => createKeys204(_) }
     }
   }
+
+  override def getEncodedClientKeyById(clientId: String, keyId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEncodedClientKey: ToEntityMarshaller[EncodedClientKey],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[EncodedClientKey] = for {
+      clientUuid       <- clientId.toFutureUUID
+      encodedClientKey <- authorizationProcessService.getEncodedClientKeyById(clientUuid, keyId)
+    } yield (encodedClientKey.toApi)
+
+    onComplete(result) {
+      handleError(s"Error retrieving key $keyId for client ${clientId.toString}") orElse { case Success(key) =>
+        getEncodedClientKeyById200(key)
+      }
+    }
+  }
 }

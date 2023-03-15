@@ -139,4 +139,19 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         )
       invoker.invoke(request, s"Create keys for client ${clientId.toString}")
     }
+
+  override def getEncodedClientKeyById(clientId: UUID, keyId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EncodedClientKey] =
+    withHeaders[EncodedClientKey] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EncodedClientKey] =
+        api.getEncodedClientKeyById(
+          clientId = clientId,
+          keyId = keyId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving encoding key $keyId for client ${clientId.toString}")
+    }
+
 }
