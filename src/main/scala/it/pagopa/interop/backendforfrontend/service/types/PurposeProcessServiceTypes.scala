@@ -126,4 +126,13 @@ object PurposeProcessServiceTypes {
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
   }
+
+  implicit class PurposeUpdateContentConverter(private val puc: PurposeUpdateContent) extends AnyVal {
+    def toProcess: PurposeProcess.PurposeUpdateContent =
+      PurposeProcess.PurposeUpdateContent(
+        title = puc.title,
+        description = puc.description,
+        riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess)
+      )
+  }
 }

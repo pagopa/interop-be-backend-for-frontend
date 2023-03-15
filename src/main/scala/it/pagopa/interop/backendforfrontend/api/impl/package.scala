@@ -131,6 +131,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   )
   implicit val purposeVersionFormat: RootJsonFormat[PurposeVersion]                 = jsonFormat8(PurposeVersion)
   implicit val clientFormat: RootJsonFormat[Client]                                 = jsonFormat3(Client)
+  implicit val relationshipProductFormat: RootJsonFormat[RelationshipProduct]       = jsonFormat3(RelationshipProduct)
+  implicit val operatorFormat: RootJsonFormat[Operator]                             = jsonFormat7(Operator)
+  implicit val keySeedFormat: RootJsonFormat[KeySeed]                               = jsonFormat4(KeySeed)
   implicit val encodedClientKeyFormat: RootJsonFormat[EncodedClientKey]             = jsonFormat1(EncodedClientKey)
 
   implicit val purposeFormat: RootJsonFormat[Purpose]                                 = jsonFormat13(Purpose)
@@ -138,6 +141,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val purposeAdditionDetailsSeed: RootJsonFormat[PurposeAdditionDetailsSeed] = jsonFormat1(
     PurposeAdditionDetailsSeed
   )
+
+  implicit val purposeUpdateContentFormat: RootJsonFormat[PurposeUpdateContent] = jsonFormat3(PurposeUpdateContent)
 
   implicit val DraftPurposeVersionUpdateContentFormat: RootJsonFormat[DraftPurposeVersionUpdateContent] = jsonFormat1(
     DraftPurposeVersionUpdateContent
@@ -164,6 +169,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val waitingForApprovalPurposeVersionUpdateContentSeed
     : RootJsonFormat[WaitingForApprovalPurposeVersionUpdateContentSeed] =
     jsonFormat1(WaitingForApprovalPurposeVersionUpdateContentSeed)
+
+  implicit val selfcareProductFormat: RootJsonFormat[SelfcareProduct]         = jsonFormat2(SelfcareProduct)
+  implicit val selfcareInstitutionFormat: RootJsonFormat[SelfcareInstitution] = jsonFormat3(SelfcareInstitution)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 

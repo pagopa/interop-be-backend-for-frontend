@@ -351,29 +351,21 @@ final case class PurposesApiServiceImpl(
     }
   }
 
-  override def createPurpose(
-    q: Option[String],
-    eservicesIds: String,
-    consumersIds: String,
-    producersIds: String,
-    states: String,
-    offset: Int,
-    limit: Int,
-    purposeSeed: PurposeSeed
-  )(implicit
+  override def createPurpose(purposeSeed: PurposeSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
-    logger.info(s"Creating purpose with eService $eservicesIds and consumer $consumersIds")
+    logger.info(s"Creating purpose with eService ${purposeSeed.eserviceId} and consumer ${purposeSeed.consumerId}")
 
     val result: Future[CreatedResource] =
       purposeProcessService.createPurpose(purposeSeed.toProcess)(contexts).map(_.toApiResource)
 
     onComplete(result) {
-      handleError(s"Error creating Purpose with eService $eservicesIds and consumer $consumersIds") orElse {
-        case Success(purpose) =>
-          createPurpose200(purpose)
+      handleError(
+        s"Error creating Purpose with eService ${purposeSeed.eserviceId} and consumer ${purposeSeed.consumerId}"
+      ) orElse { case Success(purpose) =>
+        createPurpose200(purpose)
       }
     }
   }
@@ -398,6 +390,25 @@ final case class PurposesApiServiceImpl(
     onComplete(result) {
       handleError(s"Error retrieving purpose $purposeId") orElse { case Success(response) =>
         getPurpose200(response)
+      }
+    }
+  }
+
+  override def updatePurpose(purposeId: String, purposeUpdateContent: PurposeUpdateContent)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID    <- purposeId.toFutureUUID
+      updatedPurpose <- purposeProcessService
+        .updatePurpose(purposeUUID, purposeUpdateContent.toProcess)
+      versionUUID    <- getCurrentVersion(updatedPurpose).map(_.id).toFuture(PurposeNotFound(purposeUUID))
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
+
+    onComplete(result) {
+      handleError(s"Error updating Purpose $purposeId") orElse { case Success(response) =>
+        updatePurpose200(response)
       }
     }
   }
