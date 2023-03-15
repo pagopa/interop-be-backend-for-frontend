@@ -507,7 +507,7 @@ final case class AgreementsApiServiceImpl(
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
-    val result = q match {
+    val result = q.filterNot(_.isBlank) match {
       case Some(value) if value.length < 3 => emptyResponse
       case _                               => validResponse
     }
@@ -548,7 +548,7 @@ final case class AgreementsApiServiceImpl(
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
-    val result = q match {
+    val result = q.filterNot(_.isBlank) match {
       case Some(value) if value.length < 3 => emptyResponse
       case _                               => validResponse
     }
@@ -582,7 +582,7 @@ final case class AgreementsApiServiceImpl(
           )
         )
 
-    val result = q match {
+    val result = q.filterNot(_.isBlank) match {
       case Some(value) if value.length < 3 => emptyResponse
       case _                               => validResponse
     }
@@ -616,7 +616,7 @@ final case class AgreementsApiServiceImpl(
           )
         )
 
-    val result = q match {
+    val result = q.filterNot(_.isBlank) match {
       case Some(value) if value.length < 3 => emptyResponse
       case _                               => validResponse
     }
