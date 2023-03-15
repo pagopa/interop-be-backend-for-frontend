@@ -124,6 +124,24 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     }
   }
 
+  override def getClientOperators(clientId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerOperatorarray: ToEntityMarshaller[Seq[Operator]],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[Seq[Operator]] = for {
+      clientUuid <- clientId.toFutureUUID
+      operators  <- authorizationProcessService.getClientOperators(clientUuid)
+    } yield (operators.map(_.toApi))
+
+    onComplete(result) {
+      handleError(s"Error retrieving operators for client $clientId") orElse { case Success(operators) =>
+        getClientOperators200(operators)
+      }
+    }
+  }
+
   override def createKeys(clientId: String, keySeed: Seq[KeySeed])(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
