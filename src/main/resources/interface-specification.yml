@@ -6351,6 +6351,24 @@ paths:
               format: uuid
             default: []
           explode: false    
+        - name: consumerId
+          in: query
+          description: ID of Consumer that MUST be related to the Client
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: purposeId
+          in: query
+          description: ID of Purpose that MUST be related to the Client
+          schema:
+            type: string
+            format: uuid
+        - name: kind
+          in: query
+          description: type of Client to be retrieved
+          schema:
+            type: string  
         - in: query
           name: offset
           required: true
@@ -6388,6 +6406,44 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '400':
           description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:

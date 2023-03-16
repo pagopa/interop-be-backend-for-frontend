@@ -25,8 +25,6 @@ trait AuthorizationProcessService {
     contexts: Seq[(String, String)]
   ): Future[Unit]
 
-  def getClients(consumerId: UUID, purposeId: Option[UUID])(implicit contexts: Seq[(String, String)]): Future[Clients]
-
   def getClientKeys(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[ReadClientKeys]
 
   def getClientOperators(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[Operator]]
@@ -41,7 +39,13 @@ trait AuthorizationProcessService {
 
   def createApiClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client]
 
-  def getClients(name: Option[String] = None, relationshipIds: Seq[UUID] = Seq.empty, limit: Int, offset: Int = 0)(
-    implicit contexts: Seq[(String, String)]
-  ): Future[Clients]
+  def getClients(
+    name: Option[String],
+    relationshipIds: Seq[UUID],
+    consumerId: UUID,
+    purposeId: Option[UUID],
+    kind: Option[String],
+    limit: Int,
+    offset: Int
+  )(implicit contexts: Seq[(String, String)]): Future[Clients]
 }

@@ -209,16 +209,29 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     }
   }
 
-  override def getClients(q: Option[String], relationshipIds: String, offset: Int, limit: Int)(implicit
+  override def getClients(
+    q: Option[String],
+    relationshipIds: String,
+    consumerId: String,
+    purposeId: Option[String],
+    kind: Option[String],
+    offset: Int,
+    limit: Int
+  )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerClients: ToEntityMarshaller[Clients],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[Clients] = for {
       relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
+      consumerUuid      <- consumerId.toFutureUUID
+      purposeUuid       <- purposeId.map(_.toFutureUUID).sequence
       pagedResults      <- authorizationProcessService.getClients(
         name = q,
         relationshipIds = relationshipsUuid,
+        consumerId = consumerUuid,
+        purposeId = purposeUuid,
+        kind = kind,
         offset = offset,
         limit = limit
       )
