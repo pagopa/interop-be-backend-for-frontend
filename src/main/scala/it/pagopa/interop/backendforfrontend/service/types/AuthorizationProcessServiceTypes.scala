@@ -14,7 +14,7 @@ object AuthorizationProcessServiceTypes {
     def toCreatedResource: CreatedResource = CreatedResource(id = client.id)
     def toApi: ClientDetails               = ClientDetails(
       id = client.id,
-      consumer = Organization(id = client.consumer.institutionId, description = client.consumer.description),
+      consumer = CompactOrganization(id = client.consumer.institutionId, name = client.consumer.description),
       name = client.name,
       purposes = client.purposes.map(_.toApi),
       description = client.description,
@@ -26,7 +26,7 @@ object AuthorizationProcessServiceTypes {
     def toApi: ClientPurpose = ClientPurpose(
       purposeId = pur.purposeId,
       title = pur.title,
-      eservice = CompactEServiceLight(pur.agreement.eservice.id, pur.agreement.eservice.name)
+      eservice = CompactEService(pur.agreement.eservice.id, pur.agreement.eservice.name)
     )
   }
 

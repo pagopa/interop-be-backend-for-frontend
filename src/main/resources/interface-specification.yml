@@ -6342,6 +6342,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
           description: Client retrieved
@@ -7894,7 +7895,7 @@ components:
           type: string
           format: uuid
         consumer:
-          $ref: '#/components/schemas/Organization'
+          $ref: '#/components/schemas/CompactOrganization'
         name:
           type: string
         purposes:
@@ -7927,21 +7928,11 @@ components:
         title:
           type: string
         eservice:
-          $ref: '#/components/schemas/CompactEServiceLight'  
+          $ref: '#/components/schemas/CompactEService'  
       required:
         - purposeId
         - title
         - eservice
-    Organization:
-      type: object
-      required:
-        - id
-        - description
-      properties:
-        id:
-          type: string
-        description:
-          type: string    
     CatalogDescriptorEService:
       type: object
       required:

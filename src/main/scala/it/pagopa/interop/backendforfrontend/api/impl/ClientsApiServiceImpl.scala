@@ -216,7 +216,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     val result: Future[ClientDetails] = for {
       clientUuid <- clientId.toFutureUUID
       client     <- authorizationProcessService.getClient(clientUuid)
-    } yield (client.toApi)
+    } yield client.toApi
 
     onComplete(result) {
       handleError(s"Error retrieving client $clientId") orElse { case Success(client) =>
