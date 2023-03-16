@@ -12,6 +12,29 @@ object AuthorizationProcessServiceTypes {
 
   implicit class ClientConverter(private val client: AuthorizationProcess.Client) extends AnyVal {
     def toCreatedResource: CreatedResource = CreatedResource(id = client.id)
+    def toApi: ClientDetails               = ClientDetails(
+      id = client.id,
+      consumer = Organization(id = client.consumer.institutionId, description = client.consumer.description),
+      name = client.name,
+      purposes = client.purposes.map(_.toApi),
+      description = client.description,
+      kind = client.kind.toApi
+    )
+  }
+
+  implicit class ClientPurposeConverter(private val pur: AuthorizationProcess.Purpose) extends AnyVal {
+    def toApi: ClientPurpose = ClientPurpose(
+      purposeId = pur.purposeId,
+      title = pur.title,
+      eservice = CompactEServiceLight(pur.agreement.eservice.id, pur.agreement.eservice.name)
+    )
+  }
+
+  implicit class ClientKindConverter(private val ck: AuthorizationProcess.ClientKind) extends AnyVal {
+    def toApi: ClientKind = ck match {
+      case AuthorizationProcess.ClientKind.API      => ClientKind.API
+      case AuthorizationProcess.ClientKind.CONSUMER => ClientKind.CONSUMER
+    }
   }
 
   implicit class OperatorRoleConverter(private val opr: AuthorizationProcess.OperatorRole) extends AnyVal {

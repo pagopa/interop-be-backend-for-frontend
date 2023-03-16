@@ -206,4 +206,22 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       }
     }
   }
+
+  def getClient(clientId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerClientDetails: ToEntityMarshaller[ClientDetails]
+  ): Route = {
+
+    val result: Future[ClientDetails] = for {
+      clientUuid <- clientId.toFutureUUID
+      client     <- authorizationProcessService.getClient(clientUuid)
+    } yield (client.toApi)
+
+    onComplete(result) {
+      handleError(s"Error retrieving client $clientId") orElse { case Success(client) =>
+        getClient200(client)
+      }
+    }
+  }
 }
