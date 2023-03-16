@@ -4080,7 +4080,7 @@ paths:
       description: Retrieve Purposes
       parameters:
         - in: query
-          name: name
+          name: q
           schema:
             type: string
         - in: query
