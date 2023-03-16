@@ -63,7 +63,7 @@ object AuthorizationProcessServiceTypes {
     def toApi: EncodedClientKey = EncodedClientKey(key = eck.key)
   }
 
-  implicit class ClientSeedConverter(private val seed: ClientSeed) extends AnyVal {
+  implicit class ClientSeedConverter(private val seed: ClientSeed)                         extends AnyVal {
     def toProcess: AuthorizationProcess.ClientSeed =
       AuthorizationProcess.ClientSeed(name = seed.name, description = seed.description)
   }

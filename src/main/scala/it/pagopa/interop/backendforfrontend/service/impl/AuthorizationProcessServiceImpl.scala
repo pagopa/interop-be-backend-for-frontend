@@ -93,19 +93,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Retrieving keys for client $clientId")
     }
 
-  override def getClients(consumerId: UUID, purposeId: Option[UUID])(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Clients] = withHeaders[Clients] { (bearerToken, correlationId, ip) =>
-    val request =
-      api.listClients(
-        xCorrelationId = correlationId,
-        xForwardedFor = ip,
-        purposeId = purposeId,
-        consumerId = consumerId
-      )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving clients for purpose $purposeId")
-  }
-
   override def clientOperatorRelationshipBinding(clientId: UUID, relationshipId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Client] =
@@ -172,18 +159,27 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Create api client with name ${clientSeed.name}")
     }
 
-
-  def getClients(name: Option[String], relationshipIds: Seq[UUID], limit: Int, offset: Int)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Clients] = withHeaders[Clients] { (bearerToken, correlationId, ip) =>
-    val request = api.getClients(
-      xCorrelationId = correlationId,
-      name = name,
-      relationshipIds = relationshipIds,
-      offset = offset,
-      limit = limit,
-      xForwardedFor = ip
-    )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving clients")
+  def getClients(
+    name: Option[String],
+    relationshipIds: Seq[UUID],
+    consumerId: UUID,
+    purposeId: Option[UUID],
+    kind: Option[String],
+    limit: Int,
+    offset: Int
+  )(implicit contexts: Seq[(String, String)]): Future[Clients] = withHeaders[Clients] {
+    (bearerToken, correlationId, ip) =>
+      val request = api.getClients(
+        xCorrelationId = correlationId,
+        name = name,
+        relationshipIds = relationshipIds,
+        consumerId = consumerId,
+        purposeId = purposeId,
+        kind = kind,
+        offset = offset,
+        limit = limit,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving clients")
   }
 }
