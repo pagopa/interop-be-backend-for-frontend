@@ -6351,6 +6351,11 @@ paths:
               format: uuid
             default: []
           explode: false    
+        - name: kind
+          in: query
+          description: type of Client to be retrieved
+          schema:
+            type: string  
         - in: query
           name: offset
           required: true

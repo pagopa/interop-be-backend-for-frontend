@@ -210,7 +210,8 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     }
   }
 
-  override def getClients(q: Option[String], relationshipIds: String, offset: Int, limit: Int)(implicit
+  override def getClients(q: Option[String], relationshipIds: String, kind: Option[String], offset: Int, limit: Int)(
+    implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCompactClients: ToEntityMarshaller[CompactClients]
@@ -223,7 +224,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
         relationshipIds = relationshipsUuid,
         consumerId = requesterUuid,
         purposeId = None,
-        kind = None,
+        kind = kind,
         offset = offset,
         limit = limit
       )
