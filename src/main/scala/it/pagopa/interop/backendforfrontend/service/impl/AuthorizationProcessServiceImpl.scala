@@ -2,13 +2,13 @@ package it.pagopa.interop.backendforfrontend.service.impl
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.authorizationprocess.client.model.{Clients, ReadClientKeys}
+import it.pagopa.interop.authorizationprocess.client.api.{ClientApi, EnumsSerializers}
+import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
+import it.pagopa.interop.authorizationprocess.client.model._
 import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
-import it.pagopa.interop.authorizationprocess.client.api.{EnumsSerializers, ClientApi}
-import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
-import it.pagopa.interop.authorizationprocess.client.model._
+
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -119,4 +119,57 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Binding operator relationship $relationshipId to client ${clientId.toString}")
     }
+
+  override def getClientOperators(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[Operator]] =
+    withHeaders[Seq[Operator]] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Seq[Operator]] =
+        api.getClientOperators(clientId = clientId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Retrieving operators for client ${clientId.toString}")
+    }
+
+  override def createKeys(clientId: UUID, keySeed: Seq[KeySeed])(implicit
+    contexts: Seq[(String, String)]
+  ): Future[ClientKeys] =
+    withHeaders[ClientKeys] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[ClientKeys] =
+        api.createKeys(clientId = clientId, keySeed = keySeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Create keys for client ${clientId.toString}")
+    }
+
+  override def getEncodedClientKeyById(clientId: UUID, keyId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EncodedClientKey] =
+    withHeaders[EncodedClientKey] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EncodedClientKey] =
+        api.getEncodedClientKeyById(
+          clientId = clientId,
+          keyId = keyId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving encoding key $keyId for client ${clientId.toString}")
+    }
+
+  override def createConsumerClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.createConsumerClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Creating consumer client with name ${clientSeed.name}")
+    }
+
+  override def createApiClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.createApiClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Create api client with name ${clientSeed.name}")
+    }
+
 }

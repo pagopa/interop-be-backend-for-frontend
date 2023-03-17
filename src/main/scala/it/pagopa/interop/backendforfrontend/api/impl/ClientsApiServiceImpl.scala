@@ -9,9 +9,9 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcessModel}
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessApiError}
-import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.PartyProcessService
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 
@@ -126,6 +126,89 @@ final case class ClientsApiServiceImpl(
       handleError(s"Error adding purpose ${purposeAdditionDetailsSeed.purposeId} to client $clientId") orElse {
         case Success(_) =>
           addClientPurpose204
+      }
+    }
+  }
+
+  override def getClientOperators(clientId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerOperatorarray: ToEntityMarshaller[Seq[Operator]],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[Seq[Operator]] = for {
+      clientUuid <- clientId.toFutureUUID
+      operators  <- authorizationProcessService.getClientOperators(clientUuid)
+    } yield (operators.map(_.toApi))
+
+    onComplete(result) {
+      handleError(s"Error retrieving operators for client $clientId") orElse { case Success(operators) =>
+        getClientOperators200(operators)
+      }
+    }
+  }
+
+  override def createKeys(clientId: String, keySeed: Seq[KeySeed])(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[Unit] = for {
+      clientUuid <- clientId.toFutureUUID
+      _          <- authorizationProcessService.createKeys(clientUuid, keySeed.map(_.toProcess))
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error creating keys for client $clientId") orElse { case Success(_) => createKeys204(_) }
+    }
+  }
+
+  override def getEncodedClientKeyById(clientId: String, keyId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEncodedClientKey: ToEntityMarshaller[EncodedClientKey],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[EncodedClientKey] = for {
+      clientUuid       <- clientId.toFutureUUID
+      encodedClientKey <- authorizationProcessService.getEncodedClientKeyById(clientUuid, keyId)
+    } yield (encodedClientKey.toApi)
+
+    onComplete(result) {
+      handleError(s"Error retrieving key $keyId for client ${clientId.toString}") orElse { case Success(key) =>
+        getEncodedClientKeyById200(key)
+      }
+    }
+  }
+
+  override def createConsumerClient(clientSeed: ClientSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerClient: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+
+    val result: Future[CreatedResource] =
+      authorizationProcessService.createConsumerClient(clientSeed.toProcess) map (_.toCreatedResource)
+
+    onComplete(result) {
+      handleError(s"Error creating consumer client with name ${clientSeed.name}") orElse { case Success(resource) =>
+        createConsumerClient200(resource)
+      }
+    }
+  }
+
+  override def createApiClient(clientSeed: ClientSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+
+    val result: Future[CreatedResource] =
+      authorizationProcessService.createApiClient(clientSeed.toProcess) map (_.toCreatedResource)
+
+    onComplete(result) {
+      handleError(s"Error creating api client with name ${clientSeed.name}") orElse { case Success(resource) =>
+        createApiClient200(resource)
       }
     }
   }
