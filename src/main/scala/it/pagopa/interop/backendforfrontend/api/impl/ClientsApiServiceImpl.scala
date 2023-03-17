@@ -136,26 +136,22 @@ final case class ClientsApiServiceImpl(
     toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
   ): Route = {
 
-    def getRelationship(key: AuthorizationProcessModel.ReadClientKey): Future[PublicKey] =
+    def decorate(key: AuthorizationProcessModel.ReadClientKey): Future[PublicKey] =
       partyProcessService
         .getRelationship(key.operator.relationshipId)
-        .map(relationship => {
-          relationship.state match {
-            case ACTIVE => key.toApi(isOrphan = false)
-            case _      => key.toApi(isOrphan = true)
-          }
+        .map(_.state match {
+          case ACTIVE => key.toApi(isOrphan = false)
+          case _      => key.toApi(isOrphan = true)
         })
-        .recoverWith(apiError =>
-          apiError match {
-            case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true))
-            case other                                 => Future.failed(other)
-          }
-        )
+        .recoverWith {
+          case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true))
+          case other                                 => Future.failed(other)
+        }
 
     val result: Future[PublicKeys] = for {
       clientUuid     <- clientId.toFutureUUID
       readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
-      keys           <- Future.traverse(readClientKeys.keys)(getRelationship)
+      keys           <- Future.traverse(readClientKeys.keys)(decorate)
     } yield PublicKeys(keys)
 
     onComplete(result) {
