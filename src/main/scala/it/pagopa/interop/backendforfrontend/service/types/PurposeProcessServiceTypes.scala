@@ -73,7 +73,7 @@ object PurposeProcessServiceTypes {
   }
 
   implicit class ClientConverter(private val c: AuthorizationProcess.ClientEntry) extends AnyVal {
-    def toApi(hasKeys: Boolean): Client = Client(id = c.id, name = c.name, hasKeys = hasKeys)
+    def toApi(hasKeys: Boolean): CompactClient = CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
   implicit class RiskAnalysisDocumentConverter(private val rad: PurposeProcess.PurposeVersionDocument) extends AnyVal {

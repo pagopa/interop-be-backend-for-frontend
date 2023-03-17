@@ -1,6 +1,6 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
-import cats.implicits._
+import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
@@ -11,6 +11,7 @@ import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
@@ -209,34 +210,28 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     }
   }
 
-  override def getClients(
-    q: Option[String],
-    relationshipIds: String,
-    consumerId: String,
-    purposeId: Option[String],
-    kind: Option[String],
-    offset: Int,
-    limit: Int
-  )(implicit
+  override def getClients(q: Option[String], relationshipIds: String, offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerClients: ToEntityMarshaller[Clients],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactClients: ToEntityMarshaller[CompactClients]
   ): Route = {
-    val result: Future[Clients] = for {
+    val result: Future[CompactClients] = for {
+      requesterUuid     <- getOrganizationIdFutureUUID(contexts)
       relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
-      consumerUuid      <- consumerId.toFutureUUID
-      purposeUuid       <- purposeId.map(_.toFutureUUID).sequence
       pagedResults      <- authorizationProcessService.getClients(
         name = q,
         relationshipIds = relationshipsUuid,
-        consumerId = consumerUuid,
-        purposeId = purposeUuid,
-        kind = kind,
+        consumerId = requesterUuid,
+        purposeId = None,
+        kind = None,
         offset = offset,
         limit = limit
       )
-    } yield Clients(
-      results = pagedResults.results.map(_.toApi),
+      hasKeys           <- Future
+        .traverse(pagedResults.results.map(_.id))(authorizationProcessService.getClientKeys)
+        .map(ks => ks.flatMap(_.keys).nonEmpty)
+    } yield CompactClients(
+      results = pagedResults.results.map(_.toApi(hasKeys)),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 

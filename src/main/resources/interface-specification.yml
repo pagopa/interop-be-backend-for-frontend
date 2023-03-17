@@ -6351,24 +6351,6 @@ paths:
               format: uuid
             default: []
           explode: false    
-        - name: consumerId
-          in: query
-          description: ID of Consumer that MUST be related to the Client
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: purposeId
-          in: query
-          description: ID of Purpose that MUST be related to the Client
-          schema:
-            type: string
-            format: uuid
-        - name: kind
-          in: query
-          description: type of Client to be retrieved
-          schema:
-            type: string  
         - in: query
           name: offset
           required: true
@@ -6390,7 +6372,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Clients'
+                $ref: '#/components/schemas/CompactClients'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -8287,7 +8269,7 @@ components:
           type: boolean
         activeDescriptor:
           $ref: '#/components/schemas/CompactDescriptor'
-    Clients:
+    CompactClients:
       type: object
       properties:
         results:
@@ -8299,17 +8281,6 @@ components:
       required:
         - results
         - pagination    
-    CompactClient:
-      type: object
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
     AgreementListEntry:
       type: object
       required:
@@ -8639,7 +8610,7 @@ components:
         clients:
           type: array
           items:
-            $ref: '#/components/schemas/Client'
+            $ref: '#/components/schemas/CompactClient'
         waitingForApprovalVersion:
           $ref: '#/components/schemas/PurposeVersion'
         suspendedByConsumer:
@@ -8776,7 +8747,7 @@ components:
           type: string
       required:
         - name
-    Client:
+    CompactClient:
       type: object
       properties:
         id:
