@@ -4080,7 +4080,7 @@ paths:
       description: Retrieve Purposes
       parameters:
         - in: query
-          name: name
+          name: q
           schema:
             type: string
         - in: query
@@ -6351,11 +6351,11 @@ paths:
               format: uuid
             default: []
           explode: false    
-        - name: kind
-          in: query
+        - in: query
+          name: kind
           description: type of Client to be retrieved
           schema:
-            type: string  
+            $ref: '#/components/schemas/ClientKind' 
         - in: query
           name: offset
           required: true
@@ -8274,6 +8274,11 @@ components:
           type: boolean
         activeDescriptor:
           $ref: '#/components/schemas/CompactDescriptor'
+    ClientKind:
+      type: string
+      enum:
+        - API
+        - CONSUMER
     CompactClients:
       type: object
       properties:
