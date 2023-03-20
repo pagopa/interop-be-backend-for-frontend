@@ -12,7 +12,7 @@ object AuthorizationProcessServiceTypes {
 
   implicit class ClientConverter(private val client: AuthorizationProcess.Client) extends AnyVal {
     def toCreatedResource: CreatedResource = CreatedResource(id = client.id)
-    def toApi: ClientDetails               = ClientDetails(
+    def toApi: Client                      = Client(
       id = client.id,
       consumer = CompactOrganization(id = client.consumer.institutionId, name = client.consumer.description),
       name = client.name,

@@ -6491,7 +6491,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientDetails'
+                $ref: '#/components/schemas/Client'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -8029,7 +8029,7 @@ components:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
         eservice:
           $ref: '#/components/schemas/CatalogDescriptorEService'
-    ClientDetails:
+    Client:
       description: Models Client details
       type: object
       properties:

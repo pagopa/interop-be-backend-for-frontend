@@ -245,10 +245,10 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
   def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerClientDetails: ToEntityMarshaller[ClientDetails]
+    toEntityMarshallerClient: ToEntityMarshaller[Client]
   ): Route = {
 
-    val result: Future[ClientDetails] = for {
+    val result: Future[Client] = for {
       clientUuid <- clientId.toFutureUUID
       client     <- authorizationProcessService.getClient(clientUuid)
     } yield client.toApi
