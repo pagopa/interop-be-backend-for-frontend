@@ -164,7 +164,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
     relationshipIds: Seq[UUID],
     consumerId: UUID,
     purposeId: Option[UUID],
-    kind: Option[String],
+    kind: Option[ClientKind],
     limit: Int,
     offset: Int
   )(implicit contexts: Seq[(String, String)]): Future[Clients] = withHeaders[Clients] {

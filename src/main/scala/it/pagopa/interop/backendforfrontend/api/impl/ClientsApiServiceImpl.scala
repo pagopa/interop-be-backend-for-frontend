@@ -219,12 +219,13 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     val result: Future[CompactClients] = for {
       requesterUuid     <- getOrganizationIdFutureUUID(contexts)
       relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
+      clientKind        <- kind.traverse(ClientKind.fromValue).toFuture
       pagedResults      <- authorizationProcessService.getClients(
         name = q,
         relationshipIds = relationshipsUuid,
         consumerId = requesterUuid,
         purposeId = None,
-        kind = kind,
+        kind = clientKind.map(_.toProcess),
         offset = offset,
         limit = limit
       )
