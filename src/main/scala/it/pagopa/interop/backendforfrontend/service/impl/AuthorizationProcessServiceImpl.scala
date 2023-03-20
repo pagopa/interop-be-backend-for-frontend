@@ -175,7 +175,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         relationshipIds = relationshipIds,
         consumerId = consumerId,
         purposeId = purposeId,
-        kind = kind.map(_.toString),
+        kind = kind,
         offset = offset,
         limit = limit,
         xForwardedFor = ip
