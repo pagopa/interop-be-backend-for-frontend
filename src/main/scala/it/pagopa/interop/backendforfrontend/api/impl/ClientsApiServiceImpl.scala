@@ -1,5 +1,6 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
+import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
@@ -10,7 +11,9 @@ import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
+import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
@@ -204,6 +207,38 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       handleError(s"Error creating api client with name ${clientSeed.name}") orElse { case Success(resource) =>
         createApiClient200(resource)
       }
+    }
+  }
+
+  override def getClients(q: Option[String], relationshipIds: String, kind: Option[String], offset: Int, limit: Int)(
+    implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactClients: ToEntityMarshaller[CompactClients]
+  ): Route = {
+    val result: Future[CompactClients] = for {
+      requesterUuid     <- getOrganizationIdFutureUUID(contexts)
+      relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
+      clientKind        <- kind.traverse(ClientKind.fromValue).toFuture
+      pagedResults      <- authorizationProcessService.getClients(
+        name = q,
+        relationshipIds = relationshipsUuid,
+        consumerId = requesterUuid,
+        purposeId = None,
+        kind = clientKind.map(_.toProcess),
+        offset = offset,
+        limit = limit
+      )
+      hasKeys           <- Future
+        .traverse(pagedResults.results.map(_.id))(authorizationProcessService.getClientKeys)
+        .map(ks => ks.flatMap(_.keys).nonEmpty)
+    } yield CompactClients(
+      results = pagedResults.results.map(_.toApi(hasKeys)),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    onComplete(result) {
+      handleError(s"Error retrieving clients") orElse { case Success(clients) => getClients200(clients) }
     }
   }
 }
