@@ -4,6 +4,7 @@ import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
+import it.pagopa.interop.backendforfrontend.service.TenantManagementService
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
@@ -13,14 +14,17 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
+import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
 
-final case class ClientsApiServiceImpl(authorizationProcessService: AuthorizationProcessService)(implicit
-  ec: ExecutionContext
-) extends ClientsApiService {
+final case class ClientsApiServiceImpl(
+  authorizationProcessService: AuthorizationProcessService,
+  tenantManagementService: TenantManagementService
+)(implicit ec: ExecutionContext)
+    extends ClientsApiService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
@@ -242,7 +246,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     }
   }
 
-  def getClient(clientId: String)(implicit
+  override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerClient: ToEntityMarshaller[Client]
@@ -251,7 +255,8 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
     val result: Future[Client] = for {
       clientUuid <- clientId.toFutureUUID
       client     <- authorizationProcessService.getClient(clientUuid)
-    } yield client.toApi
+      apiClient  <- enhanceClient(client)
+    } yield apiClient
 
     onComplete(result) {
       handleError(s"Error retrieving client $clientId") orElse { case Success(client) =>
@@ -259,4 +264,32 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       }
     }
   }
+
+  private def enhanceClient(
+    client: AuthorizationProcess.Client
+  )(implicit contexts: Seq[(String, String)]): Future[Client] = for {
+    consumerUuid <- client.consumer.institutionId.toFutureUUID
+    consumer     <- tenantManagementService
+      .getTenant(consumerUuid)
+  } yield Client(
+    id = client.id,
+    consumer = CompactOrganization(consumer.id, consumer.name),
+    name = client.name,
+    purposes = client.purposes.traverse(enhancePurpose),
+    description = client.description,
+    kind = client.kind.toApi
+  )
+
+  private def enhancePurpose(
+    purpose: AuthorizationProcess.Purpose
+  )(implicit contexts: Seq[(String, String)]): Future[ClientPurpose] = for {
+    eserviceUuid <- purpose.states.eservice.eserviceId.toFutureUUID
+    producerUuid <- purpose.states.agreement.consumerId//????
+    producer     <- tenantManagementService
+      .getTenant(producerUuid)
+  } yield ClientPurpose(
+    purposeId = purpose.id,
+    title = purpose.title,
+    eservice = CompactEService(id = purpose.agreement.eservice.id, name = purpose.agreement.eservice.name)
+  )
 }

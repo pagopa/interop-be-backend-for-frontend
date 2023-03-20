@@ -246,7 +246,7 @@ trait Dependencies {
 
     val clientsApi: ClientsApi =
       new ClientsApi(
-        ClientsApiServiceImpl(authorizationProcess),
+        ClientsApiServiceImpl(authorizationProcess, tenantManagement),
         ClientsApiMarshallerImpl,
         oauthAndRateLimitingDirective
       )
