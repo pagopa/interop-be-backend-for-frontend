@@ -3,8 +3,12 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
-import it.pagopa.interop.backendforfrontend.service.TenantManagementService
+import it.pagopa.interop.backendforfrontend.service.{
+  AuthorizationProcessService,
+  CatalogProcessService,
+  PurposeProcessService,
+  TenantProcessService
+}
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
@@ -22,7 +26,9 @@ import scala.util.Success
 
 final case class ClientsApiServiceImpl(
   authorizationProcessService: AuthorizationProcessService,
-  tenantManagementService: TenantManagementService
+  tenantProcessService: TenantProcessService,
+  catalogProcessService: CatalogProcessService,
+  purposeProcessService: PurposeProcessService
 )(implicit ec: ExecutionContext)
     extends ClientsApiService {
 
@@ -237,7 +243,7 @@ final case class ClientsApiServiceImpl(
         .traverse(pagedResults.results.map(_.id))(authorizationProcessService.getClientKeys)
         .map(ks => ks.flatMap(_.keys).nonEmpty)
     } yield CompactClients(
-      results = pagedResults.results.map(_.toApi(hasKeys)),
+      results = pagedResults.results.map(_.toCompactApi(hasKeys)),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
@@ -268,28 +274,29 @@ final case class ClientsApiServiceImpl(
   private def enhanceClient(
     client: AuthorizationProcess.Client
   )(implicit contexts: Seq[(String, String)]): Future[Client] = for {
-    consumerUuid <- client.consumer.institutionId.toFutureUUID
-    consumer     <- tenantManagementService
-      .getTenant(consumerUuid)
+    consumer <- tenantProcessService
+      .getTenant(client.consumerId)
+    purposes <- Future.traverse(client.purposes)(enhancePurpose)
   } yield Client(
     id = client.id,
     consumer = CompactOrganization(consumer.id, consumer.name),
     name = client.name,
-    purposes = client.purposes.traverse(enhancePurpose),
+    purposes = purposes,
     description = client.description,
     kind = client.kind.toApi
   )
 
   private def enhancePurpose(
-    purpose: AuthorizationProcess.Purpose
+    clientPurpose: AuthorizationProcess.ClientPurpose
   )(implicit contexts: Seq[(String, String)]): Future[ClientPurpose] = for {
-    eserviceUuid <- purpose.states.eservice.eserviceId.toFutureUUID
-    producerUuid <- purpose.states.agreement.consumerId//????
-    producer     <- tenantManagementService
-      .getTenant(producerUuid)
+    (eService, purpose) <- catalogProcessService
+      .getEServiceById(clientPurpose.states.eservice.eserviceId)
+      .zip(purposeProcessService.getPurpose(clientPurpose.states.purpose.purposeId))
+    producer            <- tenantProcessService
+      .getTenant(eService.producerId)
   } yield ClientPurpose(
     purposeId = purpose.id,
     title = purpose.title,
-    eservice = CompactEService(id = purpose.agreement.eservice.id, name = purpose.agreement.eservice.name)
+    eservice = CompactEService(id = eService.id, name = eService.name, CompactOrganization(producer.id, producer.name))
   )
 }
