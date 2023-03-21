@@ -24,6 +24,8 @@ import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import java.io.File
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
+import it.pagopa.interop.authorizationprocess.client.model.ClientEntry
+import java.util.UUID
 
 final case class PurposesApiServiceImpl(
   catalogProcessService: CatalogProcessService,
@@ -252,11 +254,11 @@ final case class PurposesApiServiceImpl(
     currentDescriptor <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(EServiceDescriptorNotFound(eService.id.toString, agreement.descriptorId.toString))
-    processClients    <- authorizationProcessService.getClients(purpose.consumerId, Some(purpose.id))
+    processClients    <- getAllClients(purpose.consumerId, Some(purpose.id))
     currentVersion            = getCurrentVersion(purpose)
     waitingForApprovalVersion = getWaitingForApproval(purpose)
     hasKeys <- Future
-      .traverse(processClients.clients.map(_.id))(authorizationProcessService.getClientKeys)
+      .traverse(processClients.map(_.id))(authorizationProcessService.getClientKeys)
       .map(ks => ks.flatMap(_.keys).nonEmpty)
   } yield purpose.toApi(
     eService,
@@ -269,6 +271,32 @@ final case class PurposesApiServiceImpl(
     hasKeys,
     waitingForApprovalVersion
   )
+
+  def getAllClients(consumerId: UUID, purposeId: Option[UUID])(implicit
+    contexts: Seq[(String, String)],
+    ec: ExecutionContext
+  ): Future[List[ClientEntry]] = {
+
+    def getClientsFrom(offset: Int): Future[List[ClientEntry]] =
+      authorizationProcessService
+        .getClients(
+          name = None,
+          relationshipIds = Seq.empty,
+          consumerId = consumerId,
+          purposeId = purposeId,
+          kind = None,
+          limit = 50,
+          offset = offset
+        )
+        .map(_.results.toList)
+
+    def go(start: Int)(as: List[ClientEntry]): Future[List[ClientEntry]] =
+      getClientsFrom(start).flatMap(clients =>
+        if (clients.size < 50) Future.successful(as ++ clients) else go(start + 50)(as ++ clients)
+      )
+
+    go(0)(Nil)
+  }
 
   override def clonePurpose(purposeId: String)(implicit
     contexts: Seq[(String, String)],
