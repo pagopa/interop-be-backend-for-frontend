@@ -1921,7 +1921,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Create a new EService
@@ -2054,7 +2054,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
     put:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Updates a draft descriptor
@@ -2428,7 +2428,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Suspend the selected descriptor.
@@ -2617,7 +2617,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Deletes an e-service document
@@ -2700,7 +2700,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
     get:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Get an e-service document
@@ -2788,7 +2788,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Clones the selected descriptor.
@@ -2872,7 +2872,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Updates an e-service document
@@ -3039,7 +3039,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
     put:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Updates EService general information
@@ -3797,7 +3797,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     post:
-      security: [{}]
+      security: [ { } ]
       tags:
         - authorization
       operationId: getSessionToken
@@ -4091,7 +4091,7 @@ paths:
             items:
               type: string
               format: uuid
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: consumersIds
@@ -4101,7 +4101,7 @@ paths:
             items:
               type: string
               format: uuid
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: producersIds
@@ -4111,7 +4111,7 @@ paths:
             items:
               type: string
               format: uuid
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: states
@@ -4120,7 +4120,7 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/PurposeVersionState'
-            default: [ ]
+            default: []
           explode: false
         - in: query
           name: offset
@@ -6350,12 +6350,12 @@ paths:
               type: string
               format: uuid
             default: []
-          explode: false    
+          explode: false
         - in: query
           name: kind
           description: type of Client to be retrieved
           schema:
-            $ref: '#/components/schemas/ClientKind' 
+            $ref: '#/components/schemas/ClientKind'
         - in: query
           name: offset
           required: true
@@ -6428,7 +6428,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '403':
           description: Forbidden
           content:
@@ -6471,6 +6471,97 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
+    get:
+      description: Retrieves a Client
+      tags:
+        - clients
+      summary: Get a Client
+      operationId: getClient
+      parameters:
+        - name: clientId
+          in: path
+          description: The Client id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Client retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Client not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
     delete:
       description: Deletes a Client
       tags:
@@ -6519,7 +6610,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '403':
           description: Forbidden
           content:
@@ -6538,7 +6629,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Client not found
           content:
@@ -6617,7 +6708,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '403':
           description: Forbidden
           content:
@@ -6636,7 +6727,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Client not found
           content:
@@ -7894,7 +7985,7 @@ components:
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
         attributes:
-          $ref: '#/components/schemas/EServiceAttributes'
+          $ref: '#/components/schemas/EServiceAttributesSeed'
     EServiceSeed:
       type: object
       required:
@@ -7910,7 +8001,7 @@ components:
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
         attributes:
-          $ref: '#/components/schemas/EServiceAttributes'
+          $ref: '#/components/schemas/EServiceAttributesSeed'
     UpdateEServiceDescriptorSeed:
       required:
         - audience
@@ -8029,6 +8120,46 @@ components:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
         eservice:
           $ref: '#/components/schemas/CatalogDescriptorEService'
+    Client:
+      description: Models Client details
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        consumer:
+          $ref: '#/components/schemas/CompactOrganization'
+        name:
+          type: string
+        purposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientPurpose'
+        description:
+          type: string
+        kind:
+          $ref: '#/components/schemas/ClientKind'
+      required:
+        - id
+        - organization
+        - consumer
+        - name
+        - purposes
+        - kind     
+    ClientPurpose:
+      type: object
+      properties:
+        purposeId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        eservice:
+          $ref: '#/components/schemas/CompactEService'  
+      required:
+        - purposeId
+        - title
+        - eservice
     CatalogDescriptorEService:
       type: object
       required:
@@ -8381,7 +8512,7 @@ components:
           $ref: '#/components/schemas/Pagination'
       required:
         - results
-        - pagination    
+        - pagination
     AgreementListEntry:
       type: object
       required:
@@ -8400,7 +8531,7 @@ components:
         eservice:
           $ref: '#/components/schemas/CompactEService'
         state:
-          $ref: '#/components/schemas/AgreementState'  
+          $ref: '#/components/schemas/AgreementState'
         canBeUpgraded:
           type: boolean
         suspendedByConsumer:
@@ -8410,7 +8541,7 @@ components:
         suspendedByPlatform:
           type: boolean
         descriptor:
-          $ref: '#/components/schemas/CompactDescriptor'     
+          $ref: '#/components/schemas/CompactDescriptor'
     CompactAgreement:
       type: object
       required:
@@ -8795,7 +8926,7 @@ components:
       required:
         - id
         - role
-        - createdAt    
+        - createdAt
         - purposeId
     KeysSeed:
       type: array
@@ -9144,6 +9275,47 @@ components:
         - name
         - description
         - explicitAttributeVerification
+    EServiceAttributesSeed:
+      type: object
+      properties:
+        certified:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeSeed'
+        declared:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeSeed'
+        verified:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeSeed'
+      additionalProperties: false
+      required:
+        - certified
+        - declared
+        - verified
+    EServiceAttributeSeed:
+      type: object
+      properties:
+        single:
+          $ref: '#/components/schemas/EServiceAttributeValueSeed'
+        group:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeValueSeed'
+    EServiceAttributeValueSeed:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        explicitAttributeVerification:
+          type: boolean
+      required:
+        - id
+        - explicitAttributeVerification
+
     AttributeSeed:
       title: AttributeSeed
       type: object
