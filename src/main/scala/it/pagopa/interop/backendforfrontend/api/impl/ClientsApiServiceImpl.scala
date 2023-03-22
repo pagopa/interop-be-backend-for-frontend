@@ -286,7 +286,6 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
