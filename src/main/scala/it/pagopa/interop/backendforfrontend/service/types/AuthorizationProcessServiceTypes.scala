@@ -10,11 +10,27 @@ object AuthorizationProcessServiceTypes {
       AuthorizationProcess.PurposeAdditionDetails(purposeId = seed.purposeId)
   }
 
-  implicit class ClientConverter(private val client: AuthorizationProcess.Client) extends AnyVal {
-    def toCreatedResource: CreatedResource = CreatedResource(id = client.id)
+  implicit class ClientProcessConverter(private val c: AuthorizationProcess.Client) extends AnyVal {
+    def toCreatedResource: CreatedResource            = CreatedResource(id = c.id)
+    def toCompactApi(hasKeys: Boolean): CompactClient =
+      CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
-  implicit class OperatorRoleConverter(private val opr: AuthorizationProcess.OperatorRole) extends AnyVal {
+  implicit class ClientKindProcessConverter(private val ck: AuthorizationProcess.ClientKind) extends AnyVal {
+    def toApi: ClientKind = ck match {
+      case AuthorizationProcess.ClientKind.API      => ClientKind.API
+      case AuthorizationProcess.ClientKind.CONSUMER => ClientKind.CONSUMER
+    }
+  }
+
+  implicit class ClientKindConverter(private val ck: ClientKind) extends AnyVal {
+    def toProcess: AuthorizationProcess.ClientKind = ck match {
+      case ClientKind.API      => AuthorizationProcess.ClientKind.API
+      case ClientKind.CONSUMER => AuthorizationProcess.ClientKind.CONSUMER
+    }
+  }
+
+  implicit class OperatorRoleProcessConverter(private val opr: AuthorizationProcess.OperatorRole) extends AnyVal {
     def toApi: OperatorRole = opr match {
       case AuthorizationProcess.OperatorRole.MANAGER      => OperatorRole.MANAGER
       case AuthorizationProcess.OperatorRole.DELEGATE     => OperatorRole.DELEGATE
@@ -23,7 +39,7 @@ object AuthorizationProcessServiceTypes {
     }
   }
 
-  implicit class OperatorStateConverter(private val opr: AuthorizationProcess.OperatorState) extends AnyVal {
+  implicit class OperatorStateProcessConverter(private val opr: AuthorizationProcess.OperatorState) extends AnyVal {
     def toApi: OperatorState = opr match {
       case AuthorizationProcess.OperatorState.ACTIVE    => OperatorState.ACTIVE
       case AuthorizationProcess.OperatorState.SUSPENDED => OperatorState.SUSPENDED
@@ -31,11 +47,12 @@ object AuthorizationProcessServiceTypes {
     }
   }
 
-  implicit class RelationshipProductConverter(private val rp: AuthorizationProcess.RelationshipProduct) extends AnyVal {
+  implicit class RelationshipProductProcessConverter(private val rp: AuthorizationProcess.RelationshipProduct)
+      extends AnyVal {
     def toApi: RelationshipProduct = RelationshipProduct(id = rp.id, role = rp.role, createdAt = rp.createdAt)
   }
 
-  implicit class OperatorConverter(private val op: AuthorizationProcess.Operator) extends AnyVal {
+  implicit class OperatorProcessConverter(private val op: AuthorizationProcess.Operator) extends AnyVal {
     def toApi: Operator = Operator(
       relationshipId = op.relationshipId,
       taxCode = op.taxCode,
@@ -59,24 +76,13 @@ object AuthorizationProcessServiceTypes {
       AuthorizationProcess.KeySeed(key = seed.key, use = seed.use.toProcess, alg = seed.alg, name = seed.name)
   }
 
-  implicit class EncodedClientKeyConverter(private val eck: AuthorizationProcess.EncodedClientKey) extends AnyVal {
+  implicit class EncodedClientKeyProcessConverter(private val eck: AuthorizationProcess.EncodedClientKey)
+      extends AnyVal {
     def toApi: EncodedClientKey = EncodedClientKey(key = eck.key)
   }
 
   implicit class ClientSeedConverter(private val seed: ClientSeed) extends AnyVal {
     def toProcess: AuthorizationProcess.ClientSeed =
       AuthorizationProcess.ClientSeed(name = seed.name, description = seed.description)
-  }
-
-  implicit class CompactClientEntryConverter(private val entry: AuthorizationProcess.ClientEntry) extends AnyVal {
-    def toApi(hasKeys: Boolean): CompactClient =
-      CompactClient(id = entry.id, name = entry.name, hasKeys = hasKeys)
-  }
-
-  implicit class ClientKindConverter(private val ck: ClientKind) extends AnyVal {
-    def toProcess: AuthorizationProcess.ClientKind = ck match {
-      case ClientKind.API      => AuthorizationProcess.ClientKind.API
-      case ClientKind.CONSUMER => AuthorizationProcess.ClientKind.CONSUMER
-    }
   }
 }

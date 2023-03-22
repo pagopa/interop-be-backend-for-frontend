@@ -20,11 +20,11 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import it.pagopa.interop.authorizationprocess.client.model.Client
 
 import java.io.File
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
-import it.pagopa.interop.authorizationprocess.client.model.ClientEntry
 import java.util.UUID
 
 final case class PurposesApiServiceImpl(
@@ -275,9 +275,9 @@ final case class PurposesApiServiceImpl(
   def getAllClients(consumerId: UUID, purposeId: Option[UUID])(implicit
     contexts: Seq[(String, String)],
     ec: ExecutionContext
-  ): Future[List[ClientEntry]] = {
+  ): Future[List[Client]] = {
 
-    def getClientsFrom(offset: Int): Future[List[ClientEntry]] =
+    def getClientsFrom(offset: Int): Future[List[Client]] =
       authorizationProcessService
         .getClients(
           name = None,
@@ -290,7 +290,7 @@ final case class PurposesApiServiceImpl(
         )
         .map(_.results.toList)
 
-    def go(start: Int)(as: List[ClientEntry]): Future[List[ClientEntry]] =
+    def go(start: Int)(as: List[Client]): Future[List[Client]] =
       getClientsFrom(start).flatMap(clients =>
         if (clients.size < 50) Future.successful(as ++ clients) else go(start + 50)(as ++ clients)
       )

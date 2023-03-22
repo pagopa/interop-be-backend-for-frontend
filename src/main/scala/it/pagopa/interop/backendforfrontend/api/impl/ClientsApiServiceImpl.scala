@@ -3,7 +3,12 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
+import it.pagopa.interop.backendforfrontend.service.{
+  AuthorizationProcessService,
+  CatalogProcessService,
+  PurposeProcessService,
+  TenantProcessService
+}
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
@@ -13,14 +18,19 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
+import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
 
-final case class ClientsApiServiceImpl(authorizationProcessService: AuthorizationProcessService)(implicit
-  ec: ExecutionContext
-) extends ClientsApiService {
+final case class ClientsApiServiceImpl(
+  authorizationProcessService: AuthorizationProcessService,
+  tenantProcessService: TenantProcessService,
+  catalogProcessService: CatalogProcessService,
+  purposeProcessService: PurposeProcessService
+)(implicit ec: ExecutionContext)
+    extends ClientsApiService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
@@ -233,7 +243,7 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
         .traverse(pagedResults.results.map(_.id))(authorizationProcessService.getClientKeys)
         .map(ks => ks.flatMap(_.keys).nonEmpty)
     } yield CompactClients(
-      results = pagedResults.results.map(_.toApi(hasKeys)),
+      results = pagedResults.results.map(_.toCompactApi(hasKeys)),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
@@ -241,4 +251,52 @@ final case class ClientsApiServiceImpl(authorizationProcessService: Authorizatio
       handleError(s"Error retrieving clients") orElse { case Success(clients) => getClients200(clients) }
     }
   }
+
+  override def getClient(clientId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerClient: ToEntityMarshaller[Client]
+  ): Route = {
+
+    val result: Future[Client] = for {
+      clientUuid <- clientId.toFutureUUID
+      client     <- authorizationProcessService.getClient(clientUuid)
+      apiClient  <- enhanceClient(client)
+    } yield apiClient
+
+    onComplete(result) {
+      handleError(s"Error retrieving client $clientId") orElse { case Success(client) =>
+        getClient200(client)
+      }
+    }
+  }
+
+  private def enhanceClient(
+    client: AuthorizationProcess.Client
+  )(implicit contexts: Seq[(String, String)]): Future[Client] = for {
+    consumer <- tenantProcessService
+      .getTenant(client.consumerId)
+    purposes <- Future.traverse(client.purposes)(enhancePurpose)
+  } yield Client(
+    id = client.id,
+    consumer = CompactOrganization(consumer.id, consumer.name),
+    name = client.name,
+    purposes = purposes,
+    description = client.description,
+    kind = client.kind.toApi
+  )
+
+  private def enhancePurpose(
+    clientPurpose: AuthorizationProcess.ClientPurpose
+  )(implicit contexts: Seq[(String, String)]): Future[ClientPurpose] = for {
+    (eService, purpose) <- catalogProcessService
+      .getEServiceById(clientPurpose.states.eservice.eserviceId)
+      .zip(purposeProcessService.getPurpose(clientPurpose.states.purpose.purposeId))
+    producer            <- tenantProcessService
+      .getTenant(eService.producerId)
+  } yield ClientPurpose(
+    purposeId = purpose.id,
+    title = purpose.title,
+    eservice = CompactEService(id = eService.id, name = eService.name, CompactOrganization(producer.id, producer.name))
+  )
 }

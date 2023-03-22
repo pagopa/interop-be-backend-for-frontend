@@ -159,7 +159,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Create api client with name ${clientSeed.name}")
     }
 
-  def getClients(
+  override def getClients(
     name: Option[String],
     relationshipIds: Seq[UUID],
     consumerId: UUID,
@@ -182,4 +182,13 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving clients")
   }
+
+  override def getClient(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.getClient(clientId = clientId.toString, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Retrieve client $clientId")
+    }
 }

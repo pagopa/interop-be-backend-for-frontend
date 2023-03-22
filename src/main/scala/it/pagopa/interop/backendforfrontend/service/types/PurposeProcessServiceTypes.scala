@@ -72,7 +72,7 @@ object PurposeProcessServiceTypes {
     )
   }
 
-  implicit class ClientConverter(private val c: AuthorizationProcess.ClientEntry) extends AnyVal {
+  implicit class ClientConverter(private val c: AuthorizationProcess.Client) extends AnyVal {
     def toApi(hasKeys: Boolean): CompactClient = CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
@@ -89,7 +89,7 @@ object PurposeProcessServiceTypes {
       currentVersion: Option[PurposeProcess.PurposeVersion],
       producer: TenantProcess.Tenant,
       consumer: TenantProcess.Tenant,
-      processClients: Seq[AuthorizationProcess.ClientEntry],
+      processClients: Seq[AuthorizationProcess.Client],
       hasKeys: Boolean,
       waitingForApprovalVersion: Option[PurposeProcess.PurposeVersion]
     ): Purpose = Purpose(

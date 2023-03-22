@@ -6,6 +6,7 @@ import java.util.UUID
 import scala.concurrent.Future
 
 trait AuthorizationProcessService {
+  def getClient(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client]
 
   def deleteClient(clientId: String)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
@@ -48,4 +49,5 @@ trait AuthorizationProcessService {
     limit: Int,
     offset: Int
   )(implicit contexts: Seq[(String, String)]): Future[Clients]
+
 }
