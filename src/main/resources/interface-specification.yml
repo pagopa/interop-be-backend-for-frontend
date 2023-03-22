@@ -9092,8 +9092,6 @@ components:
           type: boolean
       required:
         - id
-        - name
-        - description
         - explicitAttributeVerification
 
     AttributeSeed:
