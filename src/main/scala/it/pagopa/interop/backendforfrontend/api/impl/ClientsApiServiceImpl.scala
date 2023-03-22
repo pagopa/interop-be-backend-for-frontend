@@ -151,7 +151,7 @@ final case class ClientsApiServiceImpl(
     val result: Future[PublicKey] = for {
       clientUuid    <- clientId.toFutureUUID
       readClientKey <- authorizationProcessService.getClientKeyById(clientUuid, keyId)
-      key           <- decorate(readClientKey)
+      key           <- decorateKey(readClientKey)
     } yield key
 
     onComplete(result) {
@@ -285,7 +285,7 @@ final case class ClientsApiServiceImpl(
     val result: Future[PublicKeys] = for {
       clientUuid     <- clientId.toFutureUUID
       readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
-      keys           <- Future.traverse(readClientKeys.keys)(decorate)
+      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
     onComplete(result) {
@@ -295,7 +295,7 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  private def decorate(
+  private def decorateKey(
     key: AuthorizationProcessModel.ReadClientKey
   )(implicit contexts: Seq[(String, String)]): Future[PublicKey] =
     partyProcessService
