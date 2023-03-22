@@ -7,7 +7,8 @@ import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   CatalogProcessService,
   PurposeProcessService,
-  TenantProcessService
+  TenantProcessService,
+  PartyProcessService
 }
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
@@ -31,7 +32,8 @@ final case class ClientsApiServiceImpl(
   authorizationProcessService: AuthorizationProcessService,
   tenantProcessService: TenantProcessService,
   catalogProcessService: CatalogProcessService,
-  purposeProcessService: PurposeProcessService
+  purposeProcessService: PurposeProcessService,
+  partyProcessService: PartyProcessService
 )(implicit ec: ExecutionContext)
     extends ClientsApiService {
 
@@ -285,7 +287,6 @@ final case class ClientsApiServiceImpl(
       }
     }
   }
-
 
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],

@@ -86,17 +86,11 @@ object AuthorizationProcessServiceTypes {
       AuthorizationProcess.ClientSeed(name = seed.name, description = seed.description)
   }
 
-  implicit class CompactClientEntryConverter(private val entry: AuthorizationProcess.ClientEntry) extends AnyVal {
+  implicit class CompactClientConverter(private val c: AuthorizationProcess.Client) extends AnyVal {
     def toApi(hasKeys: Boolean): CompactClient =
-      CompactClient(id = entry.id, name = entry.name, hasKeys = hasKeys)
+      CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
-  implicit class ClientKindConverter(private val ck: ClientKind)                                extends AnyVal {
-    def toProcess: AuthorizationProcess.ClientKind = ck match {
-      case ClientKind.API      => AuthorizationProcess.ClientKind.API
-      case ClientKind.CONSUMER => AuthorizationProcess.ClientKind.CONSUMER
-    }
-  }
   implicit class OperatorDetailsConverter(private val od: AuthorizationProcess.OperatorDetails) extends AnyVal {
     def toApi: SelfcareUser =
       SelfcareUser(relationshipId = od.relationshipId, familyName = od.familyName, name = od.name)
