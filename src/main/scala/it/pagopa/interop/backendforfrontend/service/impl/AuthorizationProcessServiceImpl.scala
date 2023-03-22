@@ -107,6 +107,17 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Binding operator relationship $relationshipId to client ${clientId.toString}")
     }
 
+  override def getClientKeyById(clientId: UUID, keyId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[ReadClientKey] =
+    withHeaders[ReadClientKey] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[ReadClientKey] =
+        api.getClientKeyById(clientId = clientId, keyId = keyId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Retrieve key ${keyId} of client ${clientId.toString}")
+    }
+
   override def getClientOperators(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[Operator]] =
     withHeaders[Seq[Operator]] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Seq[Operator]] =
