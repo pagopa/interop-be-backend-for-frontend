@@ -93,19 +93,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Retrieve keys of client ${clientId.toString}")
     }
 
-  override def getClients(consumerId: UUID, purposeId: Option[UUID])(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Clients] = withHeaders[Clients] { (bearerToken, correlationId, ip) =>
-    val request =
-      api.listClients(
-        xCorrelationId = correlationId,
-        xForwardedFor = ip,
-        purposeId = purposeId,
-        consumerId = consumerId
-      )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving clients for purpose $purposeId")
-  }
-
   override def clientOperatorRelationshipBinding(clientId: UUID, relationshipId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Client] =
@@ -129,5 +116,90 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Retrieve key ${keyId} of client ${clientId.toString}")
+    }
+
+  override def getClientOperators(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[Operator]] =
+    withHeaders[Seq[Operator]] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Seq[Operator]] =
+        api.getClientOperators(clientId = clientId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Retrieving operators for client ${clientId.toString}")
+    }
+
+  override def createKeys(clientId: UUID, keySeed: Seq[KeySeed])(implicit
+    contexts: Seq[(String, String)]
+  ): Future[ClientKeys] =
+    withHeaders[ClientKeys] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[ClientKeys] =
+        api.createKeys(clientId = clientId, keySeed = keySeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Create keys for client ${clientId.toString}")
+    }
+
+  override def getEncodedClientKeyById(clientId: UUID, keyId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EncodedClientKey] =
+    withHeaders[EncodedClientKey] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[EncodedClientKey] =
+        api.getEncodedClientKeyById(
+          clientId = clientId,
+          keyId = keyId,
+          xCorrelationId = correlationId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving encoding key $keyId for client ${clientId.toString}")
+    }
+
+  override def createConsumerClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.createConsumerClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Creating consumer client with name ${clientSeed.name}")
+    }
+
+  override def createApiClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.createApiClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Create api client with name ${clientSeed.name}")
+    }
+
+  override def getClients(
+    name: Option[String],
+    relationshipIds: Seq[UUID],
+    consumerId: UUID,
+    purposeId: Option[UUID],
+    kind: Option[ClientKind],
+    limit: Int,
+    offset: Int
+  )(implicit contexts: Seq[(String, String)]): Future[Clients] = withHeaders[Clients] {
+    (bearerToken, correlationId, ip) =>
+      val request = api.getClients(
+        xCorrelationId = correlationId,
+        name = name,
+        relationshipIds = relationshipIds,
+        consumerId = consumerId,
+        purposeId = purposeId,
+        kind = kind,
+        offset = offset,
+        limit = limit,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving clients")
+  }
+
+  override def getClient(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client] =
+    withHeaders[Client] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Client] =
+        api.getClient(clientId = clientId.toString, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Retrieve client $clientId")
     }
 }
