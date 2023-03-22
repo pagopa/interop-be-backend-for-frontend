@@ -86,11 +86,11 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
 
   override def getClientKeys(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[ReadClientKeys] =
     withHeaders[ReadClientKeys] { (bearerToken, correlationId, ip) =>
-      val request =
-        api.getClientKeys(xCorrelationId = correlationId, clientId = clientId, xForwardedFor = ip)(
+      val request: ApiRequest[ReadClientKeys] =
+        api.getClientKeys(clientId = clientId, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Retrieving keys for client $clientId")
+      invoker.invoke(request, s"Retrieve keys of client ${clientId.toString}")
     }
 
   override def clientOperatorRelationshipBinding(clientId: UUID, relationshipId: UUID)(implicit
