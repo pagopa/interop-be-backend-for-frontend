@@ -7,8 +7,7 @@ import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   CatalogProcessService,
   PurposeProcessService,
-  TenantProcessService,
-  PartyProcessService
+  TenantProcessService
 }
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
@@ -21,9 +20,6 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
-import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => PartyProcessApiError}
-import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcessModel}
-import it.pagopa.interop.selfcare.partyprocess.client.model.RelationshipState.ACTIVE
 
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
@@ -32,8 +28,7 @@ final case class ClientsApiServiceImpl(
   authorizationProcessService: AuthorizationProcessService,
   tenantProcessService: TenantProcessService,
   catalogProcessService: CatalogProcessService,
-  purposeProcessService: PurposeProcessService,
-  partyProcessService: PartyProcessService
+  purposeProcessService: PurposeProcessService
 )(implicit ec: ExecutionContext)
     extends ClientsApiService {
 
@@ -254,37 +249,6 @@ final case class ClientsApiServiceImpl(
 
     onComplete(result) {
       handleError(s"Error retrieving clients") orElse { case Success(clients) => getClients200(clients) }
-    }
-  }
-
-  override def getClientKeys(clientId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
-  ): Route = {
-
-    def decorate(key: AuthorizationProcessModel.ReadClientKey): Future[PublicKey] =
-      partyProcessService
-        .getRelationship(key.operator.relationshipId)
-        .map(_.state match {
-          case ACTIVE => key.toApi(isOrphan = false)
-          case _      => key.toApi(isOrphan = true)
-        })
-        .recoverWith {
-          case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true))
-          case other                                 => Future.failed(other)
-        }
-
-    val result: Future[PublicKeys] = for {
-      clientUuid     <- clientId.toFutureUUID
-      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
-      keys           <- Future.traverse(readClientKeys.keys)(decorate)
-    } yield PublicKeys(keys)
-
-    onComplete(result) {
-      handleError(s"Error retrieving keys of client $clientId") orElse { case Success(keys) =>
-        getClientKeys200(keys)
-      }
     }
   }
 
