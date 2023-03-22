@@ -142,34 +142,17 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def getClientKeys(clientId: String)(implicit
+  override def getClientKeyById(clientId: String, keyId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerReadClientKeys: ToEntityMarshaller[ReadClientKeys],
+    toEntityMarshallerPublicKey: ToEntityMarshaller[PublicKey],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
-    val result: Future[ReadClientKeys] = for {
-      clientUuid     <- clientId.toFutureUUID
-      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
-    } yield ReadClientKeys(keys = readClientKeys.keys.map(_.toApi))
-
-    onComplete(result) {
-      handleError(s"Error retrieving keys of client $clientId") orElse { case Success(keys) =>
-        getClientKeys200(keys)
-      }
-    }
-  }
-
-  override def getClientKeyById(clientId: String, keyId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerReadClientKey: ToEntityMarshaller[ReadClientKey]
-  ): Route = {
-
-    val result: Future[ReadClientKey] = for {
+    val result: Future[PublicKey] = for {
       clientUuid    <- clientId.toFutureUUID
       readClientKey <- authorizationProcessService.getClientKeyById(clientUuid, keyId)
-    } yield readClientKey.toApi
+      key           <- decorate(readClientKey)
+    } yield key
 
     onComplete(result) {
       handleError(s"Error retrieving key $keyId of client $clientId") orElse { case Success(key) =>
@@ -299,18 +282,6 @@ final case class ClientsApiServiceImpl(
     toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
   ): Route = {
 
-    def decorate(key: AuthorizationProcessModel.ReadClientKey): Future[PublicKey] =
-      partyProcessService
-        .getRelationship(key.operator.relationshipId)
-        .map(_.state match {
-          case ACTIVE => key.toApi(isOrphan = false)
-          case _      => key.toApi(isOrphan = true)
-        })
-        .recoverWith {
-          case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true))
-          case other                                 => Future.failed(other)
-        }
-
     val result: Future[PublicKeys] = for {
       clientUuid     <- clientId.toFutureUUID
       readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
@@ -323,6 +294,20 @@ final case class ClientsApiServiceImpl(
       }
     }
   }
+
+  private def decorate(
+    key: AuthorizationProcessModel.ReadClientKey
+  )(implicit contexts: Seq[(String, String)]): Future[PublicKey] =
+    partyProcessService
+      .getRelationship(key.operator.relationshipId)
+      .map(_.state match {
+        case ACTIVE => key.toApi(isOrphan = false)
+        case _      => key.toApi(isOrphan = true)
+      })
+      .recoverWith {
+        case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true))
+        case other                                 => Future.failed(other)
+      }
 
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],

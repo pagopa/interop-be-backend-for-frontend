@@ -185,15 +185,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     : RootJsonFormat[WaitingForApprovalPurposeVersionUpdateContentSeed] =
     jsonFormat1(WaitingForApprovalPurposeVersionUpdateContentSeed)
 
-  implicit val primeInfoFormat: RootJsonFormat[OtherPrimeInfo]        = jsonFormat3(OtherPrimeInfo)
-  implicit val operatorDetailsFormat: RootJsonFormat[OperatorDetails] = jsonFormat3(OperatorDetails)
-  implicit val keyFormat: RootJsonFormat[Key]                         =
-    jsonFormat22(Key)
-  implicit val readClientKeyFormat: RootJsonFormat[ReadClientKey]     =
-    jsonFormat5(ReadClientKey)
-  implicit val readClientKeysFormat: RootJsonFormat[ReadClientKeys]   =
-    jsonFormat1(ReadClientKeys)
-
   implicit val selfcareProductFormat: RootJsonFormat[SelfcareProduct]         = jsonFormat2(SelfcareProduct)
   implicit val selfcareInstitutionFormat: RootJsonFormat[SelfcareInstitution] = jsonFormat3(SelfcareInstitution)
 
