@@ -7582,6 +7582,97 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+    get:
+      tags:
+        - clients
+      summary: Returns a set of keys by client ID.
+      description: Given a client identifier it returns its corresponding set of keys, if any
+      operationId: getClientKeys
+      parameters:
+        - name: clientId
+          in: path
+          description: ID of Client
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: returns the corresponding array of keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKeys'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Client id not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/clients/{clientId}/encoded/keys/{keyId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -9606,6 +9697,50 @@ components:
         - verificationDate
         - renewal
         - revocationDate
+    PublicKey:
+      type: object
+      properties:
+        keyId:
+          type: string
+        name:
+          type: string
+        operator:
+          $ref: '#/components/schemas/SelfcareUser'
+        createdAt:
+          type: string
+          format: date-time
+        isOrphan:
+          type: boolean    
+      required:
+        - keyId
+        - name
+        - createdAt
+        - operator
+        - isOrphan
+    SelfcareUser:
+      description: Contains some details about operator
+      type: object
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        familyName:
+          type: string
+      required:
+        - relationshipId
+        - name
+        - familyName    
+    PublicKeys:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicKey'
+      required:
+        - keys    
     Problem:
       properties:
         type:
