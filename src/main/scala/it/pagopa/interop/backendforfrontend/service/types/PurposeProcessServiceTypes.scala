@@ -2,7 +2,6 @@ package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
-import it.pagopa.interop.authorizationprocess.client.model.Clients
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.AgreementStateConverter
@@ -74,7 +73,7 @@ object PurposeProcessServiceTypes {
   }
 
   implicit class ClientConverter(private val c: AuthorizationProcess.Client) extends AnyVal {
-    def toApi(hasKeys: Boolean): Client = Client(id = c.id, name = c.name, hasKeys = hasKeys)
+    def toApi(hasKeys: Boolean): CompactClient = CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
   implicit class RiskAnalysisDocumentConverter(private val rad: PurposeProcess.PurposeVersionDocument) extends AnyVal {
@@ -90,7 +89,7 @@ object PurposeProcessServiceTypes {
       currentVersion: Option[PurposeProcess.PurposeVersion],
       producer: TenantProcess.Tenant,
       consumer: TenantProcess.Tenant,
-      processClients: Clients,
+      processClients: Seq[AuthorizationProcess.Client],
       hasKeys: Boolean,
       waitingForApprovalVersion: Option[PurposeProcess.PurposeVersion]
     ): Purpose = Purpose(
@@ -118,12 +117,21 @@ object PurposeProcessServiceTypes {
       },
       currentVersion = currentVersion.map(_.toApi),
       versions = p.versions.map(_.toApi),
-      clients = processClients.clients.map(_.toApi(hasKeys)),
+      clients = processClients.map(_.toApi(hasKeys)),
       waitingForApprovalVersion = waitingForApprovalVersion.map(_.toApi),
       suspendedByConsumer = p.suspendedByConsumer,
       suspendedByProducer = p.suspendedByProducer
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
+  }
+
+  implicit class PurposeUpdateContentConverter(private val puc: PurposeUpdateContent) extends AnyVal {
+    def toProcess: PurposeProcess.PurposeUpdateContent =
+      PurposeProcess.PurposeUpdateContent(
+        title = puc.title,
+        description = puc.description,
+        riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess)
+      )
   }
 }

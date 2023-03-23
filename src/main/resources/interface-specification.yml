@@ -1921,7 +1921,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Create a new EService
@@ -2054,7 +2054,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
     put:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Updates a draft descriptor
@@ -2428,7 +2428,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Suspend the selected descriptor.
@@ -2617,7 +2617,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Deletes an e-service document
@@ -2700,7 +2700,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
     get:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Get an e-service document
@@ -2788,7 +2788,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Clones the selected descriptor.
@@ -2872,7 +2872,7 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Updates an e-service document
@@ -3039,7 +3039,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
     put:
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       tags:
         - eservices
       summary: Updates EService general information
@@ -3797,7 +3797,7 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     post:
-      security: [{}]
+      security: [ { } ]
       tags:
         - authorization
       operationId: getSessionToken
@@ -4073,69 +4073,70 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
-      - in: query
-        name: q
-        schema:
-          type: string
-      - in: query
-        name: eservicesIds
-        description: comma separated sequence of EService IDs
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-          default: []
-        explode: false
-      - in: query
-        name: consumersIds
-        description: comma separated sequence of consumers IDs
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-          default: []
-        explode: false
-      - in: query
-        name: producersIds
-        description: comma separated sequence of producers IDs
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-          default: []
-        explode: false
-      - in: query
-        name: states
-        description: comma separated sequence of states
-        schema:
-          type: array
-          items:
-            $ref: '#/components/schemas/PurposeVersionState'
-          default: []
-        explode: false
-      - in: query
-        name: offset
-        required: true
-        schema:
-          type: integer
-          format: int32
-          minimum: 0
-      - in: query
-        name: limit
-        required: true
-        schema:
-          type: integer
-          format: int32
-          minimum: 1
-          maximum: 50
     get:
       tags:
         - purposes
       operationId: getPurposes
       description: Retrieve Purposes
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: eservicesIds
+          description: comma separated sequence of EService IDs
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+            default: []
+          explode: false
+        - in: query
+          name: consumersIds
+          description: comma separated sequence of consumers IDs
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+            default: []
+          explode: false
+        - in: query
+          name: producersIds
+          description: comma separated sequence of producers IDs
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+            default: []
+          explode: false
+        - in: query
+          name: states
+          description: comma separated sequence of states
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/PurposeVersionState'
+            default: []
+          explode: false
+        - in: query
+          name: offset
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 50
       responses:
         '200':
           description: Purposes retrieved
@@ -5310,6 +5311,59 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+    post:
+      parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+        - $ref: '#/components/parameters/IpAddress'
+      tags:
+        - purposes
+      operationId: updatePurpose
+      description: Updates a Purpose if not yet activated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurposeUpdateContent'
+        required: true
+      responses:
+        '200':
+          description: Purpose updated
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurposeVersionResource'
+        '400':
+          description: Bad Request
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /purposes/{purposeId}/versions/{versionId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -6271,10 +6325,243 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /clients:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - clients
+      summary: retrieves a list of clients
+      description: retrieves a list of clients
+      operationId: getClients
+      parameters:
+        - in: query
+          name: q
+          description: Query to filter Clients by name
+          schema:
+            type: string
+        - in: query
+          name: relationshipIds
+          description: comma separated sequence of relationship IDs
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+            default: []
+          explode: false
+        - in: query
+          name: kind
+          description: type of Client to be retrieved
+          schema:
+            $ref: '#/components/schemas/ClientKind'
+        - in: query
+          name: offset
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 50
+      responses:
+        '200':
+          description: Clients found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompactClients'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /clients/{clientId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
+    get:
+      description: Retrieves a Client
+      tags:
+        - clients
+      summary: Get a Client
+      operationId: getClient
+      parameters:
+        - name: clientId
+          in: path
+          description: The Client id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Client retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Client not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
     delete:
       description: Deletes a Client
       tags:
@@ -6323,7 +6610,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '403':
           description: Forbidden
           content:
@@ -6342,7 +6629,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Client not found
           content:
@@ -6421,7 +6708,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '403':
           description: Forbidden
           content:
@@ -6440,7 +6727,7 @@ paths:
             'X-Rate-Limit-Interval':
               schema:
                 type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
           description: Client not found
           content:
@@ -6464,6 +6751,103 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - clients
+      summary: Returns a key by client and key identifier (kid).
+      description: 'Given a client and key identifiers it returns the corresponding key, if any'
+      operationId: getClientKeyById
+      parameters:
+        - name: clientId
+          in: path
+          description: ID of the client to look up
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: keyId
+          in: path
+          description: the unique identifier of the key (kid) to lookup
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: returns the corresponding key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKey'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
+        '404':
+          description: Key not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available      
     delete:
       tags:
         - clients
@@ -6873,6 +7257,787 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/selfcare/institutions/products':
+    get:
+      tags:
+        - selfcare
+      summary: getInstitutionUserProducts
+      description: Service to retrieve all active products for given institution and user
+      operationId: getInstitutionUserProducts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SelfcareProduct'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/selfcare/institutions':
+    get:
+      tags:
+        - selfcare
+      summary: getInstitutions
+      description: The service retrieves all the onboarded institutions related to the provided user
+      operationId: getInstitutions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SelfcareInstitution'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/clients/{clientId}/operators':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - clients
+      summary: List client operators
+      description: List client operators
+      operationId: getClientOperators
+      parameters:
+        - name: clientId
+          in: path
+          description: ID of Client the operators belong to
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request succeed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operators'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/clients/{clientId}/keys':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+        - clients
+      summary: Create Keys for the specific clientId.
+      operationId: createKeys
+      requestBody:
+        required: true
+        description: an array of base64 encoded PEM keys.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeysSeed'
+      description: Creates one or more keys for the corresponding client.
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          description: ID of client that the added keys MUST belong to
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Keys created
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Client id not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '409':
+          description: Key already exists
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+    get:
+      tags:
+        - clients
+      summary: Returns a set of keys by client ID.
+      description: Given a client identifier it returns its corresponding set of keys, if any
+      operationId: getClientKeys
+      parameters:
+        - name: clientId
+          in: path
+          description: ID of Client
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: returns the corresponding array of keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicKeys'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Client id not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/clients/{clientId}/encoded/keys/{keyId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - clients
+      summary: Returns a base64 encoded key by client and key identifier (kid).
+      description: 'Given a client and key identifiers it returns the corresponding encoded key, if any'
+      operationId: getEncodedClientKeyById
+      parameters:
+        - name: clientId
+          in: path
+          description: ID of the client to look up
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: keyId
+          in: path
+          description: the unique identifier of the key (kid) to lookup
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: returns the corresponding base 64 encoded key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncodedClientKey'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Key not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /clientsConsumer:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+        - clients
+      summary: Create a new consumer client
+      description: Create a new consumer client
+      operationId: createConsumerClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientSeed'
+      responses:
+        '200':
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedResource'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /clientsApi:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+        - clients
+      summary: Create a new API client
+      description: Create a new API client
+      operationId: createApiClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientSeed'
+      responses:
+        '200':
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedResource'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/clients/{clientId}/operators/{operatorId}/keys':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -6999,7 +8164,7 @@ components:
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
         attributes:
-          $ref: '#/components/schemas/EServiceAttributes'
+          $ref: '#/components/schemas/EServiceAttributesSeed'
     EServiceSeed:
       type: object
       required:
@@ -7015,7 +8180,7 @@ components:
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
         attributes:
-          $ref: '#/components/schemas/EServiceAttributes'
+          $ref: '#/components/schemas/EServiceAttributesSeed'
     UpdateEServiceDescriptorSeed:
       required:
         - audience
@@ -7134,6 +8299,46 @@ components:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
         eservice:
           $ref: '#/components/schemas/CatalogDescriptorEService'
+    Client:
+      description: Models Client details
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        consumer:
+          $ref: '#/components/schemas/CompactOrganization'
+        name:
+          type: string
+        purposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientPurpose'
+        description:
+          type: string
+        kind:
+          $ref: '#/components/schemas/ClientKind'
+      required:
+        - id
+        - organization
+        - consumer
+        - name
+        - purposes
+        - kind     
+    ClientPurpose:
+      type: object
+      properties:
+        purposeId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        eservice:
+          $ref: '#/components/schemas/CompactEService'  
+      required:
+        - purposeId
+        - title
+        - eservice
     CatalogDescriptorEService:
       type: object
       required:
@@ -7470,6 +8675,23 @@ components:
           type: boolean
         activeDescriptor:
           $ref: '#/components/schemas/CompactDescriptor'
+    ClientKind:
+      type: string
+      enum:
+        - API
+        - CONSUMER
+    CompactClients:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompactClient'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - results
+        - pagination
     AgreementListEntry:
       type: object
       required:
@@ -7488,7 +8710,7 @@ components:
         eservice:
           $ref: '#/components/schemas/CompactEService'
         state:
-          $ref: '#/components/schemas/AgreementState'  
+          $ref: '#/components/schemas/AgreementState'
         canBeUpgraded:
           type: boolean
         suspendedByConsumer:
@@ -7498,7 +8720,7 @@ components:
         suspendedByPlatform:
           type: boolean
         descriptor:
-          $ref: '#/components/schemas/CompactDescriptor'     
+          $ref: '#/components/schemas/CompactDescriptor'
     CompactAgreement:
       type: object
       required:
@@ -7743,6 +8965,35 @@ components:
         - id
         - role
         - createdAt
+    SelfcareProduct:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - name
+    SelfcareInstitution:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Institution's unique internal Id
+          format: uuid
+        description:
+          type: string
+          description: Institution's legal name
+        userProductRoles:
+          type: array
+          items:
+            type: string
+          description: User's roles on product
+      required:
+        - id
+        - description
+        - userProductRoles
     Purpose:
       type: object
       properties:
@@ -7770,7 +9021,7 @@ components:
         clients:
           type: array
           items:
-            $ref: '#/components/schemas/Client'
+            $ref: '#/components/schemas/CompactClient'
         waitingForApprovalVersion:
           $ref: '#/components/schemas/PurposeVersion'
         suspendedByConsumer:
@@ -7793,7 +9044,147 @@ components:
           type: string
           format: uuid
       required:
-        - purposeId    
+        - purposeId
+    OperatorState:
+      type: string
+      description: Represents the Client Operator state
+      enum:
+        - ACTIVE
+        - SUSPENDED
+        - DELETED
+    OperatorRole:
+      type: string
+      description: Represents the generic available role types for the relationship
+      enum:
+        - MANAGER
+        - DELEGATE
+        - SUB_DELEGATE
+        - OPERATOR
+    Operator:
+      description: Models a Client Operator
+      type: object
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+        taxCode:
+          type: string
+        name:
+          type: string
+        familyName:
+          type: string
+        role:
+          $ref: '#/components/schemas/OperatorRole'
+        product:
+          $ref: '#/components/schemas/RelationshipProduct'
+        state:
+          $ref: '#/components/schemas/OperatorState'
+      required:
+        - relationshipId
+        - taxCode
+        - name
+        - familyName
+        - email
+        - role
+        - product
+        - state
+    Operators:
+      type: object
+      items:
+        $ref: '#/components/schemas/Operator'
+    RelationshipProduct:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - role
+        - createdAt
+        - purposeId
+    KeysSeed:
+      type: array
+      items:
+        $ref: '#/components/schemas/KeySeed'
+    KeySeed:
+      description: 'Models the seed for a public key to be persisted'
+      type: object
+      properties:
+        key:
+          type: string
+          description: 'Base64 UTF-8 encoding of a public key in PEM format'
+        use:
+          $ref: '#/components/schemas/KeyUse'
+        alg:
+          type: string
+          description: 'The algorithm type of the key.'
+        name:
+          type: string
+          description: 'Name given to the current key.'
+          minLength: 5
+          maxLength: 60
+      required:
+        - key
+        - use
+        - alg
+        - name
+    KeyUse:
+      type: string
+      description: Represents the Use field of key
+      enum:
+        - SIG
+        - ENC
+    EncodedClientKey:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 'base64 encoded key'
+      required:
+        - key
+        - purposeId
+    ClientSeed:
+      description: Client creation request body
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - name
+    CompactClient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hasKeys:
+          type: boolean
+      required:
+        - id
+        - name
+        - hasKeys
+    PurposeUpdateContent:
+      type: object
+      description: contains the expected payload for purpose update.
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        riskAnalysisForm:
+          $ref: '#/components/schemas/RiskAnalysisForm'
+      required:
+        - title
+        - description
     Purposes:
       type: object
       properties:
@@ -8063,6 +9454,47 @@ components:
         - name
         - description
         - explicitAttributeVerification
+    EServiceAttributesSeed:
+      type: object
+      properties:
+        certified:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeSeed'
+        declared:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeSeed'
+        verified:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeSeed'
+      additionalProperties: false
+      required:
+        - certified
+        - declared
+        - verified
+    EServiceAttributeSeed:
+      type: object
+      properties:
+        single:
+          $ref: '#/components/schemas/EServiceAttributeValueSeed'
+        group:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeValueSeed'
+    EServiceAttributeValueSeed:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        explicitAttributeVerification:
+          type: boolean
+      required:
+        - id
+        - explicitAttributeVerification
+
     AttributeSeed:
       title: AttributeSeed
       type: object
@@ -8444,6 +9876,50 @@ components:
         - verificationDate
         - renewal
         - revocationDate
+    PublicKey:
+      type: object
+      properties:
+        keyId:
+          type: string
+        name:
+          type: string
+        operator:
+          $ref: '#/components/schemas/SelfcareUser'
+        createdAt:
+          type: string
+          format: date-time
+        isOrphan:
+          type: boolean    
+      required:
+        - keyId
+        - name
+        - createdAt
+        - operator
+        - isOrphan
+    SelfcareUser:
+      description: Contains some details about operator
+      type: object
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        familyName:
+          type: string
+      required:
+        - relationshipId
+        - name
+        - familyName    
+    PublicKeys:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicKey'
+      required:
+        - keys    
     Problem:
       properties:
         type:

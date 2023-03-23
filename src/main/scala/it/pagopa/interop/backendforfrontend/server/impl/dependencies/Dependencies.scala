@@ -30,6 +30,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   PurposesApiServiceImpl,
   TenantsApiMarshallerImpl,
   TenantsApiServiceImpl,
+  SelfcareApiMarshallerImpl,
+  SelfcareApiServiceImpl,
   entityMarshallerProblem,
   problemOf,
   serviceErrorCodePrefix
@@ -147,6 +149,8 @@ trait Dependencies {
       new PurposeProcessServiceImpl(ApplicationConfiguration.purposeProcessURL, blockingEc)
     val authorizationProcess: AuthorizationProcessService     =
       new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
+    val selfcareClient: SelfcareClientService                 =
+      new SelfcareClientServiceImpl(ApplicationConfiguration.selfcareV2URL, ApplicationConfiguration.selfcareV2ApiKey)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
 
@@ -242,8 +246,15 @@ trait Dependencies {
 
     val clientsApi: ClientsApi =
       new ClientsApi(
-        ClientsApiServiceImpl(authorizationProcess),
+        ClientsApiServiceImpl(authorizationProcess, tenantProcess, catalogProcess, purposeProcess, partyProcess),
         ClientsApiMarshallerImpl,
+        oauthAndRateLimitingDirective
+      )
+
+    val selfcareApi: SelfcareApi =
+      new SelfcareApi(
+        SelfcareApiServiceImpl(selfcareClient, tenantProcess),
+        SelfcareApiMarshallerImpl,
         oauthAndRateLimitingDirective
       )
 
@@ -251,6 +262,7 @@ trait Dependencies {
       attributes = attributesApi,
       authorization = authorizationApi,
       agreements = agreementsApi,
+      selfcare = selfcareApi,
       tenants = tenantsApi,
       eservices = eServicesApi,
       purposes = purposesApi,
