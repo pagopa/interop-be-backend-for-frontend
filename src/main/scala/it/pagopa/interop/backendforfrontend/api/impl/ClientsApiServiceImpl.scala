@@ -264,7 +264,9 @@ final case class ClientsApiServiceImpl(
         limit = limit
       )
       hasKeys           <- Future
-        .traverse(pagedResults.results.map(_.id))(authorizationProcessService.getClientKeys)
+        .traverse(pagedResults.results.map(_.id))(id =>
+          authorizationProcessService.getClientKeys(id, relationshipsUuid)
+        )
         .map(ks => ks.flatMap(_.keys).nonEmpty)
     } yield CompactClients(
       results = pagedResults.results.map(_.toCompactApi(hasKeys)),
@@ -284,7 +286,7 @@ final case class ClientsApiServiceImpl(
 
     val result: Future[PublicKeys] = for {
       clientUuid     <- clientId.toFutureUUID
-      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
+      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid, Seq.empty)
       keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
@@ -364,9 +366,10 @@ final case class ClientsApiServiceImpl(
   ): Route = {
 
     val result: Future[PublicKeys] = for {
-      clientUuid     <- clientId.toFutureUUID
-      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
-      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
+      clientUuid       <- clientId.toFutureUUID
+      relationshipUuid <- relationshipId.toFutureUUID
+      readClientKeys   <- authorizationProcessService.getClientKeys(clientUuid, Seq(relationshipUuid))
+      keys             <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
     onComplete(result) {
