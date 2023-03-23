@@ -106,9 +106,4 @@ object AuthorizationProcessServiceTypes {
         isOrphan = isOrphan
       )
   }
-
-  implicit class ClientKeyConverter(private val ck: AuthorizationProcess.ClientKey) extends AnyVal {
-    def toApi(isOrphan: Boolean, operator: SelfcareUser): PublicKey =
-      PublicKey(keyId = ck.key.kid, name = ck.name, operator = operator, createdAt = ck.createdAt, isOrphan = isOrphan)
-  }
 }

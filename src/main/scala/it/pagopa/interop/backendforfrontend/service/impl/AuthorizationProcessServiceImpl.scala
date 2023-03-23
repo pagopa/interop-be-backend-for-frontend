@@ -16,16 +16,16 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   system: ActorSystem[_]
 ) extends AuthorizationProcessService {
 
-  val invoker: ApiInvoker      = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
-  val clientApi: ClientApi     = ClientApi(authorizationProcessUrl)
-  
+  val invoker: ApiInvoker = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
+  val api: ClientApi      = ClientApi(authorizationProcessUrl)
+
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def deleteClient(clientId: String)(implicit contexts: Seq[(String, String)]): Future[Unit] =
     withHeaders[Unit] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Unit] =
-        clientApi.deleteClient(clientId = clientId, xCorrelationId = correlationId, xForwardedFor = ip)(
+        api.deleteClient(clientId = clientId, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Deleting client $clientId")
@@ -36,7 +36,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[Unit] =
     withHeaders[Unit] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Unit] =
-        clientApi.removeClientPurpose(
+        api.removeClientPurpose(
           clientId = clientId,
           purposeId = purposeId,
           xCorrelationId = correlationId,
@@ -50,12 +50,9 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[Unit] =
     withHeaders[Unit] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Unit] =
-        clientApi.deleteClientKeyById(
-          clientId = clientId,
-          keyId = keyId,
-          xCorrelationId = correlationId,
-          xForwardedFor = ip
-        )(BearerToken(bearerToken))
+        api.deleteClientKeyById(clientId = clientId, keyId = keyId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
       invoker.invoke(request, s"Deleting key $keyId of client ${clientId.toString}")
     }
 
@@ -64,7 +61,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[Unit] =
     withHeaders[Unit] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Unit] =
-        clientApi.removeClientOperatorRelationship(
+        api.removeClientOperatorRelationship(
           clientId = clientId,
           relationshipId = relationshipId,
           xCorrelationId = correlationId,
@@ -78,7 +75,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[Unit] =
     withHeaders[Unit] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Unit] =
-        clientApi.addClientPurpose(
+        api.addClientPurpose(
           clientId = clientId,
           purposeAdditionDetails = purposeAdditionDetails,
           xCorrelationId = correlationId,
@@ -92,7 +89,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[ReadClientKeys] =
     withHeaders[ReadClientKeys] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[ReadClientKeys] =
-        clientApi.getClientKeys(
+        api.getClientKeys(
           clientId = clientId,
           relationshipIds = relationshipIds,
           xCorrelationId = correlationId,
@@ -106,7 +103,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[Client] =
     withHeaders[Client] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Client] =
-        clientApi.clientOperatorRelationshipBinding(
+        api.clientOperatorRelationshipBinding(
           clientId = clientId,
           relationshipId = relationshipId,
           xCorrelationId = correlationId,
@@ -120,19 +117,16 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[ReadClientKey] =
     withHeaders[ReadClientKey] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[ReadClientKey] =
-        clientApi.getClientKeyById(
-          clientId = clientId,
-          keyId = keyId,
-          xCorrelationId = correlationId,
-          xForwardedFor = ip
-        )(BearerToken(bearerToken))
+        api.getClientKeyById(clientId = clientId, keyId = keyId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
       invoker.invoke(request, s"Retrieve key ${keyId} of client ${clientId.toString}")
     }
 
   override def getClientOperators(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[Operator]] =
     withHeaders[Seq[Operator]] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Seq[Operator]] =
-        clientApi.getClientOperators(clientId = clientId, xCorrelationId = correlationId, xForwardedFor = ip)(
+        api.getClientOperators(clientId = clientId, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Retrieving operators for client ${clientId.toString}")
@@ -143,12 +137,9 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[ClientKeys] =
     withHeaders[ClientKeys] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[ClientKeys] =
-        clientApi.createKeys(
-          clientId = clientId,
-          keySeed = keySeed,
-          xCorrelationId = correlationId,
-          xForwardedFor = ip
-        )(BearerToken(bearerToken))
+        api.createKeys(clientId = clientId, keySeed = keySeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
       invoker.invoke(request, s"Create keys for client ${clientId.toString}")
     }
 
@@ -157,7 +148,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[EncodedClientKey] =
     withHeaders[EncodedClientKey] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[EncodedClientKey] =
-        clientApi.getEncodedClientKeyById(
+        api.getEncodedClientKeyById(
           clientId = clientId,
           keyId = keyId,
           xCorrelationId = correlationId,
@@ -169,7 +160,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   override def createConsumerClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client] =
     withHeaders[Client] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Client] =
-        clientApi.createConsumerClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+        api.createConsumerClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Creating consumer client with name ${clientSeed.name}")
@@ -178,7 +169,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   override def createApiClient(clientSeed: ClientSeed)(implicit contexts: Seq[(String, String)]): Future[Client] =
     withHeaders[Client] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Client] =
-        clientApi.createApiClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
+        api.createApiClient(clientSeed = clientSeed, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Create api client with name ${clientSeed.name}")
@@ -194,7 +185,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
     offset: Int
   )(implicit contexts: Seq[(String, String)]): Future[Clients] = withHeaders[Clients] {
     (bearerToken, correlationId, ip) =>
-      val request = clientApi.getClients(
+      val request = api.getClients(
         xCorrelationId = correlationId,
         name = name,
         relationshipIds = relationshipIds,
@@ -211,7 +202,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   override def getClient(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client] =
     withHeaders[Client] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Client] =
-        clientApi.getClient(clientId = clientId.toString, xCorrelationId = correlationId, xForwardedFor = ip)(
+        api.getClient(clientId = clientId.toString, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Retrieve client $clientId")
