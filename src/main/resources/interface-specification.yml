@@ -8038,7 +8038,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/clients/{clientId}/operators/{operatorId}/keys':
+  '/clients/{clientId}/relationships/{relationshipId}/keys':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
@@ -8049,19 +8049,19 @@ paths:
         schema:
           type: string
           format: uuid
-      - name: operatorId
+      - name: relationshipId
         in: path
         required: true
-        description: ID of the Opeartor that the added keys MUST belong to
+        description: ID of the Relationship that the added keys MUST belong to
         schema:
           type: string
           format: uuid
     get:
       tags:
         - clients
-      summary: Returns a set of keys by operator ID and client ID.
-      description: 'Given an operator and a client it returns its corresponding set of keys, if any'
-      operationId: getClientOperatorKeys
+      summary: Returns a set of keys by relationship ID and client ID.
+      description: 'Given a relationship and a client it returns its corresponding set of keys, if any'
+      operationId: getClientRelationshipKeys
       responses:
         '200':
           description: returns the corresponding array of keys

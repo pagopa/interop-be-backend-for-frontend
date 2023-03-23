@@ -357,21 +357,22 @@ final case class ClientsApiServiceImpl(
     eservice = CompactEService(id = eService.id, name = eService.name, CompactOrganization(producer.id, producer.name))
   )
 
-  override def getClientOperatorKeys(clientId: String, operatorId: String)(implicit
+  override def getClientRelationshipKeys(clientId: String, relationshipId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerClientKeys: ToEntityMarshaller[ClientKeys],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
   ): Route = {
 
-    val result: Future[ClientKeys] = for {
-      clientUuid   <- clientId.toFutureUUID
-      operatorUuid <- operatorId.toFutureUUID
-      clientKeys   <- authorizationProcessService.getClientOperatorKeys(clientUuid, operatorUuid)
-    } yield clientKeys.toApi
+    val result: Future[PublicKeys] = for {
+      clientUuid     <- clientId.toFutureUUID
+      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
+      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
+    } yield PublicKeys(keys)
 
     onComplete(result) {
-      handleError(s"Error retrieving keys to client $clientId and operator $operatorId") orElse { case Success(keys) =>
-        getClientOperatorKeys200(keys)
+      handleError(s"Error retrieving keys to client $clientId and relationship $relationshipId") orElse {
+        case Success(keys) =>
+          getClientRelationshipKeys200(keys)
       }
     }
   }
