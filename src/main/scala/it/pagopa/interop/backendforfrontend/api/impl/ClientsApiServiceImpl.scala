@@ -359,6 +359,26 @@ final case class ClientsApiServiceImpl(
     eservice = CompactEService(id = eService.id, name = eService.name, CompactOrganization(producer.id, producer.name))
   )
 
+  override def getClientOperatorRelationshipById(clientId: String, relationshipId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerOperator: ToEntityMarshaller[Operator],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[Operator] = for {
+      clientUuid       <- clientId.toFutureUUID
+      relationshipUuid <- relationshipId.toFutureUUID
+      operator         <- authorizationProcessService.getClientOperatorRelationshipById(clientUuid, relationshipUuid)
+    } yield operator.toApi
+
+    onComplete(result) {
+      handleError(s"Error retrieving relationship $relationshipId of client $clientId") orElse {
+        case Success(operator) =>
+          getClientOperatorRelationshipById200(operator)
+      }
+    }
+  }
+
   override def getClientRelationshipKeys(clientId: String, relationshipId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
