@@ -161,7 +161,7 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def getClientOperators(clientId: String)(implicit
+  override def getClientRelationships(clientId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerOperatorarray: ToEntityMarshaller[Seq[Operator]],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -169,12 +169,12 @@ final case class ClientsApiServiceImpl(
 
     val result: Future[Seq[Operator]] = for {
       clientUuid <- clientId.toFutureUUID
-      operators  <- authorizationProcessService.getClientOperators(clientUuid)
+      operators  <- authorizationProcessService.getClientRelationships(clientUuid)
     } yield (operators.map(_.toApi))
 
     onComplete(result) {
       handleError(s"Error retrieving operators for client $clientId") orElse { case Success(operators) =>
-        getClientOperators200(operators)
+        getClientRelationships200(operators)
       }
     }
   }
