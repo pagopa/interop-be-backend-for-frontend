@@ -370,7 +370,7 @@ final case class ClientsApiServiceImpl(
     } yield operator.toApi
 
     onComplete(result) {
-      handleError(s"Error operator of the client $clientId by relationship $relationshipId") orElse {
+      handleError(s"Error retrieving relationship $relationshipId of client $clientId") orElse {
         case Success(operator) =>
           getClientOperatorRelationshipById200(operator)
       }

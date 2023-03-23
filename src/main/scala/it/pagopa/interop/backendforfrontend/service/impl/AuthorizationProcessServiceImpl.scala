@@ -214,6 +214,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
           xCorrelationId = correlationId,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Retrieve operator of the client $clientId by relationship $relationshipId")
+      invoker.invoke(request, s"Retrieving relationship $relationshipId of client $clientId")
     }
 }
