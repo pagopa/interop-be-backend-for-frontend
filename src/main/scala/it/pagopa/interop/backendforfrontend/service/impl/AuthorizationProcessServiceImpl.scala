@@ -2,7 +2,7 @@ package it.pagopa.interop.backendforfrontend.service.impl
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.authorizationprocess.client.api.{ClientApi, EnumsSerializers, OperatorApi}
+import it.pagopa.interop.authorizationprocess.client.api.{ClientApi, EnumsSerializers}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
 import it.pagopa.interop.authorizationprocess.client.model._
 import it.pagopa.interop.backendforfrontend.service.AuthorizationProcessService
@@ -18,8 +18,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
 
   val invoker: ApiInvoker      = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
   val clientApi: ClientApi     = ClientApi(authorizationProcessUrl)
-  val operatorApi: OperatorApi = OperatorApi(authorizationProcessUrl)
-
+  
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
