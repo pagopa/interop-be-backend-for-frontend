@@ -265,7 +265,7 @@ final case class ClientsApiServiceImpl(
       )
       hasKeys           <- Future
         .traverse(pagedResults.results.map(_.id))(id =>
-          authorizationProcessService.getClientKeys(id, relationshipsUuid)
+          authorizationProcessService.getClientKeys(id, Seq.empty)
         )
         .map(ks => ks.flatMap(_.keys).nonEmpty)
     } yield CompactClients(
