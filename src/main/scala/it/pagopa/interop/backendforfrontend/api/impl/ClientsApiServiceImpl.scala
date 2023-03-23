@@ -264,7 +264,7 @@ final case class ClientsApiServiceImpl(
         limit = limit
       )
       hasKeys           <- Future
-        .traverse(pagedResults.results.map(_.id))(authorizationProcessService.getClientKeys)
+        .traverse(pagedResults.results.map(_.id))(id => authorizationProcessService.getClientKeys(id, Seq.empty))
         .map(ks => ks.flatMap(_.keys).nonEmpty)
     } yield CompactClients(
       results = pagedResults.results.map(_.toCompactApi(hasKeys)),
@@ -284,7 +284,7 @@ final case class ClientsApiServiceImpl(
 
     val result: Future[PublicKeys] = for {
       clientUuid     <- clientId.toFutureUUID
-      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid)
+      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid, Seq.empty)
       keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
@@ -373,6 +373,27 @@ final case class ClientsApiServiceImpl(
       handleError(s"Error retrieving relationship $relationshipId of client $clientId") orElse {
         case Success(operator) =>
           getClientOperatorRelationshipById200(operator)
+      }
+    }
+  }
+
+  override def getClientRelationshipKeys(clientId: String, relationshipId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
+  ): Route = {
+
+    val result: Future[PublicKeys] = for {
+      clientUuid       <- clientId.toFutureUUID
+      relationshipUuid <- relationshipId.toFutureUUID
+      readClientKeys   <- authorizationProcessService.getClientKeys(clientUuid, Seq(relationshipUuid))
+      keys             <- Future.traverse(readClientKeys.keys)(decorateKey)
+    } yield PublicKeys(keys)
+
+    onComplete(result) {
+      handleError(s"Error retrieving keys to client $clientId and relationship $relationshipId") orElse {
+        case Success(keys) =>
+          getClientRelationshipKeys200(keys)
       }
     }
   }

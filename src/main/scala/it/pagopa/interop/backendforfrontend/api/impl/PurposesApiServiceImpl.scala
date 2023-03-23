@@ -258,7 +258,7 @@ final case class PurposesApiServiceImpl(
     currentVersion            = getCurrentVersion(purpose)
     waitingForApprovalVersion = getWaitingForApproval(purpose)
     hasKeys <- Future
-      .traverse(processClients.map(_.id))(authorizationProcessService.getClientKeys)
+      .traverse(processClients.map(_.id))(id => authorizationProcessService.getClientKeys(id, Seq.empty))
       .map(ks => ks.flatMap(_.keys).nonEmpty)
   } yield purpose.toApi(
     eService,
