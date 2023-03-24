@@ -397,4 +397,43 @@ final case class ClientsApiServiceImpl(
       }
     }
   }
+
+  override def getClientsWithKeys(
+    name: Option[String],
+    relationshipIds: String,
+    consumerId: String,
+    purposeId: Option[String],
+    kind: Option[String],
+    offset: Int,
+    limit: Int
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerCompactClientsWithKeys: ToEntityMarshaller[CompactClientsWithKeys],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    val result: Future[CompactClientsWithKeys] = for {
+      requesterUuid     <- getOrganizationIdFutureUUID(contexts)
+      relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
+      clientKind        <- kind.traverse(ClientKind.fromValue).toFuture
+      pagedResults      <- authorizationProcessService.getClientsWithKeys(
+        name = name,
+        relationshipIds = relationshipsUuid,
+        consumerId = requesterUuid,
+        purposeId = None,
+        kind = clientKind.map(_.toProcess),
+        offset = offset,
+        limit = limit
+      )
+    } yield CompactClientsWithKeys(
+      results = pagedResults.results.map(_.toApi),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    onComplete(result) {
+      handleError(s"Error retrieving clients with keys") orElse { case Success(clientskeys) =>
+        getClientsWithKeys200(clientskeys)
+      }
+    }
+  }
 }
