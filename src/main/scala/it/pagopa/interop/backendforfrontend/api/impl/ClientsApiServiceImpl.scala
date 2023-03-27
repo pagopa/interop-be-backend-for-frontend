@@ -247,14 +247,14 @@ final case class ClientsApiServiceImpl(
   override def getClients(q: Option[String], relationshipIds: String, kind: Option[String], offset: Int, limit: Int)(
     implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCompactClients: ToEntityMarshaller[CompactClients]
+    toEntityMarshallerCompactClients: ToEntityMarshaller[CompactClientsWithKeys],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[CompactClients] = for {
+    val result: Future[CompactClientsWithKeys] = for {
       requesterUuid     <- getOrganizationIdFutureUUID(contexts)
       relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
       clientKind        <- kind.traverse(ClientKind.fromValue).toFuture
-      pagedResults      <- authorizationProcessService.getClients(
+      pagedResults      <- authorizationProcessService.getClientsWithKeys(
         name = q,
         relationshipIds = relationshipsUuid,
         consumerId = requesterUuid,
@@ -263,11 +263,8 @@ final case class ClientsApiServiceImpl(
         offset = offset,
         limit = limit
       )
-      hasKeys           <- Future
-        .traverse(pagedResults.results.map(_.id))(id => authorizationProcessService.getClientKeys(id, Seq.empty))
-        .map(ks => ks.flatMap(_.keys).nonEmpty)
-    } yield CompactClients(
-      results = pagedResults.results.map(_.toCompactApi(hasKeys)),
+    } yield CompactClientsWithKeys(
+      results = pagedResults.results.map(_.toApi),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
@@ -394,45 +391,6 @@ final case class ClientsApiServiceImpl(
       handleError(s"Error retrieving keys to client $clientId and relationship $relationshipId") orElse {
         case Success(keys) =>
           getClientRelationshipKeys200(keys)
-      }
-    }
-  }
-
-  override def getClientsWithKeys(
-    name: Option[String],
-    relationshipIds: String,
-    consumerId: String,
-    purposeId: Option[String],
-    kind: Option[String],
-    offset: Int,
-    limit: Int
-  )(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerCompactClientsWithKeys: ToEntityMarshaller[CompactClientsWithKeys],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-
-    val result: Future[CompactClientsWithKeys] = for {
-      requesterUuid     <- getOrganizationIdFutureUUID(contexts)
-      relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
-      clientKind        <- kind.traverse(ClientKind.fromValue).toFuture
-      pagedResults      <- authorizationProcessService.getClientsWithKeys(
-        name = name,
-        relationshipIds = relationshipsUuid,
-        consumerId = requesterUuid,
-        purposeId = None,
-        kind = clientKind.map(_.toProcess),
-        offset = offset,
-        limit = limit
-      )
-    } yield CompactClientsWithKeys(
-      results = pagedResults.results.map(_.toApi),
-      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
-    )
-
-    onComplete(result) {
-      handleError(s"Error retrieving clients with keys") orElse { case Success(clientskeys) =>
-        getClientsWithKeys200(clientskeys)
       }
     }
   }

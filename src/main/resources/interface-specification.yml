@@ -6325,142 +6325,6 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  /clientsWithKeys:
-    parameters:
-      - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
-    get:
-      tags:
-        - clients
-      summary: List clients with keys
-      description: List clients with keys
-      operationId: getClientsWithKeys
-      parameters:
-        - in: query
-          name: name
-          description: Filter for the client name
-          schema:
-            type: string
-        - in: query
-          name: relationshipIds
-          description: comma separated sequence of relationship IDs
-          schema:
-            type: array
-            items:
-              type: string
-              format: uuid
-            default: []
-          explode: false
-        - name: consumerId
-          in: query
-          description: ID of Consumer that MUST be related to the Client
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: purposeId
-          in: query
-          description: ID of Purpose that MUST be related to the Client
-          schema:
-            type: string
-            format: uuid
-        - name: kind
-          in: query
-          description: type of Client to be retrieved
-          schema:
-            $ref: '#/components/schemas/ClientKind' 
-        - in: query
-          name: offset
-          required: true
-          schema:
-            type: integer
-            format: int32
-            minimum: 0
-        - in: query
-          name: limit
-          required: true
-          schema:
-            type: integer
-            format: int32
-            minimum: 1
-            maximum: 50 
-      responses:
-        '200':
-          description: Clients found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CompactClientsWithKeys'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '401':
-          description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '403':
-          description: Forbidden
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /clients:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -6513,7 +6377,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CompactClients'
+                $ref: '#/components/schemas/CompactClientsWithKeys'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -8937,18 +8801,6 @@ components:
       required:
         - id
         - name
-    CompactClients:
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/CompactClient'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-      required:
-        - results
-        - pagination
     AgreementListEntry:
       type: object
       required:

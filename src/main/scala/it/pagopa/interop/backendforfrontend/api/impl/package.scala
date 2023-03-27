@@ -165,8 +165,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     UpdateEServiceDescriptorSeed
   )
 
-  implicit val clientsFormat: RootJsonFormat[CompactClients] = jsonFormat2(CompactClients)
-
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat6(Problem)
 
