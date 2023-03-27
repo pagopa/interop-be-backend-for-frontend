@@ -153,8 +153,14 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
-    implicit
+  override def getEServicesCatalog(
+    q: Option[String],
+    producersIds: String,
+    states: String,
+    agreementStates: String,
+    offset: Int,
+    limit: Int
+  )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCatalogEServices: ToEntityMarshaller[CatalogEServices]
