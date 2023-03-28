@@ -112,7 +112,7 @@ object CatalogProcessServiceTypes {
     }
   }
 
-  implicit class AgreementStateObjectConverter(private val a: CatalogProcess.AgreementState.type) extends AnyVal {
+  implicit class CpAgreementStateObjectConverter(private val a: CatalogProcess.AgreementState.type) extends AnyVal {
     def fromApi(a: AgreementState): CatalogProcess.AgreementState = a match {
       case AgreementState.DRAFT                        => CatalogProcess.AgreementState.DRAFT
       case AgreementState.ACTIVE                       => CatalogProcess.AgreementState.ACTIVE
