@@ -3,7 +3,6 @@ package it.pagopa.interop.backendforfrontend.service.types
 import cats.syntax.all._
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeManagement}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
-import it.pagopa.interop.backendforfrontend.model.EServiceDescriptorState._
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
@@ -94,22 +93,34 @@ object CatalogProcessServiceTypes {
   implicit class EServiceDescriptorStateConverter(private val d: CatalogProcess.EServiceDescriptorState)
       extends AnyVal {
     def toApi: EServiceDescriptorState = d match {
-      case CatalogProcess.EServiceDescriptorState.DRAFT      => DRAFT
-      case CatalogProcess.EServiceDescriptorState.PUBLISHED  => PUBLISHED
-      case CatalogProcess.EServiceDescriptorState.DEPRECATED => DEPRECATED
-      case CatalogProcess.EServiceDescriptorState.SUSPENDED  => SUSPENDED
-      case CatalogProcess.EServiceDescriptorState.ARCHIVED   => ARCHIVED
+      case CatalogProcess.EServiceDescriptorState.DRAFT      => EServiceDescriptorState.DRAFT
+      case CatalogProcess.EServiceDescriptorState.PUBLISHED  => EServiceDescriptorState.PUBLISHED
+      case CatalogProcess.EServiceDescriptorState.DEPRECATED => EServiceDescriptorState.DEPRECATED
+      case CatalogProcess.EServiceDescriptorState.SUSPENDED  => EServiceDescriptorState.SUSPENDED
+      case CatalogProcess.EServiceDescriptorState.ARCHIVED   => EServiceDescriptorState.ARCHIVED
     }
   }
 
   implicit class EServiceDescriptorStateObjectConverter(private val d: CatalogProcess.EServiceDescriptorState.type)
       extends AnyVal {
     def fromApi(s: EServiceDescriptorState): CatalogProcess.EServiceDescriptorState = s match {
-      case DRAFT      => CatalogProcess.EServiceDescriptorState.DRAFT
-      case PUBLISHED  => CatalogProcess.EServiceDescriptorState.PUBLISHED
-      case DEPRECATED => CatalogProcess.EServiceDescriptorState.DEPRECATED
-      case SUSPENDED  => CatalogProcess.EServiceDescriptorState.SUSPENDED
-      case ARCHIVED   => CatalogProcess.EServiceDescriptorState.ARCHIVED
+      case EServiceDescriptorState.DRAFT      => CatalogProcess.EServiceDescriptorState.DRAFT
+      case EServiceDescriptorState.PUBLISHED  => CatalogProcess.EServiceDescriptorState.PUBLISHED
+      case EServiceDescriptorState.DEPRECATED => CatalogProcess.EServiceDescriptorState.DEPRECATED
+      case EServiceDescriptorState.SUSPENDED  => CatalogProcess.EServiceDescriptorState.SUSPENDED
+      case EServiceDescriptorState.ARCHIVED   => CatalogProcess.EServiceDescriptorState.ARCHIVED
+    }
+  }
+
+  implicit class AgreementStateObjectConverter(private val a: CatalogProcess.AgreementState.type) extends AnyVal {
+    def fromApi(a: AgreementState): CatalogProcess.AgreementState = a match {
+      case AgreementState.DRAFT                        => CatalogProcess.AgreementState.DRAFT
+      case AgreementState.ACTIVE                       => CatalogProcess.AgreementState.ACTIVE
+      case AgreementState.ARCHIVED                     => CatalogProcess.AgreementState.ARCHIVED
+      case AgreementState.PENDING                      => CatalogProcess.AgreementState.PENDING
+      case AgreementState.SUSPENDED                    => CatalogProcess.AgreementState.SUSPENDED
+      case AgreementState.MISSING_CERTIFIED_ATTRIBUTES => CatalogProcess.AgreementState.MISSING_CERTIFIED_ATTRIBUTES
+      case AgreementState.REJECTED                     => CatalogProcess.AgreementState.REJECTED
     }
   }
 
