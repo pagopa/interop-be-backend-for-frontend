@@ -230,7 +230,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
     kind: Option[ClientKind],
     limit: Int,
     offset: Int
-  )(implicit contexts: Seq[(String, String)]): Future[ClientsKeys] = withHeaders[ClientsKeys] {
+  )(implicit contexts: Seq[(String, String)]): Future[ClientsWithKeys] = withHeaders[ClientsWithKeys] {
     (bearerToken, correlationId, ip) =>
       val request = api.getClientsWithKeys(
         xCorrelationId = correlationId,

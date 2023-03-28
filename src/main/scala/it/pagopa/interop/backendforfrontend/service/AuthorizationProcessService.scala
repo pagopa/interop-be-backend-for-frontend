@@ -66,6 +66,6 @@ trait AuthorizationProcessService {
     kind: Option[ClientKind],
     limit: Int,
     offset: Int
-  )(implicit contexts: Seq[(String, String)]): Future[ClientsKeys]
+  )(implicit contexts: Seq[(String, String)]): Future[ClientsWithKeys]
 
 }

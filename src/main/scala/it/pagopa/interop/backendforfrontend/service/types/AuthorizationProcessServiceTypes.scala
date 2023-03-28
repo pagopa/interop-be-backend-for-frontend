@@ -16,7 +16,7 @@ object AuthorizationProcessServiceTypes {
       CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
-  implicit class ClientEntryKeyProcessConverter(private val c: AuthorizationProcess.ClientEntryKey) extends AnyVal {
+  implicit class ClientEntryKeyProcessConverter(private val c: AuthorizationProcess.ClientWithKeys) extends AnyVal {
     def toApi: CompactClientWithKeys =
       CompactClientWithKeys(id = c.client.id, name = c.client.name, keys = c.keys.map(_.toApi))
   }
