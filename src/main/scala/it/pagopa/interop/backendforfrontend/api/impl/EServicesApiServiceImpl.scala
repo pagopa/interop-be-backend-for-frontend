@@ -226,6 +226,7 @@ final case class EServicesApiServiceImpl(
       eservice = CatalogDescriptorEService(
         id = eService.id,
         name = eService.name,
+        producer = CompactOrganization(id = producerTenant.id, name = producerTenant.name),
         description = eService.description,
         technology = eService.technology.toApi,
         attributes = eServiceAttributes,

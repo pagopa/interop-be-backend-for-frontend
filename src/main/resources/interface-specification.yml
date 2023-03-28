@@ -8436,6 +8436,7 @@ components:
       required:
         - id
         - name
+        - producer
         - description
         - technology
         - attributes
@@ -8449,6 +8450,8 @@ components:
           format: uuid
         name:
           type: string
+        producer:
+          $ref: '#/components/schemas/CompactOrganization'
         description:
           type: string
         technology:
