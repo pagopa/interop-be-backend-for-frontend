@@ -2727,6 +2727,11 @@ paths:
       responses:
         '200':
           description: EService document retrieved
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -2740,10 +2745,6 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EServiceDoc'
         '404':
           description: EService not found
           headers:
@@ -9204,7 +9205,7 @@ components:
         - product
         - state
     Operators:
-      type: object
+      type: array
       items:
         $ref: '#/components/schemas/Operator'
     RelationshipProduct:
