@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MessageEntity}
+import akka.http.scaladsl.model.{ContentType, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
@@ -32,8 +32,8 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
-import java.io.{ByteArrayOutputStream, File, FileOutputStream}
-import java.nio.file.{Files, Path}
+import java.io.File
+import java.nio.file.Files
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -604,31 +604,16 @@ final case class EServicesApiServiceImpl(
         Future.successful
       )
 
-  private def convertToMessageEntity(
-    name: String,
-    contentType: ContentType,
-    data: ByteArrayOutputStream
-  ): Future[MessageEntity] =
-    Future {
-      val randomPath: Path               = Files.createTempDirectory(s"document")
-      val temporaryFilePath: String      = s"${randomPath.toString}/${name}"
-      val file: File                     = new File(temporaryFilePath)
-      val outputStream: FileOutputStream = new FileOutputStream(file)
-      data.writeTo(outputStream)
-      HttpEntity.fromFile(contentType, file)
-    }
-
   override def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
   ): Route = {
-    val result: Future[MessageEntity] = for {
-      document      <- catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)
-      contentType   <- getDocumentContentType(document)
-      response      <- fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(document.path)
-      messageEntity <- convertToMessageEntity(document.name, contentType, response)
-    } yield messageEntity
+    val result: Future[HttpEntity.Strict] = for {
+      document    <- catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)
+      contentType <- getDocumentContentType(document)
+      byteStream  <- fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(document.path)
+    } yield HttpEntity(contentType, byteStream.toByteArray())
 
     onComplete(result) {
       handleError(s"Error getting document $documentId of eservice $eServiceId") orElse {
