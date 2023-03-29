@@ -192,12 +192,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val publicKeysFormat: RootJsonFormat[PublicKeys]     =
     jsonFormat1(PublicKeys)
 
-  implicit val compactKeyFormat: RootJsonFormat[CompactKey]                         =
+  implicit val compactKeyFormat: RootJsonFormat[CompactKey]         =
     jsonFormat2(CompactKey)
-  implicit val compactClientWithKeysFormat: RootJsonFormat[CompactClientWithKeys]   =
-    jsonFormat4(CompactClientWithKeys)
-  implicit val compactClientsWithKeysFormat: RootJsonFormat[CompactClientsWithKeys] =
-    jsonFormat2(CompactClientsWithKeys)
+  implicit val compactClientsFormat: RootJsonFormat[CompactClients] =
+    jsonFormat2(CompactClients)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 

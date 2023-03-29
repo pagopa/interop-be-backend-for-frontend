@@ -247,10 +247,10 @@ final case class ClientsApiServiceImpl(
   override def getClients(q: Option[String], relationshipIds: String, kind: Option[String], offset: Int, limit: Int)(
     implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerCompactClients: ToEntityMarshaller[CompactClientsWithKeys],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCompactClients: ToEntityMarshaller[CompactClients]
   ): Route = {
-    val result: Future[CompactClientsWithKeys] = for {
+    val result: Future[CompactClients] = for {
       requesterUuid     <- getOrganizationIdFutureUUID(contexts)
       relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
       clientKind        <- kind.traverse(ClientKind.fromValue).toFuture
@@ -263,7 +263,7 @@ final case class ClientsApiServiceImpl(
         offset = offset,
         limit = limit
       )
-    } yield CompactClientsWithKeys(
+    } yield CompactClients(
       results = pagedResults.results.map(_.toApi),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )

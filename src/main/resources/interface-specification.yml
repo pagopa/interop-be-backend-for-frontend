@@ -6378,7 +6378,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CompactClientsWithKeys'
+                $ref: '#/components/schemas/CompactClients'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -8767,37 +8767,18 @@ components:
       enum:
         - API
         - CONSUMER
-    CompactClientsWithKeys:
+    CompactClients:
       type: object
       properties:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/CompactClientWithKeys'
+            $ref: '#/components/schemas/CompactClient'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
         - results
         - pagination
-    CompactClientWithKeys:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        keys:
-          type: array
-          items:
-            $ref: '#/components/schemas/CompactKey'
-        hasKeys:
-          type: boolean
-      required:
-        - id
-        - name
-        - keys
-        - hasKeys
     CompactKey:
       type: object
       properties:
