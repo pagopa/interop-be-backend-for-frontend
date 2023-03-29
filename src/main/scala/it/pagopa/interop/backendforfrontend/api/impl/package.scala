@@ -195,7 +195,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val compactKeyFormat: RootJsonFormat[CompactKey]                         =
     jsonFormat2(CompactKey)
   implicit val compactClientWithKeysFormat: RootJsonFormat[CompactClientWithKeys]   =
-    jsonFormat3(CompactClientWithKeys)
+    jsonFormat4(CompactClientWithKeys)
   implicit val compactClientsWithKeysFormat: RootJsonFormat[CompactClientsWithKeys] =
     jsonFormat2(CompactClientsWithKeys)
 

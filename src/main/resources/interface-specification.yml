@@ -8790,10 +8790,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CompactKey'
+        hasKeys:
+          type: boolean
       required:
         - id
         - name
         - keys
+        - hasKeys
     CompactKey:
       type: object
       properties:
