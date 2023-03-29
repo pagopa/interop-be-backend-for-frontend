@@ -7,6 +7,8 @@ import it.pagopa.interop.backendforfrontend.api.EservicesApiMarshaller
 import it.pagopa.interop.backendforfrontend.model._
 import spray.json.DefaultJsonProtocol
 
+import java.io.File
+
 object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonSupport with DefaultJsonProtocol {
 
   override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
@@ -50,4 +52,6 @@ object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonS
 
   override implicit def toEntityMarshallerCreatedEServiceDescriptor: ToEntityMarshaller[CreatedEServiceDescriptor] =
     sprayJsonMarshaller[CreatedEServiceDescriptor]
+
+  override implicit def toEntityMarshallerFile: ToEntityMarshaller[File] = entityMarshallerFile
 }
