@@ -16,11 +16,6 @@ object AuthorizationProcessServiceTypes {
       CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
-  implicit class ClientEntryKeyProcessConverter(private val c: AuthorizationProcess.ClientWithKeys) extends AnyVal {
-    def toApi: CompactClient =
-      CompactClient(id = c.client.id, name = c.client.name, hasKeys = c.keys.size > 0)
-  }
-
   implicit class ClientKindProcessConverter(private val ck: AuthorizationProcess.ClientKind) extends AnyVal {
     def toApi: ClientKind = ck match {
       case AuthorizationProcess.ClientKind.API      => ClientKind.API
@@ -105,5 +100,10 @@ object AuthorizationProcessServiceTypes {
         createdAt = rck.createdAt,
         isOrphan = isOrphan
       )
+  }
+
+  implicit class ClientEntryKeyProcessConverter(private val c: AuthorizationProcess.ClientWithKeys) extends AnyVal {
+    def toApi: CompactClient =
+      CompactClient(id = c.client.id, name = c.client.name, hasKeys = c.keys.size > 0)
   }
 }
