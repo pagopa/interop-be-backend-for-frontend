@@ -91,6 +91,11 @@ object AuthorizationProcessServiceTypes {
       CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
 
+  implicit class ClientWithKeysConverter(private val c: AuthorizationProcess.ClientWithKeys) extends AnyVal {
+    def toApi: CompactClient =
+      CompactClient(id = c.client.id, name = c.client.name, hasKeys = c.keys.nonEmpty)
+  }
+
   implicit class OperatorDetailsConverter(private val od: AuthorizationProcess.OperatorDetails) extends AnyVal {
     def toApi: SelfcareUser =
       SelfcareUser(relationshipId = od.relationshipId, familyName = od.familyName, name = od.name)

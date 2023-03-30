@@ -48,6 +48,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     name: Option[String] = None,
     eServicesIds: Seq[UUID],
     producersIds: Seq[UUID],
+    agreementStates: Seq[AgreementState],
     states: Seq[EServiceDescriptorState],
     offset: Int,
     limit: Int
@@ -57,6 +58,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         name = name,
         eservicesIds = eServicesIds,
         producersIds = producersIds,
+        agreementStates = agreementStates,
         states = states,
         offset = offset,
         limit = limit,

@@ -153,25 +153,33 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  override def getEServicesCatalog(q: Option[String], producersIds: String, states: String, offset: Int, limit: Int)(
-    implicit
+  override def getEServicesCatalog(
+    q: Option[String],
+    producersIds: String,
+    states: String,
+    agreementStates: String,
+    offset: Int,
+    limit: Int
+  )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCatalogEServices: ToEntityMarshaller[CatalogEServices]
   ): Route = {
-    val result = for {
-      requesterId       <- getOrganizationIdFutureUUID(contexts)
-      apiStates         <- parseArrayParameters(states).traverse(EServiceDescriptorState.fromValue).toFuture
-      producersUuids    <- parseArrayParameters(producersIds).traverse(_.toFutureUUID)
-      pagedResults      <- catalogProcessService.getEServices(
+    val result: Future[CatalogEServices] = for {
+      requesterUuid      <- getOrganizationIdFutureUUID(contexts)
+      apiStates          <- parseArrayParameters(states).traverse(EServiceDescriptorState.fromValue).toFuture
+      apiAgreementStates <- parseArrayParameters(agreementStates).traverse(AgreementState.fromValue).toFuture
+      producersUuids     <- parseArrayParameters(producersIds).traverse(_.toFutureUUID)
+      pagedResults       <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = Nil,
         producersIds = producersUuids,
+        agreementStates = apiAgreementStates.map(CatalogProcess.AgreementState.fromApi),
         states = apiStates.map(CatalogProcess.EServiceDescriptorState.fromApi),
         offset = offset,
         limit = limit
       )
-      enhancedEServices <- Future.traverse(pagedResults.results)(enhanceCatalogEService(requesterId))
+      enhancedEServices  <- Future.traverse(pagedResults.results)(enhanceCatalogEService(requesterUuid))
     } yield CatalogEServices(
       results = enhancedEServices,
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
@@ -267,6 +275,7 @@ final case class EServicesApiServiceImpl(
       name = q,
       eServicesIds = eServicesIds,
       producersIds = List(producerId),
+      agreementStates = Nil,
       states = Nil,
       offset = offset,
       limit = limit
