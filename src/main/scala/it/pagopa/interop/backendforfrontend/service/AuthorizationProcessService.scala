@@ -67,4 +67,5 @@ trait AuthorizationProcessService {
   def getClientOperatorRelationshipById(clientId: UUID, relationshipId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Operator]
+
 }
