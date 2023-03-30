@@ -31,10 +31,20 @@ final case class AttributesApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerAttributesResponse: ToEntityMarshaller[AttributesResponse]
   ): Route = {
-    /*val result: Future[AttributesResponse] = for {
+    val result: Future[AttributesResponse] =
+      attributeRegistryProcessApiService
+        .getAttributes(name, limit, offset, kinds)
+        .map(a =>
+          AttributesResponse(totalCount = a.totalCount, limit = a.limit, offset = a.offset, results = a.results)
+        )
 
-    }*/
-    ???
+    onComplete(result) {
+      handleError(
+        s"Error retrieving attributes with name = $name, limit = $limit, offset = $offset, kinds = $kinds"
+      ) orElse { case Success(attributes) =>
+        getAttributes200(attributes)
+      }
+    }
   }
 
   override def getAttributeById(attributeId: String)(implicit

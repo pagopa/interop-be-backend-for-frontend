@@ -6,7 +6,6 @@ import it.pagopa.interop.backendforfrontend.model.{
   Attribute,
   AttributeKind,
   AttributeSeed,
-  AttributesResponse,
   CertifiedAttribute,
   DeclaredAttribute,
   VerifiedAttribute
