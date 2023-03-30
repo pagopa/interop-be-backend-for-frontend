@@ -6,26 +6,27 @@ import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.authorizationprocess.client.model.ClientWithKeys
 import it.pagopa.interop.backendforfrontend.api.PurposesApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service._
+import it.pagopa.interop.backendforfrontend.service.types.PurposeProcessServiceTypes._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
-import it.pagopa.interop.authorizationprocess.client.model.Client
 
 import java.io.File
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
-import java.util.UUID
 
 final case class PurposesApiServiceImpl(
   catalogProcessService: CatalogProcessService,
@@ -245,6 +246,7 @@ final case class PurposesApiServiceImpl(
     producers: Seq[TenantProcess.Tenant],
     consumers: Seq[TenantProcess.Tenant]
   )(implicit context: Seq[(String, String)]): Future[Purpose] = for {
+    requesterId       <- getOrganizationIdFutureUUID(context)
     eService          <- eServices.find(_.id == purpose.eserviceId).toFuture(EServiceNotFound(purpose.eserviceId))
     producer          <- producers.find(_.id == eService.producerId).toFuture(TenantNotFound(eService.producerId))
     consumer          <- consumers.find(_.id == purpose.consumerId).toFuture(TenantNotFound(purpose.consumerId))
@@ -254,12 +256,11 @@ final case class PurposesApiServiceImpl(
     currentDescriptor <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(EServiceDescriptorNotFound(eService.id.toString, agreement.descriptorId.toString))
-    processClients    <- getAllClients(purpose.consumerId, Some(purpose.id))
+    clients           <-
+      if (requesterId == purpose.consumerId) getAllClients(purpose.consumerId, Some(purpose.id))
+      else Future.successful(Nil)
     currentVersion            = getCurrentVersion(purpose)
     waitingForApprovalVersion = getWaitingForApproval(purpose)
-    hasKeys <- Future
-      .traverse(processClients.map(_.id))(id => authorizationProcessService.getClientKeys(id, Seq.empty))
-      .map(ks => ks.flatMap(_.keys).nonEmpty)
   } yield purpose.toApi(
     eService,
     agreement,
@@ -267,19 +268,18 @@ final case class PurposesApiServiceImpl(
     currentVersion,
     producer,
     consumer,
-    processClients,
-    hasKeys,
+    clients,
     waitingForApprovalVersion
   )
 
-  def getAllClients(consumerId: UUID, purposeId: Option[UUID])(implicit
+  private def getAllClients(consumerId: UUID, purposeId: Option[UUID])(implicit
     contexts: Seq[(String, String)],
     ec: ExecutionContext
-  ): Future[List[Client]] = {
+  ): Future[List[ClientWithKeys]] = {
 
-    def getClientsFrom(offset: Int): Future[List[Client]] =
+    def getClientsFrom(offset: Int): Future[List[ClientWithKeys]] =
       authorizationProcessService
-        .getClients(
+        .getClientsWithKeys(
           name = None,
           relationshipIds = Seq.empty,
           consumerId = consumerId,
@@ -290,7 +290,7 @@ final case class PurposesApiServiceImpl(
         )
         .map(_.results.toList)
 
-    def go(start: Int)(as: List[Client]): Future[List[Client]] =
+    def go(start: Int)(as: List[ClientWithKeys]): Future[List[ClientWithKeys]] =
       getClientsFrom(start).flatMap(clients =>
         if (clients.size < 50) Future.successful(as ++ clients) else go(start + 50)(as ++ clients)
       )
