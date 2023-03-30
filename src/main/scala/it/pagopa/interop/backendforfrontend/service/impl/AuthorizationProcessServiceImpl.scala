@@ -245,5 +245,4 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving clients with keys")
   }
-
 }

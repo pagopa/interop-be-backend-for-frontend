@@ -5,6 +5,7 @@ import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProc
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.AgreementStateConverter
+import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes.ClientWithKeysConverter
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.EServiceDescriptorStateConverter
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
@@ -89,8 +90,7 @@ object PurposeProcessServiceTypes {
       currentVersion: Option[PurposeProcess.PurposeVersion],
       producer: TenantProcess.Tenant,
       consumer: TenantProcess.Tenant,
-      processClients: Seq[AuthorizationProcess.Client],
-      hasKeys: Boolean,
+      clients: Seq[AuthorizationProcess.ClientWithKeys],
       waitingForApprovalVersion: Option[PurposeProcess.PurposeVersion]
     ): Purpose = Purpose(
       id = p.id,
@@ -117,7 +117,7 @@ object PurposeProcessServiceTypes {
       },
       currentVersion = currentVersion.map(_.toApi),
       versions = p.versions.map(_.toApi),
-      clients = processClients.map(_.toApi(hasKeys)),
+      clients = clients.map(_.toApi),
       waitingForApprovalVersion = waitingForApprovalVersion.map(_.toApi),
       suspendedByConsumer = p.suspendedByConsumer,
       suspendedByProducer = p.suspendedByProducer
