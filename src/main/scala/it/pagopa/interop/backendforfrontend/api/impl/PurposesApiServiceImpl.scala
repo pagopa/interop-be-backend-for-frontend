@@ -272,7 +272,7 @@ final case class PurposesApiServiceImpl(
     waitingForApprovalVersion
   )
 
-  def getAllClients(consumerId: UUID, purposeId: Option[UUID])(implicit
+  private def getAllClients(consumerId: UUID, purposeId: Option[UUID])(implicit
     contexts: Seq[(String, String)],
     ec: ExecutionContext
   ): Future[List[ClientWithKeys]] = {
