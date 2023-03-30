@@ -23,12 +23,6 @@ object AttributeRegistryServiceTypes {
   type MgmtAttributeKind                  = attributeregistrymanagement.client.model.AttributeKind
   type MgmtAttributeSeed                  = attributeregistrymanagement.client.model.AttributeSeed
 
-  implicit class AttributesResponseConverter(private val mgmtAttributesResponse: MgmtAttributesResponse)
-      extends AnyVal {
-    def toResponse: AttributesResponse =
-      AttributesResponse(attributes = mgmtAttributesResponse.attributes.map(_.toAttribute))
-  }
-
   private def toModel(kind: MgmtAttributeKind): AttributeKind = kind match {
     case attributeregistrymanagement.client.model.AttributeKind.CERTIFIED => CERTIFIED
     case attributeregistrymanagement.client.model.AttributeKind.DECLARED  => DECLARED

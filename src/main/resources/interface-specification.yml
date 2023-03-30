@@ -5863,74 +5863,42 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     get:
-      summary: 'returns the list of attributes available on the registry'
+      summary: Get attributes
+      operationId: getAttributes
+      description: 'returns attributes'
       tags:
         - attributes
-      operationId: getAttributes
       parameters:
         - in: query
-          name: search
+          name: name
+          description: Query to filter Attributes by name
           schema:
             type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: kinds
+          description: Array of kinds
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/AttributeKind'
+          required: true
       responses:
         '200':
-          description: array of currently available attributes
+          description: A List of Attributes
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttributesResponse'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '404':
-          description: Attributes not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '429':
-          description: Too Many Requests
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-      description: Returns the list of currently available attributes
     post:
       summary: Creates attribute
       tags:
@@ -8808,6 +8776,14 @@ components:
           type: boolean
         descriptor:
           $ref: '#/components/schemas/CompactDescriptor'
+    CompactAttribute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
     CompactAgreement:
       type: object
       required:
@@ -9748,12 +9724,18 @@ components:
       title: AttributesResponse
       type: object
       properties:
-        attributes:
+        totalCount:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        results:
           type: array
           items:
-            $ref: '#/components/schemas/Attribute'
+            $ref: '#/components/schemas/CompactAttribute'
       required:
-        - attributes
+        - results
     CompactTenant:
       properties:
         id:
