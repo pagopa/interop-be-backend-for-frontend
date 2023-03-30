@@ -1,5 +1,4 @@
 package it.pagopa.interop.backendforfrontend.service.types
-
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.backendforfrontend.model._
 
@@ -104,6 +103,6 @@ object AuthorizationProcessServiceTypes {
 
   implicit class ClientEntryKeyProcessConverter(private val c: AuthorizationProcess.ClientWithKeys) extends AnyVal {
     def toApi: CompactClient =
-      CompactClient(id = c.client.id, name = c.client.name, hasKeys = c.keys.size > 0)
+      CompactClient(id = c.client.id, name = c.client.name, hasKeys = !c.keys.isEmpty)
   }
 }
