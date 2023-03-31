@@ -254,7 +254,7 @@ final case class ClientsApiServiceImpl(
       requesterUuid     <- getOrganizationIdFutureUUID(contexts)
       relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
       clientKind        <- kind.traverse(ClientKind.fromValue).toFuture
-      pagedResults      <- authorizationProcessService.getClients(
+      pagedResults      <- authorizationProcessService.getClientsWithKeys(
         name = q,
         relationshipIds = relationshipsUuid,
         consumerId = requesterUuid,
@@ -263,11 +263,8 @@ final case class ClientsApiServiceImpl(
         offset = offset,
         limit = limit
       )
-      hasKeys           <- Future
-        .traverse(pagedResults.results.map(_.id))(id => authorizationProcessService.getClientKeys(id, Seq.empty))
-        .map(ks => ks.flatMap(_.keys).nonEmpty)
     } yield CompactClients(
-      results = pagedResults.results.map(_.toCompactApi(hasKeys)),
+      results = pagedResults.results.map(_.toApi),
       pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
     )
 
