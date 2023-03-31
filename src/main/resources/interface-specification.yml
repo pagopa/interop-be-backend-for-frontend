@@ -5917,7 +5917,7 @@ paths:
         - attributes
       parameters:
         - in: query
-          name: name
+          name: q
           description: Query to filter Attributes by name
           schema:
             type: string
@@ -5946,6 +5946,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttributesResponse'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
     post:
       summary: Creates attribute
       tags:
@@ -8831,6 +8844,9 @@ components:
           format: uuid
         name:
           type: string
+      required:
+        - id
+        - name
     CompactAgreement:
       type: object
       required:
@@ -9771,12 +9787,8 @@ components:
       title: AttributesResponse
       type: object
       properties:
-        totalCount:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+        pagination:
+          $ref: '#/components/schemas/Pagination'
         results:
           type: array
           items:

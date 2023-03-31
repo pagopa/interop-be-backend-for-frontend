@@ -101,7 +101,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val attributeFormat: RootJsonFormat[Attribute]                   = jsonFormat7(Attribute)
   implicit val compactAttributeFormat: RootJsonFormat[CompactAttribute]     = jsonFormat2(CompactAttribute)
-  implicit val attributesResponseFormat: RootJsonFormat[AttributesResponse] = jsonFormat4(AttributesResponse)
+  implicit val attributesResponseFormat: RootJsonFormat[AttributesResponse] = jsonFormat2(AttributesResponse)
 
   implicit val attributeSeedFormat: RootJsonFormat[AttributeSeed] = jsonFormat5(AttributeSeed)
 
