@@ -9783,6 +9783,7 @@ components:
             $ref: '#/components/schemas/CompactAttribute'
       required:
         - results
+        - pagination
     CompactTenant:
       properties:
         id:
