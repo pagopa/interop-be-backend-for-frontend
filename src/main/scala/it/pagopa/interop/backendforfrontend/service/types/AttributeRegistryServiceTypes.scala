@@ -2,11 +2,13 @@ package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop._
 import it.pagopa.interop.backendforfrontend.model.AttributeKind.{CERTIFIED, DECLARED, VERIFIED}
+import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeProcess}
 import it.pagopa.interop.backendforfrontend.model.{
   Attribute,
   AttributeKind,
   AttributeSeed,
   CertifiedAttribute,
+  CompactAttribute,
   DeclaredAttribute,
   VerifiedAttribute
 }
@@ -27,6 +29,18 @@ object AttributeRegistryServiceTypes {
     case CERTIFIED => attributeregistrymanagement.client.model.AttributeKind.CERTIFIED
     case DECLARED  => attributeregistrymanagement.client.model.AttributeKind.DECLARED
     case VERIFIED  => attributeregistrymanagement.client.model.AttributeKind.VERIFIED
+  }
+
+  implicit class AttributeKindProcessConverter(private val ak: String) extends AnyVal {
+    def toProcess: AttributeProcess.AttributeKind = ak match {
+      case "CERTIFIED" => AttributeProcess.AttributeKind.CERTIFIED
+      case "DECLARED"  => AttributeProcess.AttributeKind.DECLARED
+      case "VERIFIED"  => AttributeProcess.AttributeKind.VERIFIED
+    }
+  }
+
+  implicit class AttributeProcessConverter(private val attribute: AttributeProcess.Attribute) extends AnyVal {
+    def toApi: CompactAttribute = CompactAttribute(id = attribute.id, name = attribute.name)
   }
 
   implicit class AttributeConverter(private val attribute: MgmtAttribute) extends AnyVal {

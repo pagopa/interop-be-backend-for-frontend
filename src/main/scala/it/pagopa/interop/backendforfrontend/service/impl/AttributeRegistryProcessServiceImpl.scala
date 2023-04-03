@@ -2,10 +2,9 @@ package it.pagopa.interop.backendforfrontend.service.impl
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.attributeregistryprocess.client.model.Attributes
-import it.pagopa.interop.attributeregistryprocess.client.api.AttributeApi
-import it.pagopa.interop.attributeregistryprocess.client.invoker.ApiInvoker
-import it.pagopa.interop.attributeregistryprocess.client.api.EnumsSerializers
+import it.pagopa.interop.attributeregistryprocess.client.api.{AttributeApi, EnumsSerializers}
+import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiInvoker, BearerToken}
+import it.pagopa.interop.attributeregistryprocess.client.model.{AttributeKind, Attributes}
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
@@ -22,10 +21,17 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getAttributes(name: Option[String], limit: Int, offset: Int, kinds: String)(implicit
+  override def getAttributes(name: Option[String], limit: Int, offset: Int, kinds: Seq[AttributeKind])(implicit
     contexts: Seq[(String, String)]
   ): Future[Attributes] = withHeaders[Attributes] { (bearerToken, correlationId, ip) =>
-    val request = api.getAttributes(xCorrelationId = correlationId, xForwardedFor = ip)(BearerToken(bearerToken))
+    val request = api.getAttributes(
+      xCorrelationId = correlationId,
+      limit = limit,
+      offset = offset,
+      kinds = kinds,
+      xForwardedFor = ip,
+      name = name
+    )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving attributes")
   }
 }

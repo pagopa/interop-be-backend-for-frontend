@@ -5945,7 +5945,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AttributesResponse'
+                $ref: '#/components/schemas/Attributes'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -9700,8 +9700,8 @@ components:
         - CERTIFIED
         - DECLARED
         - VERIFIED
-    AttributesResponse:
-      title: AttributesResponse
+    Attributes:
+      title: Attributes
       type: object
       properties:
         pagination:
