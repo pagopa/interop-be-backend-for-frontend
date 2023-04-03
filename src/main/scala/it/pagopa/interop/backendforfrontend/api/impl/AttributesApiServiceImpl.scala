@@ -12,6 +12,7 @@ import it.pagopa.interop.backendforfrontend.service.{
   AttributeRegistryManagementService,
   AttributeRegistryProcessService
 }
+
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -82,7 +83,14 @@ final case class AttributesApiServiceImpl(
   ): Route = {
     val result: Future[Attributes] =
       attributeRegistryProcessApiService
-        .getAttributes(q, limit, offset, parseArrayParameters(kinds).map(_.toProcess))
+        .getAttributes(
+          q,
+          limit,
+          offset,
+          parseArrayParameters(kinds)
+            .map(AttributeKind.fromValue)
+            .flatMap(_.map(_.toProcess).toOption)
+        )
         .map(a => Attributes(Pagination(offset, limit, a.totalCount), a.results.map(_.toApi)))
 
     onComplete(result) {

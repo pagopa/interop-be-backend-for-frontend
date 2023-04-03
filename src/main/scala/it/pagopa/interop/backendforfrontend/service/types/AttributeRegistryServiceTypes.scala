@@ -31,11 +31,11 @@ object AttributeRegistryServiceTypes {
     case VERIFIED  => attributeregistrymanagement.client.model.AttributeKind.VERIFIED
   }
 
-  implicit class AttributeKindProcessConverter(private val ak: String) extends AnyVal {
+  implicit class AttributeKindProcessConverter(private val ak: AttributeKind) extends AnyVal {
     def toProcess: AttributeProcess.AttributeKind = ak match {
-      case "CERTIFIED" => AttributeProcess.AttributeKind.CERTIFIED
-      case "DECLARED"  => AttributeProcess.AttributeKind.DECLARED
-      case "VERIFIED"  => AttributeProcess.AttributeKind.VERIFIED
+      case CERTIFIED => AttributeProcess.AttributeKind.CERTIFIED
+      case DECLARED  => AttributeProcess.AttributeKind.DECLARED
+      case VERIFIED  => AttributeProcess.AttributeKind.VERIFIED
     }
   }
 
