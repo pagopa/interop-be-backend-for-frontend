@@ -238,6 +238,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         api.removeArchivedPurpose(purposeId = purposeId, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Removing purpose ${purposeId.toString} with version archived")
+      invoker.invoke(request, s"Removing archived purpose ${purposeId.toString} from clients")
     }
 }
