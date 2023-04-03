@@ -39,5 +39,4 @@ object ClientsApiMarshallerImpl extends ClientsApiMarshaller with SprayJsonSuppo
 
   override implicit def toEntityMarshallerClient: ToEntityMarshaller[Client] = sprayJsonMarshaller[Client]
 
-  override implicit def toEntityMarshallerOperator: ToEntityMarshaller[Operator] = sprayJsonMarshaller[Operator]
 }

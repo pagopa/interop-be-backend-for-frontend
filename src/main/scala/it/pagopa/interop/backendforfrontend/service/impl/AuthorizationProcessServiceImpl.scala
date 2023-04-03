@@ -208,20 +208,6 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       invoker.invoke(request, s"Retrieve client $clientId")
     }
 
-  override def getClientOperatorRelationshipById(clientId: UUID, relationshipId: UUID)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Operator] =
-    withHeaders[Operator] { (bearerToken, correlationId, ip) =>
-      val request: ApiRequest[Operator] =
-        api.getClientOperatorRelationshipById(
-          clientId = clientId,
-          relationshipId = relationshipId,
-          xCorrelationId = correlationId,
-          xForwardedFor = ip
-        )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Retrieving relationship $relationshipId of client $clientId")
-    }
-
   override def getClientsWithKeys(
     name: Option[String],
     relationshipIds: Seq[UUID],
