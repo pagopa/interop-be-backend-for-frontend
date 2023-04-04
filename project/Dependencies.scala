@@ -28,7 +28,7 @@ object Dependencies {
     lazy val commonsUtils = namespace %% "interop-commons-utils"        % commonsVersion
     lazy val jwt          = namespace %% "interop-commons-jwt"          % commonsVersion
     lazy val rateLimiter  = namespace %% "interop-commons-rate-limiter" % commonsVersion
-    lazy val vault        = namespace %% "interop-commons-signer"       % commonsVersion
+    lazy val signer        = namespace %% "interop-commons-signer"      % commonsVersion
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
     lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
@@ -150,7 +150,7 @@ object Dependencies {
       pagopa.userRegistryClient         % Compile,
       pagopa.attributeRegistryClient    % Compile,
       pagopa.selfcareV2Client           % Compile,
-      pagopa.vault                      % Compile,
+      pagopa.signer                     % Compile,
       pagopa.fileManager                % Compile,
       pagopa.parser                     % Compile,
       tika.core                         % Compile,
