@@ -19,6 +19,7 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
+import cats.implicits._
 
 final case class AttributesApiServiceImpl(
   attributeRegistryManagementApiService: AttributeRegistryManagementService,
@@ -82,16 +83,14 @@ final case class AttributesApiServiceImpl(
     toEntityMarshallerAttributes: ToEntityMarshaller[Attributes]
   ): Route = {
     val result: Future[Attributes] =
-      attributeRegistryProcessApiService
-        .getAttributes(
-          q,
-          limit,
-          offset,
-          parseArrayParameters(kinds)
-            .map(AttributeKind.fromValue)
-            .flatMap(_.map(_.toProcess).toOption)
+      parseArrayParameters(kinds)
+        .traverse(AttributeKind.fromValue)
+        .toFuture
+        .flatMap(attributeKindList =>
+          attributeRegistryProcessApiService
+            .getAttributes(q, limit, offset, attributeKindList.map(_.toProcess))
+            .map(a => Attributes(Pagination(offset, limit, a.totalCount), a.results.map(_.toApi)))
         )
-        .map(a => Attributes(Pagination(offset, limit, a.totalCount), a.results.map(_.toApi)))
 
     onComplete(result) {
       handleError(
