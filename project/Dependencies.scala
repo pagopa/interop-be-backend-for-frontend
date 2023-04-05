@@ -28,7 +28,7 @@ object Dependencies {
     lazy val commonsUtils = namespace %% "interop-commons-utils"        % commonsVersion
     lazy val jwt          = namespace %% "interop-commons-jwt"          % commonsVersion
     lazy val rateLimiter  = namespace %% "interop-commons-rate-limiter" % commonsVersion
-    lazy val signer        = namespace %% "interop-commons-signer"      % commonsVersion
+    lazy val signer       = namespace %% "interop-commons-signer"       % commonsVersion
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
     lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
