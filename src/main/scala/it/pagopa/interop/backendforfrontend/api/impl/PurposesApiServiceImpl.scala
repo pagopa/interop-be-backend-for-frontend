@@ -54,6 +54,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit")
+
     val result: Future[Purposes] =
       for {
         statesEnum     <- parseArrayParameters(states).distinct
@@ -94,6 +96,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Archiving purpose $purposeId with version $versionId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUuid <- purposeId.toFutureUUID
       versionUuid <- versionId.toFutureUUID
@@ -117,6 +121,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Updating purpose $purposeId with version $versionId in waiting for approval state")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUuid    <- purposeId.toFutureUUID
       versionUuid    <- versionId.toFutureUUID
@@ -325,6 +331,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Suspending Version $versionId of Purpose $purposeId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUUID <- purposeId.toFutureUUID
       versionUUID <- versionId.toFutureUUID
@@ -343,6 +351,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Activating Version $versionId of Purpose $purposeId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUUID <- purposeId.toFutureUUID
       versionUUID <- versionId.toFutureUUID
@@ -365,6 +375,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Updating draft version $versionId of purpose $purposeId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUUID <- purposeId.toFutureUUID
       versionUUID <- versionId.toFutureUUID
@@ -403,6 +415,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Retrieving Purpose $purposeId")
+
     val result: Future[Purpose] = for {
       purposeUUID     <- purposeId.toFutureUUID
       purpose         <- purposeProcessService.getPurpose(purposeUUID)
@@ -427,6 +441,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Updating Purpose $purposeId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUUID    <- purposeId.toFutureUUID
       updatedPurpose <- purposeProcessService
@@ -446,10 +462,11 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerRiskAnalysisFormConfig: ToEntityMarshaller[RiskAnalysisFormConfig]
   ): Route = {
-    val result: Future[RiskAnalysisFormConfig] = for {
-      riskAnalysisFormConfig <- purposeProcessService
-        .retrieveLatestRiskAnalysisConfiguration()
-    } yield riskAnalysisFormConfig.toApi
+    logger.info(s"Retrieving risk analysis latest configuration")
+
+    val result: Future[RiskAnalysisFormConfig] = purposeProcessService
+      .retrieveLatestRiskAnalysisConfiguration()
+      .map(_.toApi)
 
     onComplete(result) {
       handleError(s"Error retrieving latest risk analysis configuration") orElse { case Success(response) =>
