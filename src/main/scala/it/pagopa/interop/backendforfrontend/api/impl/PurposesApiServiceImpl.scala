@@ -440,4 +440,21 @@ final case class PurposesApiServiceImpl(
       }
     }
   }
+
+  override def retrieveLatestRiskAnalysisConfiguration()(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerRiskAnalysisFormConfig: ToEntityMarshaller[RiskAnalysisFormConfig]
+  ): Route = {
+    val result: Future[RiskAnalysisFormConfig] = for {
+      riskAnalysisFormConfig <- purposeProcessService
+        .retrieveLatestRiskAnalysisConfiguration()
+    } yield riskAnalysisFormConfig.toApi
+
+    onComplete(result) {
+      handleError(s"Error retrieving latest risk analysis configuration") orElse { case Success(response) =>
+        retrieveLatestRiskAnalysisConfiguration200(response)
+      }
+    }
+  }
 }

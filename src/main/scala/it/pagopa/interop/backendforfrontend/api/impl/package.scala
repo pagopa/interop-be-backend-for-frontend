@@ -194,6 +194,15 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val publicKeysFormat: RootJsonFormat[PublicKeys]     =
     jsonFormat1(PublicKeys)
 
+  implicit def dependencyFormat: RootJsonFormat[Dependency]                         =
+    jsonFormat2(Dependency)
+  implicit def localizedTextFormat: RootJsonFormat[LocalizedText]                   =
+    jsonFormat2(LocalizedText)
+  implicit def formConfigQuestionFormat: RootJsonFormat[FormConfigQuestion]         =
+    jsonFormat6(FormConfigQuestion)
+  implicit def riskAnalysisFormConfigFormat: RootJsonFormat[RiskAnalysisFormConfig] =
+    jsonFormat2(RiskAnalysisFormConfig)
+
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
   final val entityMarshallerFile: ToEntityMarshaller[File] =

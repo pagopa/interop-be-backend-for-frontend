@@ -134,4 +134,46 @@ object PurposeProcessServiceTypes {
         riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess)
       )
   }
+
+  implicit class RiskAnalysisFormConfigWrapper(
+    private val riskAnalysisFormConfig: PurposeProcess.RiskAnalysisFormConfigResponse
+  ) extends AnyVal {
+    def toApi: RiskAnalysisFormConfig =
+      RiskAnalysisFormConfig(
+        version = riskAnalysisFormConfig.version,
+        questions = riskAnalysisFormConfig.questions.map(_.toApi)
+      )
+  }
+
+  implicit class FormConfigQuestionWrapper(private val question: PurposeProcess.FormConfigQuestionResponse)
+      extends AnyVal {
+    def toApi: FormConfigQuestion =
+      FormConfigQuestion(
+        id = question.id,
+        label = question.label.toApi,
+        infoLabel = question.infoLabel.map(_.toApi),
+        dataType = question.dataType.toApi,
+        required = question.required,
+        dependencies = question.dependencies.map(_.toApi)
+      )
+  }
+
+  implicit class LocalizedTextWrapper(private val localizedText: PurposeProcess.LocalizedTextResponse) extends AnyVal {
+    def toApi: LocalizedText =
+      LocalizedText(it = localizedText.it, en = localizedText.en)
+  }
+
+  implicit class DataTypeWrapper(private val dataType: PurposeProcess.DataTypeResponse) extends AnyVal {
+    def toApi: DataType =
+      dataType match {
+        case PurposeProcess.DataTypeResponse.SINGLE   => DataType.SINGLE
+        case PurposeProcess.DataTypeResponse.MULTI    => DataType.MULTI
+        case PurposeProcess.DataTypeResponse.FREETEXT => DataType.FREETEXT
+      }
+  }
+
+  implicit class DependencyWrapper(private val dependency: PurposeProcess.DependencyResponse) extends AnyVal {
+    def toApi: Dependency =
+      Dependency(id = dependency.id, value = dependency.value)
+  }
 }
