@@ -231,4 +231,13 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving clients with keys")
   }
+
+  override def removeArchivedPurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.removeArchivedPurpose(purposeId = purposeId, xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Removing archived purpose ${purposeId.toString} from clients")
+    }
 }

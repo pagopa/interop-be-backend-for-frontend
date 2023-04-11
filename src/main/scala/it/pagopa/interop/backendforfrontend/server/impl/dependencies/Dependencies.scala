@@ -129,27 +129,29 @@ trait Dependencies {
     val oauthAndRateLimitingDirective: Directive1[Seq[(String, String)]] =
       jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
 
-    val partyProcess: PartyProcessService                     =
+    val partyProcess: PartyProcessService                               =
       new PartyProcessServiceImpl(ApplicationConfiguration.partyProcessURL, ApplicationConfiguration.partyProcessApiKey)
-    val attributeRegistry: AttributeRegistryManagementService =
+    val attributeRegistryProcess: AttributeRegistryProcessService       =
+      new AttributeRegistryProcessServiceImpl(ApplicationConfiguration.attributeRegistryProcessURL, blockingEc)
+    val attributeRegistryManagement: AttributeRegistryManagementService =
       new AttributeRegistryManagementServiceImpl(ApplicationConfiguration.attributeRegistryManagementURL, blockingEc)
-    val agreementProcess: AgreementProcessService             =
+    val agreementProcess: AgreementProcessService                       =
       new AgreementProcessServiceImpl(ApplicationConfiguration.agreementProcessURL, blockingEc)
-    val catalogManagement: CatalogManagementService           =
+    val catalogManagement: CatalogManagementService                     =
       new CatalogManagementServiceImpl(ApplicationConfiguration.catalogManagementURL, blockingEc)
-    val catalogProcess: CatalogProcessService                 =
+    val catalogProcess: CatalogProcessService                           =
       new CatalogProcessServiceImpl(ApplicationConfiguration.catalogProcessURL, blockingEc)
-    val tenantManagement: TenantManagementService             =
+    val tenantManagement: TenantManagementService                       =
       new TenantManagementServiceImpl(ApplicationConfiguration.tenantManagementURL, blockingEc)
-    val userRegistry: UserRegistryService                     =
+    val userRegistry: UserRegistryService                               =
       new UserRegistryServiceImpl(ApplicationConfiguration.userRegistryURL, ApplicationConfiguration.userRegistryApiKey)
-    val tenantProcess: TenantProcessService                   =
+    val tenantProcess: TenantProcessService                             =
       new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
-    val purposeProcess: PurposeProcessService                 =
+    val purposeProcess: PurposeProcessService                           =
       new PurposeProcessServiceImpl(ApplicationConfiguration.purposeProcessURL, blockingEc)
-    val authorizationProcess: AuthorizationProcessService     =
+    val authorizationProcess: AuthorizationProcessService               =
       new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
-    val selfcareClient: SelfcareClientService                 =
+    val selfcareClient: SelfcareClientService                           =
       new SelfcareClientServiceImpl(ApplicationConfiguration.selfcareV2URL, ApplicationConfiguration.selfcareV2ApiKey)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
@@ -186,13 +188,13 @@ trait Dependencies {
     )
 
     val partyApi: PartyApi = new PartyApi(
-      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistry, tenantManagement),
+      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistryManagement, tenantManagement),
       PartyApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
 
     val attributesApi: AttributesApi = new AttributesApi(
-      AttributesApiServiceImpl(attributeRegistry),
+      AttributesApiServiceImpl(attributeRegistryManagement, attributeRegistryProcess),
       AttributesApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
@@ -200,7 +202,7 @@ trait Dependencies {
     val agreementsApi: AgreementsApi = new AgreementsApi(
       AgreementsApiServiceImpl(
         agreementProcess,
-        attributeRegistry,
+        attributeRegistryManagement,
         catalogManagement,
         partyProcess,
         tenantManagement,
@@ -212,7 +214,7 @@ trait Dependencies {
     )
 
     val tenantsApi: TenantsApi = new TenantsApi(
-      TenantsApiServiceImpl(attributeRegistry, tenantManagement, tenantProcess),
+      TenantsApiServiceImpl(attributeRegistryManagement, tenantManagement, tenantProcess),
       TenantsApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
@@ -220,7 +222,7 @@ trait Dependencies {
     val eServicesApi: EservicesApi = new EservicesApi(
       EServicesApiServiceImpl(
         agreementProcess,
-        attributeRegistry,
+        attributeRegistryManagement,
         catalogProcess,
         tenantManagement,
         partyProcess,

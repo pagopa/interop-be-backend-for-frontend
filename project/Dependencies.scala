@@ -66,8 +66,11 @@ object Dependencies {
     lazy val userRegistryClient =
       namespace %% "interop-selfcare-user-registry-client" % userRegistryVersion
 
-    lazy val attributeRegistryClient =
-      namespace %% "interop-be-attribute-registry-management-client" % attributeRegistryVersion
+    lazy val attributeRegistryProcessClient =
+      namespace %% "interop-be-attribute-registry-process-client" % attributeRegistryProcessVersion
+
+    lazy val attributeRegistryManagementClient =
+      namespace %% "interop-be-attribute-registry-management-client" % attributeRegistryManagementVersion
 
     lazy val selfcareV2Client =
       namespace %% "interop-selfcare-v2-client" % selfcareV2ClientVersion
@@ -122,43 +125,44 @@ object Dependencies {
       // For making Java 12 happy
       "javax.annotation"               % "javax.annotation-api" % "1.3.2" % "compile",
       //
-      akka.actor                        % Compile,
-      akka.actorTyped                   % Compile,
-      akka.http                         % Compile,
-      akka.httpJson                     % Compile,
-      akka.management                   % Compile,
-      akka.managementLogLevels          % Compile,
-      akka.persistence                  % Compile,
-      akka.slf4j                        % Compile,
-      akka.stream                       % Compile,
-      cats.core                         % Compile,
-      logback.classic                   % Compile,
-      mustache.mustache                 % Compile,
-      pagopa.commonsUtils               % Compile,
-      pagopa.jwt                        % Compile,
-      pagopa.rateLimiter                % Compile,
-      pagopa.authorizationProcessClient % Compile,
-      pagopa.agreementProcessClient     % Compile,
-      pagopa.agreementProcessLifecycle  % Compile,
-      pagopa.catalogManagementClient    % Compile,
-      pagopa.catalogProcessClient       % Compile,
-      pagopa.partyProcessClient         % Compile,
-      pagopa.partyManagementClient      % Compile,
-      pagopa.tenantManagementClient     % Compile,
-      pagopa.tenantProcessClient        % Compile,
-      pagopa.purposeProcessClient       % Compile,
-      pagopa.userRegistryClient         % Compile,
-      pagopa.attributeRegistryClient    % Compile,
-      pagopa.selfcareV2Client           % Compile,
-      pagopa.signer                     % Compile,
-      pagopa.fileManager                % Compile,
-      pagopa.parser                     % Compile,
-      tika.core                         % Compile,
-      akka.httpTestkit                  % Test,
-      akka.testkit                      % Test,
-      akka.untypedTestkit               % Test,
-      scalamock.core                    % Test,
-      scalatest.core                    % Test
+      akka.actor                               % Compile,
+      akka.actorTyped                          % Compile,
+      akka.http                                % Compile,
+      akka.httpJson                            % Compile,
+      akka.management                          % Compile,
+      akka.managementLogLevels                 % Compile,
+      akka.persistence                         % Compile,
+      akka.slf4j                               % Compile,
+      akka.stream                              % Compile,
+      cats.core                                % Compile,
+      logback.classic                          % Compile,
+      mustache.mustache                        % Compile,
+      pagopa.commonsUtils                      % Compile,
+      pagopa.jwt                               % Compile,
+      pagopa.rateLimiter                       % Compile,
+      pagopa.authorizationProcessClient        % Compile,
+      pagopa.agreementProcessClient            % Compile,
+      pagopa.agreementProcessLifecycle         % Compile,
+      pagopa.catalogManagementClient           % Compile,
+      pagopa.catalogProcessClient              % Compile,
+      pagopa.partyProcessClient                % Compile,
+      pagopa.partyManagementClient             % Compile,
+      pagopa.tenantManagementClient            % Compile,
+      pagopa.tenantProcessClient               % Compile,
+      pagopa.purposeProcessClient              % Compile,
+      pagopa.userRegistryClient                % Compile,
+      pagopa.attributeRegistryProcessClient    % Compile,
+      pagopa.attributeRegistryManagementClient % Compile,
+      pagopa.selfcareV2Client                  % Compile,
+      pagopa.signer                            % Compile,
+      pagopa.fileManager                       % Compile,
+      pagopa.parser                            % Compile,
+      tika.core                                % Compile,
+      akka.httpTestkit                         % Test,
+      akka.testkit                             % Test,
+      akka.untypedTestkit                      % Test,
+      scalamock.core                           % Test,
+      scalatest.core                           % Test
     )
 
     lazy val client: Seq[ModuleID] = Seq(
