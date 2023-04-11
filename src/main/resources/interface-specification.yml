@@ -4695,6 +4695,25 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '403':
           description: Forbidden
           content:
@@ -5910,22 +5929,42 @@ paths:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     get:
-      summary: 'returns the list of attributes available on the registry'
+      summary: Get attributes
+      operationId: getAttributes
+      description: 'returns attributes'
       tags:
         - attributes
-      operationId: getAttributes
       parameters:
         - in: query
-          name: search
+          name: q
+          description: Query to filter Attributes by name
           schema:
             type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: kinds
+          description: Array of kinds
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/AttributeKind'
+          required: true
       responses:
         '200':
-          description: array of currently available attributes
+          description: A List of Attributes
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AttributesResponse'
+                $ref: '#/components/schemas/Attributes'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -5939,45 +5978,6 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '404':
-          description: Attributes not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '429':
-          description: Too Many Requests
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-      description: Returns the list of currently available attributes
     post:
       summary: Creates attribute
       tags:
@@ -8901,6 +8901,17 @@ components:
           type: boolean
         descriptor:
           $ref: '#/components/schemas/CompactDescriptor'
+    CompactAttribute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+        - id
+        - name
     CompactAgreement:
       type: object
       required:
@@ -9837,16 +9848,19 @@ components:
         - CERTIFIED
         - DECLARED
         - VERIFIED
-    AttributesResponse:
-      title: AttributesResponse
+    Attributes:
+      title: Attributes
       type: object
       properties:
-        attributes:
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        results:
           type: array
           items:
-            $ref: '#/components/schemas/Attribute'
+            $ref: '#/components/schemas/CompactAttribute'
       required:
-        - attributes
+        - results
+        - pagination
     CompactTenant:
       properties:
         id:

@@ -104,6 +104,7 @@ final case class PurposesApiServiceImpl(
       purposeUuid <- purposeId.toFutureUUID
       versionUuid <- versionId.toFutureUUID
       _           <- purposeProcessService.archivePurposeVersion(purposeUuid, versionUuid)
+      _           <- authorizationProcessService.removeArchivedPurpose(purposeUuid)
     } yield PurposeVersionResource(purposeId = purposeUuid, versionId = versionUuid)
 
     onComplete(result) {
