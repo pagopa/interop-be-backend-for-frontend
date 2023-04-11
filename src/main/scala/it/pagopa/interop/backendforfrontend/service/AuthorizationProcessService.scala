@@ -63,4 +63,6 @@ trait AuthorizationProcessService {
     limit: Int,
     offset: Int
   )(implicit contexts: Seq[(String, String)]): Future[ClientsWithKeys]
+
+  def removeArchivedPurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 }
