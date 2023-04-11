@@ -1,12 +1,11 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
+import akka.actor.typed.ActorSystem
 import cats.implicits.catsSyntaxOptionId
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.attributeregistrymanagement.client.invoker.ApiInvoker
 import it.pagopa.interop.agreementprocess.client.api.EnumsSerializers
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
-import it.pagopa.interop.attributeregistrymanagement.client.invoker.BearerToken
-import it.pagopa.interop.attributeregistrymanagement.client.model.AttributesResponse
+import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiInvoker, BearerToken}
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementService
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes.{
   MgmtAttribute,
@@ -14,12 +13,10 @@ import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServi
   MgmtAttributesResponse
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.withHeaders
 
 import java.util.UUID
-import scala.concurrent.Future
-import akka.actor.typed.ActorSystem
-import scala.concurrent.ExecutionContextExecutor
-import it.pagopa.interop.commons.utils.withHeaders
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class AttributeRegistryManagementServiceImpl(attributeRegistryURL: String, blockingEc: ExecutionContextExecutor)(
   implicit system: ActorSystem[_]
@@ -30,13 +27,6 @@ class AttributeRegistryManagementServiceImpl(attributeRegistryURL: String, block
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
-
-  override def getAttributes(search: Option[String])(implicit
-    contexts: Seq[(String, String)]
-  ): Future[AttributesResponse] = withHeaders[AttributesResponse] { (bearerToken, correlationId, ip) =>
-    val request = api.getAttributes(xCorrelationId = correlationId, xForwardedFor = ip)(BearerToken(bearerToken))
-    invoker.invoke(request, s"Loading attributes")
-  }
 
   override def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[MgmtAttribute] =
     withHeaders[MgmtAttribute] { (bearerToken, correlationId, ip) =>

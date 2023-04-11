@@ -6,36 +6,29 @@ import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AttributesApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
-import it.pagopa.interop.backendforfrontend.model.{Attribute, AttributeSeed, AttributesResponse, Problem}
-import it.pagopa.interop.backendforfrontend.service.AttributeRegistryManagementService
+import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.{
+  AttributeRegistryManagementService,
+  AttributeRegistryProcessService
+}
+
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
+import cats.implicits._
 
-final case class AttributesApiServiceImpl(attributeRegistryManagementApiService: AttributeRegistryManagementService)(
-  implicit ec: ExecutionContext
-) extends AttributesApiService {
+final case class AttributesApiServiceImpl(
+  attributeRegistryManagementApiService: AttributeRegistryManagementService,
+  attributeRegistryProcessApiService: AttributeRegistryProcessService
+)(implicit ec: ExecutionContext)
+    extends AttributesApiService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
-
-  override def getAttributes(search: Option[String])(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerAttributesResponse: ToEntityMarshaller[AttributesResponse],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    val result: Future[AttributesResponse] =
-      attributeRegistryManagementApiService.getAttributes(search)(contexts).map(_.toResponse)
-
-    onComplete(result) {
-      handleError(s"Error retrieving attributes for search string $search") orElse { case Success(attributes) =>
-        getAttributes200(attributes)
-      }
-    }
-  }
 
   override def getAttributeById(attributeId: String)(implicit
     contexts: Seq[(String, String)],
@@ -85,4 +78,26 @@ final case class AttributesApiServiceImpl(attributeRegistryManagementApiService:
     }
   }
 
+  override def getAttributes(q: Option[String], limit: Int, offset: Int, kinds: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAttributes: ToEntityMarshaller[Attributes]
+  ): Route = {
+    val result: Future[Attributes] =
+      parseArrayParameters(kinds)
+        .traverse(AttributeKind.fromValue)
+        .toFuture
+        .flatMap(attributeKindList =>
+          attributeRegistryProcessApiService
+            .getAttributes(q, limit, offset, attributeKindList.map(_.toProcess))
+            .map(a => Attributes(Pagination(offset, limit, a.totalCount), a.results.map(_.toApi)))
+        )
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving attributes with name = $q, limit = $limit, offset = $offset, kinds = $kinds"
+      ) orElse { case Success(attributes) =>
+        getAttributes200(attributes)
+      }
+    }
+  }
 }
