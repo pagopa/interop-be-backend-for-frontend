@@ -41,12 +41,13 @@ final case class PurposesApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getPurposes(
+  override def getConsumerPurposes(
     q: Option[String],
     eServicesIds: String,
     consumersIds: String,
     producersIds: String,
     states: String,
+    excludeDraft: Option[Boolean],
     offset: Int,
     limit: Int
   )(implicit
@@ -68,6 +69,7 @@ final case class PurposesApiServiceImpl(
           consumersIds = consumersUUIDs,
           producersIds = producersUUIDs,
           states = statesEnum,
+          excludeDraft = excludeDraft,
           offset = offset,
           limit = limit
         )
@@ -85,7 +87,57 @@ final case class PurposesApiServiceImpl(
     onComplete(result) {
       handleError(
         s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
-      ) orElse { case Success(r) => getPurposes200(r) }
+      ) orElse { case Success(r) => getConsumerPurposes200(r) }
+    }
+  }
+
+  override def getProducerPurposes(
+    q: Option[String],
+    eServicesIds: String,
+    consumersIds: String,
+    producersIds: String,
+    states: String,
+    excludeDraft: Option[Boolean],
+    offset: Int,
+    limit: Int
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Purposes] =
+      for {
+        statesEnum     <- parseArrayParameters(states).distinct
+          .traverse(PurposeProcess.PurposeVersionState.fromValue)
+          .toFuture
+        eServicesUUIDs <- parseArrayParameters(eServicesIds).distinct.traverse(_.toFutureUUID)
+        consumersUUIDs <- parseArrayParameters(consumersIds).distinct.traverse(_.toFutureUUID)
+        producersUUIDs <- parseArrayParameters(producersIds).distinct.traverse(_.toFutureUUID)
+        pagedResults   <- purposeProcessService.getPurposes(
+          name = q,
+          eServicesIds = eServicesUUIDs,
+          consumersIds = consumersUUIDs,
+          producersIds = producersUUIDs,
+          states = statesEnum,
+          excludeDraft = excludeDraft,
+          offset = offset,
+          limit = limit
+        )
+        actualEServicesIds = pagedResults.results.map(_.eserviceId).distinct
+        actualConsumersIds = pagedResults.results.map(_.consumerId).distinct
+        eServices       <- actualEServicesIds.traverse(catalogProcessService.getEServiceById)
+        producers       <- eServices.map(_.producerId).distinct.traverse(tenantProcessService.getTenant)
+        consumers       <- actualConsumersIds.traverse(tenantProcessService.getTenant)
+        enhancedResults <- pagedResults.results.traverse(enhancePurpose(_, eServices, producers, consumers))
+      } yield Purposes(
+        results = enhancedResults,
+        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+      )
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
+      ) orElse { case Success(r) => getProducerPurposes200(r) }
     }
   }
 
