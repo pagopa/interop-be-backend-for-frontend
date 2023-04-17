@@ -41,7 +41,7 @@ import scala.util.Success
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
   attributeRegistryService: AttributeRegistryManagementService,
-  catalogManagementService: CatalogManagementService,
+  catalogProcessService: CatalogProcessService,
   partyProcessService: PartyProcessService,
   tenantManagementService: TenantManagementService,
   fileManager: FileManager,
@@ -248,7 +248,7 @@ final case class AgreementsApiServiceImpl(
     tenantManagementService
       .getTenant(agreement.consumerId)
       .zip(tenantManagementService.getTenant(agreement.producerId))
-      .zip(catalogManagementService.getEService(agreement.eserviceId))
+      .zip(catalogProcessService.getEService(agreement.eserviceId))
       .map({ case ((consumer, producer), eservice) =>
         (consumer, producer, eservice)
       })
