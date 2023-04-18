@@ -9,7 +9,7 @@ import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute.AdaptableTenantAttributeOps
-import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.{AdaptableTenantAttribute, _}
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryManagementService, TenantProcessService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
