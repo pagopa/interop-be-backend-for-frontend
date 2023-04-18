@@ -8,24 +8,18 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{
-  AttributeRegistryManagementService,
-  TenantManagementService,
-  TenantProcessService
-}
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute.AdaptableTenantAttributeOps
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.{AdaptableTenantAttribute, _}
+import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryManagementService, TenantProcessService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.tenantmanagement.client.model.{TenantAttribute => DepTenantAttribute}
+import it.pagopa.interop.tenantprocess.client.model.{TenantAttribute => DepTenantAttribute}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 final case class TenantsApiServiceImpl(
   attributeRegistryService: AttributeRegistryManagementService,
-  tenantManagementService: TenantManagementService,
   tenantProcessService: TenantProcessService
 )(implicit ec: ExecutionContext)
     extends TenantsApiService {
@@ -193,7 +187,7 @@ final case class TenantsApiServiceImpl(
   ): Future[Seq[ApiAttribute]] =
     for {
       tenantUUID <- tenantId.toFutureUUID
-      tenant     <- tenantManagementService.getTenant(tenantUUID)
+      tenant     <- tenantProcessService.getTenant(tenantUUID)
       tenantAttributes = tenant.attributes.mapFilter(attributeFromTenantAttribute)
       attributeIds     = tenantAttributes.map(_.id)
       registryAttributes <- attributeRegistryService.getBulkAttributes(attributeIds)
@@ -205,7 +199,7 @@ final case class TenantsApiServiceImpl(
     toEntityMarshallerTenant: ToEntityMarshaller[Tenant]
   ): Route = {
     val result: Future[Tenant] = for {
-      tenant       <- tenantId.toFutureUUID >>= tenantManagementService.getTenant
+      tenant       <- tenantId.toFutureUUID >>= tenantProcessService.getTenant
       selfcareUUID <- tenant.selfcareId.traverse(_.toFutureUUID)
       attributes   <- attributeRegistryService.getBulkAttributes(Utils.tenantAttributesIds(tenant)).map(_.attributes)
     } yield tenant.toApi(selfcareUUID, attributes)
