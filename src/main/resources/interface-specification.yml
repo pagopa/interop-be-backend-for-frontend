@@ -4244,10 +4244,6 @@ paths:
             default: []
           explode: false
         - in: query
-          name: excludeDraft
-          schema:
-            type: boolean  
-        - in: query
           name: offset
           required: true
           schema:
@@ -4354,10 +4350,6 @@ paths:
               $ref: '#/components/schemas/PurposeVersionState'
             default: []
           explode: false
-        - in: query
-          name: excludeDraft
-          schema:
-            type: boolean  
         - in: query
           name: offset
           required: true
