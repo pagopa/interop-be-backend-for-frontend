@@ -188,7 +188,7 @@ trait Dependencies {
     )
 
     val partyApi: PartyApi = new PartyApi(
-      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistryManagement, tenantManagement),
+      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistryManagement, tenantProcess),
       PartyApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
@@ -205,7 +205,7 @@ trait Dependencies {
         attributeRegistryManagement,
         catalogManagement,
         partyProcess,
-        tenantManagement,
+        tenantProcess,
         fileManager(blockingEc),
         UUIDSupplier
       ),
@@ -214,7 +214,7 @@ trait Dependencies {
     )
 
     val tenantsApi: TenantsApi = new TenantsApi(
-      TenantsApiServiceImpl(attributeRegistryManagement, tenantManagement, tenantProcess),
+      TenantsApiServiceImpl(attributeRegistryManagement, tenantProcess),
       TenantsApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
@@ -224,7 +224,7 @@ trait Dependencies {
         agreementProcess,
         attributeRegistryManagement,
         catalogProcess,
-        tenantManagement,
+        tenantProcess,
         partyProcess,
         fileManager(blockingEc),
         UUIDSupplier

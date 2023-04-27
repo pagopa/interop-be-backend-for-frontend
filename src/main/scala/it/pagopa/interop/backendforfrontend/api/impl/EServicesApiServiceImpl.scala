@@ -18,10 +18,11 @@ import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.catalogprocess.client.model.EServices
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
@@ -30,7 +31,6 @@ import it.pagopa.interop.commons.utils.Digester
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
-import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
 
 import java.io.File
 import java.nio.file.Files
@@ -43,7 +43,7 @@ final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
   catalogProcessService: CatalogProcessService,
-  tenantManagementService: TenantManagementService,
+  tenantProcessService: TenantProcessService,
   partyProcessService: PartyProcessService,
   fileManager: FileManager,
   uuidSupplier: UUIDSupplier
@@ -208,8 +208,8 @@ final case class EServicesApiServiceImpl(
         .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
         .map(_.attributes)
       eServiceAttributes             <- eService.attributes.toApi(attributes)
-      requesterTenant                <- tenantManagementService.getTenant(requesterId)
-      producerTenant                 <- tenantManagementService.getTenant(eService.producerId)
+      requesterTenant                <- tenantProcessService.getTenant(requesterId)
+      producerTenant                 <- tenantProcessService.getTenant(eService.producerId)
       agreement                      <- agreementProcessService.getLatestAgreement(requesterId, eService)
     } yield CatalogEServiceDescriptor(
       id = descriptor.id,
@@ -237,12 +237,12 @@ final case class EServicesApiServiceImpl(
         isMine = eService.producerId == requesterId,
         hasCertifiedAttributes = certifiedAttributesSatisfied(
           eService.attributes.toManagement,
-          requesterTenant.attributes.mapFilter(_.certified)
+          consumerAttributes = requesterTenant.attributes.mapFilter(_.certified).map(_.toManagement)
         ),
         isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
         activeDescriptor =
           getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
-        mail = producerTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
+        mail = producerTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
       )
     )
 
@@ -318,9 +318,9 @@ final case class EServicesApiServiceImpl(
   private def enhanceCatalogEService(
     requesterId: UUID
   )(eService: CatalogProcess.EService)(implicit contexts: Seq[(String, String)]): Future[CatalogEService] = for {
-    producerTenant  <- tenantManagementService.getTenant(eService.producerId)
+    producerTenant  <- tenantProcessService.getTenant(eService.producerId)
     requesterTenant <-
-      if (requesterId != eService.producerId) tenantManagementService.getTenant(requesterId)
+      if (requesterId != eService.producerId) tenantProcessService.getTenant(requesterId)
       else Future.successful(producerTenant)
 
     activeDescriptor = getActiveDescriptor(eService)
@@ -334,8 +334,10 @@ final case class EServicesApiServiceImpl(
       CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded(eService, a))
     },
     isMine = eService.producerId == requesterId,
-    hasCertifiedAttributes =
-      certifiedAttributesSatisfied(eService.attributes.toManagement, requesterTenant.attributes.mapFilter(_.certified)),
+    hasCertifiedAttributes = certifiedAttributesSatisfied(
+      eService.attributes.toManagement,
+      requesterTenant.attributes.mapFilter(_.certified).map(_.toManagement)
+    ),
     activeDescriptor = activeDescriptor.map(_.toCompactDescriptor)
   )
 
@@ -394,7 +396,7 @@ final case class EServicesApiServiceImpl(
         .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
         .map(_.attributes)
       eServiceAttributes             <- eService.attributes.toApi(attributes)
-      requesterTenant                <- tenantManagementService.getTenant(eService.producerId)
+      requesterTenant                <- tenantProcessService.getTenant(eService.producerId)
     } yield ProducerEServiceDescriptor(
       id = descriptor.id,
       version = descriptor.version,
@@ -416,7 +418,7 @@ final case class EServicesApiServiceImpl(
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         draftDescriptor =
           getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
-        mail = requesterTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
+        mail = requesterTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
       )
     )
 
