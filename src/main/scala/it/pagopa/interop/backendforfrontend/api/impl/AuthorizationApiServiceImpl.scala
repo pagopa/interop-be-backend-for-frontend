@@ -32,8 +32,8 @@ final case class AuthorizationApiServiceImpl(
   jwtReader: JWTReader,
   sessionTokenGenerator: SessionTokenGenerator,
   interopTokenGenerator: InteropTokenGenerator,
-  tenantManagement: TenantManagementService,
-  tenantProcess: TenantProcessService,
+  tenantManagementService: TenantManagementService,
+  tenantProcessService: TenantProcessService,
   partyProcess: PartyProcessService,
   allowList: List[String],
   rateLimiter: RateLimiter
@@ -88,7 +88,7 @@ final case class AuthorizationApiServiceImpl(
     selfcareId: String
   )(alternative: => Future[(UUID, String)])(implicit contexts: Seq[(String, String)]): Future[UUID] = {
     for {
-      (tenantId, origin) <- tenantManagement
+      (tenantId, origin) <- tenantManagementService
         .getBySelfcareId(selfcareId)
         .map(t => (t.id, t.externalId.origin))
         .recoverWith {
@@ -104,7 +104,7 @@ final case class AuthorizationApiServiceImpl(
     for {
       partyInstitution <- partyProcess.getInstitution(selfcareId)
       _                <- assertTenantAllowed(selfcareId, partyInstitution.origin)
-      tenant           <- tenantProcess
+      tenant           <- tenantProcessService
         .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
           partyInstitution.id.toString
         )
