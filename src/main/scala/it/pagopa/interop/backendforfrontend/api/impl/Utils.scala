@@ -4,12 +4,12 @@ import cats.syntax.all._
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes.AdaptableTenantAttribute._
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
-import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
 import java.util.UUID
 
@@ -30,30 +30,30 @@ object Utils {
     registryAttributesMap.get(tenantAttribute.id).map(ra => tenantAttribute.toApi(ra.name, ra.description))
 
   def enhanceTenantAttributes(
-    tenantAttributes: Seq[TenantManagement.TenantAttribute],
+    tenantAttributes: Seq[TenantProcess.TenantAttribute],
     registryAttributes: Seq[AttributeRegistry.Attribute]
   ): TenantAttributes = {
     val registryAttributesMap: Map[UUID, Attribute] = registryAttributes.fproductLeft(_.id).toMap
 
     val declareds: Seq[DeclaredTenantAttribute] = tenantAttributes.collect {
-      case TenantManagement.TenantAttribute(Some(declared), None, None) =>
+      case TenantProcess.TenantAttribute(Some(declared), None, None) =>
         Utils.tenantAttributeToApi(declared, registryAttributesMap)
     }.flattenOption
 
     val certifieds: Seq[CertifiedTenantAttribute] = tenantAttributes.collect {
-      case TenantManagement.TenantAttribute(None, Some(certified), None) =>
+      case TenantProcess.TenantAttribute(None, Some(certified), None) =>
         Utils.tenantAttributeToApi(certified, registryAttributesMap)
     }.flattenOption
 
     val verifieds: Seq[VerifiedTenantAttribute] = tenantAttributes.collect {
-      case TenantManagement.TenantAttribute(None, None, Some(verified)) =>
+      case TenantProcess.TenantAttribute(None, None, Some(verified)) =>
         Utils.tenantAttributeToApi(verified, registryAttributesMap)
     }.flattenOption
 
     TenantAttributes(declareds, certifieds, verifieds)
   }
 
-  def tenantAttributesIds(tenant: TenantManagement.Tenant): Seq[UUID] =
+  def tenantAttributesIds(tenant: TenantProcess.Tenant): Seq[UUID] =
     tenant.attributes.mapFilter(_.verified.map(_.id)) ++
       tenant.attributes.mapFilter(_.certified.map(_.id)) ++
       tenant.attributes.mapFilter(_.declared.map(_.id))

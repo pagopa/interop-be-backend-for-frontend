@@ -28,6 +28,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
     consumersIds: Seq[UUID],
     producersIds: Seq[UUID],
     states: Seq[PurposeVersionState],
+    excludeDraft: Option[Boolean],
     offset: Int,
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Purposes] =
@@ -39,6 +40,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
           consumersIds = consumersIds,
           producersIds = producersIds,
           states = states,
+          excludeDraft = excludeDraft,
           offset = offset,
           limit = limit,
           xCorrelationId = correlationId,
