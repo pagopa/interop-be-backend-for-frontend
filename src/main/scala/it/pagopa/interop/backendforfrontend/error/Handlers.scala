@@ -23,6 +23,7 @@ import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareV2Error
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => AuthorizationProcessError}
+import it.pagopa.interop.commons.jwt.errors.InvalidJWTClaim
 import spray.json._
 import scala.util.{Failure, Try}
 
@@ -49,14 +50,15 @@ object Handlers {
         s"Requests limit exceeded for organization ${tmr.tenantId}",
         Headers.headersFromStatus(tmr.status)
       )
-    case Failure(err: AttributeNotExists)                       => internalServerError(err, logMessage)
-    case Failure(err: UnknownTenantOrigin)                      => badRequest(err, logMessage)
-    case Failure(err: InvalidInterfaceContentTypeDetected)      => badRequest(err, logMessage)
-    case Failure(err: InvalidInterfaceFileDetected)             => badRequest(err, logMessage)
-    case Failure(err: InvalidEServiceRequester)                 => forbidden(err, logMessage)
-    case Failure(err: AgreementDescriptorNotFound)              => notFound(err, logMessage)
-    case Failure(err: EServiceDescriptorNotFound)               => notFound(err, logMessage)
-    case Failure(err)                                           => internalServerError(err, logMessage)
+    case Failure(err: InvalidJWTClaim)                     => unauthorized(GenericError(err.getMessage()), logMessage)
+    case Failure(err: AttributeNotExists)                  => internalServerError(err, logMessage)
+    case Failure(err: UnknownTenantOrigin)                 => badRequest(err, logMessage)
+    case Failure(err: InvalidInterfaceContentTypeDetected) => badRequest(err, logMessage)
+    case Failure(err: InvalidInterfaceFileDetected)        => badRequest(err, logMessage)
+    case Failure(err: InvalidEServiceRequester)            => forbidden(err, logMessage)
+    case Failure(err: AgreementDescriptorNotFound)         => notFound(err, logMessage)
+    case Failure(err: EServiceDescriptorNotFound)          => notFound(err, logMessage)
+    case Failure(err)                                      => internalServerError(err, logMessage)
   }
 
   private def completeWithError[T](statusCode: Int, response: Option[T], endpointMessage: String)(implicit

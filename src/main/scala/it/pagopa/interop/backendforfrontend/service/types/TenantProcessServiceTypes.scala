@@ -1,9 +1,95 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
+import it.pagopa.interop.backendforfrontend.model.VerificationRenewal.{AUTOMATIC_RENEWAL, REVOKE_ON_EXPIRATION}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils
+
+import java.util.UUID
 
 object TenantProcessServiceTypes {
+
+  trait AdaptableTenantAttribute[DepAttribute, ApiAttribute] {
+    def toApi(a: DepAttribute, name: String, description: String): ApiAttribute
+
+    def id(a: DepAttribute): UUID
+  }
+
+  object AdaptableTenantAttribute {
+    def apply[DepAttribute, ApiAttribute](implicit
+      attribute: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
+    ): AdaptableTenantAttribute[DepAttribute, ApiAttribute] = attribute
+
+    implicit class AdaptableTenantAttributeOps[DepAttribute, ApiAttribute](a: DepAttribute)(implicit
+      attribute: AdaptableTenantAttribute[DepAttribute, ApiAttribute]
+    ) {
+      def toApi(name: String, description: String): ApiAttribute =
+        AdaptableTenantAttribute[DepAttribute, ApiAttribute].toApi(a, name, description)
+
+      def id: UUID = AdaptableTenantAttribute[DepAttribute, ApiAttribute].id(a)
+    }
+
+    implicit val certifiedAttribute
+      : AdaptableTenantAttribute[TenantProcess.CertifiedTenantAttribute, CertifiedTenantAttribute] =
+      new AdaptableTenantAttribute[TenantProcess.CertifiedTenantAttribute, CertifiedTenantAttribute] {
+        def id(attribute: TenantProcess.CertifiedTenantAttribute): UUID = attribute.id
+
+        def toApi(
+          attribute: TenantProcess.CertifiedTenantAttribute,
+          name: String,
+          description: String
+        ): CertifiedTenantAttribute =
+          CertifiedTenantAttribute(
+            id = attribute.id,
+            name = name,
+            description = description,
+            assignmentTimestamp = attribute.assignmentTimestamp,
+            revocationTimestamp = attribute.revocationTimestamp
+          )
+      }
+
+    implicit val declaredAttribute
+      : AdaptableTenantAttribute[TenantProcess.DeclaredTenantAttribute, DeclaredTenantAttribute] =
+      new AdaptableTenantAttribute[TenantProcess.DeclaredTenantAttribute, DeclaredTenantAttribute] {
+        def id(attribute: TenantProcess.DeclaredTenantAttribute): UUID = attribute.id
+
+        def toApi(
+          attribute: TenantProcess.DeclaredTenantAttribute,
+          name: String,
+          description: String
+        ): DeclaredTenantAttribute =
+          DeclaredTenantAttribute(
+            id = attribute.id,
+            name = name,
+            description = description,
+            assignmentTimestamp = attribute.assignmentTimestamp,
+            revocationTimestamp = attribute.revocationTimestamp
+          )
+      }
+
+    implicit val verifiedAttribute
+      : AdaptableTenantAttribute[TenantProcess.VerifiedTenantAttribute, VerifiedTenantAttribute] =
+      new AdaptableTenantAttribute[TenantProcess.VerifiedTenantAttribute, VerifiedTenantAttribute] {
+        def id(attribute: TenantProcess.VerifiedTenantAttribute): UUID = attribute.id
+
+        def toApi(
+          attribute: TenantProcess.VerifiedTenantAttribute,
+          name: String,
+          description: String
+        ): VerifiedTenantAttribute =
+          VerifiedTenantAttribute(
+            id = attribute.id,
+            name = name,
+            description = description,
+            assignmentTimestamp = attribute.assignmentTimestamp,
+            verifiedBy = attribute.verifiedBy.map(_.toApi),
+            revokedBy = attribute.revokedBy.map(_.toApi)
+          )
+      }
+
+  }
 
   implicit class DeclaredTenantAttributeSeedConverter(private val seed: DeclaredTenantAttributeSeed) extends AnyVal {
     def toSeed: TenantProcess.DeclaredTenantAttributeSeed = TenantProcess.DeclaredTenantAttributeSeed(id = seed.id)
@@ -17,6 +103,15 @@ object TenantProcessServiceTypes {
     )
   }
 
+  implicit class CertifiedTenantAttributeConverter(private val a: TenantProcess.CertifiedTenantAttribute)
+      extends AnyVal {
+    def toManagement: TenantManagement.CertifiedTenantAttribute = TenantManagement.CertifiedTenantAttribute(
+      id = a.id,
+      assignmentTimestamp = a.assignmentTimestamp,
+      revocationTimestamp = a.revocationTimestamp
+    )
+  }
+
   implicit class TenantDeltaConverter(private val delta: TenantDelta) extends AnyVal {
     def toExternalModel: TenantProcess.TenantDelta = TenantProcess.TenantDelta(mails =
       TenantProcess.MailSeed(
@@ -27,10 +122,64 @@ object TenantProcessServiceTypes {
     )
   }
 
-  implicit class VerificationRenewalConverter(private val v: VerificationRenewal) extends AnyVal {
+  implicit class VerificationRenewaltoSeed(private val v: VerificationRenewal) extends AnyVal {
     def toSeed: TenantProcess.VerificationRenewal = v match {
       case VerificationRenewal.REVOKE_ON_EXPIRATION => TenantProcess.VerificationRenewal.REVOKE_ON_EXPIRATION
       case VerificationRenewal.AUTOMATIC_RENEWAL    => TenantProcess.VerificationRenewal.AUTOMATIC_RENEWAL
     }
+  }
+
+  implicit class VerificationRenewaltoApi(private val v: TenantProcess.VerificationRenewal) extends AnyVal {
+    def toApi: VerificationRenewal = v match {
+      case TenantProcess.VerificationRenewal.REVOKE_ON_EXPIRATION => REVOKE_ON_EXPIRATION
+      case TenantProcess.VerificationRenewal.AUTOMATIC_RENEWAL    => AUTOMATIC_RENEWAL
+    }
+  }
+
+  implicit class TenantVerifierConverter(private val v: TenantProcess.TenantVerifier) extends AnyVal {
+    def toApi: TenantVerifier = TenantVerifier(
+      id = v.id,
+      verificationDate = v.verificationDate,
+      renewal = v.renewal.toApi,
+      expirationDate = v.expirationDate,
+      extensionDate = v.extensionDate
+    )
+  }
+
+  implicit class TenantRevokerConverter(private val v: TenantProcess.TenantRevoker) extends AnyVal {
+    def toApi: TenantRevoker = TenantRevoker(
+      id = v.id,
+      verificationDate = v.verificationDate,
+      expirationDate = v.expirationDate,
+      renewal = v.renewal.toApi,
+      extensionDate = v.extensionDate,
+      revocationDate = v.revocationDate
+    )
+  }
+
+  implicit class MailConverter(private val m: TenantProcess.Mail) extends AnyVal {
+    def toApi: Mail = Mail(address = m.address, description = m.description)
+  }
+
+  implicit class ExternalIdConverter(private val e: TenantProcess.ExternalId) extends AnyVal {
+    def toApi: ExternalId = ExternalId(origin = e.origin, value = e.value)
+  }
+
+  implicit class AttributeListConverter(private val as: Seq[TenantProcess.TenantAttribute]) extends AnyVal {
+    def toApi(attributes: Seq[AttributeRegistry.Attribute]): TenantAttributes =
+      Utils.enhanceTenantAttributes(as, attributes)
+  }
+
+  implicit class TenantConverter(private val t: TenantProcess.Tenant) extends AnyVal {
+    def toApi(selfcareUUID: Option[UUID], attributes: Seq[AttributeRegistry.Attribute]): Tenant = Tenant(
+      id = t.id,
+      selfcareId = selfcareUUID,
+      externalId = t.externalId.toApi,
+      createdAt = t.createdAt,
+      updatedAt = t.updatedAt,
+      name = t.name,
+      attributes = t.attributes.toApi(attributes),
+      contactMail = t.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
+    )
   }
 }

@@ -13,6 +13,7 @@ trait PurposeProcessService {
     consumersIds: Seq[UUID],
     producersIds: Seq[UUID],
     states: Seq[PurposeVersionState],
+    excludeDraft: Option[Boolean],
     offset: Int,
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Purposes]
