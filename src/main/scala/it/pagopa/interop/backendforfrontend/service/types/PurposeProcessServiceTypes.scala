@@ -154,13 +154,21 @@ object PurposeProcessServiceTypes {
         infoLabel = question.infoLabel.map(_.toApi),
         dataType = question.dataType.toApi,
         required = question.required,
-        dependencies = question.dependencies.map(_.toApi)
+        dependencies = question.dependencies.map(_.toApi),
+        visualType = question.visualType,
+        defaultValue = question.defaultValue,
+        options = question.options.map(_.map(_.toApi))
       )
   }
 
   implicit class LocalizedTextWrapper(private val localizedText: PurposeProcess.LocalizedTextResponse) extends AnyVal {
     def toApi: LocalizedText =
       LocalizedText(it = localizedText.it, en = localizedText.en)
+  }
+
+  implicit class LabeledValueWrapper(private val labeledValue: PurposeProcess.LabeledValueResponse) extends AnyVal {
+    def toApi: LabeledValue =
+      LabeledValue(label = labeledValue.label.toApi, value = labeledValue.value)
   }
 
   implicit class DataTypeWrapper(private val dataType: PurposeProcess.DataTypeResponse) extends AnyVal {
