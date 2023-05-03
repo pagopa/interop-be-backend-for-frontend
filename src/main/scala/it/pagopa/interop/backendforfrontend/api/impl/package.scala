@@ -199,8 +199,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat2(Dependency)
   implicit def localizedTextFormat: RootJsonFormat[LocalizedText]                   =
     jsonFormat2(LocalizedText)
+  implicit def labeledValueFormat: RootJsonFormat[LabeledValue]                     =
+    jsonFormat2(LabeledValue)
   implicit def formConfigQuestionFormat: RootJsonFormat[FormConfigQuestion]         =
-    jsonFormat6(FormConfigQuestion)
+    jsonFormat9(FormConfigQuestion)
   implicit def riskAnalysisFormConfigFormat: RootJsonFormat[RiskAnalysisFormConfig] =
     jsonFormat2(RiskAnalysisFormConfig)
 
