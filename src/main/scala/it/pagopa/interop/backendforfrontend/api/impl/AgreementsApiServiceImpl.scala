@@ -328,7 +328,8 @@ final case class AgreementsApiServiceImpl(
     rejectionReason = agreement.rejectionReason,
     consumerDocuments = agreement.consumerDocuments.map(_.toApi),
     createdAt = agreement.createdAt,
-    updatedAt = agreement.updatedAt
+    updatedAt = agreement.updatedAt,
+    suspendedAt = agreement.suspendedAt
   )
 
   def eServiceAttributesIds(eService: CatalogManagement.EService): Seq[UUID] = {
