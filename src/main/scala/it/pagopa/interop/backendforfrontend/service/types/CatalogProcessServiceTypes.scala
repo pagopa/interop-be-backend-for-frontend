@@ -14,18 +14,8 @@ import scala.concurrent.Future
 
 object CatalogProcessServiceTypes {
 
-  type CatalogProcessESeed                        = CatalogProcess.EServiceSeed
-  type CatalogProcessETechnology                  = CatalogProcess.EServiceTechnology
-  type CatalogProcessAttributesSeed               = CatalogProcess.AttributesSeed
-  type CatalogProcessAttributeSeed                = CatalogProcess.AttributeSeed
-  type CatalogProcessAttributeValueSeed           = CatalogProcess.AttributeValueSeed
-  type CatalogProcessEService                     = CatalogProcess.EService
-  type CatalogProcessEServiceDescriptorSeed       = CatalogProcess.EServiceDescriptorSeed
-  type CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed
-  type CatalogProcessUpdateEServiceSeed           = CatalogProcess.UpdateEServiceSeed
-
   implicit class UpdateEServiceSeedConverter(private val ues: UpdateEServiceSeed) extends AnyVal {
-    def toProcess: CatalogProcessUpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed(
+    def toProcess: CatalogProcess.UpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed(
       name = ues.name,
       description = ues.description,
       technology = ues.technology.toProcess,
@@ -34,24 +24,24 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
-    def toProcess: CatalogProcessETechnology = est match {
+    def toProcess: CatalogProcess.EServiceTechnology = est match {
       case EServiceTechnology.REST => REST
       case EServiceTechnology.SOAP => SOAP
     }
   }
 
   implicit class EServiceAttributeValueSeedConverter(private val a: EServiceAttributeValueSeed) extends AnyVal {
-    def toProcess: CatalogProcessAttributeValueSeed =
+    def toProcess: CatalogProcess.AttributeValueSeed =
       CatalogProcess.AttributeValueSeed(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
   }
 
   implicit class EServiceAttributeSeedConverter(private val e: EServiceAttributeSeed) extends AnyVal {
-    def toProcess: CatalogProcessAttributeSeed =
+    def toProcess: CatalogProcess.AttributeSeed =
       CatalogProcess.AttributeSeed(single = e.single.map(_.toProcess), group = e.group.nested.map(_.toProcess).value)
   }
 
   implicit class EServiceAttributesSeedConverter(private val esa: EServiceAttributesSeed) extends AnyVal {
-    def toProcess: CatalogProcessAttributesSeed = CatalogProcess.AttributesSeed(
+    def toProcess: CatalogProcess.AttributesSeed = CatalogProcess.AttributesSeed(
       certified = esa.certified.map(_.toProcess),
       declared = esa.declared.map(_.toProcess),
       verified = esa.verified.map(_.toProcess)
@@ -59,7 +49,7 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceSeedConverter(private val es: EServiceSeed) extends AnyVal {
-    def toProcess: CatalogProcessESeed = CatalogProcess.EServiceSeed(
+    def toProcess: CatalogProcess.EServiceSeed = CatalogProcess.EServiceSeed(
       name = es.name,
       description = es.description,
       technology = es.technology.toProcess,
@@ -68,7 +58,7 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed) extends AnyVal {
-    def toProcess: CatalogProcessEServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
+    def toProcess: CatalogProcess.EServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
       description = seed.description,
       audience = seed.audience,
       voucherLifespan = seed.voucherLifespan,
@@ -78,7 +68,7 @@ object CatalogProcessServiceTypes {
     )
   }
 
-  implicit class EServiceConverter(private val coes: CatalogProcessEService) extends AnyVal {
+  implicit class EServiceConverter(private val coes: CatalogProcess.EService) extends AnyVal {
     def toApi: CreatedResource                                               = CreatedResource(id = coes.id)
     def toApiWithDescriptorId(descriptorId: UUID): CreatedEServiceDescriptor =
       CreatedEServiceDescriptor(id = coes.id, descriptorId = descriptorId)
@@ -219,7 +209,7 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class UpdateEServiceDescriptorSeedConverter(private val usds: UpdateEServiceDescriptorSeed) extends AnyVal {
-    def toProcess: CatalogProcessUpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed(
+    def toProcess: CatalogProcess.UpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed(
       description = usds.description,
       audience = usds.audience,
       voucherLifespan = usds.voucherLifespan,
