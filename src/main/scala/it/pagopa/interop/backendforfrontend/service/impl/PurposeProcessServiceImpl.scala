@@ -214,4 +214,15 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Updating purpose $id")
   }
+
+  override def retrieveLatestRiskAnalysisConfiguration()(implicit
+    contexts: Seq[(String, String)]
+  ): Future[RiskAnalysisFormConfigResponse] = withHeaders[RiskAnalysisFormConfigResponse] {
+    (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[RiskAnalysisFormConfigResponse] =
+        api.retrieveLatestRiskAnalysisConfiguration(xCorrelationId = correlationId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Retrieving latest risk analysis configuration")
+  }
 }

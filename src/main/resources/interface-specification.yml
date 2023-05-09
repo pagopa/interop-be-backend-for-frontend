@@ -8279,6 +8279,54 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /purposes/riskAnalysis/latest:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      tags:
+        - purposes
+      operationId: retrieveLatestRiskAnalysisConfiguration
+      description: Retrieve latest risk analysis configuration
+      responses:
+        '200':
+          description: Risk analysis requested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAnalysisFormConfig'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/status':
     get:
       security: []
@@ -8308,6 +8356,90 @@ components:
       schema:
         type: string
   schemas:
+    RiskAnalysisFormConfig:
+      type: object
+      properties:
+        version: 
+          type: string
+        questions: 
+          type: array
+          items:
+            $ref: '#/components/schemas/FormConfigQuestion'
+      required:
+        - version
+        - questions 
+    FormConfigQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        label: 
+          $ref: '#/components/schemas/LocalizedText'
+        infoLabel: 
+          $ref: '#/components/schemas/LocalizedText'
+        dataType: 
+          $ref: '#/components/schemas/DataType'
+        required:
+          type: boolean
+        dependencies: 
+          type: array
+          items:
+            $ref: '#/components/schemas/Dependency'
+        visualType:
+          type: string
+        defaultValue:
+          type: array
+          items:
+            type: string
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabeledValue'    
+      required:
+        - id
+        - label
+        - dataType
+        - required
+        - dependencies
+        - visualType
+        - defaultValue
+    LabeledValue:
+      type: object
+      properties:
+        label:
+          $ref: '#/components/schemas/LocalizedText'
+        value:
+          type: string
+      required:
+        - label
+        - value      
+    LocalizedText:
+      type: object
+      properties:
+        it:
+          type: string
+        en:
+          type: string
+      required:
+        - it
+        - en
+    DataType:
+      type: string
+      description: Data Type Question
+      enum:
+        - SINGLE
+        - MULTI
+        - FREETEXT
+    Dependency:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: string
+      required:
+        - id
+        - value
     UpdateEServiceSeed:
       type: object
       required:
