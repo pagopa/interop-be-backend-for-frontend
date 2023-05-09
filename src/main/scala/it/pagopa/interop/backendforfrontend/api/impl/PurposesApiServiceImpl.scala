@@ -511,4 +511,24 @@ final case class PurposesApiServiceImpl(
       }
     }
   }
+
+  override def retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerRiskAnalysisFormConfig: ToEntityMarshaller[RiskAnalysisFormConfig]
+  ): Route = {
+    logger.info(s"Retrieving risk analysis latest configuration for version $riskAnalysisVersion")
+
+    val result: Future[RiskAnalysisFormConfig] = purposeProcessService
+      .retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion)
+      .map(_.toApi)
+
+    onComplete(result) {
+      handleError(s"Error retrieving risk analysis configuration for version $riskAnalysisVersion") orElse {
+        case Success(response) =>
+          retrieveRiskAnalysisConfigurationByVersion200(response)
+      }
+    }
+  }
+
 }

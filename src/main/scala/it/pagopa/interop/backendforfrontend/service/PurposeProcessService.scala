@@ -66,4 +66,8 @@ trait PurposeProcessService {
     contexts: Seq[(String, String)]
   ): Future[RiskAnalysisFormConfigResponse]
 
+  def retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[RiskAnalysisFormConfigResponse]
+
 }
