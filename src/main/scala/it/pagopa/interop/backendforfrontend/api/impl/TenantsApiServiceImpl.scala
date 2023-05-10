@@ -210,4 +210,23 @@ final case class TenantsApiServiceImpl(
       }
     }
   }
+
+  override def updateRenewalStrategyVerifiedAttribute(
+    tenantId: String,
+    attributeId: String,
+    seed: RenewalVerifiedTenantAttributeSeed
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] = for {
+      tenantUuid    <- tenantId.toFutureUUID
+      attributeUuid <- attributeId.toFutureUUID
+      _ <- tenantProcessService.updateRenewalStrategyVerifiedAttribute(tenantUuid, seed.toSeed(attributeUuid)).void
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error updating renewal strategy for verified attribute ${attributeId} to tenant $tenantId") orElse {
+        case Success(_) =>
+          updateRenewalStrategyVerifiedAttribute204
+      }
+    }
+  }
 }

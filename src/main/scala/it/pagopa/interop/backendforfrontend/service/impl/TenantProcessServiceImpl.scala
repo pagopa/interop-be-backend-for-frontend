@@ -139,4 +139,18 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Getting consumers with name $name, limit $limit, offset $offset")
     }
+
+  override def updateRenewalStrategyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenant] =
+    withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Tenant] =
+        api.updateRenewalStrategyVerifiedAttribute(
+          xCorrelationId = correlationId,
+          tenantId = tenantId,
+          verifiedTenantAttributeSeed = seed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Updating renewal strategy for verified attribute ${seed.id} to $tenantId")
+    }
 }
