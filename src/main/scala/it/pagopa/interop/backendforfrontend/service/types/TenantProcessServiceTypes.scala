@@ -185,8 +185,7 @@ object TenantProcessServiceTypes {
 
   implicit class RenewalVerifiedTenantAttributeSeedConverter(private val seed: RenewalVerifiedTenantAttributeSeed)
       extends AnyVal {
-    def toSeed(id: UUID): TenantProcess.VerifiedTenantAttributeSeed = TenantProcess.VerifiedTenantAttributeSeed(
-      id = id,
+    def toSeed: TenantProcess.UpdateVerifiedTenantAttributeSeed = TenantProcess.UpdateVerifiedTenantAttributeSeed(
       renewal = seed.renewal.toSeed,
       expirationDate = seed.expirationDate
     )

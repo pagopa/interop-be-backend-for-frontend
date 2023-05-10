@@ -13,7 +13,8 @@ import it.pagopa.interop.tenantprocess.client.model.{
   Tenant,
   TenantDelta,
   Tenants,
-  VerifiedTenantAttributeSeed
+  VerifiedTenantAttributeSeed,
+  UpdateVerifiedTenantAttributeSeed
 }
 
 import java.util.UUID
@@ -140,17 +141,18 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       invoker.invoke(request, s"Getting consumers with name $name, limit $limit, offset $offset")
     }
 
-  override def updateRenewalStrategyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
-    contexts: Seq[(String, String)]
+  override def updateVerifiedAttribute(tenantId: UUID, attributeId: UUID, seed: UpdateVerifiedTenantAttributeSeed)(
+    implicit contexts: Seq[(String, String)]
   ): Future[Tenant] =
     withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Tenant] =
-        api.updateRenewalStrategyVerifiedAttribute(
+        api.updateVerifiedAttribute(
           xCorrelationId = correlationId,
           tenantId = tenantId,
-          verifiedTenantAttributeSeed = seed,
+          attributeId = attributeId,
+          updateVerifiedTenantAttributeSeed = seed,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Updating renewal strategy for verified attribute ${seed.id} to $tenantId")
+      invoker.invoke(request, s"Updating verified attribute $attributeId to $tenantId")
     }
 }

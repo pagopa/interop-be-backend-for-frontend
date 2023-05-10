@@ -219,7 +219,7 @@ final case class TenantsApiServiceImpl(
     val result: Future[Unit] = for {
       tenantUuid    <- tenantId.toFutureUUID
       attributeUuid <- attributeId.toFutureUUID
-      _ <- tenantProcessService.updateRenewalStrategyVerifiedAttribute(tenantUuid, seed.toSeed(attributeUuid)).void
+      _             <- tenantProcessService.updateVerifiedAttribute(tenantUuid, attributeUuid, seed.toSeed).void
     } yield ()
 
     onComplete(result) {
