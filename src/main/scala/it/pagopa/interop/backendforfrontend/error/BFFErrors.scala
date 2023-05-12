@@ -94,4 +94,16 @@ object BFFErrors {
 
   final case class PurposeNotFound(purposeId: UUID) extends ComponentError("0021", s"Purpose $purposeId not found")
 
+  final case class PrivacyNoticeNotFoundInConfiguration(privacyNoticeId: String)
+      extends ComponentError("0022", s"PrivacyNotice $privacyNoticeId not found in configuration")
+
+  final case class PrivacyNoticeNotFound(privacyNoticeId: UUID)
+      extends ComponentError("0023", s"PrivacyNotice $privacyNoticeId not found")
+
+  final case class PrivacyNoticeVersionIsNotTheLatest(versionId: UUID)
+      extends ComponentError("0024", s"PrivacyNotice version $versionId not found")
+
+  final case class DynamoReadingError(message: String)
+      extends ComponentError("0025", s"Error while reading data from Dynamo -> $message")
+
 }

@@ -8399,6 +8399,124 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /user/consent/{consentType}:
+    parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+        - $ref: '#/components/parameters/IpAddress'
+        - name: consentType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ConsentType'
+    get:
+        tags:
+          - privacyNotices
+        operationId: getPrivacyNotice
+        description: Retrieve a specified version of privacy notice
+        responses:
+          '200':
+            description: Retrieve Privacy Notice
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PrivacyNotice'
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          '400':
+            description: Bad Request
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/Problem'
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          '404':
+            description: Not found
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/Problem'
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+    post:
+        tags:
+          - privacyNotices
+        operationId: approvePrivacyNotice
+        description: User approve a privacy notice
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyNoticeSeed'
+        responses:
+          '204':
+            description: Privacy Notices inserted or updated
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          '400':
+            description: Bad Request
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/Problem'
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/status':
     get:
       security: []
@@ -8428,6 +8546,45 @@ components:
       schema:
         type: string
   schemas:
+    PrivacyNotice:
+      type: object
+      properties:
+        id: 
+          type: string
+          format: uuid
+        userId: 
+          type: string
+          format: uuid
+        consentType:
+          $ref: '#/components/schemas/ConsentType'
+        firstAccept:
+          type: boolean
+        isUpdated:
+          type: boolean
+        latestVersionId:
+          type: string
+          format: uuid
+      required:
+        - id
+        - userId
+        - consentType
+        - firstAccept
+        - isUpdated
+        - latestVersionId
+    ConsentType:
+      type: string
+      description: Consent Type
+      enum:
+        - PP
+        - TOS
+    PrivacyNoticeSeed:
+      type: object
+      properties:
+        latestVersionId: 
+          type: string
+          format: uuid
+      required:
+        - latestVersionId    
     RiskAnalysisFormConfig:
       type: object
       properties:

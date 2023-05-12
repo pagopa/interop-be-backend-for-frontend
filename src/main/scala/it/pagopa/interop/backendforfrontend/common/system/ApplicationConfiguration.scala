@@ -83,4 +83,8 @@ object ApplicationConfiguration {
   val allowListPath: String              = config.getString("backend-for-frontend.storage.allow-list.path")
   val allowListFilename: String          = config.getString("backend-for-frontend.storage.allow-list.filename")
   val selfcareProductId: String          = config.getString("backend-for-frontend.selfcare-product-id")
+
+  val privacyNoticePpUuid: String    = config.getString("backend-for-frontend.privacy-notices.pp-uuid")
+  val privacyNoticeTosUuid: String   = config.getString("backend-for-frontend.privacy-notices.tos-uuid")
+  val privacyNoticeTableName: String = config.getString("backend-for-frontend.privacy-notices.table-name")
 }
