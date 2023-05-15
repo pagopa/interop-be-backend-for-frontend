@@ -7,7 +7,9 @@ import java.util.UUID
 import java.time.OffsetDateTime
 
 final case class UserPrivacyNotice(
-  id: UUID,
+  pk: String,
+  sk: String,
+  pnId: UUID,
   userId: UUID,
   acceptedAt: OffsetDateTime,
   version: UserPrivacyNoticeVersion

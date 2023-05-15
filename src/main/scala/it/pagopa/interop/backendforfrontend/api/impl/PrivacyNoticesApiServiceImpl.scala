@@ -41,7 +41,7 @@ final case class PrivacyNoticesApiServiceImpl(
       ctype    <- ConsentType.fromValue(consentType).toFuture
       ppId     <- consentTypeMap.get(ctype).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
       ppUuid   <- ppId.toFutureUUID
-      latest   <- privacyNoticesService.getLatestVersion(ppUuid).flatMap(_.toFuture(PrivacyNoticeNotFound(ppUuid)))
+      latest   <- privacyNoticesService.getLatestVersion(ppUuid).flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
       userPrivacyNotice <- privacyNoticesService.getByUserId(ppUuid, userUuid)
       apiPrivacy = userPrivacyNotice.fold(
         PrivacyNotice(
@@ -77,15 +77,17 @@ final case class PrivacyNoticesApiServiceImpl(
     val result: Future[Unit] = for {
       userUuid <- getUidFutureUUID(contexts)
       ctype    <- ConsentType.fromValue(consentType).toFuture
-      ppId     <- consentTypeMap.get(ctype).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
-      ppUuid   <- ppId.toFutureUUID
-      latest   <- privacyNoticesService.getLatestVersion(ppUuid).flatMap(_.toFuture(PrivacyNoticeNotFound(ppUuid)))
+      pnId     <- consentTypeMap.get(ctype).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
+      pnUuid   <- pnId.toFutureUUID
+      latest   <- privacyNoticesService.getLatestVersion(pnUuid).flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
       _        <- Future
         .failed(PrivacyNoticeVersionIsNotTheLatest(seed.latestVersionId))
         .unlessA(latest.privacyNoticeVersion.versionId == seed.latestVersionId)
       _        <- privacyNoticesService.put(
         PersistentModel.UserPrivacyNotice(
-          id = ppUuid,
+          pk = s"${PersistentModel.UserPrivacyNotice.pkPrefix}$pnUuid",
+          sk = s"${PersistentModel.UserPrivacyNotice.skPrefix}$userUuid",
+          pnId = pnUuid,
           userId = userUuid,
           acceptedAt = OffsetDateTimeSupplier.get(),
           version = PersistentModel.UserPrivacyNoticeVersion(

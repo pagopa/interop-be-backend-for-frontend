@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 final case class PrivacyNotice(
   pk: String,
   sk: String,
-  id: UUID,
+  pnId: UUID,
   createdDate: OffsetDateTime,
   lastPublishedDate: OffsetDateTime,
   organizationId: UUID,
