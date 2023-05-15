@@ -8474,7 +8474,7 @@ paths:
     post:
         tags:
           - privacyNotices
-        operationId: approvePrivacyNotice
+        operationId: acceptPrivacyNotice
         description: User approve a privacy notice
         requestBody:
           required: true
@@ -8484,7 +8484,7 @@ paths:
                 $ref: '#/components/schemas/PrivacyNoticeSeed'
         responses:
           '204':
-            description: Privacy Notices inserted or updated
+            description: Privacy Notices accepted
             headers:
               'X-Rate-Limit-Limit':
                 schema:

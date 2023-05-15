@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 final case class UserPrivacyNotice(
   id: UUID,
   userId: UUID,
-  approvedDate: OffsetDateTime,
+  acceptedAt: OffsetDateTime,
   version: UserPrivacyNoticeVersion
 )
 

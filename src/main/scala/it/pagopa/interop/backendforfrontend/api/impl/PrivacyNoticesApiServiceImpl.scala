@@ -68,11 +68,11 @@ final case class PrivacyNoticesApiServiceImpl(
     }
   }
 
-  override def approvePrivacyNotice(consentType: String, seed: PrivacyNoticeSeed)(implicit
+  override def acceptPrivacyNotice(consentType: String, seed: PrivacyNoticeSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    logger.info(s"Approve privacy notices for consentType $consentType")
+    logger.info(s"Accept privacy notices for consentType $consentType")
 
     val result: Future[Unit] = for {
       userUuid <- getUidFutureUUID(contexts)
@@ -87,7 +87,7 @@ final case class PrivacyNoticesApiServiceImpl(
         PersistentModel.UserPrivacyNotice(
           id = ppUuid,
           userId = userUuid,
-          approvedDate = OffsetDateTimeSupplier.get(),
+          acceptedAt = OffsetDateTimeSupplier.get(),
           version = PersistentModel.UserPrivacyNoticeVersion(
             versionId = seed.latestVersionId,
             kind = ctype.toPersistent,
@@ -98,8 +98,8 @@ final case class PrivacyNoticesApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error Approving privacy notices for consentType $consentType") orElse { case Success(_) =>
-        approvePrivacyNotice204(_)
+      handleError(s"Error accepting privacy notices for consentType $consentType") orElse { case Success(_) =>
+        acceptPrivacyNotice204(_)
       }
     }
   }
