@@ -86,7 +86,7 @@ final case class PrivacyNoticesApiServiceImpl(
       _        <- privacyNoticesService.put(
         PersistentModel.UserPrivacyNotice(
           pk = s"${PersistentModel.UserPrivacyNotice.pkPrefix}$pnUuid",
-          sk = s"${PersistentModel.UserPrivacyNotice.skPrefix}$userUuid",
+          sk = s"${PersistentModel.UserPrivacyNotice.skPrefix}$userUuid#${latest.privacyNoticeVersion.version}",
           pnId = pnUuid,
           userId = userUuid,
           acceptedAt = OffsetDateTimeSupplier.get(),

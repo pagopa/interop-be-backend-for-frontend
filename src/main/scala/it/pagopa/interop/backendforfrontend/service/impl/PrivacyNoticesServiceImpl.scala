@@ -7,6 +7,7 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import org.scanamo.DynamoReadError.describe
 import org.scanamo._
 import org.scanamo.syntax._
+import org.scanamo.ops.ScanamoOps
 import it.pagopa.interop.backendforfrontend.service.PrivacyNoticesService
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.DynamoReadingError
 import it.pagopa.interop.backendforfrontend.service.model.{PrivacyNotice, UserPrivacyNotice}
@@ -40,14 +41,16 @@ class PrivacyNoticesServiceImpl(tableName: String)(implicit ec: ExecutionContext
     contexts: Seq[(String, String)]
   ): Future[Option[UserPrivacyNotice]] = {
     logger.info(s"Getting privacy notice with id ${id.toString} for user ${userId.toString}")
-    scanamo
-      .exec {
-        userTable.get("pk" === s"${UserPrivacyNotice.pkPrefix}$id" and "sk" === s"${UserPrivacyNotice.skPrefix}$userId")
-      }
-      .flatMap {
-        case Some(value) => value.leftMap(err => DynamoReadingError(describe(err))).toFuture.some.sequence
-        case None        => Future.successful(None)
-      }
+
+    val query: ScanamoOps[List[Either[DynamoReadError, UserPrivacyNotice]]] =
+      userTable.query(
+        "pk" === s"${UserPrivacyNotice.pkPrefix}$id" and ("sk" beginsWith s"${UserPrivacyNotice.skPrefix}$userId")
+      )
+
+    scanamo.exec(query).map(x => x.sequence).flatMap {
+      case Left(err)   => Future.failed(DynamoReadingError(describe(err)))
+      case Right(list) => Future.successful(list.maxByOption(_.version.version))
+    }
   }
   override def put(userPrivacyNotice: UserPrivacyNotice)(implicit contexts: Seq[(String, String)]): Future[Unit]   = {
     logger.info(s"Putting $userPrivacyNotice privacy notice")
