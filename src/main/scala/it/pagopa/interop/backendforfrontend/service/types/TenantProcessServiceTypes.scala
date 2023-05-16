@@ -182,4 +182,12 @@ object TenantProcessServiceTypes {
       contactMail = t.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
     )
   }
+
+  implicit class RenewalVerifiedTenantAttributeSeedConverter(private val seed: RenewalVerifiedTenantAttributeSeed)
+      extends AnyVal {
+    def toSeed: TenantProcess.UpdateVerifiedTenantAttributeSeed = TenantProcess.UpdateVerifiedTenantAttributeSeed(
+      renewal = seed.renewal.toSeed,
+      expirationDate = seed.expirationDate
+    )
+  }
 }
