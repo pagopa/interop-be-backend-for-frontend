@@ -52,6 +52,7 @@ class PrivacyNoticesServiceImpl(tableName: String)(implicit ec: ExecutionContext
       case Right(list) => Future.successful(list.maxByOption(_.version.version))
     }
   }
+  
   override def put(userPrivacyNotice: UserPrivacyNotice)(implicit contexts: Seq[(String, String)]): Future[Unit]   = {
     logger.info(s"Putting $userPrivacyNotice privacy notice")
     scanamo.exec(userTable.put(userPrivacyNotice))
