@@ -28,10 +28,12 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   PartyApiServiceImpl,
   PurposesApiMarshallerImpl,
   PurposesApiServiceImpl,
-  TenantsApiMarshallerImpl,
-  TenantsApiServiceImpl,
   SelfcareApiMarshallerImpl,
   SelfcareApiServiceImpl,
+  TenantsApiMarshallerImpl,
+  TenantsApiServiceImpl,
+  ToolsApiMarshallerImpl,
+  ToolsApiServiceImpl,
   entityMarshallerProblem,
   problemOf,
   serviceErrorCodePrefix
@@ -149,6 +151,8 @@ trait Dependencies {
       new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
     val purposeProcess: PurposeProcessService                           =
       new PurposeProcessServiceImpl(ApplicationConfiguration.purposeProcessURL, blockingEc)
+    val authorizationManagement: AuthorizationManagementService         =
+      new AuthorizationManagementServiceImpl(ApplicationConfiguration.authorizationManagementURL, blockingEc)
     val authorizationProcess: AuthorizationProcessService               =
       new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
     val selfcareClient: SelfcareClientService                           =
@@ -260,6 +264,9 @@ trait Dependencies {
         oauthAndRateLimitingDirective
       )
 
+    val toolsApi: ToolsApi =
+      new ToolsApi(ToolsApiServiceImpl(authorizationManagement), ToolsApiMarshallerImpl, oauthAndRateLimitingDirective)
+
     new Controller(
       attributes = attributesApi,
       authorization = authorizationApi,
@@ -270,6 +277,7 @@ trait Dependencies {
       purposes = purposesApi,
       clients = clientsApi,
       party = partyApi,
+      tools = toolsApi,
       health = healthApi,
       validationExceptionToRoute = validationExceptionToRoute.some
     )(actorSystem.classicSystem)

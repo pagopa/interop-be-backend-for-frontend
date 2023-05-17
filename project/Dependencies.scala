@@ -32,6 +32,8 @@ object Dependencies {
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
     lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
+    lazy val clientAssertionValidation =
+      namespace %% "interop-be-client-assertion-validation" % authorizationManagementVersion
 
     lazy val authorizationProcessClient =
       namespace %% "interop-be-authorization-process-client" % authorizationProcessVersion
@@ -74,7 +76,7 @@ object Dependencies {
 
     lazy val selfcareV2Client =
       namespace %% "interop-selfcare-v2-client" % selfcareV2ClientVersion
-  
+
   }
 
   private[this] object cats {
@@ -113,7 +115,7 @@ object Dependencies {
     lazy val namespace = "org.scalamock"
     lazy val core      = namespace %% "scalamock" % scalaMockVersion
   }
-  private[this] object tika {
+  private[this] object tika      {
     lazy val namespace = "org.apache.tika"
     lazy val core      = namespace % "tika-core" % tikaVersion
   }
@@ -123,7 +125,7 @@ object Dependencies {
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
     lazy val `server`: Seq[ModuleID]  = Seq(
       // For making Java 12 happy
-      "javax.annotation"               % "javax.annotation-api" % "1.3.2" % "compile",
+      "javax.annotation"                       % "javax.annotation-api" % "1.3.2" % "compile",
       //
       akka.actor                               % Compile,
       akka.actorTyped                          % Compile,
@@ -140,6 +142,7 @@ object Dependencies {
       pagopa.commonsUtils                      % Compile,
       pagopa.jwt                               % Compile,
       pagopa.rateLimiter                       % Compile,
+      pagopa.clientAssertionValidation         % Compile,
       pagopa.authorizationProcessClient        % Compile,
       pagopa.agreementProcessClient            % Compile,
       pagopa.agreementProcessLifecycle         % Compile,

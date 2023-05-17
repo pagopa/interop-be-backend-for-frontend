@@ -94,4 +94,10 @@ object BFFErrors {
 
   final case class PurposeNotFound(purposeId: UUID) extends ComponentError("0021", s"Purpose $purposeId not found")
 
+  final case class KidNotFound(clientId: UUID, kid: String)
+      extends ComponentError("0022", s"Kid $kid not found in Client $clientId")
+
+  final case class OrganizationNotAllowed(clientId: UUID)
+      extends ComponentError("0023", s"Organization not allowed for Client $clientId")
+
 }
