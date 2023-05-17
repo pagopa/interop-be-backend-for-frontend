@@ -13,7 +13,8 @@ import it.pagopa.interop.tenantprocess.client.model.{
   Tenant,
   TenantDelta,
   Tenants,
-  VerifiedTenantAttributeSeed
+  VerifiedTenantAttributeSeed,
+  UpdateVerifiedTenantAttributeSeed
 }
 
 import java.util.UUID
@@ -138,5 +139,20 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
           offset = offset
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Getting consumers with name $name, limit $limit, offset $offset")
+    }
+
+  override def updateVerifiedAttribute(tenantId: UUID, attributeId: UUID, seed: UpdateVerifiedTenantAttributeSeed)(
+    implicit contexts: Seq[(String, String)]
+  ): Future[Tenant] =
+    withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Tenant] =
+        api.updateVerifiedAttribute(
+          xCorrelationId = correlationId,
+          tenantId = tenantId,
+          attributeId = attributeId,
+          updateVerifiedTenantAttributeSeed = seed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Updating verified attribute $attributeId to $tenantId")
     }
 }
