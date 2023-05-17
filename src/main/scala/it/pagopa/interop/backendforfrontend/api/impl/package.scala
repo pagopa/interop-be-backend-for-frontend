@@ -209,8 +209,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val renewalVerifiedTenantAttributeSeedFormat: RootJsonFormat[RenewalVerifiedTenantAttributeSeed] =
     jsonFormat2(RenewalVerifiedTenantAttributeSeed)
 
-//  implicit val accessTokenRequestFormat: RootJsonFormat[AccessTokenRequest] = jsonFormat4(AccessTokenRequest)
-
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
   final val entityMarshallerFile: ToEntityMarshaller[File] =
