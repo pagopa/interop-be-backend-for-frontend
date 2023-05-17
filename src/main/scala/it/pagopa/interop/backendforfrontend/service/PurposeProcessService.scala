@@ -61,4 +61,13 @@ trait PurposeProcessService {
   def updatePurpose(id: UUID, purposeUpdateContent: PurposeUpdateContent)(implicit
     contexts: Seq[(String, String)]
   ): Future[Purpose]
+
+  def retrieveLatestRiskAnalysisConfiguration()(implicit
+    contexts: Seq[(String, String)]
+  ): Future[RiskAnalysisFormConfigResponse]
+
+  def retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[RiskAnalysisFormConfigResponse]
+
 }
