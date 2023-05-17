@@ -9189,11 +9189,17 @@ components:
           type: string
         description:
           type: string
+        isFreeOfCharge:
+          type: boolean
+          default: true
+        freeOfChargeReason:
+          type: string  
       required:
         - eserviceId
         - consumerId
         - title
         - description
+        - isFreeOfCharge
     WaitingForApprovalPurposeVersionUpdateContentSeed:
       type: object
       description: contains the expected payload for purpose version update.
@@ -9405,6 +9411,10 @@ components:
           type: boolean
         suspendedByProducer:
           type: boolean
+        isFreeOfCharge:
+          type: boolean
+        freeOfChargeReason:
+          type: string    
       required:
         - id
         - title
@@ -9414,6 +9424,7 @@ components:
         - clients
         - eservice
         - agreement
+        - isFreeOfCharge
     PurposeAdditionDetailsSeed:
       type: object
       properties:
