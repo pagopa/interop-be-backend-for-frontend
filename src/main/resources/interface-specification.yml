@@ -8663,11 +8663,8 @@ components:
           format: jws
         client_assertion_type:
           type: string
-          example: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
         grant_type:
           type: string
-          enum:
-            - client_credentials
     RiskAnalysisFormConfig:
       type: object
       properties:
