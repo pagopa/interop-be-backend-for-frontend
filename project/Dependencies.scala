@@ -44,9 +44,6 @@ object Dependencies {
     lazy val agreementProcessLifecycle =
       namespace %% "interop-be-agreement-process-lifecycle" % agreementProcessVersion
 
-    lazy val catalogManagementClient =
-      namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
-
     lazy val catalogProcessClient =
       namespace %% "interop-be-catalog-process-client" % catalogProcessVersion
 
@@ -146,7 +143,6 @@ object Dependencies {
       pagopa.authorizationProcessClient        % Compile,
       pagopa.agreementProcessClient            % Compile,
       pagopa.agreementProcessLifecycle         % Compile,
-      pagopa.catalogManagementClient           % Compile,
       pagopa.catalogProcessClient              % Compile,
       pagopa.partyProcessClient                % Compile,
       pagopa.partyManagementClient             % Compile,

@@ -3,6 +3,7 @@ package it.pagopa.interop.backendforfrontend.service.types
 import it.pagopa.interop._
 import it.pagopa.interop.backendforfrontend.model.AttributeKind.{CERTIFIED, DECLARED, VERIFIED}
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeProcess}
+import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeModel}
 import it.pagopa.interop.backendforfrontend.model.{
   Attribute,
   AttributeKind,
@@ -14,10 +15,10 @@ import it.pagopa.interop.backendforfrontend.model.{
 }
 
 object AttributeRegistryServiceTypes {
-  type MgmtAttribute          = attributeregistrymanagement.client.model.Attribute
-  type MgmtAttributesResponse = attributeregistrymanagement.client.model.AttributesResponse
-  type MgmtAttributeKind      = attributeregistrymanagement.client.model.AttributeKind
-  type MgmtAttributeSeed      = attributeregistrymanagement.client.model.AttributeSeed
+  type MgmtAttribute          = AttributeModel.Attribute
+  type MgmtAttributesResponse = AttributeModel.AttributesResponse
+  type MgmtAttributeKind      = AttributeModel.AttributeKind
+  type MgmtAttributeSeed      = AttributeModel.AttributeSeed
 
   private def toModel(kind: MgmtAttributeKind): AttributeKind = kind match {
     case attributeregistrymanagement.client.model.AttributeKind.CERTIFIED => CERTIFIED
@@ -43,7 +44,7 @@ object AttributeRegistryServiceTypes {
     def toApi: CompactAttribute = CompactAttribute(id = attribute.id, name = attribute.name)
   }
 
-  implicit class AttributeConverter(private val attribute: MgmtAttribute) extends AnyVal {
+  implicit class AttributeRegistryManagementConverter(private val attribute: MgmtAttribute) extends AnyVal {
     def toAttribute: Attribute = Attribute(
       id = attribute.id,
       code = attribute.code,
