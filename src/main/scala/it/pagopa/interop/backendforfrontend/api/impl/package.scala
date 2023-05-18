@@ -206,6 +206,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit def riskAnalysisFormConfigFormat: RootJsonFormat[RiskAnalysisFormConfig] =
     jsonFormat2(RiskAnalysisFormConfig)
 
+  implicit val renewalVerifiedTenantAttributeSeedFormat: RootJsonFormat[RenewalVerifiedTenantAttributeSeed] =
+    jsonFormat2(RenewalVerifiedTenantAttributeSeed)
+
   implicit def privacyNoticeFormat: RootJsonFormat[PrivacyNotice]         =
     jsonFormat6(PrivacyNotice)
   implicit def privacyNoticeSeedFormat: RootJsonFormat[PrivacyNoticeSeed] =

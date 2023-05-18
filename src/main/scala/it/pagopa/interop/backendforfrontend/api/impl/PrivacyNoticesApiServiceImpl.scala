@@ -43,23 +43,22 @@ final case class PrivacyNoticesApiServiceImpl(
       ppUuid   <- ppId.toFutureUUID
       latest   <- privacyNoticesService.getLatestVersion(ppUuid).flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
       userPrivacyNotice <- privacyNoticesService.getByUserId(ppUuid, userUuid)
-      apiPrivacy = userPrivacyNotice.fold(
-        PrivacyNotice(
-          id = ppUuid,
-          userId = userUuid,
-          consentType = ctype,
-          firstAccept = true,
-          isUpdated = false,
-          latestVersionId = latest.privacyNoticeVersion.versionId
-        )
-      )(upn =>
-        upn.toApi(
-          firstAccept = false,
-          isUpdated = (latest.privacyNoticeVersion.version > upn.version.version),
-          latestVersionId = latest.privacyNoticeVersion.versionId
-        )
+    } yield userPrivacyNotice.fold(
+      PrivacyNotice(
+        id = ppUuid,
+        userId = userUuid,
+        consentType = ctype,
+        firstAccept = true,
+        isUpdated = false,
+        latestVersionId = latest.privacyNoticeVersion.versionId
       )
-    } yield apiPrivacy
+    )(upn =>
+      upn.toApi(
+        firstAccept = false,
+        isUpdated = (latest.privacyNoticeVersion.version > upn.version.version),
+        latestVersionId = latest.privacyNoticeVersion.versionId
+      )
+    )
 
     onComplete(result) {
       handleError(s"Error retrieving privacy notices for consentType $consentType") orElse { case Success(res) =>
