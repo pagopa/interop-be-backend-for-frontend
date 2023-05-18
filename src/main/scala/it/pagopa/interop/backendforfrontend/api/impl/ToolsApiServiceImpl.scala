@@ -3,7 +3,6 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
-import cats.implicits._
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
@@ -52,9 +51,10 @@ final case class ToolsApiServiceImpl(authorizationManagementService: Authorizati
           clientAssertionValidator
         ).toFuture
         keyWithClient <- authorizationManagementService.getKeyWithClient(checker.subject, checker.kid)
-        _             <- Future
-          .failed(OrganizationNotAllowed(keyWithClient.client.id))
-          .whenA(requesterId != keyWithClient.client.consumerId)
+        _             <-
+          if (requesterId != keyWithClient.client.consumerId)
+            Future.failed(OrganizationNotAllowed(keyWithClient.client.id))
+          else Future.unit
         _             <- verifyClientAssertionSignature(keyWithClient, checker).toFuture
         _             <- verifyPlatformState(keyWithClient.client, checker).toFuture
       } yield ()
