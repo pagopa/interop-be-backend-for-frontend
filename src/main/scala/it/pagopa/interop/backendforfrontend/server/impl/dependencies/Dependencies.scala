@@ -137,8 +137,6 @@ trait Dependencies {
       new AttributeRegistryManagementServiceImpl(ApplicationConfiguration.attributeRegistryManagementURL, blockingEc)
     val agreementProcess: AgreementProcessService                       =
       new AgreementProcessServiceImpl(ApplicationConfiguration.agreementProcessURL, blockingEc)
-    val catalogManagement: CatalogManagementService                     =
-      new CatalogManagementServiceImpl(ApplicationConfiguration.catalogManagementURL, blockingEc)
     val catalogProcess: CatalogProcessService                           =
       new CatalogProcessServiceImpl(ApplicationConfiguration.catalogProcessURL, blockingEc)
     val tenantManagement: TenantManagementService                       =
@@ -203,7 +201,7 @@ trait Dependencies {
       AgreementsApiServiceImpl(
         agreementProcess,
         attributeRegistryManagement,
-        catalogManagement,
+        catalogProcess,
         partyProcess,
         tenantProcess,
         fileManager(blockingEc),
