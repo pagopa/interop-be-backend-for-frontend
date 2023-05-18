@@ -71,7 +71,8 @@ object PurposeProcessServiceTypes {
       updatedAt = pv.updatedAt,
       firstActivationAt = pv.firstActivationAt,
       dailyCalls = pv.dailyCalls,
-      riskAnalysisDocument = pv.riskAnalysis.map(_.toApi)
+      riskAnalysisDocument = pv.riskAnalysis.map(_.toApi),
+      suspendedAt = pv.suspendedAt
     )
   }
 

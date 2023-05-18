@@ -21,9 +21,10 @@ import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
-import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -41,7 +42,7 @@ import scala.util.Success
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
   attributeRegistryService: AttributeRegistryManagementService,
-  catalogManagementService: CatalogManagementService,
+  catalogProcessService: CatalogProcessService,
   partyProcessService: PartyProcessService,
   tenantProcessService: TenantProcessService,
   fileManager: FileManager,
@@ -244,11 +245,11 @@ final case class AgreementsApiServiceImpl(
 
   def parallelGet(agreement: AgreementProcess.Agreement)(implicit
     contexts: Seq[(String, String)]
-  ): Future[(TenantProcess.Tenant, TenantProcess.Tenant, CatalogManagement.EService)] =
+  ): Future[(TenantProcess.Tenant, TenantProcess.Tenant, CatalogProcess.EService)] =
     tenantProcessService
       .getTenant(agreement.consumerId)
       .zip(tenantProcessService.getTenant(agreement.producerId))
-      .zip(catalogManagementService.getEService(agreement.eserviceId))
+      .zip(catalogProcessService.getEServiceById(agreement.eserviceId))
       .map({ case ((consumer, producer), eservice) =>
         (consumer, producer, eservice)
       })
@@ -328,11 +329,12 @@ final case class AgreementsApiServiceImpl(
     rejectionReason = agreement.rejectionReason,
     consumerDocuments = agreement.consumerDocuments.map(_.toApi),
     createdAt = agreement.createdAt,
-    updatedAt = agreement.updatedAt
+    updatedAt = agreement.updatedAt,
+    suspendedAt = agreement.suspendedAt
   )
 
-  def eServiceAttributesIds(eService: CatalogManagement.EService): Seq[UUID] = {
-    val attrs: Seq[CatalogManagement.Attribute] =
+  def eServiceAttributesIds(eService: CatalogProcess.EService): Seq[UUID] = {
+    val attrs: Seq[CatalogProcess.Attribute] =
       eService.attributes.verified ++ eService.attributes.declared ++ eService.attributes.certified
     attrs
       .mapFilter(a =>
