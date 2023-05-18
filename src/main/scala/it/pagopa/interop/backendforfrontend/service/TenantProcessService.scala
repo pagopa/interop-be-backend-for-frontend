@@ -30,4 +30,8 @@ trait TenantProcessService {
   ): Future[Tenants]
 
   def updateTenant(tenantId: UUID, tenantDelta: TenantDelta)(implicit contexts: Seq[(String, String)]): Future[Unit]
+
+  def updateVerifiedAttribute(tenantId: UUID, attributeId: UUID, seed: UpdateVerifiedTenantAttributeSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenant]
 }
