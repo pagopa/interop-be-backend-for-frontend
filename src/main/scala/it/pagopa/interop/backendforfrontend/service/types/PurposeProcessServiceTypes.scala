@@ -35,7 +35,9 @@ object PurposeProcessServiceTypes {
       consumerId = seed.consumerId,
       riskAnalysisForm = seed.riskAnalysisForm.map(_.toProcess),
       title = seed.title,
-      description = seed.description
+      description = seed.description,
+      isFreeOfCharge = seed.isFreeOfCharge,
+      freeOfChargeReason = seed.freeOfChargeReason
     )
   }
 
@@ -121,7 +123,9 @@ object PurposeProcessServiceTypes {
       clients = clients.map(_.toApi),
       waitingForApprovalVersion = waitingForApprovalVersion.map(_.toApi),
       suspendedByConsumer = p.suspendedByConsumer,
-      suspendedByProducer = p.suspendedByProducer
+      suspendedByProducer = p.suspendedByProducer,
+      isFreeOfCharge = p.isFreeOfCharge,
+      freeOfChargeReason = p.freeOfChargeReason
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
