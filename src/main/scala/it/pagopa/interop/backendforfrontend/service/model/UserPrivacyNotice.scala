@@ -25,7 +25,17 @@ object PrivacyNoticeKind {
 }
 
 object UserPrivacyNotice {
+
+  /**
+    * PRNO stands for [PR]IVACY [NO]TICE UUID, thus you get soon the meaning of the column
+    */
   val pkPrefix: String = "PRNO#"
+
+  /**
+    * PRNO stands for [USER] UUID, thus you get soon the meaning of the column, 
+    * chained to this you can find the number of the version separate by # , simulating the One To Many cardinality
+    * using a single table pattern
+    */
   val skPrefix: String = "USER#"
 
   implicit val formatPrivacyNoticeKind: DynamoFormat[PrivacyNoticeKind]               = deriveDynamoFormat

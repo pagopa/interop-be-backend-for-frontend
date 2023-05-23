@@ -27,7 +27,15 @@ final case class PrivacyNoticeVersion(
 )
 
 object PrivacyNotice {
-  val pkPrefix: String                                                        = "PRNO#"
+
+  /**
+    * PRNO stands for [PR]IVACY [NO]TICE UUID, thus you get soon the meaning of the column
+    */
+  val pkPrefix: String = "PRNO#"
+
+  /**
+    * LATV stands for [LAT[EST [V]ERSION, thus you get soon the meaning of the column
+    */
   val skPrefix: String                                                        = "LATV#"
   implicit val formatPrivacyNoticeVersion: DynamoFormat[PrivacyNoticeVersion] = deriveDynamoFormat
   implicit val formatPrivacyNotice: DynamoFormat[PrivacyNotice]               = deriveDynamoFormat
