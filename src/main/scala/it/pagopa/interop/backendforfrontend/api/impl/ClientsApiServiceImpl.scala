@@ -337,7 +337,8 @@ final case class ClientsApiServiceImpl(
     name = client.name,
     purposes = purposes,
     description = client.description,
-    kind = client.kind.toApi
+    kind = client.kind.toApi,
+    createdAt = client.createdAt
   )
 
   private def enhancePurpose(

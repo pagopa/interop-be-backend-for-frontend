@@ -243,7 +243,11 @@ final case class EServicesApiServiceImpl(
         activeDescriptor =
           getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
         mail = producerTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
-      )
+      ),
+      publishedAt = descriptor.publishedAt,
+      suspendedAt = descriptor.suspendedAt,
+      deprecatedAt = descriptor.deprecatedAt,
+      archivedAt = descriptor.archivedAt
     )
 
     onComplete(result) {

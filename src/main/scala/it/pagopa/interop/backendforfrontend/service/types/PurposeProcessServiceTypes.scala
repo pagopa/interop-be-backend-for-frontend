@@ -71,7 +71,8 @@ object PurposeProcessServiceTypes {
       updatedAt = pv.updatedAt,
       firstActivationAt = pv.firstActivationAt,
       dailyCalls = pv.dailyCalls,
-      riskAnalysisDocument = pv.riskAnalysis.map(_.toApi)
+      riskAnalysisDocument = pv.riskAnalysis.map(_.toApi),
+      suspendedAt = pv.suspendedAt
     )
   }
 
@@ -122,7 +123,9 @@ object PurposeProcessServiceTypes {
       clients = clients.map(_.toApi),
       waitingForApprovalVersion = waitingForApprovalVersion.map(_.toApi),
       suspendedByConsumer = p.suspendedByConsumer,
-      suspendedByProducer = p.suspendedByProducer
+      suspendedByProducer = p.suspendedByProducer,
+      isFreeOfCharge = p.isFreeOfCharge,
+      freeOfChargeReason = p.freeOfChargeReason
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)

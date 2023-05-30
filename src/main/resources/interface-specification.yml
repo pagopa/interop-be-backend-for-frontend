@@ -8903,6 +8903,18 @@ components:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
         eservice:
           $ref: '#/components/schemas/CatalogDescriptorEService'
+        publishedAt:
+          type: string
+          format: date-time
+        suspendedAt:
+          type: string
+          format: date-time
+        deprecatedAt:
+          type: string
+          format: date-time
+        archivedAt:
+          type: string
+          format: date-time
     Client:
       description: Models Client details
       type: object
@@ -8910,6 +8922,9 @@ components:
         id:
           type: string
           format: uuid
+        createdAt:
+          type: string
+          format: date-time
         consumer:
           $ref: '#/components/schemas/CompactOrganization'
         name:
@@ -8928,7 +8943,8 @@ components:
         - consumer
         - name
         - purposes
-        - kind     
+        - kind
+        - createdAt
     ClientPurpose:
       type: object
       properties:
@@ -9169,6 +9185,9 @@ components:
           type: string
           format: date-time
         updatedAt:
+          type: string
+          format: date-time
+        suspendedAt:
           type: string
           format: date-time
       additionalProperties: false
@@ -9434,6 +9453,10 @@ components:
           type: boolean
         freeOfChargeReason:
           type: string
+        isFreeOfCharge:
+          type: boolean
+        freeOfChargeReason:
+          type: string
       required:
         - eserviceId
         - consumerId
@@ -9651,6 +9674,10 @@ components:
           type: boolean
         suspendedByProducer:
           type: boolean
+        isFreeOfCharge:
+          type: boolean
+        freeOfChargeReason:
+          type: string
       required:
         - id
         - title
@@ -9660,6 +9687,7 @@ components:
         - clients
         - eservice
         - agreement
+        - isFreeOfCharge
     PurposeAdditionDetailsSeed:
       type: object
       properties:
@@ -9829,6 +9857,9 @@ components:
         state:
           $ref: '#/components/schemas/PurposeVersionState'
         createdAt:
+          type: string
+          format: date-time
+        suspendedAt:
           type: string
           format: date-time
         expectedApprovalDate:
