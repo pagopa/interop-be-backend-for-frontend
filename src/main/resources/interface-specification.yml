@@ -3993,8 +3993,12 @@ paths:
             schema:
               $ref: '#/components/schemas/AccessTokenRequest'
       responses:
-        '204':
+        '200':
           description: Request successfully validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenGenerationValidationResult'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -9426,11 +9430,16 @@ components:
           type: string
         description:
           type: string
+        isFreeOfCharge:
+          type: boolean
+        freeOfChargeReason:
+          type: string
       required:
         - eserviceId
         - consumerId
         - title
         - description
+        - isFreeOfCharge
     WaitingForApprovalPurposeVersionUpdateContentSeed:
       type: object
       description: contains the expected payload for purpose version update.
@@ -10503,6 +10512,77 @@ components:
         - verificationDate
         - renewal
         - revocationDate
+    TokenGenerationValidationResult:
+      type: object
+      properties:
+        clientKind:
+          $ref: '#/components/schemas/ClientKind'
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenGenerationValidationEntry'
+        eservice:
+          $ref: '#/components/schemas/TokenGenerationValidationEService'
+      required:
+        - results
+    TokenGenerationValidationEntry:
+      type: object
+      properties:
+        step:
+          $ref: '#/components/schemas/TokenGenerationValidationStep'
+        result:
+          $ref: '#/components/schemas/TokenGenerationValidationStepResult'
+        failures:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenGenerationValidationStepFailure'
+      required:
+        - step
+        - result
+        - failures
+    TokenGenerationValidationStep:
+      type: string
+      description: Token Generation Validation Step
+      enum:
+        - CLIENT_ASSERTION_VALIDATION
+        - PUBLIC_KEY_RETRIEVE
+        - CLIENT_ASSERTION_SIGNATURE_VERIFICATION
+        - PLATFORM_STATES_VERIFICATION
+    TokenGenerationValidationStepResult:
+      type: string
+      description: Token Generation Validation Step RESULT
+      enum:
+        - PASSED
+        - SKIPPED
+        - FAILED
+    TokenGenerationValidationStepFailure:
+      type: object
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+      required:
+        - code
+        - reason
+    TokenGenerationValidationEService:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        descriptorId:
+          type: string
+          format: uuid
+        version:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - descriptorId
+        - version
+        - name
     PublicKey:
       type: object
       properties:

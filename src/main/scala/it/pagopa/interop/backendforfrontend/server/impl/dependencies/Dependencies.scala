@@ -263,7 +263,11 @@ trait Dependencies {
       )
 
     val toolsApi: ToolsApi =
-      new ToolsApi(ToolsApiServiceImpl(authorizationManagement), ToolsApiMarshallerImpl, oauthAndRateLimitingDirective)
+      new ToolsApi(
+        ToolsApiServiceImpl(authorizationManagement, agreementProcess, catalogProcess, purposeProcess),
+        ToolsApiMarshallerImpl,
+        oauthAndRateLimitingDirective
+      )
 
     new Controller(
       attributes = attributesApi,

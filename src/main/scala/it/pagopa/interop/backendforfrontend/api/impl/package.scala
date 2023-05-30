@@ -126,7 +126,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat5(ProducerEServiceDetails)
 
   implicit val riskAnalysisFormFormat: RootJsonFormat[RiskAnalysisForm]             = jsonFormat2(RiskAnalysisForm)
-  implicit val purposeSeedFormat: RootJsonFormat[PurposeSeed]                       = jsonFormat5(PurposeSeed)
+  implicit val purposeSeedFormat: RootJsonFormat[PurposeSeed]                       = jsonFormat7(PurposeSeed)
   implicit val PurposeVersionDocumentFormat: RootJsonFormat[PurposeVersionDocument] = jsonFormat3(
     PurposeVersionDocument
   )
@@ -205,6 +205,15 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat9(FormConfigQuestion)
   implicit def riskAnalysisFormConfigFormat: RootJsonFormat[RiskAnalysisFormConfig] =
     jsonFormat2(RiskAnalysisFormConfig)
+
+  implicit def tokenGenerationValidationStepFailureFormat: RootJsonFormat[TokenGenerationValidationStepFailure] =
+    jsonFormat2(TokenGenerationValidationStepFailure)
+  implicit def tokenGenerationValidationEServiceFormat: RootJsonFormat[TokenGenerationValidationEService]       =
+    jsonFormat4(TokenGenerationValidationEService)
+  implicit def tokenGenerationValidationEntryFormat: RootJsonFormat[TokenGenerationValidationEntry]             =
+    jsonFormat3(TokenGenerationValidationEntry)
+  implicit def tokenGenerationValidationResultFormat: RootJsonFormat[TokenGenerationValidationResult]           =
+    jsonFormat3(TokenGenerationValidationResult)
 
   implicit val renewalVerifiedTenantAttributeSeedFormat: RootJsonFormat[RenewalVerifiedTenantAttributeSeed] =
     jsonFormat2(RenewalVerifiedTenantAttributeSeed)

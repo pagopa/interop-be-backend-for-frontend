@@ -35,7 +35,9 @@ object PurposeProcessServiceTypes {
       consumerId = seed.consumerId,
       riskAnalysisForm = seed.riskAnalysisForm.map(_.toProcess),
       title = seed.title,
-      description = seed.description
+      description = seed.description,
+      isFreeOfCharge = seed.isFreeOfCharge,
+      freeOfChargeReason = seed.freeOfChargeReason
     )
   }
 
