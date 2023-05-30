@@ -6,14 +6,10 @@ import akka.http.scaladsl.server.Route
 import cats.data.NonEmptyList
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.authorizationmanagement.client.model.ClientKind
+import it.pagopa.interop.authorizationmanagement.client.model.KeyWithClient
 import it.pagopa.interop.backendforfrontend.api.ToolsApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  ClientAssertionValidationWrapper,
-  KidNotFound,
-  OrganizationNotAllowed
-}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleTokenValidationError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationManagementServiceTypes._
@@ -29,24 +25,14 @@ import it.pagopa.interop.clientassertionvalidation.Errors.{
   ClientAssertionValidationFailure,
   PlatformStateVerificationFailure
 }
-import it.pagopa.interop.clientassertionvalidation.NimbusClientAssertionValidator
-import it.pagopa.interop.clientassertionvalidation.Validation.{
-  validateClientAssertion,
-  verifyClientAssertionSignature,
-  verifyPlatformState
-}
+import it.pagopa.interop.clientassertionvalidation.model.AssertionValidationResult
+import it.pagopa.interop.clientassertionvalidation.{NimbusClientAssertionValidator, Validation}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.TypeConversions._
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-
-// TODO gli step non dovrebbero essere una lista con enum, ma un oggetto con campi definiti
-
-// TODO
-final case class PublicKeyNotFound(kid: String, clientId: UUID)
-    extends ClientAssertionValidationError("8099", s"Public key with kid $kid not found for client $clientId")
 
 final case class ToolsApiServiceImpl(
   authorizationManagementService: AuthorizationManagementService,
@@ -56,9 +42,8 @@ final case class ToolsApiServiceImpl(
 )(implicit ec: ExecutionContext)
     extends ToolsApiService {
 
-  private val clientAssertionValidator = new NimbusClientAssertionValidator(
-    ApplicationConfiguration.clientAssertionAudience
-  )
+  private val clientAssertionValidator =
+    new NimbusClientAssertionValidator(ApplicationConfiguration.clientAssertionAudience)
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
@@ -76,62 +61,84 @@ final case class ToolsApiServiceImpl(
     val result: Future[TokenGenerationValidationResult] =
       for {
         requesterId   <- getOrganizationIdFutureUUID(contexts)
-        validation    <- validateClientAssertion(clientId, clientAssertion, clientAssertionType, grantType)(
-          clientAssertionValidator
-        ).leftMap(handleValidationResults(clientKind = None, eService = None)).toFuture
-        keyWithClient <- authorizationManagementService
-          .getKeyWithClient(validation.clientAssertion.sub, validation.clientAssertion.kid)
-          .recoverWith { case ex: KidNotFound =>
-            Future.failed(
-              handleValidationResults(clientKind = None, eService = None)(
-                NonEmptyList.one(PublicKeyNotFound(ex.kid, ex.clientId))
-              )
-            )
-          }
-        _             <-
-          if (requesterId != keyWithClient.client.consumerId)
-            Future.failed(OrganizationNotAllowed(keyWithClient.client.id))
-          else Future.unit
+        validation    <- validateClientAssertion(clientId, clientAssertion, clientAssertionType, grantType).toFuture
+        keyWithClient <- getKeyWithClient(validation.clientAssertion.sub, validation.clientAssertion.kid)
+        _             <- assertIsConsumer(requesterId, keyWithClient)
         eService      <- Future.traverse(validation.clientAssertion.purposeId.toList)(getEService).map(_.headOption)
-        _             <- verifyClientAssertionSignature(keyWithClient, validation)(clientAssertionValidator)
-          .leftMap(e =>
-            handleValidationResults(clientKind = keyWithClient.client.kind.some, eService = eService)(
-              NonEmptyList.one(e)
-            )
-          )
-          .toFuture
-        _             <- verifyPlatformState(keyWithClient.client, validation.clientAssertion)
-          .leftMap(handleValidationResults(clientKind = keyWithClient.client.kind.some, eService = eService))
-          .toFuture
-      } yield TokenGenerationValidationResult(
-        clientKind = keyWithClient.client.kind.toApi.some,
-        eservice = eService,
-        results = List(
-          TokenGenerationValidationEntry(
-            step = TokenGenerationValidationStep.CLIENT_ASSERTION_VALIDATION,
-            result = TokenGenerationValidationStepResult.PASSED,
-            failures = Nil
-          ),
-          TokenGenerationValidationEntry(
-            step = TokenGenerationValidationStep.PUBLIC_KEY_RETRIEVE,
-            result = TokenGenerationValidationStepResult.PASSED,
-            failures = Nil
-          ),
-          TokenGenerationValidationEntry(
-            step = TokenGenerationValidationStep.CLIENT_ASSERTION_SIGNATURE_VERIFICATION,
-            result = TokenGenerationValidationStepResult.PASSED,
-            failures = Nil
-          ),
-          TokenGenerationValidationEntry(
-            step = TokenGenerationValidationStep.CLIENT_ASSERTION_VALIDATION,
-            result = TokenGenerationValidationStepResult.PASSED,
-            failures = Nil
-          )
-        )
-      )
+        _             <- verifyClientAssertionSignature(keyWithClient, validation, eService).toFuture
+        _             <- verifyPlatformState(keyWithClient, validation, eService).toFuture
+      } yield successfulValidationResult(clientKind = keyWithClient.client.kind.toApi, eService = eService)
 
     onComplete(result)(
       handleTokenValidationError(s"Error validating token generation request")(validateTokenGeneration200)
+    )
+  }
+
+  private def validateClientAssertion(
+    clientId: Option[String],
+    clientAssertion: String,
+    clientAssertionType: String,
+    grantType: String
+  ): Either[ClientAssertionValidationWrapper, AssertionValidationResult] =
+    Validation
+      .validateClientAssertion(clientId, clientAssertion, clientAssertionType, grantType)(clientAssertionValidator)
+      .leftMap(handleValidationResults(clientKind = None, eService = None))
+
+  private def getKeyWithClient(clientId: UUID, kid: String)(implicit
+    ec: ExecutionContext,
+    contexts: Seq[(String, String)]
+  ): Future[KeyWithClient] =
+    authorizationManagementService
+      .getKeyWithClient(clientId, kid)
+      .recoverWith { case ex: KidNotFound =>
+        Future.failed(
+          handleValidationResults(clientKind = None, eService = None)(
+            NonEmptyList.one(ClientAssertionPublicKeyNotFound(ex.kid, ex.clientId))
+          )
+        )
+      }
+
+  private def verifyClientAssertionSignature(
+    keyWithClient: KeyWithClient,
+    validation: AssertionValidationResult,
+    eService: Option[TokenGenerationValidationEService]
+  ): Either[ClientAssertionValidationWrapper, Unit] = Validation
+    .verifyClientAssertionSignature(keyWithClient, validation)(clientAssertionValidator)
+    .leftMap(e =>
+      handleValidationResults(clientKind = keyWithClient.client.kind.toApi.some, eService = eService)(
+        NonEmptyList.one(e)
+      )
+    )
+
+  private def verifyPlatformState(
+    keyWithClient: KeyWithClient,
+    validation: AssertionValidationResult,
+    eService: Option[TokenGenerationValidationEService]
+  ): Either[ClientAssertionValidationWrapper, Unit] = Validation
+    .verifyPlatformState(keyWithClient.client, validation.clientAssertion)
+    .leftMap(handleValidationResults(clientKind = keyWithClient.client.kind.toApi.some, eService = eService))
+
+  private def assertIsConsumer(requesterId: UUID, keyWithClient: KeyWithClient): Future[Unit] =
+    if (requesterId != keyWithClient.client.consumerId)
+      Future.failed(OrganizationNotAllowed(keyWithClient.client.id))
+    else Future.unit
+
+  private def successfulValidationResult(
+    clientKind: ClientKind,
+    eService: Option[TokenGenerationValidationEService]
+  ) = {
+    val successfulStep =
+      TokenGenerationValidationEntry(result = TokenGenerationValidationStepResult.PASSED, failures = Nil)
+
+    TokenGenerationValidationResult(
+      clientKind = clientKind.some,
+      eservice = eService,
+      steps = TokenGenerationValidationSteps(
+        clientAssertionValidation = successfulStep,
+        publicKeyRetrieve = successfulStep,
+        clientAssertionSignatureVerification = successfulStep,
+        platformStatesVerification = successfulStep
+      )
     )
   }
 
@@ -140,7 +147,7 @@ final case class ToolsApiServiceImpl(
     eService: Option[TokenGenerationValidationEService]
   )(errors: NonEmptyList[ClientAssertionValidationError]): ClientAssertionValidationWrapper = {
     val clientAssertionValidationErrors = errors.collect { case e: ClientAssertionValidationFailure => e }
-    val keyRetrieveErrors               = errors.collect { case e: PublicKeyNotFound => e }
+    val keyRetrieveErrors               = errors.collect { case e: ClientAssertionPublicKeyNotFound => e }
     val clientAssertionSignatureErrors  = errors.collect { case e: ClientAssertionSignatureVerificationFailure => e }
     val platformStateVerificationErrors = errors.collect { case e: PlatformStateVerificationFailure => e }
 
@@ -154,26 +161,22 @@ final case class ToolsApiServiceImpl(
 
     ClientAssertionValidationWrapper(
       TokenGenerationValidationResult(
-        clientKind = clientKind.map(_.toApi),
+        clientKind = clientKind,
         eservice = eService,
-        results = List(
-          TokenGenerationValidationEntry(
-            step = TokenGenerationValidationStep.CLIENT_ASSERTION_VALIDATION,
+        steps = TokenGenerationValidationSteps(
+          clientAssertionValidation = TokenGenerationValidationEntry(
             result = stepResult(Nil, clientAssertionValidationErrors),
             failures = clientAssertionValidationErrors.map(e => TokenGenerationValidationStepFailure(e.code, e.msg))
           ),
-          TokenGenerationValidationEntry(
-            step = TokenGenerationValidationStep.PUBLIC_KEY_RETRIEVE,
+          publicKeyRetrieve = TokenGenerationValidationEntry(
             result = stepResult(clientAssertionValidationErrors, keyRetrieveErrors),
             failures = keyRetrieveErrors.map(e => TokenGenerationValidationStepFailure(e.code, e.msg))
           ),
-          TokenGenerationValidationEntry(
-            step = TokenGenerationValidationStep.CLIENT_ASSERTION_SIGNATURE_VERIFICATION,
+          clientAssertionSignatureVerification = TokenGenerationValidationEntry(
             result = stepResult(clientAssertionValidationErrors ++ keyRetrieveErrors, clientAssertionSignatureErrors),
             failures = clientAssertionSignatureErrors.map(e => TokenGenerationValidationStepFailure(e.code, e.msg))
           ),
-          TokenGenerationValidationEntry(
-            step = TokenGenerationValidationStep.CLIENT_ASSERTION_VALIDATION,
+          platformStatesVerification = TokenGenerationValidationEntry(
             result = stepResult(
               clientAssertionValidationErrors ++ keyRetrieveErrors ++ clientAssertionSignatureErrors,
               platformStateVerificationErrors
@@ -192,8 +195,10 @@ final case class ToolsApiServiceImpl(
       purpose        <- purposeProcessService.getPurpose(purposeId)
       eService       <- catalogProcessService.getEServiceById(purpose.eserviceId)
       maybeAgreement <- agreementProcessService.getLatestAgreement(consumerId = purpose.consumerId, eService = eService)
-      agreement      <- maybeAgreement.toFuture(new RuntimeException("")) // TODO
-      descriptor <- eService.descriptors.find(_.id == agreement.descriptorId).toFuture(new RuntimeException("")) // TODO
+      agreement      <- maybeAgreement.toFuture(AgreementNotFound(purpose.consumerId))
+      descriptor     <- eService.descriptors
+        .find(_.id == agreement.descriptorId)
+        .toFuture(AgreementDescriptorNotFound(agreement.id))
     } yield TokenGenerationValidationEService(
       id = eService.id,
       descriptorId = agreement.descriptorId,

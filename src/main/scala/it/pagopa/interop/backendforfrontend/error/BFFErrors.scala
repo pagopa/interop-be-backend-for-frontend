@@ -2,6 +2,7 @@ package it.pagopa.interop.backendforfrontend.error
 
 import akka.http.scaladsl.model.ErrorInfo
 import it.pagopa.interop.backendforfrontend.model.TokenGenerationValidationResult
+import it.pagopa.interop.clientassertionvalidation.Errors.ClientAssertionValidationError
 import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
 import it.pagopa.interop.commons.utils.errors.ComponentError
 
@@ -101,10 +102,10 @@ object BFFErrors {
   final case class OrganizationNotAllowed(clientId: UUID)
       extends ComponentError("0023", s"Organization not allowed for Client $clientId")
 
-//  final case class ClientAssertionValidationWrapper(errors: NonEmptyList[ClientAssertionValidationError])
-//      extends ComponentError("0024", errors.toList.mkString(","))
-
   final case class ClientAssertionValidationWrapper(result: TokenGenerationValidationResult)
       extends ComponentError("0024", "Validation results")
+
+  final case class ClientAssertionPublicKeyNotFound(kid: String, clientId: UUID)
+      extends ClientAssertionValidationError("8099", s"Public key with kid $kid not found for client $clientId")
 
 }

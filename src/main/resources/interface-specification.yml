@@ -10517,19 +10517,31 @@ components:
       properties:
         clientKind:
           $ref: '#/components/schemas/ClientKind'
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/TokenGenerationValidationEntry'
+        steps:
+          $ref: '#/components/schemas/TokenGenerationValidationSteps'
         eservice:
           $ref: '#/components/schemas/TokenGenerationValidationEService'
       required:
-        - results
+        - steps
+    TokenGenerationValidationSteps:
+      type: object
+      properties:
+        clientAssertionValidation:
+          $ref: '#/components/schemas/TokenGenerationValidationEntry'
+        publicKeyRetrieve:
+          $ref: '#/components/schemas/TokenGenerationValidationEntry'
+        clientAssertionSignatureVerification:
+          $ref: '#/components/schemas/TokenGenerationValidationEntry'
+        platformStatesVerification:
+          $ref: '#/components/schemas/TokenGenerationValidationEntry'
+      required:
+        - clientAssertionValidation
+        - publicKeyRetrieve
+        - clientAssertionSignatureVerification
+        - platformStatesVerification
     TokenGenerationValidationEntry:
       type: object
       properties:
-        step:
-          $ref: '#/components/schemas/TokenGenerationValidationStep'
         result:
           $ref: '#/components/schemas/TokenGenerationValidationStepResult'
         failures:
@@ -10537,17 +10549,8 @@ components:
           items:
             $ref: '#/components/schemas/TokenGenerationValidationStepFailure'
       required:
-        - step
         - result
         - failures
-    TokenGenerationValidationStep:
-      type: string
-      description: Token Generation Validation Step
-      enum:
-        - CLIENT_ASSERTION_VALIDATION
-        - PUBLIC_KEY_RETRIEVE
-        - CLIENT_ASSERTION_SIGNATURE_VERIFICATION
-        - PLATFORM_STATES_VERIFICATION
     TokenGenerationValidationStepResult:
       type: string
       description: Token Generation Validation Step RESULT
