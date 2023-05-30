@@ -30,6 +30,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   PurposesApiServiceImpl,
   SelfcareApiMarshallerImpl,
   SelfcareApiServiceImpl,
+  PrivacyNoticesApiMarshallerImpl,
+  PrivacyNoticesApiServiceImpl,
   TenantsApiMarshallerImpl,
   TenantsApiServiceImpl,
   ToolsApiMarshallerImpl,
@@ -61,7 +63,10 @@ import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.ServiceCode
 import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
-
+import org.scanamo._
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
+import it.pagopa.interop.backendforfrontend.service.impl.PrivacyNoticesServiceImpl
+import it.pagopa.interop.backendforfrontend.model.ConsentType
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait Dependencies {
@@ -155,6 +160,17 @@ trait Dependencies {
       new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
     val selfcareClient: SelfcareClientService                           =
       new SelfcareClientServiceImpl(ApplicationConfiguration.selfcareV2URL, ApplicationConfiguration.selfcareV2ApiKey)
+
+    implicit val scanamo: ScanamoAsync = ScanamoAsync(DynamoDbAsyncClient.create())(ec)
+
+    val consentTypeMap: Map[ConsentType, String]     =
+      Map(
+        ConsentType.PP  -> ApplicationConfiguration.privacyNoticePpUuid,
+        ConsentType.TOS -> ApplicationConfiguration.privacyNoticeTosUuid
+      )
+    val privacyNoticesProcess: PrivacyNoticesService = new PrivacyNoticesServiceImpl(
+      ApplicationConfiguration.privacyNoticeTableName
+    )(ec, scanamo)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
 
@@ -269,6 +285,12 @@ trait Dependencies {
         oauthAndRateLimitingDirective
       )
 
+    val privacyNoticesApi: PrivacyNoticesApi = new PrivacyNoticesApi(
+      PrivacyNoticesApiServiceImpl(consentTypeMap, privacyNoticesProcess),
+      PrivacyNoticesApiMarshallerImpl,
+      oauthAndRateLimitingDirective
+    )
+
     new Controller(
       attributes = attributesApi,
       authorization = authorizationApi,
@@ -281,6 +303,7 @@ trait Dependencies {
       party = partyApi,
       tools = toolsApi,
       health = healthApi,
+      privacyNotices = privacyNoticesApi,
       validationExceptionToRoute = validationExceptionToRoute.some
     )(actorSystem.classicSystem)
   }

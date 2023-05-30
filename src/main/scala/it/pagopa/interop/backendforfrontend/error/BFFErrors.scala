@@ -108,4 +108,16 @@ object BFFErrors {
   final case class ClientAssertionPublicKeyNotFound(kid: String, clientId: UUID)
       extends ClientAssertionValidationError("8099", s"Public key with kid $kid not found for client $clientId")
 
+  final case class PrivacyNoticeNotFoundInConfiguration(privacyNoticeKind: String)
+      extends ComponentError("0025", s"PrivacyNotice $privacyNoticeKind not found in configuration")
+
+  final case class PrivacyNoticeNotFound(privacyNoticeKind: String)
+      extends ComponentError("0026", s"PrivacyNotice $privacyNoticeKind not found")
+
+  final case class PrivacyNoticeVersionIsNotTheLatest(versionId: UUID)
+      extends ComponentError("0027", s"PrivacyNotice version $versionId not found")
+
+  final case class DynamoReadingError(message: String)
+      extends ComponentError("0028", s"Error while reading data from Dynamo -> $message")
+
 }
