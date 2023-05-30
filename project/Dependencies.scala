@@ -42,9 +42,6 @@ object Dependencies {
     lazy val agreementProcessLifecycle =
       namespace %% "interop-be-agreement-process-lifecycle" % agreementProcessVersion
 
-    lazy val catalogManagementClient =
-      namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
-
     lazy val catalogProcessClient =
       namespace %% "interop-be-catalog-process-client" % catalogProcessVersion
 
@@ -118,6 +115,11 @@ object Dependencies {
     lazy val core      = namespace % "tika-core" % tikaVersion
   }
 
+  private[this] object scanamo {
+    lazy val scanamo = "org.scanamo" %% "scanamo" % scanamoVersion
+    lazy val testkit = "org.scanamo" %% "scanamo-testkit" % scanamoVersion
+  }
+
   object Jars {
     lazy val overrides: Seq[ModuleID] =
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
@@ -143,7 +145,6 @@ object Dependencies {
       pagopa.authorizationProcessClient        % Compile,
       pagopa.agreementProcessClient            % Compile,
       pagopa.agreementProcessLifecycle         % Compile,
-      pagopa.catalogManagementClient           % Compile,
       pagopa.catalogProcessClient              % Compile,
       pagopa.partyProcessClient                % Compile,
       pagopa.partyManagementClient             % Compile,
@@ -158,6 +159,7 @@ object Dependencies {
       pagopa.fileManager                       % Compile,
       pagopa.parser                            % Compile,
       tika.core                                % Compile,
+      scanamo.scanamo                          % Compile,
       akka.httpTestkit                         % Test,
       akka.testkit                             % Test,
       akka.untypedTestkit                      % Test,

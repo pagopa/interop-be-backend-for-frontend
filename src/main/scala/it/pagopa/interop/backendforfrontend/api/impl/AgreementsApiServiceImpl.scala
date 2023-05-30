@@ -21,14 +21,15 @@ import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.CatalogManagementServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.TenantManagementServiceTypes._
-import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.UUIDSupplier
-import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
@@ -41,9 +42,9 @@ import scala.util.Success
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
   attributeRegistryService: AttributeRegistryManagementService,
-  catalogManagementService: CatalogManagementService,
+  catalogProcessService: CatalogProcessService,
   partyProcessService: PartyProcessService,
-  tenantManagementService: TenantManagementService,
+  tenantProcessService: TenantProcessService,
   fileManager: FileManager,
   uuidSupplier: UUIDSupplier
 )(implicit ec: ExecutionContext)
@@ -244,11 +245,11 @@ final case class AgreementsApiServiceImpl(
 
   def parallelGet(agreement: AgreementProcess.Agreement)(implicit
     contexts: Seq[(String, String)]
-  ): Future[(TenantManagement.Tenant, TenantManagement.Tenant, CatalogManagement.EService)] =
-    tenantManagementService
+  ): Future[(TenantProcess.Tenant, TenantProcess.Tenant, CatalogProcess.EService)] =
+    tenantProcessService
       .getTenant(agreement.consumerId)
-      .zip(tenantManagementService.getTenant(agreement.producerId))
-      .zip(catalogManagementService.getEService(agreement.eserviceId))
+      .zip(tenantProcessService.getTenant(agreement.producerId))
+      .zip(catalogProcessService.getEServiceById(agreement.eserviceId))
       .map({ case ((consumer, producer), eservice) =>
         (consumer, producer, eservice)
       })
@@ -308,7 +309,7 @@ final case class AgreementsApiServiceImpl(
       updatedAt = consumerTenant.updatedAt,
       name = consumerTenant.name,
       attributes = tenantAttributes,
-      contactMail = consumerTenant.mails.find(_.kind == TenantManagement.MailKind.CONTACT_EMAIL).map(_.toApi)
+      contactMail = consumerTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
     ),
     eservice = AgreementsEService(
       id = agreement.eserviceId,
@@ -328,11 +329,12 @@ final case class AgreementsApiServiceImpl(
     rejectionReason = agreement.rejectionReason,
     consumerDocuments = agreement.consumerDocuments.map(_.toApi),
     createdAt = agreement.createdAt,
-    updatedAt = agreement.updatedAt
+    updatedAt = agreement.updatedAt,
+    suspendedAt = agreement.suspendedAt
   )
 
-  def eServiceAttributesIds(eService: CatalogManagement.EService): Seq[UUID] = {
-    val attrs: Seq[CatalogManagement.Attribute] =
+  def eServiceAttributesIds(eService: CatalogProcess.EService): Seq[UUID] = {
+    val attrs: Seq[CatalogProcess.Attribute] =
       eService.attributes.verified ++ eService.attributes.declared ++ eService.attributes.certified
     attrs
       .mapFilter(a =>

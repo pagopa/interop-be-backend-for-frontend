@@ -13,6 +13,7 @@ trait PurposeProcessService {
     consumersIds: Seq[UUID],
     producersIds: Seq[UUID],
     states: Seq[PurposeVersionState],
+    excludeDraft: Option[Boolean],
     offset: Int,
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Purposes]
@@ -60,4 +61,13 @@ trait PurposeProcessService {
   def updatePurpose(id: UUID, purposeUpdateContent: PurposeUpdateContent)(implicit
     contexts: Seq[(String, String)]
   ): Future[Purpose]
+
+  def retrieveLatestRiskAnalysisConfiguration()(implicit
+    contexts: Seq[(String, String)]
+  ): Future[RiskAnalysisFormConfigResponse]
+
+  def retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[RiskAnalysisFormConfigResponse]
+
 }

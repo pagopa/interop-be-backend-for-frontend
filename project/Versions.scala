@@ -12,12 +12,12 @@ object Versions {
   lazy val scalapbVersion        = "0.11.1"
   lazy val scalatestVersion      = "3.2.14"
   lazy val tikaVersion           = "2.5.0"
+  lazy val scanamoVersion        = "1.0.0-M25"
 }
 
 object PagopaVersions {
   lazy val commonsVersion                     = "1.0.x-SNAPSHOT"
   lazy val agreementProcessVersion            = "1.0.x-SNAPSHOT"
-  lazy val catalogManagementVersion           = "1.0.x-SNAPSHOT"
   lazy val catalogProcessVersion              = "1.0.x-SNAPSHOT"
   lazy val partyProcessVersion                = "1.0.x-SNAPSHOT"
   lazy val partyManagementVersion             = "1.0.x-SNAPSHOT"

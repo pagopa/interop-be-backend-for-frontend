@@ -64,7 +64,6 @@ object ApplicationConfiguration {
     config.getString("backend-for-frontend.services.attribute-registry-management")
 
   val agreementProcessURL: String     = config.getString("backend-for-frontend.services.agreement-process")
-  val catalogManagementURL: String    = config.getString("backend-for-frontend.services.catalog-management")
   val catalogProcessURL: String       = config.getString("backend-for-frontend.services.catalog-process")
   val tenantManagementURL: String     = config.getString("backend-for-frontend.services.tenant-management")
   val tenantProcessURL: String        = config.getString("backend-for-frontend.services.tenant-process")
@@ -83,4 +82,8 @@ object ApplicationConfiguration {
   val allowListPath: String              = config.getString("backend-for-frontend.storage.allow-list.path")
   val allowListFilename: String          = config.getString("backend-for-frontend.storage.allow-list.filename")
   val selfcareProductId: String          = config.getString("backend-for-frontend.selfcare-product-id")
+
+  val privacyNoticePpUuid: String    = config.getString("backend-for-frontend.privacy-notices.pp-uuid")
+  val privacyNoticeTosUuid: String   = config.getString("backend-for-frontend.privacy-notices.tos-uuid")
+  val privacyNoticeTableName: String = config.getString("backend-for-frontend.privacy-notices.table-name")
 }

@@ -32,6 +32,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   TenantsApiServiceImpl,
   SelfcareApiMarshallerImpl,
   SelfcareApiServiceImpl,
+  PrivacyNoticesApiMarshallerImpl,
+  PrivacyNoticesApiServiceImpl,
   entityMarshallerProblem,
   problemOf,
   serviceErrorCodePrefix
@@ -59,7 +61,10 @@ import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.ServiceCode
 import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
-
+import org.scanamo._
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
+import it.pagopa.interop.backendforfrontend.service.impl.PrivacyNoticesServiceImpl
+import it.pagopa.interop.backendforfrontend.model.ConsentType
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait Dependencies {
@@ -137,8 +142,6 @@ trait Dependencies {
       new AttributeRegistryManagementServiceImpl(ApplicationConfiguration.attributeRegistryManagementURL, blockingEc)
     val agreementProcess: AgreementProcessService                       =
       new AgreementProcessServiceImpl(ApplicationConfiguration.agreementProcessURL, blockingEc)
-    val catalogManagement: CatalogManagementService                     =
-      new CatalogManagementServiceImpl(ApplicationConfiguration.catalogManagementURL, blockingEc)
     val catalogProcess: CatalogProcessService                           =
       new CatalogProcessServiceImpl(ApplicationConfiguration.catalogProcessURL, blockingEc)
     val tenantManagement: TenantManagementService                       =
@@ -153,6 +156,17 @@ trait Dependencies {
       new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
     val selfcareClient: SelfcareClientService                           =
       new SelfcareClientServiceImpl(ApplicationConfiguration.selfcareV2URL, ApplicationConfiguration.selfcareV2ApiKey)
+
+    implicit val scanamo: ScanamoAsync = ScanamoAsync(DynamoDbAsyncClient.create())(ec)
+
+    val consentTypeMap: Map[ConsentType, String]     =
+      Map(
+        ConsentType.PP  -> ApplicationConfiguration.privacyNoticePpUuid,
+        ConsentType.TOS -> ApplicationConfiguration.privacyNoticeTosUuid
+      )
+    val privacyNoticesProcess: PrivacyNoticesService = new PrivacyNoticesServiceImpl(
+      ApplicationConfiguration.privacyNoticeTableName
+    )(ec, scanamo)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
 
@@ -188,7 +202,7 @@ trait Dependencies {
     )
 
     val partyApi: PartyApi = new PartyApi(
-      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistryManagement, tenantManagement),
+      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistryManagement, tenantProcess),
       PartyApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
@@ -203,9 +217,9 @@ trait Dependencies {
       AgreementsApiServiceImpl(
         agreementProcess,
         attributeRegistryManagement,
-        catalogManagement,
+        catalogProcess,
         partyProcess,
-        tenantManagement,
+        tenantProcess,
         fileManager(blockingEc),
         UUIDSupplier
       ),
@@ -214,7 +228,7 @@ trait Dependencies {
     )
 
     val tenantsApi: TenantsApi = new TenantsApi(
-      TenantsApiServiceImpl(attributeRegistryManagement, tenantManagement, tenantProcess),
+      TenantsApiServiceImpl(attributeRegistryManagement, tenantProcess),
       TenantsApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
@@ -224,7 +238,7 @@ trait Dependencies {
         agreementProcess,
         attributeRegistryManagement,
         catalogProcess,
-        tenantManagement,
+        tenantProcess,
         partyProcess,
         fileManager(blockingEc),
         UUIDSupplier
@@ -260,6 +274,12 @@ trait Dependencies {
         oauthAndRateLimitingDirective
       )
 
+    val privacyNoticesApi: PrivacyNoticesApi = new PrivacyNoticesApi(
+      PrivacyNoticesApiServiceImpl(consentTypeMap, privacyNoticesProcess),
+      PrivacyNoticesApiMarshallerImpl,
+      oauthAndRateLimitingDirective
+    )
+
     new Controller(
       attributes = attributesApi,
       authorization = authorizationApi,
@@ -271,6 +291,7 @@ trait Dependencies {
       clients = clientsApi,
       party = partyApi,
       health = healthApi,
+      privacyNotices = privacyNoticesApi,
       validationExceptionToRoute = validationExceptionToRoute.some
     )(actorSystem.classicSystem)
   }

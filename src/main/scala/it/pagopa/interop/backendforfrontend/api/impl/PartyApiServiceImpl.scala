@@ -14,7 +14,7 @@ import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
 import it.pagopa.interop.backendforfrontend.service.{
   AttributeRegistryManagementService,
   PartyProcessService,
-  TenantManagementService,
+  TenantProcessService,
   UserRegistryService
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -29,7 +29,7 @@ final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
   userRegistryService: UserRegistryService,
   attributeRegistryService: AttributeRegistryManagementService,
-  tenantManagementService: TenantManagementService
+  tenantProcessService: TenantProcessService
 )(implicit ec: ExecutionContext)
     extends PartyApiService {
 
@@ -84,7 +84,7 @@ final case class PartyApiServiceImpl(
       rolesParams  <- parseArrayParameters(roles).traverse(PartyProcessConverter.toPartyRole).toFuture
       statesParams <- parseArrayParameters(states).traverse(PartyProcessConverter.toRelationshipState).toFuture
       productRolesParams = parseArrayParameters(productRoles)
-      tenant            <- tenantId.toFutureUUID >>= tenantManagementService.getTenant
+      tenant            <- tenantId.toFutureUUID >>= tenantProcessService.getTenant
       selfcareId        <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       relationships     <- partyProcessService.getUserInstitutionRelationships(
         selfcareId,

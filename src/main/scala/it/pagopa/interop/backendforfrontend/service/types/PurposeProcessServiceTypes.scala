@@ -35,7 +35,9 @@ object PurposeProcessServiceTypes {
       consumerId = seed.consumerId,
       riskAnalysisForm = seed.riskAnalysisForm.map(_.toProcess),
       title = seed.title,
-      description = seed.description
+      description = seed.description,
+      isFreeOfCharge = seed.isFreeOfCharge,
+      freeOfChargeReason = seed.freeOfChargeReason
     )
   }
 
@@ -69,7 +71,8 @@ object PurposeProcessServiceTypes {
       updatedAt = pv.updatedAt,
       firstActivationAt = pv.firstActivationAt,
       dailyCalls = pv.dailyCalls,
-      riskAnalysisDocument = pv.riskAnalysis.map(_.toApi)
+      riskAnalysisDocument = pv.riskAnalysis.map(_.toApi),
+      suspendedAt = pv.suspendedAt
     )
   }
 
@@ -120,7 +123,9 @@ object PurposeProcessServiceTypes {
       clients = clients.map(_.toApi),
       waitingForApprovalVersion = waitingForApprovalVersion.map(_.toApi),
       suspendedByConsumer = p.suspendedByConsumer,
-      suspendedByProducer = p.suspendedByProducer
+      suspendedByProducer = p.suspendedByProducer,
+      isFreeOfCharge = p.isFreeOfCharge,
+      freeOfChargeReason = p.freeOfChargeReason
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
@@ -133,5 +138,55 @@ object PurposeProcessServiceTypes {
         description = puc.description,
         riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess)
       )
+  }
+
+  implicit class RiskAnalysisFormConfigWrapper(
+    private val riskAnalysisFormConfig: PurposeProcess.RiskAnalysisFormConfigResponse
+  ) extends AnyVal {
+    def toApi: RiskAnalysisFormConfig =
+      RiskAnalysisFormConfig(
+        version = riskAnalysisFormConfig.version,
+        questions = riskAnalysisFormConfig.questions.map(_.toApi)
+      )
+  }
+
+  implicit class FormConfigQuestionWrapper(private val question: PurposeProcess.FormConfigQuestionResponse)
+      extends AnyVal {
+    def toApi: FormConfigQuestion =
+      FormConfigQuestion(
+        id = question.id,
+        label = question.label.toApi,
+        infoLabel = question.infoLabel.map(_.toApi),
+        dataType = question.dataType.toApi,
+        required = question.required,
+        dependencies = question.dependencies.map(_.toApi),
+        visualType = question.visualType,
+        defaultValue = question.defaultValue,
+        options = question.options.map(_.map(_.toApi))
+      )
+  }
+
+  implicit class LocalizedTextWrapper(private val localizedText: PurposeProcess.LocalizedTextResponse) extends AnyVal {
+    def toApi: LocalizedText =
+      LocalizedText(it = localizedText.it, en = localizedText.en)
+  }
+
+  implicit class LabeledValueWrapper(private val labeledValue: PurposeProcess.LabeledValueResponse) extends AnyVal {
+    def toApi: LabeledValue =
+      LabeledValue(label = labeledValue.label.toApi, value = labeledValue.value)
+  }
+
+  implicit class DataTypeWrapper(private val dataType: PurposeProcess.DataTypeResponse) extends AnyVal {
+    def toApi: DataType =
+      dataType match {
+        case PurposeProcess.DataTypeResponse.SINGLE   => DataType.SINGLE
+        case PurposeProcess.DataTypeResponse.MULTI    => DataType.MULTI
+        case PurposeProcess.DataTypeResponse.FREETEXT => DataType.FREETEXT
+      }
+  }
+
+  implicit class DependencyWrapper(private val dependency: PurposeProcess.DependencyResponse) extends AnyVal {
+    def toApi: Dependency =
+      Dependency(id = dependency.id, value = dependency.value)
   }
 }

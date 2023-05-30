@@ -41,7 +41,7 @@ final case class PurposesApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getPurposes(
+  override def getConsumerPurposes(
     q: Option[String],
     eServicesIds: String,
     consumersIds: String,
@@ -54,46 +54,86 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(
+      s"Retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
+    )
+
     val result: Future[Purposes] =
-      for {
-        statesEnum     <- parseArrayParameters(states).distinct
-          .traverse(PurposeProcess.PurposeVersionState.fromValue)
-          .toFuture
-        eServicesUUIDs <- parseArrayParameters(eServicesIds).distinct.traverse(_.toFutureUUID)
-        consumersUUIDs <- parseArrayParameters(consumersIds).distinct.traverse(_.toFutureUUID)
-        producersUUIDs <- parseArrayParameters(producersIds).distinct.traverse(_.toFutureUUID)
-        pagedResults   <- purposeProcessService.getPurposes(
-          name = q,
-          eServicesIds = eServicesUUIDs,
-          consumersIds = consumersUUIDs,
-          producersIds = producersUUIDs,
-          states = statesEnum,
-          offset = offset,
-          limit = limit
-        )
-        actualEServicesIds = pagedResults.results.map(_.eserviceId).distinct
-        actualConsumersIds = pagedResults.results.map(_.consumerId).distinct
-        eServices       <- actualEServicesIds.traverse(catalogProcessService.getEServiceById)
-        producers       <- eServices.map(_.producerId).distinct.traverse(tenantProcessService.getTenant)
-        consumers       <- actualConsumersIds.traverse(tenantProcessService.getTenant)
-        enhancedResults <- pagedResults.results.traverse(enhancePurpose(_, eServices, producers, consumers))
-      } yield Purposes(
-        results = enhancedResults,
-        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
-      )
+      getPurposes(q, eServicesIds, consumersIds, producersIds, states, offset, limit, false)
 
     onComplete(result) {
       handleError(
         s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
-      ) orElse { case Success(r) => getPurposes200(r) }
+      ) orElse { case Success(r) => getConsumerPurposes200(r) }
     }
   }
+
+  override def getProducerPurposes(
+    q: Option[String],
+    eServicesIds: String,
+    consumersIds: String,
+    producersIds: String,
+    states: String,
+    offset: Int,
+    limit: Int
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Purposes] = getPurposes(q, eServicesIds, consumersIds, producersIds, states, offset, limit, true)
+
+    onComplete(result) {
+      handleError(
+        s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
+      ) orElse { case Success(r) => getProducerPurposes200(r) }
+    }
+  }
+
+  private def getPurposes(
+    q: Option[String],
+    eServicesIds: String,
+    consumersIds: String,
+    producersIds: String,
+    states: String,
+    offset: Int,
+    limit: Int,
+    isExcludeDraft: Boolean
+  )(implicit contexts: Seq[(String, String)]): Future[Purposes] = for {
+    statesEnum     <- parseArrayParameters(states).distinct
+      .traverse(PurposeProcess.PurposeVersionState.fromValue)
+      .toFuture
+    eServicesUUIDs <- parseArrayParameters(eServicesIds).distinct.traverse(_.toFutureUUID)
+    consumersUUIDs <- parseArrayParameters(consumersIds).distinct.traverse(_.toFutureUUID)
+    producersUUIDs <- parseArrayParameters(producersIds).distinct.traverse(_.toFutureUUID)
+    pagedResults   <- purposeProcessService.getPurposes(
+      name = q,
+      eServicesIds = eServicesUUIDs,
+      consumersIds = consumersUUIDs,
+      producersIds = producersUUIDs,
+      states = statesEnum,
+      excludeDraft = isExcludeDraft.some,
+      offset = offset,
+      limit = limit
+    )
+    actualEServicesIds = pagedResults.results.map(_.eserviceId).distinct
+    actualConsumersIds = pagedResults.results.map(_.consumerId).distinct
+    eServices       <- actualEServicesIds.traverse(catalogProcessService.getEServiceById)
+    producers       <- eServices.map(_.producerId).distinct.traverse(tenantProcessService.getTenant)
+    consumers       <- actualConsumersIds.traverse(tenantProcessService.getTenant)
+    enhancedResults <- pagedResults.results.traverse(enhancePurpose(_, eServices, producers, consumers))
+  } yield Purposes(
+    results = enhancedResults,
+    pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+  )
 
   override def archivePurposeVersion(purposeId: String, versionId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Archiving purpose $purposeId with version $versionId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUuid <- purposeId.toFutureUUID
       versionUuid <- versionId.toFutureUUID
@@ -118,6 +158,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Updating purpose $purposeId with version $versionId in waiting for approval state")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUuid    <- purposeId.toFutureUUID
       versionUuid    <- versionId.toFutureUUID
@@ -326,6 +368,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Suspending Version $versionId of Purpose $purposeId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUUID <- purposeId.toFutureUUID
       versionUUID <- versionId.toFutureUUID
@@ -344,6 +388,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Activating Version $versionId of Purpose $purposeId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUUID <- purposeId.toFutureUUID
       versionUUID <- versionId.toFutureUUID
@@ -366,6 +412,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Updating draft version $versionId of purpose $purposeId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUUID <- purposeId.toFutureUUID
       versionUUID <- versionId.toFutureUUID
@@ -404,6 +452,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Retrieving Purpose $purposeId")
+
     val result: Future[Purpose] = for {
       purposeUUID     <- purposeId.toFutureUUID
       purpose         <- purposeProcessService.getPurpose(purposeUUID)
@@ -428,6 +478,8 @@ final case class PurposesApiServiceImpl(
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
+    logger.info(s"Updating Purpose $purposeId")
+
     val result: Future[PurposeVersionResource] = for {
       purposeUUID    <- purposeId.toFutureUUID
       updatedPurpose <- purposeProcessService
@@ -441,4 +493,42 @@ final case class PurposesApiServiceImpl(
       }
     }
   }
+
+  override def retrieveLatestRiskAnalysisConfiguration()(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerRiskAnalysisFormConfig: ToEntityMarshaller[RiskAnalysisFormConfig]
+  ): Route = {
+    logger.info(s"Retrieving risk analysis latest configuration")
+
+    val result: Future[RiskAnalysisFormConfig] = purposeProcessService
+      .retrieveLatestRiskAnalysisConfiguration()
+      .map(_.toApi)
+
+    onComplete(result) {
+      handleError(s"Error retrieving latest risk analysis configuration") orElse { case Success(response) =>
+        retrieveLatestRiskAnalysisConfiguration200(response)
+      }
+    }
+  }
+
+  override def retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerRiskAnalysisFormConfig: ToEntityMarshaller[RiskAnalysisFormConfig]
+  ): Route = {
+    logger.info(s"Retrieving risk analysis latest configuration for version $riskAnalysisVersion")
+
+    val result: Future[RiskAnalysisFormConfig] = purposeProcessService
+      .retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion)
+      .map(_.toApi)
+
+    onComplete(result) {
+      handleError(s"Error retrieving risk analysis configuration for version $riskAnalysisVersion") orElse {
+        case Success(response) =>
+          retrieveRiskAnalysisConfigurationByVersion200(response)
+      }
+    }
+  }
+
 }
