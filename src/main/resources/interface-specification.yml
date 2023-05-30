@@ -9635,10 +9635,6 @@ components:
           type: boolean
         freeOfChargeReason:
           type: string
-        isFreeOfCharge:
-          type: boolean
-        freeOfChargeReason:
-          type: string
       required:
         - eserviceId
         - consumerId
