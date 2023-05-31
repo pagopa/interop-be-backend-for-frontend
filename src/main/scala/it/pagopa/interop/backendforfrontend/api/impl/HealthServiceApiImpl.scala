@@ -25,6 +25,7 @@ class HealthServiceApiImpl extends HealthApiService {
   }
 
   override def moveToSupportPage()(implicit contexts: Seq[(String, String)]): Route = {
+    println("SUPPORT TEST INVOCATION")
     redirect("https://selfcare.dev.interop.pagopa.it/ui/it/assistenza/scelta-ente", StatusCodes.MovedPermanently)
 
   }
