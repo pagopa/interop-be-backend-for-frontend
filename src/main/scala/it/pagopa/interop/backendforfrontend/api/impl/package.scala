@@ -21,6 +21,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
+  implicit val saml: RootJsonFormat[SAMLResponse] = jsonFormat1(SAMLResponse)
+
   implicit val tenantDelta: RootJsonFormat[TenantDelta] = jsonFormat2(TenantDelta)
 
   implicit val tenantFormat: RootJsonFormat[CompactTenant] = jsonFormat2(CompactTenant)

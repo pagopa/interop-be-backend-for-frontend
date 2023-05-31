@@ -59,6 +59,7 @@ lazy val generated = project
   .settings(
     scalacOptions       := Seq(),
     scalafmtOnCompile   := true,
+    libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
     libraryDependencies := Dependencies.Jars.`server`,
     publish / skip      := true,
     publish             := (()),
@@ -80,7 +81,8 @@ lazy val root = (project in file("."))
     Docker / packageName        := s"${name.value}",
     Docker / dockerExposedPorts := Seq(8080),
     Docker / maintainer         := "https://pagopa.it",
-    libraryDependencies         := Dependencies.Jars.`server`,
+    libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
+    libraryDependencies                                  := Dependencies.Jars.`server`,
     dockerCommands += Cmd("LABEL", s"org.opencontainers.image.source https://github.com/pagopa/${name.value}")
   )
   .dependsOn(generated)

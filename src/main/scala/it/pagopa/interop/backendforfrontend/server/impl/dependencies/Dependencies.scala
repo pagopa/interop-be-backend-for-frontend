@@ -26,14 +26,16 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   HealthServiceApiImpl,
   PartyApiMarshallerImpl,
   PartyApiServiceImpl,
-  PurposesApiMarshallerImpl,
-  PurposesApiServiceImpl,
-  TenantsApiMarshallerImpl,
-  TenantsApiServiceImpl,
-  SelfcareApiMarshallerImpl,
-  SelfcareApiServiceImpl,
   PrivacyNoticesApiMarshallerImpl,
   PrivacyNoticesApiServiceImpl,
+  PurposesApiMarshallerImpl,
+  PurposesApiServiceImpl,
+  SelfcareApiMarshallerImpl,
+  SelfcareApiServiceImpl,
+  SupportApiMarshallerImpl,
+  SupportServiceApiImpl,
+  TenantsApiMarshallerImpl,
+  TenantsApiServiceImpl,
   entityMarshallerProblem,
   problemOf,
   serviceErrorCodePrefix
@@ -65,6 +67,7 @@ import org.scanamo._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import it.pagopa.interop.backendforfrontend.service.impl.PrivacyNoticesServiceImpl
 import it.pagopa.interop.backendforfrontend.model.ConsentType
+
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait Dependencies {
@@ -292,7 +295,12 @@ trait Dependencies {
       party = partyApi,
       health = healthApi,
       privacyNotices = privacyNoticesApi,
-      validationExceptionToRoute = validationExceptionToRoute.some
+      validationExceptionToRoute = validationExceptionToRoute.some,
+      support = new SupportApi(
+        new SupportServiceApiImpl(),
+        SupportApiMarshallerImpl,
+        SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
+      )
     )(actorSystem.classicSystem)
   }
 

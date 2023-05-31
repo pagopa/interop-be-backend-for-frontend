@@ -32,7 +32,6 @@ object Dependencies {
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
     lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
-
     lazy val authorizationProcessClient =
       namespace %% "interop-be-authorization-process-client" % authorizationProcessVersion
 
@@ -71,7 +70,7 @@ object Dependencies {
 
     lazy val selfcareV2Client =
       namespace %% "interop-selfcare-v2-client" % selfcareV2ClientVersion
-  
+
   }
 
   private[this] object cats {
@@ -110,13 +109,13 @@ object Dependencies {
     lazy val namespace = "org.scalamock"
     lazy val core      = namespace %% "scalamock" % scalaMockVersion
   }
-  private[this] object tika {
+  private[this] object tika      {
     lazy val namespace = "org.apache.tika"
     lazy val core      = namespace % "tika-core" % tikaVersion
   }
 
   private[this] object scanamo {
-    lazy val scanamo = "org.scanamo" %% "scanamo" % scanamoVersion
+    lazy val scanamo = "org.scanamo" %% "scanamo"         % scanamoVersion
     lazy val testkit = "org.scanamo" %% "scanamo-testkit" % scanamoVersion
   }
 
@@ -125,7 +124,7 @@ object Dependencies {
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
     lazy val `server`: Seq[ModuleID]  = Seq(
       // For making Java 12 happy
-      "javax.annotation"               % "javax.annotation-api" % "1.3.2" % "compile",
+      "javax.annotation"                       % "javax.annotation-api" % "1.3.2" % "compile",
       //
       akka.actor                               % Compile,
       akka.actorTyped                          % Compile,

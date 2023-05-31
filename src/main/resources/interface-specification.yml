@@ -56,6 +56,11 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: support
+    description: Support
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'
 paths:
   '/agreements':
     parameters:
@@ -8642,10 +8647,16 @@ paths:
       - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
-        - health
+        - support
       security: []
       operationId: moveToSupportPage
       description: This route is used to redirect support flow to the dedicated page
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/SAMLResponse'
       responses:
         '301':
           description: Privacy Notices accepted
@@ -10703,6 +10714,14 @@ components:
       required:
         - code
         - detail
+    SAMLResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: SAML response
+      required:
+        - response
   securitySchemes:
     bearerAuth:
       type: http
