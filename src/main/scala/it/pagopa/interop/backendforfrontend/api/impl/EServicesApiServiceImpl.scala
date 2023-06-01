@@ -679,9 +679,24 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerFile: ToEntityMarshaller[File]
   ): Route = {
-    import spray.json._
+
     import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
-    val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("YYYY-MM-DDThh:mm:ss")
+
+    val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss")
+
+    def getLines(consumers: Seq[EServiceConsumer]): Array[Byte] = {
+      val header             = "descriptorVersion,descriptorState,agreementState,consumerName,consumerExternalId"
+      val lines: Seq[String] = Seq(header) ++ consumers.map { c =>
+        List(
+          c.descriptorVersion.toString,
+          c.descriptorState.toString,
+          c.agreementState.toString,
+          c.consumerName,
+          c.consumerExternalId
+        ).map(s => s"\"$s\"").mkString(",")
+      }
+      lines.mkString("\n").getBytes()
+    }
 
     val result: Future[HttpResponse] = for {
       eServiceUUID <- eServiceId.toFutureUUID
@@ -689,7 +704,7 @@ final case class EServicesApiServiceImpl(
       consumers    <- catalogProcessService.getAllEServiceConsumers(eServiceUUID)
       filename     = s"${offsetDateTimeSupplier.get().format(dtf)}-lista-fruitori-${eService.name}.csv"
       apiConsumers = consumers.map(_.toApi)
-      byteStream   = apiConsumers.toJson.toString().getBytes
+      byteStream   = getLines(apiConsumers)
     } yield HttpResponse(
       entity = HttpEntity(ContentType(MediaTypes.`application/octet-stream`), byteStream),
       headers = Seq(`Content-Disposition`(attachment, Map("filename" -> filename)))
