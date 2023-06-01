@@ -17,7 +17,6 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import cats.syntax.all._
 
-import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
@@ -89,7 +88,7 @@ final case class PrivacyNoticesApiServiceImpl(
           versionNumber = latest.privacyNoticeVersion.version,
           privacyNoticeId = pnUuid,
           userId = userUuid,
-          acceptedAt = OffsetDateTimeSupplier.get().truncatedTo(ChronoUnit.SECONDS),
+          acceptedAt = OffsetDateTimeSupplier.get(),
           version = PersistentModel.UserPrivacyNoticeVersion(
             versionId = seed.latestVersionId,
             kind = ctype.toPersistent,
