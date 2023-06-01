@@ -11,36 +11,9 @@ import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api._
-import it.pagopa.interop.backendforfrontend.api.impl.{
-  AgreementsApiMarshallerImpl,
-  AgreementsApiServiceImpl,
-  AttributesApiMarshallerImpl,
-  AttributesApiServiceImpl,
-  AuthorizationApiMarshallerImpl,
-  AuthorizationApiServiceImpl,
-  ClientsApiMarshallerImpl,
-  ClientsApiServiceImpl,
-  EServicesApiMarshallerImpl,
-  EServicesApiServiceImpl,
-  HealthApiMarshallerImpl,
-  HealthServiceApiImpl,
-  PartyApiMarshallerImpl,
-  PartyApiServiceImpl,
-  PrivacyNoticesApiMarshallerImpl,
-  PrivacyNoticesApiServiceImpl,
-  PurposesApiMarshallerImpl,
-  PurposesApiServiceImpl,
-  SelfcareApiMarshallerImpl,
-  SelfcareApiServiceImpl,
-  SupportApiMarshallerImpl,
-  SupportServiceApiImpl,
-  TenantsApiMarshallerImpl,
-  TenantsApiServiceImpl,
-  entityMarshallerProblem,
-  problemOf,
-  serviceErrorCodePrefix
-}
+import it.pagopa.interop.backendforfrontend.api.impl._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.model.ConsentType
 import it.pagopa.interop.backendforfrontend.server.Controller
 import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.impl._
@@ -65,8 +38,6 @@ import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupp
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import org.scanamo._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import it.pagopa.interop.backendforfrontend.service.impl.PrivacyNoticesServiceImpl
-import it.pagopa.interop.backendforfrontend.model.ConsentType
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
@@ -155,6 +126,8 @@ trait Dependencies {
       new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
     val purposeProcess: PurposeProcessService                           =
       new PurposeProcessServiceImpl(ApplicationConfiguration.purposeProcessURL, blockingEc)
+    val authorizationManagement: AuthorizationManagementService         =
+      new AuthorizationManagementServiceImpl(ApplicationConfiguration.authorizationManagementURL, blockingEc)
     val authorizationProcess: AuthorizationProcessService               =
       new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
     val selfcareClient: SelfcareClientService                           =
@@ -277,10 +250,23 @@ trait Dependencies {
         oauthAndRateLimitingDirective
       )
 
+    val toolsApi: ToolsApi =
+      new ToolsApi(
+        ToolsApiServiceImpl(authorizationManagement, agreementProcess, catalogProcess, purposeProcess),
+        ToolsApiMarshallerImpl,
+        oauthAndRateLimitingDirective
+      )
+
     val privacyNoticesApi: PrivacyNoticesApi = new PrivacyNoticesApi(
       PrivacyNoticesApiServiceImpl(consentTypeMap, privacyNoticesProcess),
       PrivacyNoticesApiMarshallerImpl,
       oauthAndRateLimitingDirective
+    )
+
+    val supportApi: SupportApi = new SupportApi(
+      new SupportServiceApiImpl(),
+      SupportApiMarshallerImpl,
+      SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
     )
 
     new Controller(
@@ -293,14 +279,11 @@ trait Dependencies {
       purposes = purposesApi,
       clients = clientsApi,
       party = partyApi,
+      tools = toolsApi,
       health = healthApi,
       privacyNotices = privacyNoticesApi,
       validationExceptionToRoute = validationExceptionToRoute.some,
-      support = new SupportApi(
-        new SupportServiceApiImpl(),
-        SupportApiMarshallerImpl,
-        SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
-      )
+      support = supportApi
     )(actorSystem.classicSystem)
   }
 

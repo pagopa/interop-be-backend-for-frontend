@@ -32,6 +32,9 @@ object Dependencies {
     lazy val fileManager  = namespace %% "interop-commons-file-manager" % commonsVersion
     lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
+    lazy val clientAssertionValidation =
+      namespace %% "interop-be-client-assertion-validation" % authorizationManagementVersion
+
     lazy val authorizationProcessClient =
       namespace %% "interop-be-authorization-process-client" % authorizationProcessVersion
 
@@ -141,6 +144,7 @@ object Dependencies {
       pagopa.commonsUtils                      % Compile,
       pagopa.jwt                               % Compile,
       pagopa.rateLimiter                       % Compile,
+      pagopa.clientAssertionValidation         % Compile,
       pagopa.authorizationProcessClient        % Compile,
       pagopa.agreementProcessClient            % Compile,
       pagopa.agreementProcessLifecycle         % Compile,

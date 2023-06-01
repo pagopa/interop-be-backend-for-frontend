@@ -22,5 +22,4 @@ class HealthServiceApiImpl extends HealthApiService {
     )
     getStatus200(response)
   }
-
 }

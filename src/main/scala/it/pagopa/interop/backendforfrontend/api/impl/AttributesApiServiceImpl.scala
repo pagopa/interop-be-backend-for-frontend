@@ -73,7 +73,7 @@ final case class AttributesApiServiceImpl(
 
     onComplete(result) {
       handleError(s"Error creating attribute with seed $attributeSeed") orElse { case Success(attribute) =>
-        createAttribute201(attribute)
+        createAttribute200(attribute)
       }
     }
   }
