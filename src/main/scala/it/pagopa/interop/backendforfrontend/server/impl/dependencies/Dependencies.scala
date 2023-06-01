@@ -28,12 +28,14 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   PartyApiServiceImpl,
   PurposesApiMarshallerImpl,
   PurposesApiServiceImpl,
-  TenantsApiMarshallerImpl,
-  TenantsApiServiceImpl,
   SelfcareApiMarshallerImpl,
   SelfcareApiServiceImpl,
   PrivacyNoticesApiMarshallerImpl,
   PrivacyNoticesApiServiceImpl,
+  TenantsApiMarshallerImpl,
+  TenantsApiServiceImpl,
+  ToolsApiMarshallerImpl,
+  ToolsApiServiceImpl,
   entityMarshallerProblem,
   problemOf,
   serviceErrorCodePrefix
@@ -152,6 +154,8 @@ trait Dependencies {
       new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
     val purposeProcess: PurposeProcessService                           =
       new PurposeProcessServiceImpl(ApplicationConfiguration.purposeProcessURL, blockingEc)
+    val authorizationManagement: AuthorizationManagementService         =
+      new AuthorizationManagementServiceImpl(ApplicationConfiguration.authorizationManagementURL, blockingEc)
     val authorizationProcess: AuthorizationProcessService               =
       new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
     val selfcareClient: SelfcareClientService                           =
@@ -274,6 +278,13 @@ trait Dependencies {
         oauthAndRateLimitingDirective
       )
 
+    val toolsApi: ToolsApi =
+      new ToolsApi(
+        ToolsApiServiceImpl(authorizationManagement, agreementProcess, catalogProcess, purposeProcess),
+        ToolsApiMarshallerImpl,
+        oauthAndRateLimitingDirective
+      )
+
     val privacyNoticesApi: PrivacyNoticesApi = new PrivacyNoticesApi(
       PrivacyNoticesApiServiceImpl(consentTypeMap, privacyNoticesProcess),
       PrivacyNoticesApiMarshallerImpl,
@@ -290,6 +301,7 @@ trait Dependencies {
       purposes = purposesApi,
       clients = clientsApi,
       party = partyApi,
+      tools = toolsApi,
       health = healthApi,
       privacyNotices = privacyNoticesApi,
       validationExceptionToRoute = validationExceptionToRoute.some

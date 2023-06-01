@@ -1,6 +1,8 @@
 package it.pagopa.interop.backendforfrontend.error
 
 import akka.http.scaladsl.model.ErrorInfo
+import it.pagopa.interop.backendforfrontend.model.TokenGenerationValidationResult
+import it.pagopa.interop.clientassertionvalidation.Errors.ClientAssertionValidationError
 import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
 import it.pagopa.interop.commons.utils.errors.ComponentError
 
@@ -94,16 +96,28 @@ object BFFErrors {
 
   final case class PurposeNotFound(purposeId: UUID) extends ComponentError("0021", s"Purpose $purposeId not found")
 
+  final case class KidNotFound(clientId: UUID, kid: String)
+      extends ComponentError("0022", s"Kid $kid not found in Client $clientId")
+
+  final case class OrganizationNotAllowed(clientId: UUID)
+      extends ComponentError("0023", s"Organization not allowed for Client $clientId")
+
+  final case class ClientAssertionValidationWrapper(result: TokenGenerationValidationResult)
+      extends ComponentError("0024", "Validation results")
+
+  final case class ClientAssertionPublicKeyNotFound(kid: String, clientId: UUID)
+      extends ClientAssertionValidationError("8099", s"Public key with kid $kid not found for client $clientId")
+
   final case class PrivacyNoticeNotFoundInConfiguration(privacyNoticeKind: String)
-      extends ComponentError("0022", s"PrivacyNotice $privacyNoticeKind not found in configuration")
+      extends ComponentError("0025", s"PrivacyNotice $privacyNoticeKind not found in configuration")
 
   final case class PrivacyNoticeNotFound(privacyNoticeKind: String)
-      extends ComponentError("0023", s"PrivacyNotice $privacyNoticeKind not found")
+      extends ComponentError("0026", s"PrivacyNotice $privacyNoticeKind not found")
 
   final case class PrivacyNoticeVersionIsNotTheLatest(versionId: UUID)
-      extends ComponentError("0024", s"PrivacyNotice version $versionId not found")
+      extends ComponentError("0027", s"PrivacyNotice version $versionId not found")
 
   final case class DynamoReadingError(message: String)
-      extends ComponentError("0025", s"Error while reading data from Dynamo -> $message")
+      extends ComponentError("0028", s"Error while reading data from Dynamo -> $message")
 
 }
