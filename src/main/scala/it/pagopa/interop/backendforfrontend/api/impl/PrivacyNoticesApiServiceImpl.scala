@@ -17,6 +17,7 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import cats.syntax.all._
 
+import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
@@ -84,11 +85,11 @@ final case class PrivacyNoticesApiServiceImpl(
         .unlessA(latest.privacyNoticeVersion.versionId == seed.latestVersionId)
       _        <- privacyNoticesService.put(
         PersistentModel.UserPrivacyNotice(
-          pk = s"${PersistentModel.UserPrivacyNotice.pkPrefix}$pnUuid",
-          sk = s"${PersistentModel.UserPrivacyNotice.skPrefix}$userUuid#${latest.privacyNoticeVersion.version}",
-          pnId = pnUuid,
+          pnIdWithUserId = s"$pnUuid#$userUuid",
+          versionNumber = latest.privacyNoticeVersion.version,
+          privacyNoticeId = pnUuid,
           userId = userUuid,
-          acceptedAt = OffsetDateTimeSupplier.get(),
+          acceptedAt = OffsetDateTimeSupplier.get().truncatedTo(ChronoUnit.SECONDS),
           version = PersistentModel.UserPrivacyNoticeVersion(
             versionId = seed.latestVersionId,
             kind = ctype.toPersistent,
