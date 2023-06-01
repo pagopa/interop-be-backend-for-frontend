@@ -6215,7 +6215,7 @@ paths:
         - attributes
       operationId: createAttribute
       responses:
-        '201':
+        '200':
           description: Attribute created
           content:
             application/json:
