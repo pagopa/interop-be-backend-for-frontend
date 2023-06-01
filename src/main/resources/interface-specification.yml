@@ -6319,7 +6319,7 @@ paths:
         - attributes
       operationId: createAttribute
       responses:
-        '201':
+        '200':
           description: Attribute created
           content:
             application/json:
@@ -8741,31 +8741,6 @@ paths:
                 schema:
                   type: integer
                 description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  /support:
-    parameters:
-      - $ref: '#/components/parameters/IpAddress'
-    post:
-      tags:
-        - health
-      security: []
-      operationId: moveToSupportPage
-      description: This route is used to redirect support flow to the dedicated page
-      responses:
-        '301':
-          description: Privacy Notices accepted
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/status':
     get:
       security: []
