@@ -241,7 +241,8 @@ trait Dependencies {
         tenantProcess,
         partyProcess,
         fileManager(blockingEc),
-        UUIDSupplier
+        UUIDSupplier,
+        OffsetDateTimeSupplier
       ),
       EServicesApiMarshallerImpl,
       oauthAndRateLimitingDirective

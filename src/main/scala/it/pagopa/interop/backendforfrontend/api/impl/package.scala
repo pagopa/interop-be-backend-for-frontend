@@ -4,6 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.{ToEntityMarshaller, Marshaller}
 import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.EServiceConsumer
 import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
@@ -213,6 +214,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat6(PrivacyNotice)
   implicit def privacyNoticeSeedFormat: RootJsonFormat[PrivacyNoticeSeed] =
     jsonFormat1(PrivacyNoticeSeed)
+
+  implicit val EServiceConsumerFormat: RootJsonFormat[EServiceConsumer] = jsonFormat5(EServiceConsumer)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
