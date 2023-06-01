@@ -51,6 +51,11 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: tools
+    description: Utility Module
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'
   - name: health
     description: Verify service status
     externalDocs:
@@ -4050,6 +4055,105 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/tools/validateTokenGeneration':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+        - tools
+      summary: Validate token generation request
+      description: Provides additional details about token generation request failure
+      operationId: validateTokenGeneration
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccessTokenRequest'
+      responses:
+        '200':
+          description: Request successfully validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenGenerationValidationResult'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Validation failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/relationships/{relationshipId}':
     get:
       tags:
@@ -6294,7 +6398,7 @@ paths:
         - attributes
       operationId: createAttribute
       responses:
-        '201':
+        '200':
           description: Attribute created
           content:
             application/json:
@@ -8716,31 +8820,6 @@ paths:
                 schema:
                   type: integer
                 description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  /support:
-    parameters:
-      - $ref: '#/components/parameters/IpAddress'
-    post:
-      tags:
-        - health
-      security: []
-      operationId: moveToSupportPage
-      description: This route is used to redirect support flow to the dedicated page
-      responses:
-        '301':
-          description: Privacy Notices accepted
-          headers:
-            'X-Rate-Limit-Limit':
-              schema:
-                type: integer
-              description: Max allowed requests within time interval
-            'X-Rate-Limit-Remaining':
-              schema:
-                type: integer
-              description: Remaining requests within time interval
-            'X-Rate-Limit-Interval':
-              schema:
-                type: integer
-              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/status':
     get:
       security: []
@@ -8770,6 +8849,23 @@ components:
       schema:
         type: string
   schemas:
+    AccessTokenRequest:
+      type: object
+      required:
+        - client_assertion
+        - client_assertion_type
+        - grant_type
+      properties:
+        client_id:
+          type: string
+          example: e58035ce-c753-4f72-b613-46f8a17b71cc
+        client_assertion:
+          type: string
+          format: jws
+        client_assertion_type:
+          type: string
+        grant_type:
+          type: string
     PrivacyNotice:
       type: object
       properties:
@@ -9592,7 +9688,7 @@ components:
         isFreeOfCharge:
           type: boolean
         freeOfChargeReason:
-          type: string  
+          type: string
       required:
         - eserviceId
         - consumerId
@@ -9813,7 +9909,7 @@ components:
         isFreeOfCharge:
           type: boolean
         freeOfChargeReason:
-          type: string    
+          type: string
       required:
         - id
         - title
@@ -10679,6 +10775,80 @@ components:
         - verificationDate
         - renewal
         - revocationDate
+    TokenGenerationValidationResult:
+      type: object
+      properties:
+        clientKind:
+          $ref: '#/components/schemas/ClientKind'
+        steps:
+          $ref: '#/components/schemas/TokenGenerationValidationSteps'
+        eservice:
+          $ref: '#/components/schemas/TokenGenerationValidationEService'
+      required:
+        - steps
+    TokenGenerationValidationSteps:
+      type: object
+      properties:
+        clientAssertionValidation:
+          $ref: '#/components/schemas/TokenGenerationValidationEntry'
+        publicKeyRetrieve:
+          $ref: '#/components/schemas/TokenGenerationValidationEntry'
+        clientAssertionSignatureVerification:
+          $ref: '#/components/schemas/TokenGenerationValidationEntry'
+        platformStatesVerification:
+          $ref: '#/components/schemas/TokenGenerationValidationEntry'
+      required:
+        - clientAssertionValidation
+        - publicKeyRetrieve
+        - clientAssertionSignatureVerification
+        - platformStatesVerification
+    TokenGenerationValidationEntry:
+      type: object
+      properties:
+        result:
+          $ref: '#/components/schemas/TokenGenerationValidationStepResult'
+        failures:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenGenerationValidationStepFailure'
+      required:
+        - result
+        - failures
+    TokenGenerationValidationStepResult:
+      type: string
+      description: Token Generation Validation Step RESULT
+      enum:
+        - PASSED
+        - SKIPPED
+        - FAILED
+    TokenGenerationValidationStepFailure:
+      type: object
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+      required:
+        - code
+        - reason
+    TokenGenerationValidationEService:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        descriptorId:
+          type: string
+          format: uuid
+        version:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - descriptorId
+        - version
+        - name
     PublicKey:
       type: object
       properties:
