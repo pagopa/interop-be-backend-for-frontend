@@ -13,6 +13,9 @@ object ApplicationConfiguration {
   val jwtAudience: Set[String] =
     config.getString("backend-for-frontend.jwt.audience").split(",").toSet.filter(_.nonEmpty)
 
+  val clientAssertionAudience: Set[String] =
+    config.getString("backend-for-frontend.client-assertion-audience").split(",").toSet.filter(_.nonEmpty)
+
   val generatedJwtIssuer: String        = config.getString("backend-for-frontend.generated-jwt.issuer")
   val generatedJwtAudience: Set[String] =
     config.getString("backend-for-frontend.generated-jwt.audience").split(",").toSet.filter(_.nonEmpty)
@@ -63,12 +66,13 @@ object ApplicationConfiguration {
   val attributeRegistryManagementURL: String =
     config.getString("backend-for-frontend.services.attribute-registry-management")
 
-  val agreementProcessURL: String     = config.getString("backend-for-frontend.services.agreement-process")
-  val catalogProcessURL: String       = config.getString("backend-for-frontend.services.catalog-process")
-  val tenantManagementURL: String     = config.getString("backend-for-frontend.services.tenant-management")
-  val tenantProcessURL: String        = config.getString("backend-for-frontend.services.tenant-process")
-  val purposeProcessURL: String       = config.getString("backend-for-frontend.services.purpose-process")
-  val authorizationProcessURL: String = config.getString("backend-for-frontend.services.authorization-process")
+  val agreementProcessURL: String        = config.getString("backend-for-frontend.services.agreement-process")
+  val catalogProcessURL: String          = config.getString("backend-for-frontend.services.catalog-process")
+  val tenantManagementURL: String        = config.getString("backend-for-frontend.services.tenant-management")
+  val tenantProcessURL: String           = config.getString("backend-for-frontend.services.tenant-process")
+  val purposeProcessURL: String          = config.getString("backend-for-frontend.services.purpose-process")
+  val authorizationManagementURL: String = config.getString("backend-for-frontend.services.authorization-management")
+  val authorizationProcessURL: String    = config.getString("backend-for-frontend.services.authorization-process")
 
   val storageKind: String                    = config.getString("backend-for-frontend.storage.kind")
   val riskAnalysisDocumentsContainer: String =
