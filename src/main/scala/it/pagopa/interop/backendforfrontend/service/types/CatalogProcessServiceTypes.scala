@@ -91,6 +91,18 @@ object CatalogProcessServiceTypes {
     }
   }
 
+  implicit class EServiceAgreementStateConverter(private val d: CatalogProcess.AgreementState) extends AnyVal {
+    def toApi: AgreementState = d match {
+      case CatalogProcess.AgreementState.ACTIVE                       => AgreementState.ACTIVE
+      case CatalogProcess.AgreementState.ARCHIVED                     => AgreementState.ARCHIVED
+      case CatalogProcess.AgreementState.DRAFT                        => AgreementState.DRAFT
+      case CatalogProcess.AgreementState.MISSING_CERTIFIED_ATTRIBUTES => AgreementState.MISSING_CERTIFIED_ATTRIBUTES
+      case CatalogProcess.AgreementState.PENDING                      => AgreementState.PENDING
+      case CatalogProcess.AgreementState.REJECTED                     => AgreementState.REJECTED
+      case CatalogProcess.AgreementState.SUSPENDED                    => AgreementState.SUSPENDED
+    }
+  }
+
   implicit class EServiceDescriptorStateObjectConverter(private val d: CatalogProcess.EServiceDescriptorState.type)
       extends AnyVal {
     def fromApi(s: EServiceDescriptorState): CatalogProcess.EServiceDescriptorState = s match {
@@ -224,5 +236,24 @@ object CatalogProcessServiceTypes {
       case "DOCUMENT"  => CatalogProcess.EServiceDocumentKind.DOCUMENT
       case "INTERFACE" => CatalogProcess.EServiceDocumentKind.INTERFACE
     }
+  }
+
+  final case class EServiceConsumer(
+    descriptorVersion: Int,
+    descriptorState: EServiceDescriptorState,
+    agreementState: AgreementState,
+    consumerName: String,
+    consumerExternalId: String
+  )
+
+  implicit class EServiceConsumerWrapper(private val esc: CatalogProcess.EServiceConsumer) extends AnyVal {
+    def toApi: EServiceConsumer =
+      EServiceConsumer(
+        descriptorVersion = esc.descriptorVersion,
+        descriptorState = esc.descriptorState.toApi,
+        agreementState = esc.agreementState.toApi,
+        consumerName = esc.consumerName,
+        consumerExternalId = esc.consumerExternalId
+      )
   }
 }
