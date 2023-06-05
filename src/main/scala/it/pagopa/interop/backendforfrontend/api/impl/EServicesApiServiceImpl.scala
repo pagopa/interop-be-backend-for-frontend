@@ -685,7 +685,7 @@ final case class EServicesApiServiceImpl(
     val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss")
 
     def getLines(consumers: Seq[EServiceConsumer]): Array[Byte] = {
-      val header             = "descriptorVersion,descriptorState,agreementState,consumerName,consumerExternalId"
+      val header             = "versione,stato_versione,stato_richiesta_fruizione,fruitore,codice_ipa_fruitore"
       val lines: Seq[String] = Seq(header) ++ consumers.map { c =>
         List(
           c.descriptorVersion.toString,
