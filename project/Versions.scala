@@ -2,17 +2,17 @@ object Versions {
   lazy val akkaHttpVersion       = "10.2.10"
   lazy val akkaManagementVersion = "1.1.4"
   lazy val akkaVersion           = "2.6.20"
-  lazy val catsVersion           = "2.9.0"
+  lazy val catsVersion           = "2.8.0"
   lazy val jacksonVersion        = "2.11.4"
   lazy val json4sVersion         = "4.0.6"
-  lazy val logbackVersion        = "1.4.7"
+  lazy val logbackVersion        = "1.4.4"
   lazy val mustacheVersion       = "0.9.10"
   lazy val openapi4jVersion      = "1.0.7"
   lazy val scalaMockVersion      = "5.2.0"
   lazy val scalapbVersion        = "0.11.1"
-  lazy val scalatestVersion      = "3.2.16"
-  lazy val tikaVersion           = "2.8.0"
-  lazy val scanamoVersion        = "1.0.0-M26"
+  lazy val scalatestVersion      = "3.2.14"
+  lazy val tikaVersion           = "2.5.0"
+  lazy val scanamoVersion        = "1.0.0-M25"
 }
 
 object PagopaVersions {
