@@ -255,4 +255,18 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         )
       invoker.invoke(request, s"Deleting E-Service $eServiceId")
     }
+
+  override def getEServiceConsumers(eServiceId: UUID, offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EServiceConsumers] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[EServiceConsumers] =
+      api.getEServiceConsumers(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        offset = offset,
+        limit = limit,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving consumers for EService $eServiceId from Catalog Process")
+  }
 }

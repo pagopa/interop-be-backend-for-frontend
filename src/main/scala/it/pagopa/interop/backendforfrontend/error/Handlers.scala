@@ -1,20 +1,22 @@
 package it.pagopa.interop.backendforfrontend.error
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.StandardRoute
+import akka.http.scaladsl.server.{Route, StandardRoute}
 import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
+import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => AuthorizationProcessError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf, serviceCode}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
-import it.pagopa.interop.backendforfrontend.model.Problem
+import it.pagopa.interop.backendforfrontend.model.{Problem, TokenGenerationValidationResult}
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiError => CatalogProcessError}
+import it.pagopa.interop.commons.jwt.errors.InvalidJWTClaim
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
 import it.pagopa.interop.commons.ratelimiter
 import it.pagopa.interop.commons.ratelimiter.model.Headers
 import it.pagopa.interop.commons.utils.errors.AkkaResponses._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, TooManyRequests}
 import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors, ServiceCode}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
@@ -22,10 +24,9 @@ import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserR
 import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareV2Error}
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
-import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => AuthorizationProcessError}
-import it.pagopa.interop.commons.jwt.errors.InvalidJWTClaim
 import spray.json._
-import scala.util.{Failure, Try}
+
+import scala.util.{Failure, Success, Try}
 
 object Handlers {
 
@@ -61,6 +62,22 @@ object Handlers {
     case Failure(err: PrivacyNoticeNotFound)               => notFound(err, logMessage)
     case Failure(err)                                      => internalServerError(err, logMessage)
   }
+
+  def handleTokenValidationError(logMessage: String)(success: TokenGenerationValidationResult => Route)(
+    result: Try[TokenGenerationValidationResult]
+  )(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
+    result match {
+      case Success(s)                                            => success(s)
+      case Failure(res: ClientAssertionValidationWrapper)        => success(res.result)
+      case Failure(ex: OrganizationNotAllowed)                   => forbidden(ex, logMessage)
+      case Failure(ex: ratelimiter.error.Errors.TooManyRequests) =>
+        tooManyRequests(
+          TooManyRequests,
+          s"Requests limit exceeded for organization ${ex.tenantId}",
+          Headers.headersFromStatus(ex.status)
+        )
+      case Failure(ex)                                           => internalServerError(ex, logMessage)
+    }
 
   private def completeWithError[T](statusCode: Int, response: Option[T], endpointMessage: String)(implicit
     contexts: Seq[(String, String)],

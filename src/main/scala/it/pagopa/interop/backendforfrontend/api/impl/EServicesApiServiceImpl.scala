@@ -1,7 +1,8 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.{ContentType, HttpEntity}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
@@ -30,7 +31,8 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.Digester
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.service.UUIDSupplier
+import it.pagopa.interop.commons.utils.service.{UUIDSupplier, OffsetDateTimeSupplier}
+import java.time.format.DateTimeFormatter
 
 import java.io.File
 import java.nio.file.Files
@@ -38,6 +40,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.xml.Elem
+import akka.http.scaladsl.model.HttpResponse
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -46,7 +49,8 @@ final case class EServicesApiServiceImpl(
   tenantProcessService: TenantProcessService,
   partyProcessService: PartyProcessService,
   fileManager: FileManager,
-  uuidSupplier: UUIDSupplier
+  uuidSupplier: UUIDSupplier,
+  offsetDateTimeSupplier: OffsetDateTimeSupplier
 )(implicit ec: ExecutionContext)
     extends EservicesApiService {
 
@@ -666,6 +670,49 @@ final case class EServicesApiServiceImpl(
     onComplete(result) {
       handleError(s"Error while deleting E-Service $eServiceId") orElse { case Success(_) =>
         deleteEService204
+      }
+    }
+  }
+
+  override def getEServiceConsumers(eServiceId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+
+    import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
+
+    val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss")
+
+    def getLines(consumers: Seq[EServiceConsumer]): Array[Byte] = {
+      val header             = "versione,stato_versione,stato_richiesta_fruizione,fruitore,codice_ipa_fruitore"
+      val lines: Seq[String] = Seq(header) ++ consumers.map { c =>
+        List(
+          c.descriptorVersion.toString,
+          c.descriptorState.toString,
+          c.agreementState.toString,
+          c.consumerName,
+          c.consumerExternalId
+        ).map(s => s"\"$s\"").mkString(",")
+      }
+      lines.mkString("\n").getBytes()
+    }
+
+    val result: Future[HttpResponse] = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
+      consumers    <- catalogProcessService.getAllEServiceConsumers(eServiceUUID)
+      filename     = s"${offsetDateTimeSupplier.get().format(dtf)}-lista-fruitori-${eService.name}.csv"
+      apiConsumers = consumers.map(_.toApi)
+      byteStream   = getLines(apiConsumers)
+    } yield HttpResponse(
+      entity = HttpEntity(ContentType(MediaTypes.`application/octet-stream`), byteStream),
+      headers = Seq(`Content-Disposition`(attachment, Map("filename" -> filename)))
+    )
+
+    onComplete(result) {
+      handleError(s"Error getting consumers of eservice $eServiceId") orElse { case Success(resource) =>
+        complete(resource)
       }
     }
   }

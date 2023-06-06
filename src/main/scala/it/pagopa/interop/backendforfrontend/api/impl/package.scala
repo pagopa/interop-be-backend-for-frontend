@@ -4,6 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.{ToEntityMarshaller, Marshaller}
 import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.EServiceConsumer
 import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
 import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
@@ -206,6 +207,17 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit def riskAnalysisFormConfigFormat: RootJsonFormat[RiskAnalysisFormConfig] =
     jsonFormat2(RiskAnalysisFormConfig)
 
+  implicit def tokenGenerationValidationStepFailureFormat: RootJsonFormat[TokenGenerationValidationStepFailure] =
+    jsonFormat2(TokenGenerationValidationStepFailure)
+  implicit def tokenGenerationValidationStepsFormat: RootJsonFormat[TokenGenerationValidationSteps]             =
+    jsonFormat4(TokenGenerationValidationSteps)
+  implicit def tokenGenerationValidationEServiceFormat: RootJsonFormat[TokenGenerationValidationEService]       =
+    jsonFormat4(TokenGenerationValidationEService)
+  implicit def tokenGenerationValidationEntryFormat: RootJsonFormat[TokenGenerationValidationEntry]             =
+    jsonFormat2(TokenGenerationValidationEntry)
+  implicit def tokenGenerationValidationResultFormat: RootJsonFormat[TokenGenerationValidationResult]           =
+    jsonFormat3(TokenGenerationValidationResult)
+
   implicit val renewalVerifiedTenantAttributeSeedFormat: RootJsonFormat[RenewalVerifiedTenantAttributeSeed] =
     jsonFormat2(RenewalVerifiedTenantAttributeSeed)
 
@@ -213,6 +225,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat6(PrivacyNotice)
   implicit def privacyNoticeSeedFormat: RootJsonFormat[PrivacyNoticeSeed] =
     jsonFormat1(PrivacyNoticeSeed)
+
+  implicit val EServiceConsumerFormat: RootJsonFormat[EServiceConsumer] = jsonFormat5(EServiceConsumer)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
