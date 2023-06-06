@@ -118,7 +118,7 @@ object Dependencies {
   }
 
   private[this] object scanamo {
-    lazy val scanamo = "org.scanamo" %% "scanamo" % scanamoVersion
+    lazy val scanamo = "org.scanamo" %% "scanamo"         % scanamoVersion
     lazy val testkit = "org.scanamo" %% "scanamo-testkit" % scanamoVersion
   }
 
