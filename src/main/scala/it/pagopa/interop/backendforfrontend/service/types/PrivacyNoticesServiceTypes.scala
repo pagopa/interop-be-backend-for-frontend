@@ -8,7 +8,7 @@ object PrivacyNoticesServiceTypes {
 
   implicit class UserPrivacyNoticeConverter(private val pn: PersistentModel.UserPrivacyNotice) extends AnyVal {
     def toApi(firstAccept: Boolean, isUpdated: Boolean, latestVersionId: UUID): PrivacyNotice = PrivacyNotice(
-      id = pn.pnId,
+      id = pn.privacyNoticeId,
       userId = pn.userId,
       consentType = pn.version.kind.toApi,
       firstAccept = firstAccept,

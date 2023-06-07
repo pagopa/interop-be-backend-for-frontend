@@ -7,15 +7,13 @@ import java.util.UUID
 import java.time.OffsetDateTime
 
 final case class PrivacyNotice(
-  pk: String,
-  sk: String,
-  pnId: UUID,
+  privacyNoticeId: UUID,
   createdDate: OffsetDateTime,
   lastPublishedDate: OffsetDateTime,
   organizationId: UUID,
   responsibleUserId: Option[UUID],
   privacyNoticeVersion: PrivacyNoticeVersion,
-  createdAt: OffsetDateTime
+  persistedAt: OffsetDateTime
 )
 
 final case class PrivacyNoticeVersion(
@@ -27,16 +25,6 @@ final case class PrivacyNoticeVersion(
 )
 
 object PrivacyNotice {
-
-  /**
-    * PRNO stands for [PR]IVACY [NO]TICE UUID, thus you get soon the meaning of the column
-    */
-  val pkPrefix: String = "PRNO#"
-
-  /**
-    * LATV stands for [LAT[EST [V]ERSION, thus you get soon the meaning of the column
-    */
-  val skPrefix: String                                                        = "LATV#"
   implicit val formatPrivacyNoticeVersion: DynamoFormat[PrivacyNoticeVersion] = deriveDynamoFormat
   implicit val formatPrivacyNotice: DynamoFormat[PrivacyNotice]               = deriveDynamoFormat
 }
