@@ -3,7 +3,7 @@ package it.pagopa.interop.backendforfrontend.service
 import it.pagopa.interop.catalogprocess.client.model._
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 trait CatalogProcessService {
 
   def cloneEServiceByDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit
@@ -72,4 +72,24 @@ trait CatalogProcessService {
   def deleteDraft(eServiceId: String, descriptorId: String)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
   def deleteEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
+
+  def getEServiceConsumers(eServiceId: UUID, offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EServiceConsumers]
+
+  def getAllEServiceConsumers(
+    eServiceId: UUID
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[List[EServiceConsumer]] = {
+
+    def getEServiceConsumersFrom(offset: Int): Future[List[EServiceConsumer]] =
+      getEServiceConsumers(eServiceId = eServiceId, limit = 50, offset = offset)
+        .map(_.results.toList)
+
+    def go(start: Int)(as: List[EServiceConsumer]): Future[List[EServiceConsumer]] =
+      getEServiceConsumersFrom(start).flatMap(esec =>
+        if (esec.size < 50) Future.successful(as ++ esec) else go(start + 50)(as ++ esec)
+      )
+
+    go(0)(Nil)
+  }
 }
