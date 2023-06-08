@@ -56,6 +56,11 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: support
+    description: Support
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'    
   - name: health
     description: Verify service status
     externalDocs:
@@ -8820,6 +8825,75 @@ paths:
                 schema:
                   type: integer
                 description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /support:
+    parameters:
+        - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+          - support
+      security: []
+      operationId: redirectToSupportPage
+      description: This route is used to redirect support flow to the dedicated page
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/SAMLResponse'
+      responses:
+        '200':
+          description: returns the corresponding base 64 and token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestSAML'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        # '301':
+        #   description: SAML accepted
+        #   headers:
+        #     'X-Rate-Limit-Limit':
+        #       schema:
+        #         type: integer
+        #       description: Max allowed requests within time interval
+        #     'X-Rate-Limit-Remaining':
+        #       schema:
+        #         type: integer
+        #       description: Remaining requests within time interval
+        #     'X-Rate-Limit-Interval':
+        #       schema:
+        #         type: integer
+        #       description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/status':
     get:
       security: []
@@ -8849,6 +8923,14 @@ components:
       schema:
         type: string
   schemas:
+    SAMLResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: SAML response
+      required:
+        - response
     AccessTokenRequest:
       type: object
       required:
@@ -10022,6 +10104,18 @@ components:
       enum:
         - SIG
         - ENC
+    TestSAML:
+      type: object
+      properties:
+        base64:
+          type: string
+          description: 'base64 encoded key'
+        token:
+          type: string
+          description: 'token JWT'  
+      required:
+        - base64
+        - token
     EncodedClientKey:
       type: object
       properties:

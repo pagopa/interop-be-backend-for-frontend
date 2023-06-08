@@ -24,6 +24,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   EServicesApiServiceImpl,
   HealthApiMarshallerImpl,
   HealthServiceApiImpl,
+  SupportApiMarshallerImpl,
+  SupportApiServiceImpl,
   PartyApiMarshallerImpl,
   PartyApiServiceImpl,
   PurposesApiMarshallerImpl,
@@ -190,6 +192,13 @@ trait Dependencies {
       }
     )
 
+    val supportApi: SupportApi = new SupportApi(
+      // new SupportApiServiceImpl(sessionTokenGenerator, tenantProcess, UUIDSupplier),
+      new SupportApiServiceImpl(jwtReader, sessionTokenGenerator, UUIDSupplier, OffsetDateTimeSupplier),
+      SupportApiMarshallerImpl,
+      SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
+    )
+
     val authorizationApi: AuthorizationApi = new AuthorizationApi(
       AuthorizationApiServiceImpl(
         jwtReader,
@@ -305,7 +314,8 @@ trait Dependencies {
       tools = toolsApi,
       health = healthApi,
       privacyNotices = privacyNoticesApi,
-      validationExceptionToRoute = validationExceptionToRoute.some
+      validationExceptionToRoute = validationExceptionToRoute.some,
+      support = supportApi
     )(actorSystem.classicSystem)
   }
 
