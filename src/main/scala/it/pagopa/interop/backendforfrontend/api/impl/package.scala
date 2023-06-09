@@ -228,8 +228,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val EServiceConsumerFormat: RootJsonFormat[EServiceConsumer] = jsonFormat5(EServiceConsumer)
 
-  implicit val testSamlFormat: RootJsonFormat[TestSAML] = jsonFormat2(TestSAML)
-
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
   final val entityMarshallerFile: ToEntityMarshaller[File] =

@@ -194,8 +194,7 @@ trait Dependencies {
     )
 
     val supportApi: SupportApi = new SupportApi(
-      // new SupportApiServiceImpl(sessionTokenGenerator, tenantProcess, UUIDSupplier),
-      new SupportApiServiceImpl(jwtReader, sessionTokenGenerator, UUIDSupplier, OffsetDateTimeSupplier),
+      new SupportApiServiceImpl(sessionTokenGenerator, tenantProcess, OffsetDateTimeSupplier),
       SupportApiMarshallerImpl,
       SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
     )

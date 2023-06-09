@@ -12,11 +12,11 @@ object SupportApiMarshallerImpl extends SupportApiMarshaller with SprayJsonSuppo
 
   implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
 
+  implicit def toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken] = sprayJsonMarshaller[SessionToken]
+
   override implicit def fromEntityUnmarshallerSAMLResponse: FromEntityUnmarshaller[SAMLResponse] = {
     Unmarshaller.stringUnmarshaller
       .forContentTypes(MediaTypes.`text/xml`, MediaTypes.`application/xml`)
       .map(SAMLResponse)
   }
-
-  implicit def toEntityMarshallerTestSAML: ToEntityMarshaller[TestSAML] = sprayJsonMarshaller[TestSAML]
 }
