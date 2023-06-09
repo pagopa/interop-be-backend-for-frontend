@@ -162,8 +162,25 @@ object PurposeProcessServiceTypes {
         dependencies = question.dependencies.map(_.toApi),
         visualType = question.visualType,
         defaultValue = question.defaultValue,
+        hideOption = question.hideOption.map(_.toApi),
+        validation = question.validation.map(_.toApi),
         options = question.options.map(_.map(_.toApi))
       )
+  }
+
+  implicit class ValidationWrapper(private val validation: PurposeProcess.ValidationOptionResponse) extends AnyVal {
+    def toApi: ValidationOption =
+      ValidationOption(maxLength = validation.maxLength)
+  }
+
+  implicit class MapHideOptionWrapper(private val mapHideOption: Map[String, Seq[PurposeProcess.HideOptionResponse]])
+      extends AnyVal {
+    def toApi: Map[String, Seq[HideOption]] = mapHideOption.map { case (k, v) => (k, v.map(_.toApi)) }
+  }
+
+  implicit class HideOptionWrapper(private val hideOption: PurposeProcess.HideOptionResponse) extends AnyVal {
+    def toApi: HideOption =
+      HideOption(id = hideOption.id, value = hideOption.value)
   }
 
   implicit class LocalizedTextWrapper(private val localizedText: PurposeProcess.LocalizedTextResponse) extends AnyVal {

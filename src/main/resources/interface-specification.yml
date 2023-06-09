@@ -8940,6 +8940,15 @@ components:
           type: array
           items:
             type: string
+        hideOption:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/HideOption'
+        validation:
+          type: object
+          $ref: '#/components/schemas/ValidationOption'         
         options:
           type: array
           items:
@@ -8952,6 +8961,22 @@ components:
         - dependencies
         - visualType
         - defaultValue
+    ValidationOption:
+        type: object
+        properties:
+          maxLength:
+            type: integer
+            format: int32
+    HideOption:
+        type: object
+        properties:
+          id:
+            type: string
+          value:
+            type: string
+        required:
+          - id
+          - value       
     LabeledValue:
       type: object
       properties:
