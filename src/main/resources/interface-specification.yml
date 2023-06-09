@@ -10296,7 +10296,6 @@ components:
         - role
         - product
         - state
-        - createdAt
     RelationshipsResponse:
       type: array
       items:

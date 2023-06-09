@@ -15,22 +15,24 @@ import it.pagopa.interop.backendforfrontend.service.model.{PrivacyNotice, UserPr
 import java.util.UUID
 import scala.concurrent.{Future, ExecutionContext}
 
-class PrivacyNoticesServiceImpl(tableName: String)(implicit ec: ExecutionContext, scanamo: ScanamoAsync)
-    extends PrivacyNoticesService {
+class PrivacyNoticesServiceImpl(privacyNoticesTableName: String, privacyNoticesUsersTableName: String)(implicit
+  ec: ExecutionContext,
+  scanamo: ScanamoAsync
+) extends PrivacyNoticesService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   val pnTable: Table[PrivacyNotice] =
-    Table[PrivacyNotice](tableName)
+    Table[PrivacyNotice](privacyNoticesTableName)
 
   val userTable: Table[UserPrivacyNotice] =
-    Table[UserPrivacyNotice](tableName)
+    Table[UserPrivacyNotice](privacyNoticesUsersTableName)
 
   override def getLatestVersion(id: UUID)(implicit contexts: Seq[(String, String)]): Future[Option[PrivacyNotice]] = {
     logger.info(s"Getting id $id privacy notice")
     scanamo
-      .exec { pnTable.get("pk" === s"${PrivacyNotice.pkPrefix}$id" and "sk" === s"${PrivacyNotice.skPrefix}$id") }
+      .exec { pnTable.get("privacyNoticeId" === s"$id") }
       .flatMap {
         case Some(value) => value.leftMap(err => DynamoReadingError(describe(err))).toFuture.some.sequence
         case None        => Future.successful(None)
@@ -43,9 +45,7 @@ class PrivacyNoticesServiceImpl(tableName: String)(implicit ec: ExecutionContext
     logger.info(s"Getting privacy notice with id ${id.toString} for user ${userId.toString}")
 
     val query: ScanamoOps[List[Either[DynamoReadError, UserPrivacyNotice]]] =
-      userTable.query(
-        "pk" === s"${UserPrivacyNotice.pkPrefix}$id" and ("sk" beginsWith s"${UserPrivacyNotice.skPrefix}$userId")
-      )
+      userTable.query("pnIdWithUserId" === s"$id#$userId")
 
     scanamo.exec(query).map(x => x.sequence).flatMap {
       case Left(err)   => Future.failed(DynamoReadingError(describe(err)))

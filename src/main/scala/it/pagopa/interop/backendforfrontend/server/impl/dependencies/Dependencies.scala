@@ -171,7 +171,8 @@ trait Dependencies {
         ConsentType.TOS -> ApplicationConfiguration.privacyNoticeTosUuid
       )
     val privacyNoticesProcess: PrivacyNoticesService = new PrivacyNoticesServiceImpl(
-      ApplicationConfiguration.privacyNoticeTableName
+      ApplicationConfiguration.privacyNoticesTableName,
+      ApplicationConfiguration.privacyNoticesUsersTableName
     )(ec, scanamo)
 
     val signerService: SignerService = new KMSSignerService(blockingEc)
