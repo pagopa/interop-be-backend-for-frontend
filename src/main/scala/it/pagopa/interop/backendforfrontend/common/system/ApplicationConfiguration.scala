@@ -9,6 +9,7 @@ import scala.concurrent.duration.FiniteDuration
 object ApplicationConfiguration {
   val config: Config = ConfigFactory.load()
 
+  val pagoPaTenantId: String   = config.getString("backend-for-frontend.pagopa-tenant-id")
   val serverPort: Int          = config.getInt("backend-for-frontend.port")
   val jwtAudience: Set[String] =
     config.getString("backend-for-frontend.jwt.audience").split(",").toSet.filter(_.nonEmpty)
