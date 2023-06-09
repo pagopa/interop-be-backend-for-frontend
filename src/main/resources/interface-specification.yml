@@ -8947,7 +8947,6 @@ components:
             items:
               $ref: '#/components/schemas/HideOption'
         validation:
-          type: object
           $ref: '#/components/schemas/ValidationOption'         
         options:
           type: array
