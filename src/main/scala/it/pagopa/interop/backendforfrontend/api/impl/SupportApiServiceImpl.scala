@@ -27,11 +27,6 @@ import org.opensaml.xml.validation.ValidationException
 import org.opensaml.xml.{XMLObject, Configuration}
 import org.opensaml.DefaultBootstrap
 import org.opensaml.xml.io.{Unmarshaller, UnmarshallerFactory}
-import org.opensaml.xml.security.credential.Credential
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
-import org.opensaml.xml.security.x509.BasicX509Credential
-import org.opensaml.xml.signature.SignatureValidator
 
 import cats.syntax.all._
 import java.time.{OffsetDateTime, Instant, ZoneOffset}
@@ -50,11 +45,9 @@ class SupportApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  val ORGANIZATION_ID_CLAIM: String    = "organization.id"
-  val ORGANIZATION_NAME_CLAIM: String  = "organization.name"
-  val ORGANIZATION_ROLES_CLAIM: String = "organization.roles"
-  val SUPPORT_LEVELS: Seq[String]      = Seq("L2", "L3")
-  val SUPPORT_LEVEL_NAME: String       = "supportLevel"
+  val SUPPORT_LEVELS: Seq[String] = Seq("L2", "L3")
+  val SUPPORT_LEVEL_NAME: String  = "supportLevel"
+  val OPERATOR: String            = "OPERATOR"
 
   override def redirectToSupportPage(
     sAMLResponse: SAMLResponse
@@ -63,12 +56,11 @@ class SupportApiServiceImpl(
     logger.info(s"Calling Support SAML")
 
     val result: Future[(String, String)] = for {
-      tenant     <- ApplicationConfiguration.pagoPaTenantId.toFutureUUID >>= tenantProcessService.getTenant
-      selfcareId <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
-      claims = buildClaims(selfcareId, tenant)
+      tenant       <- ApplicationConfiguration.pagoPaTenantId.toFutureUUID >>= tenantProcessService.getTenant
+      selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
-        claimsSet = claims,
+        claimsSet = buildClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = 300
@@ -94,12 +86,11 @@ class SupportApiServiceImpl(
     logger.info(s"Calling get SAML2 token")
 
     val result: Future[SessionToken] = for {
-      tenant     <- ApplicationConfiguration.pagoPaTenantId.toFutureUUID >>= tenantProcessService.getTenant
-      selfcareId <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
-      claims = buildClaims(selfcareId, tenant)
+      tenant       <- ApplicationConfiguration.pagoPaTenantId.toFutureUUID >>= tenantProcessService.getTenant
+      selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
-        claimsSet = claims,
+        claimsSet = buildClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = 3600
@@ -126,22 +117,9 @@ class SupportApiServiceImpl(
     unmarshaller.unmarshall(element)
   }
 
-  private def getCredential(x509Certificate: String): Credential = {
-    val cf: CertificateFactory              = CertificateFactory.getInstance("X.509")
-    val cert: X509Certificate               =
-      cf.generateCertificate(new ByteArrayInputStream(x509Certificate.trim.getBytes))
-        .asInstanceOf[X509Certificate]
-    val x509Credential: BasicX509Credential = new BasicX509Credential()
-    x509Credential.setPublicKey(cert.getPublicKey())
-    x509Credential.setEntityCertificate(cert)
-    x509Credential
-  }
-
   private def validate(xmlObject: XMLObject): Future[Unit] = {
     val response               = xmlObject.asInstanceOf[Response]
     val sig                    = response.getSignature
-    val x509Data               = sig.getKeyInfo().getX509Datas().asScala.toList
-    val cacerts                = x509Data.flatMap(_.getX509Certificates().asScala.toList).map(_.getValue())
     val assertions             = response.getAssertions().asScala.toList
     val audienceRestriction    = assertions.map(_.getConditions()).flatMap(_.getAudienceRestrictions().asScala.toList)
     val notBeforeConditions    = assertions.map(_.getConditions()).map(_.getNotBefore)
@@ -156,7 +134,7 @@ class SupportApiServiceImpl(
     val now = offsetDateTimeSupplier.get()
 
     for {
-      _               <- Either
+      _ <- Either
         .catchNonFatal {
           new SAMLSignatureProfileValidator().validate(
             sig
@@ -168,28 +146,13 @@ class SupportApiServiceImpl(
           case e                      => e
         }
         .toFuture
-      x509Certificate <- cacerts.headOption.toFuture(SamlNotValid("Missing X.509 Certificates"))
-      _               <- Either
-        .catchNonFatal {
-          new SignatureValidator(getCredential(s"""-----BEGIN CERTIFICATE-----\n
-            ${x509Certificate}
-            \n-----END CERTIFICATE-----""")).validate(
-            sig
-          ) // Indicates signature was not cryptographically valid, or possibly a processing error.
-        }
-        .void
-        .leftMap {
-          case e: ValidationException => SamlNotValid(e.getMessage())
-          case e                      => e
-        }
-        .toFuture
-      _               <- Future
+      _ <- Future
         .failed(SamlNotValid("Conditions NotBefore are not compliant"))
         .whenA(notBefore.exists(nb => now.isBefore(nb)))
-      _               <- Future
+      _ <- Future
         .failed(SamlNotValid("Conditions NotOnOrAfter are not compliant"))
         .whenA(notAfter.exists(na => now.isAfter(na)))
-      _               <- attrs
+      _ <- attrs
         .find(a =>
           a.getName == SUPPORT_LEVEL_NAME && (a
             .getAttributeValues()
@@ -198,7 +161,7 @@ class SupportApiServiceImpl(
             .exists(av => SUPPORT_LEVELS.contains(av.getDOM().getTextContent())))
         )
         .toFuture(SamlNotValid("Support level is not compliant"))
-      _               <- Future
+      _ <- Future
         .failed(SamlNotValid("Conditions Audience are not compliant"))
         .unlessA(
           audienceRestriction
@@ -209,14 +172,25 @@ class SupportApiServiceImpl(
   }
 
   private def buildClaims(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] = {
+    import spray.json.RootJsonFormat
+    import spray.json._
+
+    case class Role(partyRole: String, role: String)
+    case class Organization(id: String, name: String, roles: Seq[Role])
+    implicit val roleFormat: RootJsonFormat[Role]                 = jsonFormat2(Role)
+    implicit val organizationFormat: RootJsonFormat[Organization] = jsonFormat3(Organization)
+
     Map(
-      USER_ROLES               -> SUPPORT_ROLE,
-      ORGANIZATION_ID_CLAIM    -> tenant.id.toString,
-      SELFCARE_ID_CLAIM        -> selfcareId,
-      ORGANIZATION_ID_CLAIM    -> selfcareId,
-      ORGANIZATION_NAME_CLAIM  -> tenant.name,
-      ORGANIZATION_ROLES_CLAIM -> s"""[{"partyRole": "OPERATOR", "role": "$SUPPORT_ROLE" }]""",
-      UID                      -> SUPPORT_ROLE
+      USER_ROLES            -> SUPPORT_ROLE,
+      ORGANIZATION_ID_CLAIM -> tenant.id.toString,
+      SELFCARE_ID_CLAIM     -> selfcareId,
+      ORGANIZATION_ID_CLAIM -> selfcareId,
+      ORGANIZATION          -> Organization(
+        id = selfcareId,
+        name = tenant.name,
+        roles = Seq(Role(partyRole = OPERATOR, role = SUPPORT_ROLE))
+      ).toJson.toString,
+      UID                   -> SUPPORT_ROLE
     )
   }
 }
