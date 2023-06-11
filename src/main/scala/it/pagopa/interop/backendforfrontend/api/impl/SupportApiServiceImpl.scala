@@ -35,7 +35,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
 
-class SupportApiServiceImpl(
+final case class SupportApiServiceImpl(
   sessionTokenGenerator: SessionTokenGenerator,
   tenantProcessService: TenantProcessService,
   offsetDateTimeSupplier: OffsetDateTimeSupplier
@@ -56,6 +56,7 @@ class SupportApiServiceImpl(
     logger.info(s"Calling Support SAML")
 
     val result: Future[(String, String)] = for {
+      _            <- validate(parseResponse(sAMLResponse.response))
       tenant       <- ApplicationConfiguration.pagoPaTenantId.toFutureUUID >>= tenantProcessService.getTenant
       selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken <- sessionTokenGenerator.generate(
@@ -65,7 +66,6 @@ class SupportApiServiceImpl(
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = 300
       )
-      _            <- validate(parseResponse(sAMLResponse.response))
       base64       <- sAMLResponse.response.encodeBase64.toFuture
     } yield (base64, sessionToken)
 
@@ -78,7 +78,7 @@ class SupportApiServiceImpl(
     }
   }
 
-  override def getSaml2Token(tenantId: String)(implicit
+  override def getSaml2Token(tenantId: String, sAMLResponse: SAMLResponse)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -86,7 +86,8 @@ class SupportApiServiceImpl(
     logger.info(s"Calling get SAML2 token")
 
     val result: Future[SessionToken] = for {
-      tenant       <- ApplicationConfiguration.pagoPaTenantId.toFutureUUID >>= tenantProcessService.getTenant
+      _            <- validate(parseResponse(sAMLResponse.response))
+      tenant       <- tenantId.toFutureUUID >>= tenantProcessService.getTenant
       selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
@@ -184,7 +185,6 @@ class SupportApiServiceImpl(
       USER_ROLES            -> SUPPORT_ROLE,
       ORGANIZATION_ID_CLAIM -> tenant.id.toString,
       SELFCARE_ID_CLAIM     -> selfcareId,
-      ORGANIZATION_ID_CLAIM -> selfcareId,
       ORGANIZATION          -> Organization(
         id = selfcareId,
         name = tenant.name,
