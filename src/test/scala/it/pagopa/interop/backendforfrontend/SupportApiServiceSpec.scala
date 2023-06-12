@@ -11,9 +11,10 @@ import it.pagopa.interop.tenantprocess.client.model.{ExternalId, Tenant}
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpecLike
 
+import scala.util.{Using, Success, Failure}
 import java.util.UUID
 import java.nio.file.Paths
-import scala.io.{Source, BufferedSource}
+import scala.io.Source
 import java.time.{OffsetDateTime, ZoneOffset}
 import scala.concurrent.Future
 
@@ -23,8 +24,13 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
 
     "succeed when the tenant is present and SAML2 Response is validated (redirect)" in {
 
-      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
-      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+      val response: SAMLResponse =
+        Using(Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile()))(source =>
+          SAMLResponse(source.getLines().mkString)
+        ) match {
+          case Success(s) => s
+          case Failure(e) => throw e
+        }
 
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
@@ -75,15 +81,17 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       Post() ~> supportService.redirectToSupportPage(response) ~> check {
         status shouldEqual StatusCodes.MovedPermanently
       }
-
-      source.close()
     }
 
     "fail when selfcareId is missing (redirect)" in {
 
-      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
-
-      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+      val response: SAMLResponse =
+        Using(Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile()))(source =>
+          SAMLResponse(source.getLines().mkString)
+        ) match {
+          case Success(s) => s
+          case Failure(e) => throw e
+        }
 
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
@@ -115,15 +123,17 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         val problem = responseAs[Problem]
         problem.status shouldBe StatusCodes.InternalServerError.intValue
       }
-
-      source.close()
     }
 
     "succeed when a valid tenant is passed as a parameter and SAML2 Response is validated" in {
 
-      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
-
-      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+      val response: SAMLResponse =
+        Using(Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile()))(source =>
+          SAMLResponse(source.getLines().mkString)
+        ) match {
+          case Success(s) => s
+          case Failure(e) => throw e
+        }
 
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
@@ -174,14 +184,17 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       Post() ~> supportService.getSaml2Token(tenantId.toString, response) ~> check {
         status shouldEqual StatusCodes.OK
       }
-      source.close()
     }
 
     "fail when selfcareId is missing" in {
 
-      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
-
-      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+      val response: SAMLResponse =
+        Using(Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile()))(source =>
+          SAMLResponse(source.getLines().mkString)
+        ) match {
+          case Success(s) => s
+          case Failure(e) => throw e
+        }
 
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
@@ -213,14 +226,17 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         val problem = responseAs[Problem]
         problem.status shouldBe StatusCodes.InternalServerError.intValue
       }
-      source.close()
     }
 
     "fail when SAML2 Response is not valid, due to DATE condition" in {
 
-      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
-
-      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+      val response: SAMLResponse =
+        Using(Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile()))(source =>
+          SAMLResponse(source.getLines().mkString)
+        ) match {
+          case Success(s) => s
+          case Failure(e) => throw e
+        }
 
       val timestamp = OffsetDateTime.now(ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
@@ -231,13 +247,17 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         problem.status shouldBe StatusCodes.InternalServerError.intValue
         problem.errors.head.code shouldBe "016-9991"
       }
-      source.close()
     }
 
     "fail when SAML2 Response is not valid, due to AUDIENCE condition" in {
 
-      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2_err_aud.xml").toFile())
-      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+      val response: SAMLResponse =
+        Using(Source.fromFile(Paths.get("src/test/resources/saml2_err_aud.xml").toFile()))(source =>
+          SAMLResponse(source.getLines().mkString)
+        ) match {
+          case Success(s) => s
+          case Failure(e) => throw e
+        }
 
       val timestamp      = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       val tenantId: UUID = UUID.randomUUID()
@@ -250,7 +270,29 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         problem.status shouldBe StatusCodes.InternalServerError.intValue
         problem.errors.head.code shouldBe "016-9991"
       }
-      source.close()
+    }
+
+    "fail when SAML2 Response is not valid, due to SUPPORT LEVEL condition" in {
+
+      val response: SAMLResponse =
+        Using(Source.fromFile(Paths.get("src/test/resources/saml2_err_sl.xml").toFile()))(source =>
+          SAMLResponse(source.getLines().mkString)
+        ) match {
+          case Success(s) => s
+          case Failure(e) => throw e
+        }
+
+      val timestamp      = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
+      val tenantId: UUID = UUID.randomUUID()
+
+      (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
+
+      Post() ~> supportService.getSaml2Token(tenantId.toString, response) ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        val problem = responseAs[Problem]
+        problem.status shouldBe StatusCodes.InternalServerError.intValue
+        problem.errors.head.code shouldBe "016-9991"
+      }
     }
   }
 }
