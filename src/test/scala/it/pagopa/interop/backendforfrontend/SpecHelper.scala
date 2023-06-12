@@ -85,7 +85,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
 
   implicit def toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken] = sprayJsonMarshaller[SessionToken]
 
-  implicit def context: Seq[(String, String)] =
+  implicit def contexts: Seq[(String, String)] =
     Seq("bearer" -> bearerToken, USER_ROLES -> "admin", ORGANIZATION_ID_CLAIM -> UUID.randomUUID.toString)
 
 }

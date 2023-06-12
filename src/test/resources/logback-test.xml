@@ -14,6 +14,8 @@
         <appender-ref ref="CONSOLE" />
     </appender>
 
+    <logger name="org.opensaml" level="INFO" />
+
     <root level="OFF">
         <appender-ref ref="ASYNC"/>
     </root>

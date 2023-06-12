@@ -3,7 +3,7 @@ package it.pagopa.interop.backendforfrontend
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import cats.syntax.all._
-import it.pagopa.interop.backendforfrontend.model.SAMLResponse
+import it.pagopa.interop.backendforfrontend.model.{SAMLResponse, Problem}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
@@ -13,8 +13,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.util.UUID
 import java.nio.file.Paths
-import scala.io.Source
-import scala.util.Using
+import scala.io.{Source, BufferedSource}
 import java.time.{OffsetDateTime, ZoneOffset}
 import scala.concurrent.Future
 
@@ -22,67 +21,108 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
 
   "Generating a session token from a SAML2 Response" should {
 
-    "succeed when the tenant is present and SAML2 Response is validated" in {
+    "succeed when the tenant is present and SAML2 Response is validated (redirect)" in {
 
-      Using(Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())) { source =>
-        val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
+      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
 
-        val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
-        (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
+      val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
+      (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-        val tenantId: UUID     = UUID.fromString(ApplicationConfiguration.pagoPaTenantId)
-        val selfcareId: String = UUID.randomUUID().toString
+      val tenantId: UUID     = UUID.fromString(ApplicationConfiguration.pagoPaTenantId)
+      val selfcareId: String = UUID.randomUUID().toString
 
-        (mockTenantProcess
-          .getTenant(_: UUID)(_: Seq[(String, String)]))
-          .expects(tenantId, *)
-          .once()
-          .returns(
-            Future.successful(
-              Tenant(
-                id = tenantId,
-                selfcareId = selfcareId.some,
-                externalId = ExternalId("IPA", "externalId"),
-                features = Nil,
-                attributes = Nil,
-                createdAt = OffsetDateTimeSupplier.get(),
-                updatedAt = None,
-                mails = Nil,
-                name = "PagoPa"
-              )
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
+        .once()
+        .returns(
+          Future.successful(
+            Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = ExternalId("IPA", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "PagoPa"
             )
           )
+        )
 
-        val desiredClaimSet: Map[String, AnyRef] = Map(
-          "uid"            -> "support",
-          "user-roles"     -> "support",
-          "organizationId" -> tenantId.toString,
-          "selfcareId"     -> selfcareId,
-          "organization" -> s"{\"id\":\"$selfcareId\",\"name\":\"PagoPa\",\"roles\":[{\"partyRole\":\"OPERATOR\",\"role\":\"support\"}]}"
-        ).widen[AnyRef]
+      val desiredClaimSet: Map[String, AnyRef] = Map(
+        "uid"            -> "support",
+        "user-roles"     -> "support",
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
+        "organization" -> s"{\"id\":\"$selfcareId\",\"name\":\"PagoPa\",\"roles\":[{\"partyRole\":\"OPERATOR\",\"role\":\"support\"}]}"
+      ).widen[AnyRef]
 
-        (mockSessionTokenGenerator
-          .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
-          .expects(
-            SignatureAlgorithm.RSAPkcs1Sha256,
-            desiredClaimSet,
-            ApplicationConfiguration.generatedJwtAudience,
-            ApplicationConfiguration.generatedJwtIssuer,
-            300
-          )
-          .once()
-          .returns(Future.successful("sessionToken"))
+      (mockSessionTokenGenerator
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .expects(
+          SignatureAlgorithm.RSAPkcs1Sha256,
+          desiredClaimSet,
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          300
+        )
+        .once()
+        .returns(Future.successful("sessionToken"))
 
-        Post() ~> supportService.redirectToSupportPage(response) ~> check {
-          status shouldEqual StatusCodes.MovedPermanently
-        }
+      Post() ~> supportService.redirectToSupportPage(response) ~> check {
+        status shouldEqual StatusCodes.MovedPermanently
       }
+
+      source.close()
     }
-  }
 
-  "succeed when the tenant is passed as a parameter and SAML2 Response is validated" in {
+    "fail when selfcareId is missing (redirect)" in {
 
-    Using(Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())) { source =>
+      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
+
+      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+
+      val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
+      (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
+
+      val tenantId: UUID = UUID.fromString(ApplicationConfiguration.pagoPaTenantId)
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
+        .once()
+        .returns(
+          Future.successful(
+            Tenant(
+              id = tenantId,
+              selfcareId = None,
+              externalId = ExternalId("IPA", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "PagoPa"
+            )
+          )
+        )
+
+      Post() ~> supportService.redirectToSupportPage(response) ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        val problem = responseAs[Problem]
+        problem.status shouldBe StatusCodes.InternalServerError.intValue
+      }
+
+      source.close()
+    }
+
+    "succeed when a valid tenant is passed as a parameter and SAML2 Response is validated" in {
+
+      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
+
       val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
 
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
@@ -134,6 +174,83 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       Post() ~> supportService.getSaml2Token(tenantId.toString, response) ~> check {
         status shouldEqual StatusCodes.OK
       }
+      source.close()
+    }
+
+    "fail when selfcareId is missing" in {
+
+      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
+
+      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+
+      val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
+      (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
+
+      val tenantId: UUID = UUID.randomUUID()
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
+        .once()
+        .returns(
+          Future.successful(
+            Tenant(
+              id = tenantId,
+              selfcareId = None,
+              externalId = ExternalId("IPA", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "PagoPa"
+            )
+          )
+        )
+
+      Post() ~> supportService.getSaml2Token(tenantId.toString, response) ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        val problem = responseAs[Problem]
+        problem.status shouldBe StatusCodes.InternalServerError.intValue
+      }
+      source.close()
+    }
+
+    "fail when SAML2 Response is not valid, due to DATE condition" in {
+
+      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile())
+
+      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+
+      val timestamp = OffsetDateTime.now(ZoneOffset.UTC)
+      (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
+
+      Post() ~> supportService.getSaml2Token(UUID.randomUUID().toString, response) ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        val problem = responseAs[Problem]
+        problem.status shouldBe StatusCodes.InternalServerError.intValue
+        problem.errors.head.code shouldBe "016-9991"
+      }
+      source.close()
+    }
+
+    "fail when SAML2 Response is not valid, due to AUDIENCE condition" in {
+
+      val source: BufferedSource = Source.fromFile(Paths.get("src/test/resources/saml2_err_aud.xml").toFile())
+      val response: SAMLResponse = SAMLResponse(source.getLines().mkString)
+
+      val timestamp      = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
+      val tenantId: UUID = UUID.randomUUID()
+
+      (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
+
+      Post() ~> supportService.getSaml2Token(tenantId.toString, response) ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        val problem = responseAs[Problem]
+        problem.status shouldBe StatusCodes.InternalServerError.intValue
+        problem.errors.head.code shouldBe "016-9991"
+      }
+      source.close()
     }
   }
 }

@@ -3,7 +3,7 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.{onComplete, redirect, complete}
+import akka.http.scaladsl.server.Directives.{onComplete, redirect}
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.jwt.service.SessionTokenGenerator
 import it.pagopa.interop.commons.jwt._
@@ -100,7 +100,7 @@ final case class SupportApiServiceImpl(
 
     onComplete(result) {
       handleError(s"Error creating a session token") orElse { case Success(token) =>
-        complete(StatusCodes.OK, token)
+        getSaml2Token200(token)
       }
     }
   }
@@ -167,7 +167,7 @@ final case class SupportApiServiceImpl(
         .unlessA(
           audienceRestriction
             .flatMap(_.getAudiences().asScala.toList)
-            .exists(aud => ApplicationConfiguration.generatedJwtAudience.contains(aud.getDOM().getTextContent()))
+            .exists(aud => ApplicationConfiguration.generatedJwtAudience.contains(aud.getAudienceURI))
         )
     } yield ()
   }
