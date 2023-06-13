@@ -10087,11 +10087,16 @@ components:
           type: string
         description:
           type: string
+        isFreeOfCharge:
+          type: boolean
+        freeOfChargeReason:
+          type: string      
         riskAnalysisForm:
           $ref: '#/components/schemas/RiskAnalysisForm'
       required:
         - title
         - description
+        - isFreeOfCharge
     Purposes:
       type: object
       properties:
