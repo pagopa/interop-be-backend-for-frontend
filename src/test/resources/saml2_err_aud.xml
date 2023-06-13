@@ -4,7 +4,7 @@
                  ID="_01034e925cf0634174bce1a2d3044241"
                  IssueInstant="2023-05-31T09:07:39.173Z"
                  Version="2.0">
-	<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">https://accounts.google.com/o/saml2?idpid=C00siwdxu</saml2:Issuer>
+	<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">Issuer</saml2:Issuer>
 	<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
 		<ds:SignedInfo>
 			<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
@@ -15,22 +15,18 @@
 					<ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
 				</ds:Transforms>
 				<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-				<ds:DigestValue>FJzE6jGTzXRx702jv0j+Zmxak9miCUiSNeUDjGhwnkk=</ds:DigestValue>
+				<ds:DigestValue>DigestValue</ds:DigestValue>
 			</ds:Reference>
 		</ds:SignedInfo>
 		<ds:SignatureValue>
-FBHP8E0w3BJ/0FM9KUfFVCF6mp1SQzjfoJfP4R/Kyvoov8TZ1f2cAU45Ij9z7GszyNtHhk4vElIw wjhUEHc+S2SdiljtREZNhYjbCzSMBH/jQYKJVAc8EcEAYVIpKDKyhMB3eYrP9FbFS/uonzYH8PN/ tA4Uu+0WGaJJSl44melZm2ooBaj2X5O+mx+T7rSHIe+4PItl4q+umhqnzrxTWW2u5Fk3D3OHkili C6zJIVychmBOiD76c0Y9PYkameIkd7YMFszinCzbNCEbW13lhcsr8cwL2dBaOvVTQM2m4kuEuYiw
-      COY0oXIWMLYw/SiF6gsr1iUxsYaCTFGUt24iaQ==
+SignatureValue
     
 </ds:SignatureValue>
 		<ds:KeyInfo>
 			<ds:X509Data>
-				<ds:X509SubjectName>ST=California,C=US,OU=Google For Work,CN=Google,L=Mountain View,O=Google Inc.</ds:X509SubjectName>
+				<ds:X509SubjectName>Subject</ds:X509SubjectName>
 				<ds:X509Certificate>
-			MIIDdDCCAlygAwIBAgIGAXCGIrRHMA0GCSqGSIb3DQEBCwUAMHsxFDASBgNVBAoTC0dvb2dsZSBJ bmMuMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MQ8wDQYDVQQDEwZHb29nbGUxGDAWBgNVBAsTD0dv b2dsZSBGb3IgV29yazELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWEwHhcNMjAwMjI3 MTAxMzAzWhcNMjUwMjI1MTAxMzAzWjB7MRQwEgYDVQQKEwtHb29nbGUgSW5jLjEWMBQGA1UEBxMN
-          TW91bnRhaW4gVmlldzEPMA0GA1UEAxMGR29vZ2xlMRgwFgYDVQQLEw9Hb29nbGUgRm9yIFdvcmsx CzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A MIIBCgKCAQEA+e4lrPiyh+J3y+aldfRUWO0buMeLAWenKKlbTxno0yLTr+5gRTjpm5Teihnr9bC7 hjE9SX29wdTg30mcMtQg5VBOQ/KS4y9PyYyYqYtCmW+G+KGexLy8H5ssR3yQ0E1x2vXYdbRKBy8c
-          bM4U92dVHMbmB8p6ef7fFb2m6U37m3SFSkSdSL8a3c2cilRtxNBrgn756Kzwoel/1CQj42GAL5mm Wi8bJUGLxkc1RdtA8DjAajXuT5uppJCEFjowE+Z1CvKUgVkE74kRBoyqlPkKX5mkjTGRAHy4dMy3 ObRVmGQ3eHA2ROq2fNeliM42HSLHirn77L+2UHinzEGFfU21EwIDAQABMA0GCSqGSIb3DQEBCwUA A4IBAQCRijnD1k1os1c2HzEkeMG86OfS0o/pj55TeDKrWs3Zi1QeD4lIs5UAGfZUm9UAorQjWW7m
-          nVxtgU5LbM0W0wINkCGNClAmsmVC6KzJlsWr8fWT+Bp2egisdXuGQll1kBGovbJjG61oYPKQtUIF fOpwscA0tkakaQM1iyGLsl0vOc1NXZZN02iOqAJsaTx8AqA3IjGGVyy/ereSLEqD9ymitZXeFSGO bqaI0mcmwDMJOOKYGgLzU4S3yNsVtIFRW4LZslAqpr/69kwJdiGJXhpQ97r1R6Pa+kOx9sXtWGgd 2ByFAQjWaSEYWvJqVrI2dp+cjTGayT2XUfHWSg11/LoO
+			X509Certificate
 </ds:X509Certificate>
 			</ds:X509Data>
 		</ds:KeyInfo>
@@ -42,9 +38,9 @@ FBHP8E0w3BJ/0FM9KUfFVCF6mp1SQzjfoJfP4R/Kyvoov8TZ1f2cAU45Ij9z7GszyNtHhk4vElIw wjh
 	                 ID="_6cc5c79792acfe54ecf383e3868bc574"
 	                 IssueInstant="2023-05-31T09:07:39.173Z"
 	                 Version="2.0">
-		<saml2:Issuer>https://accounts.google.com/o/saml2?idpid=C00siwdxu</saml2:Issuer>
+		<saml2:Issuer>Issuer</saml2:Issuer>
 		<saml2:Subject>
-			<saml2:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">gianni.papetti@pagopa.it</saml2:NameID>
+			<saml2:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">NameID</saml2:NameID>
 			<saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
 				<saml2:SubjectConfirmationData NotOnOrAfter="2023-05-31T09:12:39.173Z"
 				                               Recipient="https://selfcare.dev.interop.pagopa.it/backend-for-frontend/0.0/support"/>
