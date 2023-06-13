@@ -33,7 +33,7 @@ import java.time.{OffsetDateTime, Instant, ZoneOffset}
 import java.io.ByteArrayInputStream
 import scala.jdk.CollectionConverters._
 import scala.concurrent.{Future, ExecutionContext}
-import scala.util.Success
+import scala.util.{Success, Try}
 
 final case class SupportApiServiceImpl(
   sessionTokenGenerator: SessionTokenGenerator,
@@ -45,34 +45,34 @@ final case class SupportApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  val SUPPORT_LEVELS: Seq[String] = Seq("L2", "L3")
-  val SUPPORT_LEVEL_NAME: String  = "supportLevel"
-  val OPERATOR: String            = "OPERATOR"
+  val SUPPORT_LEVELS: Seq[String]    = Seq("L2", "L3")
+  val SUPPORT_LEVEL_NAME: String     = "supportLevel"
+  val SELFCARE_OPERATOR_ROLE: String = "OPERATOR"
 
-  override def redirectToSupportPage(
+  override def samlLoginCallback(
     sAMLResponse: SAMLResponse
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
 
     logger.info(s"Calling Support SAML")
 
     val result: Future[(String, String)] = for {
-      _            <- validate(parseResponse(sAMLResponse.response))
-      tenant       <- ApplicationConfiguration.pagoPaTenantId.toFutureUUID >>= tenantProcessService.getTenant
+      responseXml  <- parseResponse(sAMLResponse.response).toFuture
+      _            <- validate(responseXml).toFuture
+      tenant       <- tenantProcessService.getTenant(ApplicationConfiguration.pagoPaTenantId)
       selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
         claimsSet = buildClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
-        validityDurationInSeconds = 300
+        validityDurationInSeconds = ApplicationConfiguration.saml2TokenJwtDuration
       )
       base64       <- sAMLResponse.response.encodeBase64.toFuture
     } yield (base64, sessionToken)
 
     onComplete(result) {
       handleError(s"Error calling support SAML") orElse { case Success((base64, sessionToken)) =>
-        val redirectUrl =
-          s"https://selfcare.dev.interop.pagopa.it/ui/it/assistenza/scelta-ente#saml2=$base64&jwt=$sessionToken"
+        val redirectUrl = s"${ApplicationConfiguration.saml2CallbackUrl}#saml2=${base64}&jwt=${sessionToken}"
         redirect(redirectUrl, StatusCodes.MovedPermanently)
       }
     }
@@ -86,7 +86,8 @@ final case class SupportApiServiceImpl(
     logger.info(s"Calling get SAML2 token")
 
     val result: Future[SessionToken] = for {
-      _            <- validate(parseResponse(sAMLResponse.response))
+      responseXml  <- parseResponse(sAMLResponse.response).toFuture
+      _            <- validate(responseXml).toFuture
       tenant       <- tenantId.toFutureUUID >>= tenantProcessService.getTenant
       selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken <- sessionTokenGenerator.generate(
@@ -94,7 +95,7 @@ final case class SupportApiServiceImpl(
         claimsSet = buildClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
-        validityDurationInSeconds = 3600
+        validityDurationInSeconds = ApplicationConfiguration.saml2CallbackJwtDuration
       )
     } yield SessionToken(sessionToken)
 
@@ -105,7 +106,7 @@ final case class SupportApiServiceImpl(
     }
   }
 
-  private def parseResponse(responseXml: String): XMLObject = {
+  private def parseResponse(responseXml: String): Try[XMLObject] = Try {
     DefaultBootstrap.bootstrap()
     val documentBuilderFactory: DocumentBuilderFactory = DocumentBuilderFactory.newInstance();
     documentBuilderFactory.setNamespaceAware(true);
@@ -118,23 +119,26 @@ final case class SupportApiServiceImpl(
     unmarshaller.unmarshall(element)
   }
 
-  private def validate(xmlObject: XMLObject): Future[Unit] = {
-    val response               = xmlObject.asInstanceOf[Response]
-    val sig                    = response.getSignature
-    val assertions             = response.getAssertions().asScala.toList
-    val audienceRestriction    = assertions.map(_.getConditions()).flatMap(_.getAudienceRestrictions().asScala.toList)
-    val notBeforeConditions    = assertions.map(_.getConditions()).map(_.getNotBefore)
-    val notOnOrAfterConditions = assertions.map(_.getConditions()).map(_.getNotOnOrAfter())
-    val attributeStatements    = assertions.flatMap(_.getAttributeStatements().asScala.toList)
-    val attrs                  = attributeStatements.flatMap(_.getAttributes().asScala.toList)
-    val notBefore: List[OffsetDateTime] =
-      notBeforeConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
-    val notAfter: List[OffsetDateTime]  =
-      notOnOrAfterConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
-
-    val now = offsetDateTimeSupplier.get()
-
+  private def validate(xmlObject: XMLObject): Either[Throwable, Response] = {
     for {
+      response <- Either
+        .catchNonFatal(xmlObject.asInstanceOf[Response])
+        .leftMap {
+          case e: ClassCastException => SamlNotValid(e.getMessage())
+          case e                     => e
+        }
+      sig = response.getSignature
+      assertions             = response.getAssertions().asScala.toList
+      audienceRestriction    = assertions.map(_.getConditions()).flatMap(_.getAudienceRestrictions().asScala.toList)
+      notBeforeConditions    = assertions.map(_.getConditions()).map(_.getNotBefore())
+      notOnOrAfterConditions = assertions.map(_.getConditions()).map(_.getNotOnOrAfter())
+      attributeStatements    = assertions.flatMap(_.getAttributeStatements().asScala.toList)
+      attrs                  = attributeStatements.flatMap(_.getAttributes().asScala.toList)
+      notBefore              =
+        notBeforeConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
+      notAfter               =
+        notOnOrAfterConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
+      now                    = offsetDateTimeSupplier.get()
       _ <- Either
         .catchNonFatal {
           new SAMLSignatureProfileValidator().validate(
@@ -146,13 +150,16 @@ final case class SupportApiServiceImpl(
           case e: ValidationException => SamlNotValid(e.getMessage())
           case e                      => e
         }
-        .toFuture
-      _ <- Future
-        .failed(SamlNotValid("Conditions NotBefore are not compliant"))
-        .whenA(notBefore.exists(nb => now.isBefore(nb)))
-      _ <- Future
-        .failed(SamlNotValid("Conditions NotOnOrAfter are not compliant"))
-        .whenA(notAfter.exists(na => now.isAfter(na)))
+      _ <- Either.cond(
+        notBefore.exists(nb => now.isAfter(nb)),
+        (),
+        SamlNotValid("Conditions NotBefore are not compliant")
+      )
+      _ <- Either.cond(
+        notAfter.exists(na => now.isBefore(na) || now.isEqual(na)),
+        (),
+        SamlNotValid("Conditions NotOnOrAfter are not compliant")
+      )
       _ <- attrs
         .find(a =>
           a.getName == SUPPORT_LEVEL_NAME && (a
@@ -161,15 +168,16 @@ final case class SupportApiServiceImpl(
             .toList
             .exists(av => SUPPORT_LEVELS.contains(av.getDOM().getTextContent())))
         )
-        .toFuture(SamlNotValid("Support level is not compliant"))
-      _ <- Future
-        .failed(SamlNotValid("Conditions Audience are not compliant"))
-        .unlessA(
-          audienceRestriction
-            .flatMap(_.getAudiences().asScala.toList)
-            .exists(aud => ApplicationConfiguration.generatedJwtAudience.contains(aud.getAudienceURI))
-        )
-    } yield ()
+        .void
+        .toRight(SamlNotValid("Support level is not compliant"))
+      _ <- Either.cond(
+        audienceRestriction
+          .flatMap(_.getAudiences().asScala.toList)
+          .exists(aud => ApplicationConfiguration.generatedJwtAudience.contains(aud.getAudienceURI)),
+        (),
+        SamlNotValid("Conditions Audience are not compliant")
+      )
+    } yield (response)
   }
 
   private def buildClaims(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] = {
@@ -188,7 +196,7 @@ final case class SupportApiServiceImpl(
       ORGANIZATION          -> Organization(
         id = selfcareId,
         name = tenant.name,
-        roles = Seq(Role(partyRole = OPERATOR, role = SUPPORT_ROLE))
+        roles = Seq(Role(partyRole = SELFCARE_OPERATOR_ROLE, role = SUPPORT_ROLE))
       ).toJson.toString,
       UID                   -> SUPPORT_ROLE
     )

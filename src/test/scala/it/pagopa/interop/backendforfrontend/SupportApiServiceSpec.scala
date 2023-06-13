@@ -35,8 +35,8 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      val tenantId: UUID     = UUID.fromString(ApplicationConfiguration.pagoPaTenantId)
-      val selfcareId: String = UUID.randomUUID().toString
+      val tenantId: UUID   = ApplicationConfiguration.pagoPaTenantId
+      val selfcareId: UUID = UUID.randomUUID()
 
       (mockTenantProcess
         .getTenant(_: UUID)(_: Seq[(String, String)]))
@@ -46,7 +46,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           Future.successful(
             Tenant(
               id = tenantId,
-              selfcareId = selfcareId.some,
+              selfcareId = Some(selfcareId.toString),
               externalId = ExternalId("IPA", "externalId"),
               features = Nil,
               attributes = Nil,
@@ -62,8 +62,8 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         "uid"            -> "support",
         "user-roles"     -> "support",
         "organizationId" -> tenantId.toString,
-        "selfcareId"     -> selfcareId,
-        "organization" -> s"{\"id\":\"$selfcareId\",\"name\":\"PagoPa\",\"roles\":[{\"partyRole\":\"OPERATOR\",\"role\":\"support\"}]}"
+        "selfcareId"     -> selfcareId.toString,
+        "organization" -> s"{\"id\":\"${selfcareId.toString}\",\"name\":\"PagoPa\",\"roles\":[{\"partyRole\":\"OPERATOR\",\"role\":\"support\"}]}"
       ).widen[AnyRef]
 
       (mockSessionTokenGenerator
@@ -73,12 +73,12 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           desiredClaimSet,
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
-          300
+          ApplicationConfiguration.saml2TokenJwtDuration
         )
         .once()
         .returns(Future.successful("sessionToken"))
 
-      Post() ~> supportService.redirectToSupportPage(response) ~> check {
+      Post() ~> supportService.samlLoginCallback(response) ~> check {
         status shouldEqual StatusCodes.MovedPermanently
       }
     }
@@ -96,7 +96,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      val tenantId: UUID = UUID.fromString(ApplicationConfiguration.pagoPaTenantId)
+      val tenantId: UUID = ApplicationConfiguration.pagoPaTenantId
 
       (mockTenantProcess
         .getTenant(_: UUID)(_: Seq[(String, String)]))
@@ -118,7 +118,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           )
         )
 
-      Post() ~> supportService.redirectToSupportPage(response) ~> check {
+      Post() ~> supportService.samlLoginCallback(response) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         val problem = responseAs[Problem]
         problem.status shouldBe StatusCodes.InternalServerError.intValue
@@ -138,8 +138,8 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      val tenantId: UUID     = UUID.randomUUID()
-      val selfcareId: String = UUID.randomUUID().toString
+      val tenantId: UUID   = UUID.randomUUID()
+      val selfcareId: UUID = UUID.randomUUID()
 
       (mockTenantProcess
         .getTenant(_: UUID)(_: Seq[(String, String)]))
@@ -149,7 +149,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           Future.successful(
             Tenant(
               id = tenantId,
-              selfcareId = selfcareId.some,
+              selfcareId = Some(selfcareId.toString),
               externalId = ExternalId("IPA", "externalId"),
               features = Nil,
               attributes = Nil,
@@ -165,8 +165,8 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         "uid"            -> "support",
         "user-roles"     -> "support",
         "organizationId" -> tenantId.toString,
-        "selfcareId"     -> selfcareId,
-        "organization" -> s"{\"id\":\"$selfcareId\",\"name\":\"PagoPa\",\"roles\":[{\"partyRole\":\"OPERATOR\",\"role\":\"support\"}]}"
+        "selfcareId"     -> selfcareId.toString,
+        "organization" -> s"{\"id\":\"${selfcareId.toString}\",\"name\":\"PagoPa\",\"roles\":[{\"partyRole\":\"OPERATOR\",\"role\":\"support\"}]}"
       ).widen[AnyRef]
 
       (mockSessionTokenGenerator
@@ -176,7 +176,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           desiredClaimSet,
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
-          3600
+          ApplicationConfiguration.saml2CallbackJwtDuration
         )
         .once()
         .returns(Future.successful("sessionToken"))

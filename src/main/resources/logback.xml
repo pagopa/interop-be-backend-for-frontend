@@ -43,7 +43,7 @@
     <logger name="org.mongodb" level="WARN" />
 
     <logger name="it.pagopa.interop" level="INFO" />
-    <logger name="org.opensaml" level="INFO" />
+    <logger name="org.opensaml" level="WARN" />
     
     <root name="application" level="INFO">
         <appender-ref ref="ASYNC_STDOUT" />
