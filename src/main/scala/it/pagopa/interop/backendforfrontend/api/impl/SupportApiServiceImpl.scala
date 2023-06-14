@@ -88,7 +88,7 @@ final case class SupportApiServiceImpl(
     val result: Future[SessionToken] = for {
       responseXml  <- parseResponse(sAMLResponse.response).toFuture
       _            <- validate(responseXml).toFuture
-      tenant       <- tenantId.toFutureUUID >>= tenantProcessService.getTenant
+      tenant       <- tenantId.toFutureUUID.flatMap(tenantProcessService.getTenant)
       selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
@@ -121,28 +121,42 @@ final case class SupportApiServiceImpl(
 
   private def validate(xmlObject: XMLObject): Either[Throwable, Response] = {
     for {
-      response <- Either
+      response  <- Either
         .catchNonFatal(xmlObject.asInstanceOf[Response])
         .leftMap {
           case e: ClassCastException => SamlNotValid(e.getMessage())
           case e                     => e
         }
-      sig = response.getSignature
-      assertions             = response.getAssertions().asScala.toList
-      audienceRestriction    = assertions.map(_.getConditions()).flatMap(_.getAudienceRestrictions().asScala.toList)
-      notBeforeConditions    = assertions.map(_.getConditions()).map(_.getNotBefore())
+      signature <- response.getSignature.some.toRight(SamlNotValid("Missing Signature"))
+      assertions = response.getAssertions().asScala.toList
+      _ <- Either.cond(assertions.isEmpty, SamlNotValid("Missing Assertions"), assertions).swap
+      audienceRestrictions = assertions.map(_.getConditions()).flatMap(_.getAudienceRestrictions().asScala.toList)
+      _ <- Either
+        .cond(audienceRestrictions.isEmpty, SamlNotValid("Missing Audience Restricions"), audienceRestrictions)
+        .swap
+      notBeforeConditions = assertions.map(_.getConditions()).map(_.getNotBefore())
+      _ <- Either
+        .cond(notBeforeConditions.isEmpty, SamlNotValid("Missing Not Before Restricions"), notBeforeConditions)
+        .swap
       notOnOrAfterConditions = assertions.map(_.getConditions()).map(_.getNotOnOrAfter())
-      attributeStatements    = assertions.flatMap(_.getAttributeStatements().asScala.toList)
-      attrs                  = attributeStatements.flatMap(_.getAttributes().asScala.toList)
-      notBefore              =
+      _ <- Either
+        .cond(notOnOrAfterConditions.isEmpty, SamlNotValid("Missing On Or After Restricions"), notOnOrAfterConditions)
+        .swap
+      attributeStatements = assertions.flatMap(_.getAttributeStatements().asScala.toList)
+      _ <- Either
+        .cond(attributeStatements.isEmpty, SamlNotValid("Missing Attribute Statements"), attributeStatements)
+        .swap
+      attributes = attributeStatements.flatMap(_.getAttributes().asScala.toList)
+      _ <- Either.cond(attributes.isEmpty, SamlNotValid("Missing Attributes"), attributes).swap
+      notBefore =
         notBeforeConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
-      notAfter               =
+      notAfter  =
         notOnOrAfterConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
-      now                    = offsetDateTimeSupplier.get()
+      now       = offsetDateTimeSupplier.get()
       _ <- Either
         .catchNonFatal {
           new SAMLSignatureProfileValidator().validate(
-            sig
+            signature
           ) // Indicates signature did not conform to SAML Signature profile
         }
         .void
@@ -160,7 +174,7 @@ final case class SupportApiServiceImpl(
         (),
         SamlNotValid("Conditions NotOnOrAfter are not compliant")
       )
-      _ <- attrs
+      _ <- attributes
         .find(a =>
           a.getName == SUPPORT_LEVEL_NAME && (a
             .getAttributeValues()
@@ -171,7 +185,7 @@ final case class SupportApiServiceImpl(
         .void
         .toRight(SamlNotValid("Support level is not compliant"))
       _ <- Either.cond(
-        audienceRestriction
+        audienceRestrictions
           .flatMap(_.getAudiences().asScala.toList)
           .exists(aud => ApplicationConfiguration.generatedJwtAudience.contains(aud.getAudienceURI)),
         (),
