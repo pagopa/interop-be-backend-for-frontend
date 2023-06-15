@@ -22,10 +22,11 @@ object ApplicationConfiguration {
   val generatedJwtAudience: Set[String] =
     config.getString("backend-for-frontend.generated-jwt.audience").split(",").toSet.filter(_.nonEmpty)
   val generatedJwtDuration: Long        = config.getLong("backend-for-frontend.generated-jwt.duration-seconds")
-  val saml2TokenJwtDuration: Long       = config.getLong("backend-for-frontend.saml2-jwt.redirect-duration-seconds")
-  val saml2CallbackJwtDuration: Long    = config.getLong("backend-for-frontend.saml2-jwt.callback-duration-seconds")
-  val saml2CallbackUrl: String          = config.getString("backend-for-frontend.saml2-jwt.callback-url")
-  val rsaKeysIdentifiers: Set[String]   =
+  val supportLandingJwtDuration: Long   =
+    config.getLong("backend-for-frontend.saml2-jwt.support-landing-token-duration-seconds")
+  val supportJwtDuration: Long        = config.getLong("backend-for-frontend.saml2-jwt.support-token-duration-seconds")
+  val saml2CallbackUrl: String        = config.getString("backend-for-frontend.saml2-jwt.callback-url")
+  val rsaKeysIdentifiers: Set[String] =
     config.getString("backend-for-frontend.rsa-keys-identifiers").split(",").toSet.filter(_.nonEmpty)
 
   val ecKeysIdentifiers: Set[String] =

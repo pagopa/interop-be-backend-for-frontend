@@ -65,7 +65,7 @@ final case class SupportApiServiceImpl(
         claimsSet = buildClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
-        validityDurationInSeconds = ApplicationConfiguration.saml2TokenJwtDuration
+        validityDurationInSeconds = ApplicationConfiguration.supportLandingJwtDuration
       )
       base64       <- sAMLResponse.response.encodeBase64.toFuture
     } yield (base64, sessionToken)
@@ -95,7 +95,7 @@ final case class SupportApiServiceImpl(
         claimsSet = buildClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
-        validityDurationInSeconds = ApplicationConfiguration.saml2CallbackJwtDuration
+        validityDurationInSeconds = ApplicationConfiguration.supportJwtDuration
       )
     } yield SessionToken(sessionToken)
 
@@ -127,7 +127,7 @@ final case class SupportApiServiceImpl(
           case e: ClassCastException => SamlNotValid(e.getMessage())
           case e                     => e
         }
-      signature <- response.getSignature.some.toRight(SamlNotValid("Missing Signature"))
+      signature <- Option(response.getSignature).toRight(SamlNotValid("Missing Signature"))
       assertions = response.getAssertions().asScala.toList
       _ <- Either.cond(assertions.isEmpty, SamlNotValid("Missing Assertions"), assertions).swap
       audienceRestrictions = assertions.map(_.getConditions()).flatMap(_.getAudienceRestrictions().asScala.toList)

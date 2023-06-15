@@ -73,7 +73,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           desiredClaimSet,
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
-          ApplicationConfiguration.saml2TokenJwtDuration
+          ApplicationConfiguration.supportLandingJwtDuration
         )
         .once()
         .returns(Future.successful("sessionToken"))
@@ -176,7 +176,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           desiredClaimSet,
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
-          ApplicationConfiguration.saml2CallbackJwtDuration
+          ApplicationConfiguration.supportJwtDuration
         )
         .once()
         .returns(Future.successful("sessionToken"))
