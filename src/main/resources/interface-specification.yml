@@ -4300,7 +4300,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  /tenants/{tenantId}/attributes/{attributeId}: #We have to inform the frontend about this change
+  /tenants/{tenantId}/attributes/{attributeId}:
     post:
       tags:
         - tenants
