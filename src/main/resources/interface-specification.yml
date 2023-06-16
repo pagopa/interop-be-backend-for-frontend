@@ -4300,13 +4300,13 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  /tenants/{tenantId}/attributes/{attributeId}/updateRenewalStrategy:
+  /tenants/{tenantId}/attributes/{attributeId}: #We have to inform the frontend about this change
     post:
       tags:
         - tenants
-      summary: Update Renewal Strategy for Verified Attribute of Tenant
-      description: Update Renewal Strategy for Verified Attribute of Tenant
-      operationId: updateRenewalStrategyVerifiedAttribute
+      summary: Update expirationDate for Verified Attribute of Tenant
+      description: Update expirationDate for Verified Attribute of Tenant
+      operationId: updateVerifiedAttribute
       parameters:
         - name: tenantId
           in: path
@@ -4327,7 +4327,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RenewalVerifiedTenantAttributeSeed'     
+              $ref: '#/components/schemas/UpdateVerifiedTenantAttributeSeed'
       responses:
         '204':
           description: successful operation
@@ -10679,30 +10679,25 @@ components:
           format: uuid
       required:
         - id
-    RenewalVerifiedTenantAttributeSeed:
+    UpdateVerifiedTenantAttributeSeed:
       type: object
       properties:
-        renewal:
-          $ref: '#/components/schemas/VerificationRenewal'
         expirationDate:
           type: string
           format: date-time
       required:
-        - renewal
+        - expirationDate
     VerifiedTenantAttributeSeed:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        renewal:
-          $ref: '#/components/schemas/VerificationRenewal'
         expirationDate:
           type: string
           format: date-time
       required:
         - id
-        - renewal
     CertifiedTenantAttribute:
       type: object
       properties:
@@ -10752,11 +10747,6 @@ components:
         - assignmentTimestamp
         - verifiedBy
         - revokedBy
-    VerificationRenewal:
-      type: string
-      enum:
-        - REVOKE_ON_EXPIRATION
-        - AUTOMATIC_RENEWAL
     TenantVerifier:
       type: object
       properties:
@@ -10766,8 +10756,6 @@ components:
         verificationDate:
           type: string
           format: date-time
-        renewal:
-          $ref: '#/components/schemas/VerificationRenewal'
         expirationDate:
           type: string
           format: date-time
@@ -10777,7 +10765,6 @@ components:
       required:
         - id
         - verificationDate
-        - renewal
     TenantRevoker:
       type: object
       properties:
@@ -10787,8 +10774,6 @@ components:
         verificationDate:
           type: string
           format: date-time
-        renewal:
-          $ref: '#/components/schemas/VerificationRenewal'
         expirationDate:
           type: string
           format: date-time
@@ -10801,7 +10786,6 @@ components:
       required:
         - id
         - verificationDate
-        - renewal
         - revocationDate
     TokenGenerationValidationResult:
       type: object

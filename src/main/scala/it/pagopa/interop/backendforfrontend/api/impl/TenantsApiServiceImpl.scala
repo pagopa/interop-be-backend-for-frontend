@@ -211,10 +211,10 @@ final case class TenantsApiServiceImpl(
     }
   }
 
-  override def updateRenewalStrategyVerifiedAttribute(
+  override def updateVerifiedAttribute(
     tenantId: String,
     attributeId: String,
-    seed: RenewalVerifiedTenantAttributeSeed
+    seed: UpdateVerifiedTenantAttributeSeed
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
     val result: Future[Unit] = for {
       tenantUuid    <- tenantId.toFutureUUID
@@ -223,9 +223,9 @@ final case class TenantsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error updating renewal strategy for verified attribute ${attributeId} to tenant $tenantId") orElse {
+      handleError(s"Error updating expirationDate for verified attribute ${attributeId} to tenant $tenantId") orElse {
         case Success(_) =>
-          updateRenewalStrategyVerifiedAttribute204
+          updateVerifiedAttribute204
       }
     }
   }
