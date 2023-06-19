@@ -9019,7 +9019,6 @@ components:
         - name
         - description
         - technology
-        - attributes
       properties:
         name:
           type: string
@@ -9027,15 +9026,12 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
-        attributes:
-          $ref: '#/components/schemas/EServiceAttributesSeed'
     EServiceSeed:
       type: object
       required:
         - name
         - description
         - technology
-        - attributes
       properties:
         name:
           type: string
@@ -9043,8 +9039,6 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
-        attributes:
-          $ref: '#/components/schemas/EServiceAttributesSeed'
     UpdateEServiceDescriptorSeed:
       required:
         - audience
@@ -9052,6 +9046,7 @@ components:
         - dailyCallsPerConsumer
         - dailyCallsTotal
         - agreementApprovalPolicy
+        - attributes
       type: object
       properties:
         description:
@@ -9073,6 +9068,8 @@ components:
           format: int32
         agreementApprovalPolicy:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
+        attributes:
+          $ref: '#/components/schemas/DescriptorAttributesSeed'
     Mail:
       type: object
       required:
@@ -9089,6 +9086,7 @@ components:
         - dailyCallsPerConsumer
         - dailyCallsTotal
         - agreementApprovalPolicy
+        - attributes
       type: object
       properties:
         description:
@@ -9110,6 +9108,8 @@ components:
           format: int32
         agreementApprovalPolicy:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
+        attributes:
+          $ref: '#/components/schemas/DescriptorAttributesSeed'
     CatalogEServiceDescriptor:
       type: object
       required:
@@ -9245,7 +9245,7 @@ components:
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
         attributes:
-          $ref: '#/components/schemas/EServiceAttributes'
+          $ref: '#/components/schemas/DescriptorAttributes'
         descriptors:
           type: array
           items:
@@ -9269,7 +9269,6 @@ components:
         - name
         - description
         - technology
-        - attributes
       properties:
         id:
           type: string
@@ -9280,8 +9279,6 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
-        attributes:
-          $ref: '#/components/schemas/EServiceAttributes'
     ProducerEServiceDescriptor:
       type: object
       required:
@@ -9352,7 +9349,7 @@ components:
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
         attributes:
-          $ref: '#/components/schemas/EServiceAttributes'
+          $ref: '#/components/schemas/DescriptorAttributes'
         descriptors:
           type: array
           items:
@@ -10322,36 +10319,36 @@ components:
       enum:
         - REST
         - SOAP
-    EServiceAttributes:
+    DescriptorAttributes:
       type: object
       properties:
         certified:
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttribute'
+            $ref: '#/components/schemas/DescriptorAttribute'
         declared:
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttribute'
+            $ref: '#/components/schemas/DescriptorAttribute'
         verified:
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttribute'
+            $ref: '#/components/schemas/DescriptorAttribute'
       additionalProperties: false
       required:
         - certified
         - declared
         - verified
-    EServiceAttribute:
+    DescriptorAttribute:
       type: object
       properties:
         single:
-          $ref: '#/components/schemas/EServiceAttributeValue'
+          $ref: '#/components/schemas/DescriptorAttributeValue'
         group:
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttributeValue'
-    EServiceAttributeValue:
+            $ref: '#/components/schemas/DescriptorAttributeValue'
+    DescriptorAttributeValue:
       type: object
       properties:
         id:
@@ -10368,36 +10365,36 @@ components:
         - name
         - description
         - explicitAttributeVerification
-    EServiceAttributesSeed:
+    DescriptorAttributesSeed:
       type: object
       properties:
         certified:
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttributeSeed'
+            $ref: '#/components/schemas/DescriptorAttributeSeed'
         declared:
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttributeSeed'
+            $ref: '#/components/schemas/DescriptorAttributeSeed'
         verified:
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttributeSeed'
+            $ref: '#/components/schemas/DescriptorAttributeSeed'
       additionalProperties: false
       required:
         - certified
         - declared
         - verified
-    EServiceAttributeSeed:
+    DescriptorAttributeSeed:
       type: object
       properties:
         single:
-          $ref: '#/components/schemas/EServiceAttributeValueSeed'
+          $ref: '#/components/schemas/DescriptorAttributeValueSeed'
         group:
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttributeValueSeed'
-    EServiceAttributeValueSeed:
+            $ref: '#/components/schemas/DescriptorAttributeValueSeed'
+    DescriptorAttributeValueSeed:
       type: object
       properties:
         id:
