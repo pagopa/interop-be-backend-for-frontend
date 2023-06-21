@@ -10685,8 +10685,6 @@ components:
         expirationDate:
           type: string
           format: date-time
-      required:
-        - expirationDate
     VerifiedTenantAttributeSeed:
       type: object
       properties:
