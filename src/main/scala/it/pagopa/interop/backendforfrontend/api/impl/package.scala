@@ -48,14 +48,14 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
   implicit val verifiedTenantAttributeSeedFormat: RootJsonFormat[VerifiedTenantAttributeSeed] =
-    jsonFormat3(VerifiedTenantAttributeSeed)
+    jsonFormat2(VerifiedTenantAttributeSeed)
 
   implicit val declaredTenantAttributeFormat: RootJsonFormat[DeclaredTenantAttribute]   =
     jsonFormat5(DeclaredTenantAttribute)
   implicit val certifiedTenantAttributeFormat: RootJsonFormat[CertifiedTenantAttribute] =
     jsonFormat5(CertifiedTenantAttribute)
-  implicit val tenantVerifiedFormat: RootJsonFormat[TenantVerifier]                     = jsonFormat5(TenantVerifier)
-  implicit val tenantRevokerFormat: RootJsonFormat[TenantRevoker]                       = jsonFormat6(TenantRevoker)
+  implicit val tenantVerifiedFormat: RootJsonFormat[TenantVerifier]                     = jsonFormat4(TenantVerifier)
+  implicit val tenantRevokerFormat: RootJsonFormat[TenantRevoker]                       = jsonFormat5(TenantRevoker)
   implicit val verifiedTenantAttributeFormat: RootJsonFormat[VerifiedTenantAttribute]   =
     jsonFormat6(VerifiedTenantAttribute)
   implicit val tenantAttributesFormat: RootJsonFormat[TenantAttributes]                 =
@@ -222,8 +222,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit def tokenGenerationValidationResultFormat: RootJsonFormat[TokenGenerationValidationResult]           =
     jsonFormat3(TokenGenerationValidationResult)
 
-  implicit val renewalVerifiedTenantAttributeSeedFormat: RootJsonFormat[RenewalVerifiedTenantAttributeSeed] =
-    jsonFormat2(RenewalVerifiedTenantAttributeSeed)
+  implicit val updateVerifiedTenantAttributeSeedFormat: RootJsonFormat[UpdateVerifiedTenantAttributeSeed] =
+    jsonFormat1(UpdateVerifiedTenantAttributeSeed)
 
   implicit def privacyNoticeFormat: RootJsonFormat[PrivacyNotice]         =
     jsonFormat6(PrivacyNotice)
