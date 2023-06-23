@@ -55,7 +55,7 @@ final case class PrivacyNoticesApiServiceImpl(
     )(upn =>
       upn.toApi(
         firstAccept = false,
-        isUpdated = (latest.privacyNoticeVersion.version > upn.version.version),
+        isUpdated = (latest.privacyNoticeVersion.version == upn.version.version),
         latestVersionId = latest.privacyNoticeVersion.versionId
       )
     )

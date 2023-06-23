@@ -1,6 +1,5 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
-import it.pagopa.interop.backendforfrontend.model.VerificationRenewal.{AUTOMATIC_RENEWAL, REVOKE_ON_EXPIRATION}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
@@ -96,11 +95,8 @@ object TenantProcessServiceTypes {
   }
 
   implicit class VerifiedTenantAttributeSeedConverter(private val seed: VerifiedTenantAttributeSeed) extends AnyVal {
-    def toSeed: TenantProcess.VerifiedTenantAttributeSeed = TenantProcess.VerifiedTenantAttributeSeed(
-      id = seed.id,
-      renewal = seed.renewal.toSeed,
-      expirationDate = seed.expirationDate
-    )
+    def toSeed: TenantProcess.VerifiedTenantAttributeSeed =
+      TenantProcess.VerifiedTenantAttributeSeed(id = seed.id, expirationDate = seed.expirationDate)
   }
 
   implicit class CertifiedTenantAttributeConverter(private val a: TenantProcess.CertifiedTenantAttribute)
@@ -122,25 +118,10 @@ object TenantProcessServiceTypes {
     )
   }
 
-  implicit class VerificationRenewaltoSeed(private val v: VerificationRenewal) extends AnyVal {
-    def toSeed: TenantProcess.VerificationRenewal = v match {
-      case VerificationRenewal.REVOKE_ON_EXPIRATION => TenantProcess.VerificationRenewal.REVOKE_ON_EXPIRATION
-      case VerificationRenewal.AUTOMATIC_RENEWAL    => TenantProcess.VerificationRenewal.AUTOMATIC_RENEWAL
-    }
-  }
-
-  implicit class VerificationRenewaltoApi(private val v: TenantProcess.VerificationRenewal) extends AnyVal {
-    def toApi: VerificationRenewal = v match {
-      case TenantProcess.VerificationRenewal.REVOKE_ON_EXPIRATION => REVOKE_ON_EXPIRATION
-      case TenantProcess.VerificationRenewal.AUTOMATIC_RENEWAL    => AUTOMATIC_RENEWAL
-    }
-  }
-
   implicit class TenantVerifierConverter(private val v: TenantProcess.TenantVerifier) extends AnyVal {
     def toApi: TenantVerifier = TenantVerifier(
       id = v.id,
       verificationDate = v.verificationDate,
-      renewal = v.renewal.toApi,
       expirationDate = v.expirationDate,
       extensionDate = v.extensionDate
     )
@@ -151,7 +132,6 @@ object TenantProcessServiceTypes {
       id = v.id,
       verificationDate = v.verificationDate,
       expirationDate = v.expirationDate,
-      renewal = v.renewal.toApi,
       extensionDate = v.extensionDate,
       revocationDate = v.revocationDate
     )
@@ -183,11 +163,9 @@ object TenantProcessServiceTypes {
     )
   }
 
-  implicit class RenewalVerifiedTenantAttributeSeedConverter(private val seed: RenewalVerifiedTenantAttributeSeed)
+  implicit class RenewalVerifiedTenantAttributeSeedConverter(private val seed: UpdateVerifiedTenantAttributeSeed)
       extends AnyVal {
-    def toSeed: TenantProcess.UpdateVerifiedTenantAttributeSeed = TenantProcess.UpdateVerifiedTenantAttributeSeed(
-      renewal = seed.renewal.toSeed,
-      expirationDate = seed.expirationDate
-    )
+    def toSeed: TenantProcess.UpdateVerifiedTenantAttributeSeed =
+      TenantProcess.UpdateVerifiedTenantAttributeSeed(expirationDate = seed.expirationDate)
   }
 }
