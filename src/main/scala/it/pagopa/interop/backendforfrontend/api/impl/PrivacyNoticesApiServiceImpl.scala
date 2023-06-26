@@ -48,13 +48,13 @@ final case class PrivacyNoticesApiServiceImpl(
         id = ppUuid,
         userId = userUuid,
         consentType = ctype,
-        firstAccept = true,
+        firstAccept = false,
         isUpdated = false,
         latestVersionId = latest.privacyNoticeVersion.versionId
       )
     )(upn =>
       upn.toApi(
-        firstAccept = false,
+        firstAccept = true,
         isUpdated = (latest.privacyNoticeVersion.version == upn.version.version),
         latestVersionId = latest.privacyNoticeVersion.versionId
       )
