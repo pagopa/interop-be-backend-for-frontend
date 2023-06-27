@@ -227,13 +227,13 @@ final case class EServicesApiServiceImpl(
       dailyCallsPerConsumer = descriptor.dailyCallsPerConsumer,
       dailyCallsTotal = descriptor.dailyCallsTotal,
       agreementApprovalPolicy = descriptor.agreementApprovalPolicy.toApi,
+      attributes = descriptorAttributes,
       eservice = CatalogDescriptorEService(
         id = eService.id,
         name = eService.name,
         producer = CompactOrganization(id = producerTenant.id, name = producerTenant.name),
         description = eService.description,
         technology = eService.technology.toApi,
-        attributes = descriptorAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         agreement = agreement.map { a =>
           CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded(eService, a))

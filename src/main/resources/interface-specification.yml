@@ -9119,6 +9119,7 @@ components:
         - docs
         - state
         - audience
+        - attributes
         - voucherLifespan
         - dailyCallsPerConsumer
         - dailyCallsTotal
@@ -9140,6 +9141,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EServiceDoc'
+        attributes:
+          $ref: '#/components/schemas/DescriptorAttributes'
         state:
           $ref: '#/components/schemas/EServiceDescriptorState'
         audience:
@@ -9227,7 +9230,6 @@ components:
         - producer
         - description
         - technology
-        - attributes
         - descriptors
         - isMine
         - hasCertifiedAttributes
@@ -9244,8 +9246,6 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
-        attributes:
-          $ref: '#/components/schemas/DescriptorAttributes'
         descriptors:
           type: array
           items:
