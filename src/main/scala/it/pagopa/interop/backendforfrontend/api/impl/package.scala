@@ -118,10 +118,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat16(CatalogEServiceDescriptor)
 
   implicit val producerDescriptorEService: RootJsonFormat[ProducerDescriptorEService] =
-    jsonFormat8(ProducerDescriptorEService)
+    jsonFormat7(ProducerDescriptorEService)
 
   implicit val producerEServiceDescriptorFormat: RootJsonFormat[ProducerEServiceDescriptor] =
-    jsonFormat12(ProducerEServiceDescriptor)
+    jsonFormat13(ProducerEServiceDescriptor)
 
   implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] =
     jsonFormat4(ProducerEServiceDetails)
