@@ -106,11 +106,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val attributeSeedFormat: RootJsonFormat[AttributeSeed] = jsonFormat5(AttributeSeed)
 
-  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                       = jsonFormat4(EServiceDoc)
-  implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] =
-    jsonFormat4(EServiceAttributeValue)
-  implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
-  implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
+  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                         = jsonFormat4(EServiceDoc)
+  implicit val eServiceAttributeValueFormat: RootJsonFormat[DescriptorAttributeValue] =
+    jsonFormat4(DescriptorAttributeValue)
+  implicit val eServiceAttributeFormat: RootJsonFormat[DescriptorAttribute]           = jsonFormat2(DescriptorAttribute)
+  implicit val eServiceAttributesFormat: RootJsonFormat[DescriptorAttributes] = jsonFormat3(DescriptorAttributes)
 
   implicit val catalogDescriptorEServiceFormat: RootJsonFormat[CatalogDescriptorEService] =
     jsonFormat13(CatalogDescriptorEService)
@@ -124,7 +124,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat12(ProducerEServiceDescriptor)
 
   implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] =
-    jsonFormat5(ProducerEServiceDetails)
+    jsonFormat4(ProducerEServiceDetails)
 
   implicit val riskAnalysisFormFormat: RootJsonFormat[RiskAnalysisForm]             = jsonFormat2(RiskAnalysisForm)
   implicit val purposeSeedFormat: RootJsonFormat[PurposeSeed]                       = jsonFormat7(PurposeSeed)
@@ -153,17 +153,19 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     DraftPurposeVersionUpdateContent
   )
 
-  implicit val EServiceAttributeValueSeedFormat: RootJsonFormat[EServiceAttributeValueSeed] = jsonFormat2(
-    EServiceAttributeValueSeed
+  implicit val DescriptorAttributeValueSeedFormat: RootJsonFormat[DescriptorAttributeValueSeed] = jsonFormat2(
+    DescriptorAttributeValueSeed
   )
 
-  implicit val EServiceAttributeSeedFormat: RootJsonFormat[EServiceAttributeSeed]   = jsonFormat2(EServiceAttributeSeed)
-  implicit val EServiceAttributesSeedFormat: RootJsonFormat[EServiceAttributesSeed] = jsonFormat3(
-    EServiceAttributesSeed
+  implicit val EServiceAttributeSeedFormat: RootJsonFormat[DescriptorAttributeSeed]   = jsonFormat2(
+    DescriptorAttributeSeed
   )
-  implicit val EServiceSeedFormat: RootJsonFormat[EServiceSeed]                     = jsonFormat4(EServiceSeed)
-  implicit val updateEServiceSeed: RootJsonFormat[UpdateEServiceSeed]               = jsonFormat4(UpdateEServiceSeed)
-  implicit val updateEServiceDescriptorSeed: RootJsonFormat[UpdateEServiceDescriptorSeed] = jsonFormat6(
+  implicit val EServiceAttributesSeedFormat: RootJsonFormat[DescriptorAttributesSeed] = jsonFormat3(
+    DescriptorAttributesSeed
+  )
+  implicit val EServiceSeedFormat: RootJsonFormat[EServiceSeed]                       = jsonFormat3(EServiceSeed)
+  implicit val updateEServiceSeed: RootJsonFormat[UpdateEServiceSeed]                 = jsonFormat3(UpdateEServiceSeed)
+  implicit val updateEServiceDescriptorSeed: RootJsonFormat[UpdateEServiceDescriptorSeed] = jsonFormat7(
     UpdateEServiceDescriptorSeed
   )
 
@@ -172,7 +174,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat6(Problem)
 
-  implicit val EServiceDescriptorSeedFormat: RootJsonFormat[EServiceDescriptorSeed] = jsonFormat6(
+  implicit val EServiceDescriptorSeedFormat: RootJsonFormat[EServiceDescriptorSeed] = jsonFormat7(
     EServiceDescriptorSeed
   )
   implicit val UpdateEServiceDescriptorDocumentSeedFormat: RootJsonFormat[UpdateEServiceDescriptorDocumentSeed] =

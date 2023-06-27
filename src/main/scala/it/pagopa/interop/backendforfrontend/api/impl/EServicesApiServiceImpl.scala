@@ -209,9 +209,9 @@ final case class EServicesApiServiceImpl(
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
       attributes                     <- attributeRegistryManagementService
-        .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
+        .getBulkAttributes(extractIdsFromAttributes(descriptor.attributes))(contexts)
         .map(_.attributes)
-      eServiceAttributes             <- eService.attributes.toApi(attributes)
+      descriptorAttributes           <- descriptor.attributes.toApi(attributes)
       requesterTenant                <- tenantProcessService.getTenant(requesterId)
       producerTenant                 <- tenantProcessService.getTenant(eService.producerId)
       agreement                      <- agreementProcessService.getLatestAgreement(requesterId, eService)
@@ -233,14 +233,14 @@ final case class EServicesApiServiceImpl(
         producer = CompactOrganization(id = producerTenant.id, name = producerTenant.name),
         description = eService.description,
         technology = eService.technology.toApi,
-        attributes = eServiceAttributes,
+        attributes = descriptorAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         agreement = agreement.map { a =>
           CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded(eService, a))
         },
         isMine = eService.producerId == requesterId,
         hasCertifiedAttributes = certifiedAttributesSatisfied(
-          eService.attributes.toManagement,
+          descriptor.attributes.toManagement,
           consumerAttributes = requesterTenant.attributes.mapFilter(_.certified).map(_.toManagement)
         ),
         isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
@@ -330,22 +330,24 @@ final case class EServicesApiServiceImpl(
     requesterTenant <-
       if (requesterId != eService.producerId) tenantProcessService.getTenant(requesterId)
       else Future.successful(producerTenant)
-
     activeDescriptor = getActiveDescriptor(eService)
     latestAgreement <- agreementProcessService.getLatestAgreement(requesterId, eService)
+    hasCertifiedAttributes = activeDescriptor.fold(false)(descriptor =>
+      certifiedAttributesSatisfied(
+        descriptor.attributes.toManagement,
+        requesterTenant.attributes.mapFilter(_.certified).map(_.toManagement)
+      )
+    )
   } yield CatalogEService(
     id = eService.id,
     name = eService.name,
     description = eService.description,
     producer = CompactOrganization(id = eService.producerId, name = producerTenant.name),
-    agreement = latestAgreement.map { a =>
+    agreement = latestAgreement.map(a =>
       CompactAgreement(id = a.id, state = a.state.toApi, canBeUpgraded = canBeUpgraded(eService, a))
-    },
-    isMine = eService.producerId == requesterId,
-    hasCertifiedAttributes = certifiedAttributesSatisfied(
-      eService.attributes.toManagement,
-      requesterTenant.attributes.mapFilter(_.certified).map(_.toManagement)
     ),
+    isMine = eService.producerId == requesterId,
+    hasCertifiedAttributes = hasCertifiedAttributes,
     activeDescriptor = activeDescriptor.map(_.toCompactDescriptor)
   )
 
@@ -362,21 +364,16 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[ProducerEServiceDetails] = for {
-      requesterId        <- getOrganizationIdFutureUUID(contexts)
-      eserviceUUID       <- eserviceId.toFutureUUID
-      eService           <- catalogProcessService.getEServiceById(eserviceUUID)
+      requesterId  <- getOrganizationIdFutureUUID(contexts)
+      eserviceUUID <- eserviceId.toFutureUUID
+      eService     <- catalogProcessService.getEServiceById(eserviceUUID)
       // This is an anti-pattern, but it's the cleanest solution
-      _                  <- isTheProducer(eService, requesterId)
-      attributes         <- attributeRegistryManagementService
-        .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
-        .map(_.attributes)
-      eServiceAttributes <- eService.attributes.toApi(attributes)
+      _            <- isTheProducer(eService, requesterId)
     } yield ProducerEServiceDetails(
       id = eService.id,
       name = eService.name,
       description = eService.description,
-      technology = eService.technology.toApi,
-      attributes = eServiceAttributes
+      technology = eService.technology.toApi
     )
 
     onComplete(result) {
@@ -401,9 +398,9 @@ final case class EServicesApiServiceImpl(
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
       attributes                     <- attributeRegistryManagementService
-        .getBulkAttributes(extractIdsFromAttributes(eService.attributes))(contexts)
+        .getBulkAttributes(extractIdsFromAttributes(descriptor.attributes))(contexts)
         .map(_.attributes)
-      eServiceAttributes             <- eService.attributes.toApi(attributes)
+      descriptorAttributes           <- descriptor.attributes.toApi(attributes)
       requesterTenant                <- tenantProcessService.getTenant(eService.producerId)
     } yield ProducerEServiceDescriptor(
       id = descriptor.id,
@@ -422,7 +419,7 @@ final case class EServicesApiServiceImpl(
         name = eService.name,
         description = eService.description,
         technology = eService.technology.toApi,
-        attributes = eServiceAttributes,
+        attributes = descriptorAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         draftDescriptor =
           getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
