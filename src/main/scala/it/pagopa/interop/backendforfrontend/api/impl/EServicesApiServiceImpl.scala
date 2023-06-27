@@ -414,12 +414,12 @@ final case class EServicesApiServiceImpl(
       dailyCallsPerConsumer = descriptor.dailyCallsPerConsumer,
       dailyCallsTotal = descriptor.dailyCallsTotal,
       agreementApprovalPolicy = descriptor.agreementApprovalPolicy.toApi,
+      attributes = descriptorAttributes,
       eservice = ProducerDescriptorEService(
         id = eService.id,
         name = eService.name,
         description = eService.description,
         technology = eService.technology.toApi,
-        attributes = descriptorAttributes,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         draftDescriptor =
           getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),

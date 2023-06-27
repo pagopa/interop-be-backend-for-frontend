@@ -9292,6 +9292,7 @@ components:
         - dailyCallsTotal
         - agreementApprovalPolicy
         - eservice
+        - attributes
       properties:
         id:
           type: string
@@ -9329,6 +9330,8 @@ components:
           $ref: '#/components/schemas/AgreementApprovalPolicy'
         eservice:
           $ref: '#/components/schemas/ProducerDescriptorEService'
+        attributes:
+          $ref: '#/components/schemas/DescriptorAttributes'
     ProducerDescriptorEService:
       type: object
       required:
@@ -9336,7 +9339,6 @@ components:
         - name
         - description
         - technology
-        - attributes
         - descriptors
       properties:
         id:
@@ -9348,8 +9350,6 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
-        attributes:
-          $ref: '#/components/schemas/DescriptorAttributes'
         descriptors:
           type: array
           items:
