@@ -284,9 +284,10 @@ final case class AgreementsApiServiceImpl(
     currentDescriptor                          <- eService.descriptors
       .find(_.id == agreement.descriptorId)
       .toFuture(AgreementDescriptorNotFound(agreement.id))
-    activeDescriptor = eService.descriptors.sortBy(_.version.toInt).lastOption
+    activeDescriptor           = eService.descriptors.sortBy(_.version.toInt).lastOption
+    activeDescriptorAttributes = activeDescriptor.fold(Seq.empty[UUID])(descriptorAttributesIds)
 
-    allAttributesIds = (eServiceAttributesIds(eService) ++ Utils.tenantAttributesIds(consumerTenant)).distinct
+    allAttributesIds = (activeDescriptorAttributes ++ Utils.tenantAttributesIds(consumerTenant)).distinct
     attributes <- attributeRegistryService.getBulkAttributes(allAttributesIds)
 
     agreementVerifiedAttrs  = filterAttributes(attributes, agreement.verifiedAttributes.map(_.id))
@@ -333,9 +334,9 @@ final case class AgreementsApiServiceImpl(
     suspendedAt = agreement.suspendedAt
   )
 
-  def eServiceAttributesIds(eService: CatalogProcess.EService): Seq[UUID] = {
+  def descriptorAttributesIds(descriptor: CatalogProcess.EServiceDescriptor): Seq[UUID] = {
     val attrs: Seq[CatalogProcess.Attribute] =
-      eService.attributes.verified ++ eService.attributes.declared ++ eService.attributes.certified
+      descriptor.attributes.verified ++ descriptor.attributes.declared ++ descriptor.attributes.certified
     attrs
       .mapFilter(a =>
         (a.single, a.group) match {
