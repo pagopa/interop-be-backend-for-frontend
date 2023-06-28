@@ -33,7 +33,7 @@ import java.time.{OffsetDateTime, Instant, ZoneOffset}
 import java.io.ByteArrayInputStream
 import scala.jdk.CollectionConverters._
 import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Success, Try}
+import scala.util.{Success, Failure, Try}
 
 final case class SupportApiServiceImpl(
   sessionTokenGenerator: SessionTokenGenerator,
@@ -71,7 +71,12 @@ final case class SupportApiServiceImpl(
     } yield (base64, sessionToken)
 
     onComplete(result) {
-      handleError(s"Error calling support SAML") orElse { case Success((base64, sessionToken)) =>
+      case Failure(_)                      => {
+        logger.error(s"Error calling support SAML")
+        val redirectUrl = s"${ApplicationConfiguration.saml2CallbackErrorUrl}"
+        redirect(redirectUrl, StatusCodes.MovedPermanently)
+      }
+      case Success((base64, sessionToken)) => {
         val redirectUrl = s"${ApplicationConfiguration.saml2CallbackUrl}#saml2=${base64}&jwt=${sessionToken}"
         redirect(redirectUrl, StatusCodes.MovedPermanently)
       }

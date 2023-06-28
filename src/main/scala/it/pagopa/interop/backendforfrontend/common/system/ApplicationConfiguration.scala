@@ -26,6 +26,7 @@ object ApplicationConfiguration {
     config.getLong("backend-for-frontend.saml2-jwt.support-landing-token-duration-seconds")
   val supportJwtDuration: Long        = config.getLong("backend-for-frontend.saml2-jwt.support-token-duration-seconds")
   val saml2CallbackUrl: String        = config.getString("backend-for-frontend.saml2-jwt.callback-url")
+  val saml2CallbackErrorUrl: String   = config.getString("backend-for-frontend.saml2-jwt.callback-error-url")
   val rsaKeysIdentifiers: Set[String] =
     config.getString("backend-for-frontend.rsa-keys-identifiers").split(",").toSet.filter(_.nonEmpty)
 
