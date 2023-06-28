@@ -8832,8 +8832,8 @@ paths:
     get:
         tags:
           - privacyNotices
-        operationId: getPrivacyNoticeFromBucket
-        description: Retrieve a specified version of privacy notice from AWS bucket
+        operationId: getPrivacyNoticeContent
+        description: Retrieve the content of the privacy notice version
         responses:
           '200':
             description: Retrieve Privacy Notice

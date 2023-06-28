@@ -79,24 +79,26 @@ final case class PrivacyNoticesApiServiceImpl(
     logger.info(s"Accept privacy notices for consentType $consentType")
 
     val result: Future[Unit] = for {
-      userUuid <- getUidFutureUUID(contexts)
-      ctype    <- ConsentType.fromValue(consentType).toFuture
-      pnId     <- consentTypeMap.get(ctype).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
-      pnUuid   <- pnId.toFutureUUID
-      latest   <- privacyNoticesService.getLatestVersion(pnUuid).flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
-      _        <- Future
+      userUuid          <- getUidFutureUUID(contexts)
+      typeOfConsent     <- ConsentType.fromValue(consentType).toFuture
+      privacyNoticeId   <- consentTypeMap.get(typeOfConsent).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
+      privacyNoticeUuid <- privacyNoticeId.toFutureUUID
+      latest            <- privacyNoticesService
+        .getLatestVersion(privacyNoticeUuid)
+        .flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
+      _                 <- Future
         .failed(PrivacyNoticeVersionIsNotTheLatest(seed.latestVersionId))
         .unlessA(latest.privacyNoticeVersion.versionId == seed.latestVersionId)
-      _        <- privacyNoticesService.put(
+      _                 <- privacyNoticesService.put(
         PersistentModel.UserPrivacyNotice(
-          pnIdWithUserId = s"$pnUuid#$userUuid",
+          pnIdWithUserId = s"$privacyNoticeUuid#$userUuid",
           versionNumber = latest.privacyNoticeVersion.version,
-          privacyNoticeId = pnUuid,
+          privacyNoticeId = privacyNoticeUuid,
           userId = userUuid,
           acceptedAt = OffsetDateTimeSupplier.get(),
           version = PersistentModel.UserPrivacyNoticeVersion(
             versionId = seed.latestVersionId,
-            kind = ctype.toPersistent,
+            kind = typeOfConsent.toPersistent,
             version = latest.privacyNoticeVersion.version
           )
         )
@@ -110,7 +112,7 @@ final case class PrivacyNoticesApiServiceImpl(
     }
   }
 
-  override def getPrivacyNoticeFromBucket(consentType: String)(implicit
+  override def getPrivacyNoticeContent(consentType: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerFile: ToEntityMarshaller[File]
@@ -118,17 +120,19 @@ final case class PrivacyNoticesApiServiceImpl(
     logger.info(s"Retrieving privacy notices for consentType $consentType")
 
     val result: Future[HttpEntity.Strict] = for {
-      ctype  <- ConsentType.fromValue(consentType).toFuture
-      ppId   <- consentTypeMap.get(ctype).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
-      ppUuid <- ppId.toFutureUUID
-      latest <- privacyNoticesService.getLatestVersion(ppUuid).flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
-      byteStream <- fileManager.get(ApplicationConfiguration.privacyNoticesContainer)(
+      typeOfConsent     <- ConsentType.fromValue(consentType).toFuture
+      privacyNoticeId   <- consentTypeMap.get(typeOfConsent).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
+      privacyNoticeUuid <- privacyNoticeId.toFutureUUID
+      latest            <- privacyNoticesService
+        .getLatestVersion(privacyNoticeUuid)
+        .flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
+      byteStream        <- fileManager.get(ApplicationConfiguration.privacyNoticesContainer)(
         s"${ApplicationConfiguration.privacyNoticesPath}/${latest.privacyNoticeId.toString}/${latest.privacyNoticeVersion.versionId.toString}/it/${ApplicationConfiguration.privacyNoticesFileName}"
       )
     } yield HttpEntity(ContentType(MediaTypes.`application/json`), byteStream.toByteArray())
 
     onComplete(result) {
-      handleError(s"Error retrieving privacy notices for consentType $consentType") orElse { case Success(privacy) =>
+      handleError(s"Error retrieving privacy notices for consent type $consentType") orElse { case Success(privacy) =>
         complete(privacy)
       }
     }
