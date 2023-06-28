@@ -18,8 +18,7 @@ object CatalogProcessServiceTypes {
     def toProcess: CatalogProcess.UpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed(
       name = ues.name,
       description = ues.description,
-      technology = ues.technology.toProcess,
-      attributes = ues.attributes.toProcess
+      technology = ues.technology.toProcess
     )
   }
 
@@ -30,17 +29,17 @@ object CatalogProcessServiceTypes {
     }
   }
 
-  implicit class EServiceAttributeValueSeedConverter(private val a: EServiceAttributeValueSeed) extends AnyVal {
+  implicit class EServiceAttributeValueSeedConverter(private val a: DescriptorAttributeValueSeed) extends AnyVal {
     def toProcess: CatalogProcess.AttributeValueSeed =
       CatalogProcess.AttributeValueSeed(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
   }
 
-  implicit class EServiceAttributeSeedConverter(private val e: EServiceAttributeSeed) extends AnyVal {
+  implicit class EServiceAttributeSeedConverter(private val e: DescriptorAttributeSeed) extends AnyVal {
     def toProcess: CatalogProcess.AttributeSeed =
       CatalogProcess.AttributeSeed(single = e.single.map(_.toProcess), group = e.group.nested.map(_.toProcess).value)
   }
 
-  implicit class EServiceAttributesSeedConverter(private val esa: EServiceAttributesSeed) extends AnyVal {
+  implicit class EServiceAttributesSeedConverter(private val esa: DescriptorAttributesSeed) extends AnyVal {
     def toProcess: CatalogProcess.AttributesSeed = CatalogProcess.AttributesSeed(
       certified = esa.certified.map(_.toProcess),
       declared = esa.declared.map(_.toProcess),
@@ -49,12 +48,8 @@ object CatalogProcessServiceTypes {
   }
 
   implicit class EServiceSeedConverter(private val es: EServiceSeed) extends AnyVal {
-    def toProcess: CatalogProcess.EServiceSeed = CatalogProcess.EServiceSeed(
-      name = es.name,
-      description = es.description,
-      technology = es.technology.toProcess,
-      attributes = es.attributes.toProcess
-    )
+    def toProcess: CatalogProcess.EServiceSeed =
+      CatalogProcess.EServiceSeed(name = es.name, description = es.description, technology = es.technology.toProcess)
   }
 
   implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed) extends AnyVal {
@@ -64,7 +59,8 @@ object CatalogProcessServiceTypes {
       voucherLifespan = seed.voucherLifespan,
       dailyCallsPerConsumer = seed.dailyCallsPerConsumer,
       dailyCallsTotal = seed.dailyCallsTotal,
-      agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess
+      agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess,
+      attributes = seed.attributes.toProcess
     )
   }
 
@@ -185,7 +181,7 @@ object CatalogProcessServiceTypes {
 
   implicit class AttributesWrapper(private val eServiceAttributes: CatalogProcess.Attributes) extends AnyVal {
 
-    def toApi(attributes: Seq[AttributeManagement.Attribute]): Future[EServiceAttributes] = {
+    def toApi(attributes: Seq[AttributeManagement.Attribute]): Future[DescriptorAttributes] = {
       val attributeNames: Map[UUID, AttributeDetails] =
         attributes.map(attr => attr.id -> AttributeDetails(attr.name, attr.description)).toMap
 
@@ -193,25 +189,25 @@ object CatalogProcessServiceTypes {
         certified <- eServiceAttributes.certified.traverse(convertToApiAttribute(attributeNames))
         declared  <- eServiceAttributes.declared.traverse(convertToApiAttribute(attributeNames))
         verified  <- eServiceAttributes.verified.traverse(convertToApiAttribute(attributeNames))
-      } yield EServiceAttributes(certified = certified, declared = declared, verified = verified)
+      } yield DescriptorAttributes(certified = certified, declared = declared, verified = verified)
     }.toFuture
 
     private def convertToApiAttribute(
       attributeNames: Map[UUID, AttributeDetails]
-    )(attribute: CatalogProcess.Attribute): Either[AttributeNotExists, EServiceAttribute] =
+    )(attribute: CatalogProcess.Attribute): Either[AttributeNotExists, DescriptorAttribute] =
       for {
         single <- attribute.single.traverse(convertToApiAttributeValue(attributeNames))
         group  <- attribute.group.nested.traverse(convertToApiAttributeValue(attributeNames))
-      } yield EServiceAttribute(single = single, group = group.value)
+      } yield DescriptorAttribute(single = single, group = group.value)
 
     private def convertToApiAttributeValue(
       attributeNames: Map[UUID, AttributeDetails]
-    )(value: CatalogProcess.AttributeValue): Either[AttributeNotExists, EServiceAttributeValue] =
+    )(value: CatalogProcess.AttributeValue): Either[AttributeNotExists, DescriptorAttributeValue] =
       attributeNames
         .get(value.id)
         .toRight(AttributeNotExists(value.id))
         .map(attribute =>
-          EServiceAttributeValue(
+          DescriptorAttributeValue(
             id = value.id,
             name = attribute.name,
             description = attribute.description,
@@ -227,7 +223,8 @@ object CatalogProcessServiceTypes {
       voucherLifespan = usds.voucherLifespan,
       dailyCallsPerConsumer = usds.dailyCallsPerConsumer,
       dailyCallsTotal = usds.dailyCallsTotal,
-      agreementApprovalPolicy = usds.agreementApprovalPolicy.toProcess
+      agreementApprovalPolicy = usds.agreementApprovalPolicy.toProcess,
+      attributes = usds.attributes.toProcess
     )
   }
 

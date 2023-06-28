@@ -216,7 +216,7 @@ final case class SupportApiServiceImpl(
         id = selfcareId,
         name = tenant.name,
         roles = Seq(Role(partyRole = SELFCARE_OPERATOR_ROLE, role = SUPPORT_ROLE))
-      ).toJson.toString,
+      ).toJson.asJsObject.toString,
       UID                   -> SUPPORT_ROLE
     )
   }

@@ -63,7 +63,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         "user-roles"     -> "support",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId.toString,
-        "organization" -> s"{\"id\":\"${selfcareId.toString}\",\"name\":\"PagoPa\",\"roles\":[{\"partyRole\":\"OPERATOR\",\"role\":\"support\"}]}"
+        "organization" -> s"""{"id":"${selfcareId.toString}","name":"PagoPa","roles":[{"partyRole":"OPERATOR","role":"support"}]}"""
       ).widen[AnyRef]
 
       (mockSessionTokenGenerator
@@ -119,9 +119,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         )
 
       Post() ~> supportService.samlLoginCallback(response) ~> check {
-        status shouldEqual StatusCodes.InternalServerError
-        val problem = responseAs[Problem]
-        problem.status shouldBe StatusCodes.InternalServerError.intValue
+        status shouldEqual StatusCodes.MovedPermanently
       }
     }
 
@@ -166,7 +164,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         "user-roles"     -> "support",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId.toString,
-        "organization" -> s"{\"id\":\"${selfcareId.toString}\",\"name\":\"PagoPa\",\"roles\":[{\"partyRole\":\"OPERATOR\",\"role\":\"support\"}]}"
+        "organization" -> s"""{"id":"${selfcareId.toString}","name":"PagoPa","roles":[{"partyRole":"OPERATOR","role":"support"}]}"""
       ).widen[AnyRef]
 
       (mockSessionTokenGenerator

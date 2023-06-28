@@ -48,14 +48,14 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
   implicit val verifiedTenantAttributeSeedFormat: RootJsonFormat[VerifiedTenantAttributeSeed] =
-    jsonFormat3(VerifiedTenantAttributeSeed)
+    jsonFormat2(VerifiedTenantAttributeSeed)
 
   implicit val declaredTenantAttributeFormat: RootJsonFormat[DeclaredTenantAttribute]   =
     jsonFormat5(DeclaredTenantAttribute)
   implicit val certifiedTenantAttributeFormat: RootJsonFormat[CertifiedTenantAttribute] =
     jsonFormat5(CertifiedTenantAttribute)
-  implicit val tenantVerifiedFormat: RootJsonFormat[TenantVerifier]                     = jsonFormat5(TenantVerifier)
-  implicit val tenantRevokerFormat: RootJsonFormat[TenantRevoker]                       = jsonFormat6(TenantRevoker)
+  implicit val tenantVerifiedFormat: RootJsonFormat[TenantVerifier]                     = jsonFormat4(TenantVerifier)
+  implicit val tenantRevokerFormat: RootJsonFormat[TenantRevoker]                       = jsonFormat5(TenantRevoker)
   implicit val verifiedTenantAttributeFormat: RootJsonFormat[VerifiedTenantAttribute]   =
     jsonFormat6(VerifiedTenantAttribute)
   implicit val tenantAttributesFormat: RootJsonFormat[TenantAttributes]                 =
@@ -106,25 +106,25 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val attributeSeedFormat: RootJsonFormat[AttributeSeed] = jsonFormat5(AttributeSeed)
 
-  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                       = jsonFormat4(EServiceDoc)
-  implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] =
-    jsonFormat4(EServiceAttributeValue)
-  implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
-  implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
+  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                         = jsonFormat4(EServiceDoc)
+  implicit val eServiceAttributeValueFormat: RootJsonFormat[DescriptorAttributeValue] =
+    jsonFormat4(DescriptorAttributeValue)
+  implicit val eServiceAttributeFormat: RootJsonFormat[DescriptorAttribute]           = jsonFormat2(DescriptorAttribute)
+  implicit val eServiceAttributesFormat: RootJsonFormat[DescriptorAttributes] = jsonFormat3(DescriptorAttributes)
 
   implicit val catalogDescriptorEServiceFormat: RootJsonFormat[CatalogDescriptorEService] =
-    jsonFormat13(CatalogDescriptorEService)
+    jsonFormat12(CatalogDescriptorEService)
   implicit val catalogEServiceDescriptorFormat: RootJsonFormat[CatalogEServiceDescriptor] =
-    jsonFormat16(CatalogEServiceDescriptor)
+    jsonFormat17(CatalogEServiceDescriptor)
 
   implicit val producerDescriptorEService: RootJsonFormat[ProducerDescriptorEService] =
-    jsonFormat8(ProducerDescriptorEService)
+    jsonFormat7(ProducerDescriptorEService)
 
   implicit val producerEServiceDescriptorFormat: RootJsonFormat[ProducerEServiceDescriptor] =
-    jsonFormat12(ProducerEServiceDescriptor)
+    jsonFormat13(ProducerEServiceDescriptor)
 
   implicit val producerEServiceDetailsFormat: RootJsonFormat[ProducerEServiceDetails] =
-    jsonFormat5(ProducerEServiceDetails)
+    jsonFormat4(ProducerEServiceDetails)
 
   implicit val riskAnalysisFormFormat: RootJsonFormat[RiskAnalysisForm]             = jsonFormat2(RiskAnalysisForm)
   implicit val purposeSeedFormat: RootJsonFormat[PurposeSeed]                       = jsonFormat7(PurposeSeed)
@@ -153,17 +153,19 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     DraftPurposeVersionUpdateContent
   )
 
-  implicit val EServiceAttributeValueSeedFormat: RootJsonFormat[EServiceAttributeValueSeed] = jsonFormat2(
-    EServiceAttributeValueSeed
+  implicit val DescriptorAttributeValueSeedFormat: RootJsonFormat[DescriptorAttributeValueSeed] = jsonFormat2(
+    DescriptorAttributeValueSeed
   )
 
-  implicit val EServiceAttributeSeedFormat: RootJsonFormat[EServiceAttributeSeed]   = jsonFormat2(EServiceAttributeSeed)
-  implicit val EServiceAttributesSeedFormat: RootJsonFormat[EServiceAttributesSeed] = jsonFormat3(
-    EServiceAttributesSeed
+  implicit val EServiceAttributeSeedFormat: RootJsonFormat[DescriptorAttributeSeed]   = jsonFormat2(
+    DescriptorAttributeSeed
   )
-  implicit val EServiceSeedFormat: RootJsonFormat[EServiceSeed]                     = jsonFormat4(EServiceSeed)
-  implicit val updateEServiceSeed: RootJsonFormat[UpdateEServiceSeed]               = jsonFormat4(UpdateEServiceSeed)
-  implicit val updateEServiceDescriptorSeed: RootJsonFormat[UpdateEServiceDescriptorSeed] = jsonFormat6(
+  implicit val EServiceAttributesSeedFormat: RootJsonFormat[DescriptorAttributesSeed] = jsonFormat3(
+    DescriptorAttributesSeed
+  )
+  implicit val EServiceSeedFormat: RootJsonFormat[EServiceSeed]                       = jsonFormat3(EServiceSeed)
+  implicit val updateEServiceSeed: RootJsonFormat[UpdateEServiceSeed]                 = jsonFormat3(UpdateEServiceSeed)
+  implicit val updateEServiceDescriptorSeed: RootJsonFormat[UpdateEServiceDescriptorSeed] = jsonFormat7(
     UpdateEServiceDescriptorSeed
   )
 
@@ -172,7 +174,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat6(Problem)
 
-  implicit val EServiceDescriptorSeedFormat: RootJsonFormat[EServiceDescriptorSeed] = jsonFormat6(
+  implicit val EServiceDescriptorSeedFormat: RootJsonFormat[EServiceDescriptorSeed] = jsonFormat7(
     EServiceDescriptorSeed
   )
   implicit val UpdateEServiceDescriptorDocumentSeedFormat: RootJsonFormat[UpdateEServiceDescriptorDocumentSeed] =
@@ -222,8 +224,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit def tokenGenerationValidationResultFormat: RootJsonFormat[TokenGenerationValidationResult]           =
     jsonFormat3(TokenGenerationValidationResult)
 
-  implicit val renewalVerifiedTenantAttributeSeedFormat: RootJsonFormat[RenewalVerifiedTenantAttributeSeed] =
-    jsonFormat2(RenewalVerifiedTenantAttributeSeed)
+  implicit val updateVerifiedTenantAttributeSeedFormat: RootJsonFormat[UpdateVerifiedTenantAttributeSeed] =
+    jsonFormat1(UpdateVerifiedTenantAttributeSeed)
 
   implicit def privacyNoticeFormat: RootJsonFormat[PrivacyNotice]         =
     jsonFormat6(PrivacyNotice)
