@@ -21,6 +21,10 @@ import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, 
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.commons.utils.{ORGANIZATION_ID_CLAIM, USER_ROLES}
+import it.pagopa.interop.backendforfrontend.service.model.JsonFormats._
+import it.pagopa.interop.backendforfrontend.service.model.{Organization, Role}
+import cats.syntax.all._
+import spray.json._
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol
 
@@ -88,6 +92,18 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   implicit def contexts: Seq[(String, String)] =
     Seq("bearer" -> bearerToken, USER_ROLES -> "admin", ORGANIZATION_ID_CLAIM -> UUID.randomUUID.toString)
 
+  def desiredClaimSet(tenantId: UUID, selfcareId: UUID): Map[String, AnyRef] =
+    Map(
+      "uid"            -> "support",
+      "user-roles"     -> "support",
+      "organizationId" -> tenantId.toString,
+      "selfcareId"     -> selfcareId.toString,
+      "organization"   -> Organization(
+        id = selfcareId.toString,
+        name = "PagoPa",
+        roles = Seq(Role(partyRole = "OPERATOR", role = "support"))
+      ).toJson.asJsObject
+    ).widen[AnyRef]
 }
 
 object SpecHelper {

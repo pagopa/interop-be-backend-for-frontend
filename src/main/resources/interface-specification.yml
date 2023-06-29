@@ -8842,7 +8842,7 @@ paths:
             schema:
               $ref: '#/components/schemas/SAMLResponse'
       responses:
-        '301':
+        '302':
           description: Redirection in case of success SAML validation or error
           headers:
             'X-Rate-Limit-Limit':

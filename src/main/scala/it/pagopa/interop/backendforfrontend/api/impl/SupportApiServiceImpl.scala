@@ -14,12 +14,15 @@ import it.pagopa.interop.backendforfrontend.api.SupportApiService
 import it.pagopa.interop.backendforfrontend.service.TenantProcessService
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import it.pagopa.interop.backendforfrontend.service.model.JsonFormats._
+import it.pagopa.interop.backendforfrontend.service.model.{Organization, Role}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import javax.xml.parsers.DocumentBuilderFactory
+import spray.json._
 import org.w3c.dom
 import org.opensaml.saml2.core.Response
 import org.opensaml.security.SAMLSignatureProfileValidator
@@ -74,11 +77,11 @@ final case class SupportApiServiceImpl(
       case Failure(_)                      => {
         logger.error(s"Error calling support SAML")
         val redirectUrl = s"${ApplicationConfiguration.saml2CallbackErrorUrl}"
-        redirect(redirectUrl, StatusCodes.MovedPermanently)
+        redirect(redirectUrl, StatusCodes.Found)
       }
       case Success((base64, sessionToken)) => {
         val redirectUrl = s"${ApplicationConfiguration.saml2CallbackUrl}#saml2=${base64}&jwt=${sessionToken}"
-        redirect(redirectUrl, StatusCodes.MovedPermanently)
+        redirect(redirectUrl, StatusCodes.Found)
       }
     }
   }
@@ -199,15 +202,7 @@ final case class SupportApiServiceImpl(
     } yield (response)
   }
 
-  private def buildClaims(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] = {
-    import spray.json.RootJsonFormat
-    import spray.json._
-
-    case class Role(partyRole: String, role: String)
-    case class Organization(id: String, name: String, roles: Seq[Role])
-    implicit val roleFormat: RootJsonFormat[Role]                 = jsonFormat2(Role)
-    implicit val organizationFormat: RootJsonFormat[Organization] = jsonFormat3(Organization)
-
+  private def buildClaims(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] =
     Map(
       USER_ROLES            -> SUPPORT_ROLE,
       ORGANIZATION_ID_CLAIM -> tenant.id.toString,
@@ -216,8 +211,7 @@ final case class SupportApiServiceImpl(
         id = selfcareId,
         name = tenant.name,
         roles = Seq(Role(partyRole = SELFCARE_OPERATOR_ROLE, role = SUPPORT_ROLE))
-      ).toJson.asJsObject.toString,
+      ).toJson.asJsObject,
       UID                   -> SUPPORT_ROLE
     )
-  }
 }

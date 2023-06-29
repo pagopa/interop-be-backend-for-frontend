@@ -2,7 +2,6 @@ package it.pagopa.interop.backendforfrontend
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import cats.syntax.all._
 import it.pagopa.interop.backendforfrontend.model.{SAMLResponse, Problem}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
@@ -58,19 +57,11 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           )
         )
 
-      val desiredClaimSet: Map[String, AnyRef] = Map(
-        "uid"            -> "support",
-        "user-roles"     -> "support",
-        "organizationId" -> tenantId.toString,
-        "selfcareId"     -> selfcareId.toString,
-        "organization" -> s"""{"id":"${selfcareId.toString}","name":"PagoPa","roles":[{"partyRole":"OPERATOR","role":"support"}]}"""
-      ).widen[AnyRef]
-
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          desiredClaimSet,
+          desiredClaimSet(tenantId, selfcareId),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportLandingJwtDuration
@@ -79,7 +70,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         .returns(Future.successful("sessionToken"))
 
       Post() ~> supportService.samlLoginCallback(response) ~> check {
-        status shouldEqual StatusCodes.MovedPermanently
+        status shouldEqual StatusCodes.Found
       }
     }
 
@@ -119,7 +110,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         )
 
       Post() ~> supportService.samlLoginCallback(response) ~> check {
-        status shouldEqual StatusCodes.MovedPermanently
+        status shouldEqual StatusCodes.Found
       }
     }
 
@@ -159,19 +150,11 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           )
         )
 
-      val desiredClaimSet: Map[String, AnyRef] = Map(
-        "uid"            -> "support",
-        "user-roles"     -> "support",
-        "organizationId" -> tenantId.toString,
-        "selfcareId"     -> selfcareId.toString,
-        "organization" -> s"""{"id":"${selfcareId.toString}","name":"PagoPa","roles":[{"partyRole":"OPERATOR","role":"support"}]}"""
-      ).widen[AnyRef]
-
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          desiredClaimSet,
+          desiredClaimSet(tenantId, selfcareId),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportJwtDuration
