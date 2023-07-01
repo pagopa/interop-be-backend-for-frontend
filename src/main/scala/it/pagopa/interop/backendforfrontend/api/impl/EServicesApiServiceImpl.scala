@@ -178,6 +178,7 @@ final case class EServicesApiServiceImpl(
         name = q,
         eServicesIds = Nil,
         producersIds = producersUuids,
+        attributesIds = Nil,
         agreementStates = apiAgreementStates.map(CatalogProcess.AgreementState.fromApi),
         states = apiStates.map(CatalogProcess.EServiceDescriptorState.fromApi),
         offset = offset,
@@ -284,6 +285,7 @@ final case class EServicesApiServiceImpl(
       eServicesIds = eServicesIds,
       producersIds = List(producerId),
       agreementStates = Nil,
+      attributesIds = Nil,
       states = Nil,
       offset = offset,
       limit = limit

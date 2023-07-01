@@ -28,6 +28,7 @@ trait CatalogProcessService {
     name: Option[String] = None,
     eServicesIds: Seq[UUID],
     producersIds: Seq[UUID],
+    attributesIds: Seq[UUID],
     agreementStates: Seq[AgreementState],
     states: Seq[EServiceDescriptorState],
     offset: Int,
