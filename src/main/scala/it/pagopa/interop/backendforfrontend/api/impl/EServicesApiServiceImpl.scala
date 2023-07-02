@@ -160,6 +160,7 @@ final case class EServicesApiServiceImpl(
   override def getEServicesCatalog(
     q: Option[String],
     producersIds: String,
+    attributesIds: String,
     states: String,
     agreementStates: String,
     offset: Int,
@@ -174,10 +175,12 @@ final case class EServicesApiServiceImpl(
       apiStates          <- parseArrayParameters(states).traverse(EServiceDescriptorState.fromValue).toFuture
       apiAgreementStates <- parseArrayParameters(agreementStates).traverse(AgreementState.fromValue).toFuture
       producersUuids     <- parseArrayParameters(producersIds).traverse(_.toFutureUUID)
+      attributesUuids    <- parseArrayParameters(attributesIds).traverse(_.toFutureUUID)
       pagedResults       <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = Nil,
         producersIds = producersUuids,
+        attributesIds = attributesUuids,
         agreementStates = apiAgreementStates.map(CatalogProcess.AgreementState.fromApi),
         states = apiStates.map(CatalogProcess.EServiceDescriptorState.fromApi),
         offset = offset,
@@ -283,6 +286,7 @@ final case class EServicesApiServiceImpl(
       name = q,
       eServicesIds = eServicesIds,
       producersIds = List(producerId),
+      attributesIds = Nil,
       agreementStates = Nil,
       states = Nil,
       offset = offset,
