@@ -28,6 +28,7 @@ object PagopaVersions {
   lazy val attributeRegistryProcessVersion    = "1.0.2"
   lazy val attributeRegistryManagementVersion = "1.0.12"
   lazy val authorizationManagementVersion     = "1.0.12"
+  lazy val authorizationServerVersion         = "1.0.10"
   lazy val authorizationProcessVersion        = "1.0.11"
   lazy val selfcareV2ClientVersion            = "1.0.7"
 }
