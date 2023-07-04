@@ -33,7 +33,7 @@ object Dependencies {
     lazy val parser       = namespace %% "interop-commons-parser"       % commonsVersion
 
     lazy val clientAssertionValidation =
-      namespace %% "interop-be-client-assertion-validation" % authorizationManagementVersion
+      namespace %% "interop-be-client-assertion-validation" % authorizationServerVersion
 
     lazy val authorizationProcessClient =
       namespace %% "interop-be-authorization-process-client" % authorizationProcessVersion
