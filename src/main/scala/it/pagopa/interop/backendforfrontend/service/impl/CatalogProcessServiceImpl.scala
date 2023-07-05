@@ -69,7 +69,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
       invoker.invoke(
         request,
-        s"Retrieving EServices for name = $name, producersIds = $producersIds, states = $states, offset = $offset, limit = $limit,"
+        s"Retrieving EServices for name = $name, producersIds = $producersIds, attributesIds = $attributesIds, states = $states, offset = $offset, limit = $limit,"
       )
     }
 
