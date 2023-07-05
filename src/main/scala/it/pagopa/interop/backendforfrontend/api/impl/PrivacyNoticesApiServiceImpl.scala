@@ -1,9 +1,12 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.server.Directives.{onComplete, complete}
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.files.service.FileManager
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.api.PrivacyNoticesApiService
 import it.pagopa.interop.backendforfrontend.service.types.PrivacyNoticesServiceTypes._
 import it.pagopa.interop.backendforfrontend.model._
@@ -17,12 +20,14 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import cats.syntax.all._
 
+import java.io.File
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 final case class PrivacyNoticesApiServiceImpl(
   consentTypeMap: Map[ConsentType, String],
-  privacyNoticesService: PrivacyNoticesService
+  privacyNoticesService: PrivacyNoticesService,
+  fileManager: FileManager
 )(implicit ec: ExecutionContext)
     extends PrivacyNoticesApiService {
 
@@ -74,24 +79,26 @@ final case class PrivacyNoticesApiServiceImpl(
     logger.info(s"Accept privacy notices for consentType $consentType")
 
     val result: Future[Unit] = for {
-      userUuid <- getUidFutureUUID(contexts)
-      ctype    <- ConsentType.fromValue(consentType).toFuture
-      pnId     <- consentTypeMap.get(ctype).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
-      pnUuid   <- pnId.toFutureUUID
-      latest   <- privacyNoticesService.getLatestVersion(pnUuid).flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
-      _        <- Future
+      userUuid          <- getUidFutureUUID(contexts)
+      typeOfConsent     <- ConsentType.fromValue(consentType).toFuture
+      privacyNoticeId   <- consentTypeMap.get(typeOfConsent).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
+      privacyNoticeUuid <- privacyNoticeId.toFutureUUID
+      latest            <- privacyNoticesService
+        .getLatestVersion(privacyNoticeUuid)
+        .flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
+      _                 <- Future
         .failed(PrivacyNoticeVersionIsNotTheLatest(seed.latestVersionId))
         .unlessA(latest.privacyNoticeVersion.versionId == seed.latestVersionId)
-      _        <- privacyNoticesService.put(
+      _                 <- privacyNoticesService.put(
         PersistentModel.UserPrivacyNotice(
-          pnIdWithUserId = s"$pnUuid#$userUuid",
+          pnIdWithUserId = s"$privacyNoticeUuid#$userUuid",
           versionNumber = latest.privacyNoticeVersion.version,
-          privacyNoticeId = pnUuid,
+          privacyNoticeId = privacyNoticeUuid,
           userId = userUuid,
           acceptedAt = OffsetDateTimeSupplier.get(),
           version = PersistentModel.UserPrivacyNoticeVersion(
             versionId = seed.latestVersionId,
-            kind = ctype.toPersistent,
+            kind = typeOfConsent.toPersistent,
             version = latest.privacyNoticeVersion.version
           )
         )
@@ -101,6 +108,32 @@ final case class PrivacyNoticesApiServiceImpl(
     onComplete(result) {
       handleError(s"Error accepting privacy notices for consentType $consentType") orElse { case Success(_) =>
         acceptPrivacyNotice204(_)
+      }
+    }
+  }
+
+  override def getPrivacyNoticeContent(consentType: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+    logger.info(s"Retrieving privacy notices for consentType $consentType")
+
+    val result: Future[HttpEntity.Strict] = for {
+      typeOfConsent     <- ConsentType.fromValue(consentType).toFuture
+      privacyNoticeId   <- consentTypeMap.get(typeOfConsent).toFuture(PrivacyNoticeNotFoundInConfiguration(consentType))
+      privacyNoticeUuid <- privacyNoticeId.toFutureUUID
+      latest            <- privacyNoticesService
+        .getLatestVersion(privacyNoticeUuid)
+        .flatMap(_.toFuture(PrivacyNoticeNotFound(consentType)))
+      byteStream        <- fileManager.get(ApplicationConfiguration.privacyNoticesContainer)(
+        s"${ApplicationConfiguration.privacyNoticesPath}/${latest.privacyNoticeId.toString}/${latest.privacyNoticeVersion.versionId.toString}/it/${ApplicationConfiguration.privacyNoticesFileName}"
+      )
+    } yield HttpEntity(ContentType(MediaTypes.`application/json`), byteStream.toByteArray())
+
+    onComplete(result) {
+      handleError(s"Error retrieving privacy notices for consent type $consentType") orElse { case Success(privacy) =>
+        complete(privacy)
       }
     }
   }

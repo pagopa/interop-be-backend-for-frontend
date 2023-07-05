@@ -110,7 +110,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
         versionId = versionId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Suspending Version $versionId of Purpose $purposeId")
+    invoker.invoke(request, s"Suspending Version ${versionId.toString} of Purpose ${purposeId.toString}")
   }
 
   override def updateWaitingForApprovalPurposeVersion(
@@ -137,7 +137,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
     withHeaders[Unit] { (bearerToken, correlationId, ip) =>
       val request: ApiRequest[Unit] =
         api.deletePurpose(id = purposeId, xCorrelationId = correlationId, xForwardedFor = ip)(BearerToken(bearerToken))
-      invoker.invoke(request, s"Deleting Purposes $purposeId")
+      invoker.invoke(request, s"Deleting Purposes ${purposeId.toString}")
     }
 
   override def getRiskAnalysisDocument(purposeId: UUID, versionId: UUID, documentId: UUID)(implicit
@@ -153,7 +153,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(
       request,
-      s"Downloading Risk Analysis document $documentId for Purpose $purposeId and Version $versionId"
+      s"Downloading Risk Analysis document ${documentId.toString} for Purpose ${purposeId.toString} and Version ${versionId.toString}"
     )
   }
 
@@ -167,7 +167,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
         versionId = versionId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Activating Version $versionId of Purpose $purposeId")
+    invoker.invoke(request, s"Activating Version ${versionId.toString} of Purpose ${purposeId.toString}")
   }
   override def updateDraftPurposeVersion(
     purposeId: UUID,
@@ -183,7 +183,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
           draftPurposeVersionUpdateContent = updateContent,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Updating draft version $versionId of purpose $purposeId")
+      invoker.invoke(request, s"Updating draft version ${versionId.toString} of purpose ${purposeId.toString}")
   }
 
   override def createPurpose(seed: PurposeSeed)(implicit contexts: Seq[(String, String)]): Future[Purpose] =
