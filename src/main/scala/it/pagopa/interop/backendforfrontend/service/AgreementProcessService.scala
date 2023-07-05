@@ -24,6 +24,7 @@ trait AgreementProcessService {
     contexts: Seq[(String, String)]
   ): Future[Agreement]
   def cloneAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
+  def archiveAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
 
   def getAgreements(
     producersIds: Seq[UUID] = Seq.empty,
