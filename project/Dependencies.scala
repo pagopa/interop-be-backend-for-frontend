@@ -75,6 +75,11 @@ object Dependencies {
       namespace %% "interop-selfcare-v2-client" % selfcareV2ClientVersion
 
   }
+  
+  private[this] object opensaml {
+    lazy val namespace = "org.opensaml"
+    lazy val core  = namespace % "opensaml" % samlVersion
+  }
 
   private[this] object cats {
     lazy val namespace = "org.typelevel"
@@ -163,6 +168,7 @@ object Dependencies {
       pagopa.parser                            % Compile,
       tika.core                                % Compile,
       scanamo.scanamo                          % Compile,
+      opensaml.core                            % Compile,
       akka.httpTestkit                         % Test,
       akka.testkit                             % Test,
       akka.untypedTestkit                      % Test,

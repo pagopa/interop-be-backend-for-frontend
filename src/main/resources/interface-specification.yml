@@ -56,6 +56,11 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: support
+    description: Support
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'    
   - name: health
     description: Verify service status
     externalDocs:
@@ -8914,6 +8919,212 @@ paths:
                 schema:
                   type: integer
                 description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /privacyNotices/{consentType}:
+    parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+        - $ref: '#/components/parameters/IpAddress'
+        - name: consentType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ConsentType'
+    get:
+        tags:
+          - privacyNotices
+        operationId: getPrivacyNoticeContent
+        description: Retrieve the content of the privacy notice version
+        responses:
+          '200':
+            description: Retrieve Privacy Notice
+            content:
+              application/octet-stream:
+                schema:
+                  type: string
+                  format: binary
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          '400':
+            description: Bad Request
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/Problem'
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          '404':
+            description: Not found
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/Problem'
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /support:
+    parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+        - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+          - support
+      security: []
+      operationId: samlLoginCallback
+      description: This route is used to redirect support flow to the dedicated page
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/SAMLResponse'
+      responses:
+        '302':
+          description: Redirection in case of success SAML validation or error
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /session/saml2/tokens:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+        - support
+      summary: Returns the generated token
+      description: Returns the generated token
+      operationId: getSaml2Token
+      parameters:
+        - in: query
+          name: tenantId
+          description: The internal identifier of the tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/SAMLResponse'      
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionToken'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Tenant Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/status':
     get:
       security: []
@@ -8943,6 +9154,14 @@ components:
       schema:
         type: string
   schemas:
+    SAMLResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: SAML response
+      required:
+        - response
     AccessTokenRequest:
       type: object
       required:

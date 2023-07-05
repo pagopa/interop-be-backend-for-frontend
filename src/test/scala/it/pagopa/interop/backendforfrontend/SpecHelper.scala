@@ -2,11 +2,12 @@ package it.pagopa.interop.backendforfrontend
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.util.{Base64URL, JSONArrayUtils, JSONObjectUtils}
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.config.{Config, ConfigFactory}
-import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
+import it.pagopa.interop.backendforfrontend.api.{AuthorizationApiService, SupportApiService}
 import it.pagopa.interop.backendforfrontend.api.impl._
 import it.pagopa.interop.backendforfrontend.model.{Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{
@@ -18,6 +19,12 @@ import it.pagopa.interop.backendforfrontend.service.{
 import it.pagopa.interop.commons.jwt.model.Token
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
+import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.commons.utils.{ORGANIZATION_ID_CLAIM, USER_ROLES}
+import it.pagopa.interop.backendforfrontend.service.model.JsonFormats._
+import it.pagopa.interop.backendforfrontend.service.model.{Organization, Role}
+import cats.syntax.all._
+import spray.json._
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol
 
@@ -48,6 +55,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
     .parseResourcesAnySyntax("application-test")
     .withFallback(testData)
 
+  val mockDateTimeSupplier: OffsetDateTimeSupplier          = mock[OffsetDateTimeSupplier]
   val mockJwtReader: JWTReader                              = mock[JWTReader]
   val mockSessionTokenGenerator: SessionTokenGenerator      = mock[SessionTokenGenerator]
   val mockInteropTokenGenerator: InteropTokenGenerator      = mock[InteropTokenGenerator]
@@ -56,9 +64,9 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   val mockTenantProcess: TenantProcessService               = mock[TenantProcessService]
   val mockPartyProcess: PartyProcessService                 = mock[PartyProcessService]
   val mockAuthorizationProcess: AuthorizationProcessService = mock[AuthorizationProcessService]
-  final val allowList: List[String]    = List(UUID.randomUUID().toString, UUID.randomUUID().toString)
-  final val bearerToken: String        = "token"
-  val service: AuthorizationApiService = AuthorizationApiServiceImpl(
+  final val allowList: List[String]                 = List(UUID.randomUUID().toString, UUID.randomUUID().toString)
+  final val bearerToken: String                     = "token"
+  val authorizationService: AuthorizationApiService = AuthorizationApiServiceImpl(
     mockJwtReader,
     mockSessionTokenGenerator,
     mockInteropTokenGenerator,
@@ -68,12 +76,34 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
     allowList,
     mockRateLimiter
   )
+  val supportService: SupportApiService             =
+    SupportApiServiceImpl(mockSessionTokenGenerator, mockTenantProcess, mockDateTimeSupplier)
 
   implicit def fromEntityUnmarshallerIdentityToken: FromEntityUnmarshaller[SessionToken] =
     sprayJsonUnmarshaller[SessionToken]
 
   implicit def fromEntityUnmarshallerProblem: FromEntityUnmarshaller[Problem] =
     sprayJsonUnmarshaller[Problem]
+
+  implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
+
+  implicit def toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken] = sprayJsonMarshaller[SessionToken]
+
+  implicit def contexts: Seq[(String, String)] =
+    Seq("bearer" -> bearerToken, USER_ROLES -> "admin", ORGANIZATION_ID_CLAIM -> UUID.randomUUID.toString)
+
+  def desiredClaimSet(tenantId: UUID, selfcareId: UUID): Map[String, AnyRef] =
+    Map(
+      "uid"            -> "support",
+      "user-roles"     -> "support",
+      "organizationId" -> tenantId.toString,
+      "selfcareId"     -> selfcareId.toString,
+      "organization"   -> Organization(
+        id = selfcareId.toString,
+        name = "PagoPa",
+        roles = Seq(Role(partyRole = "OPERATOR", role = "support"))
+      ).toJson.asJsObject
+    ).widen[AnyRef]
 }
 
 object SpecHelper {
@@ -120,5 +150,4 @@ object SpecHelper {
     sub = UUID.randomUUID().toString,
     iss = UUID.randomUUID().toString
   )
-
 }

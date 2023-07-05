@@ -6,12 +6,14 @@ import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import it.pagopa.interop.backendforfrontend.api.PrivacyNoticesApiMarshaller
 import it.pagopa.interop.backendforfrontend.model._
 import spray.json.DefaultJsonProtocol
+import java.io.File
 
 object PrivacyNoticesApiMarshallerImpl
     extends PrivacyNoticesApiMarshaller
     with SprayJsonSupport
     with DefaultJsonProtocol {
 
+  override implicit def toEntityMarshallerFile: ToEntityMarshaller[File]       = entityMarshallerFile
   override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
 
   override implicit def toEntityMarshallerPrivacyNotice: ToEntityMarshaller[PrivacyNotice] =
