@@ -12,15 +12,11 @@ trait CatalogProcessService {
 
   def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService]
 
-  def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Unit]
+  def activateDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
-  def publishDescriptor(eServiceId: String, descriptorId: String)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Unit]
+  def publishDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
-  def updateEServiceById(eServiceId: String, updateEServiceSeed: UpdateEServiceSeed)(implicit
+  def updateEServiceById(eServiceId: UUID, updateEServiceSeed: UpdateEServiceSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[EService]
 
@@ -47,18 +43,16 @@ trait CatalogProcessService {
     contexts: Seq[(String, String)]
   ): Future[EServiceDescriptor]
 
-  def suspendDescriptor(eServiceId: String, descriptorId: String)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Unit]
+  def suspendDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
   def updateEServiceDocumentById(
-    eServiceId: String,
-    descriptorId: String,
-    documentId: String,
+    eServiceId: UUID,
+    descriptorId: UUID,
+    documentId: UUID,
     updateEServiceDescriptorDocumentSeed: UpdateEServiceDescriptorDocumentSeed
   )(implicit contexts: Seq[(String, String)]): Future[EServiceDoc]
 
-  def deleteEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+  def deleteEServiceDocumentById(eServiceId: UUID, descriptorId: UUID, documentId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
 
@@ -66,11 +60,11 @@ trait CatalogProcessService {
     implicit contexts: Seq[(String, String)]
   ): Future[EService]
 
-  def getEServiceDocumentById(eServiceId: String, descriptorId: String, documentId: String)(implicit
+  def getEServiceDocumentById(eServiceId: UUID, descriptorId: UUID, documentId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[EServiceDoc]
 
-  def deleteDraft(eServiceId: String, descriptorId: String)(implicit contexts: Seq[(String, String)]): Future[Unit]
+  def deleteDraft(eServiceId: UUID, descriptorId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
   def deleteEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 

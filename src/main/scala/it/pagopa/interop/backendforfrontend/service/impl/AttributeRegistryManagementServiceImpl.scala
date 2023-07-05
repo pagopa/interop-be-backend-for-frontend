@@ -33,7 +33,7 @@ class AttributeRegistryManagementServiceImpl(attributeRegistryURL: String, block
       val request = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
-      invoker.invoke(request, s"Getting attribute by id $attributeId")
+      invoker.invoke(request, s"Getting attribute by id ${attributeId.toString}")
     }
 
   override def getAttributeByOriginAndCode(origin: String, code: String)(implicit

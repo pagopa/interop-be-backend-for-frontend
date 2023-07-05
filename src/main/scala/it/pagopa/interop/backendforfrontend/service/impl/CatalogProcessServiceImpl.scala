@@ -78,7 +78,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         api.getEServiceById(xCorrelationId = correlationId, eServiceId = eServiceId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Retrieving EService for $eServiceId from Catalog Process")
+      invoker.invoke(request, s"Retrieving EService for ${eServiceId.toString} from Catalog Process")
     }
 
   def createDescriptor(eServiceId: UUID, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
@@ -88,11 +88,11 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       val request: ApiRequest[EServiceDescriptor] =
         api.createDescriptor(
           xCorrelationId = correlationId,
-          eServiceId = eServiceId.toString,
+          eServiceId = eServiceId,
           eServiceDescriptorSeed = eServiceDescriptorSeed,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Create descriptor for $eServiceId ")
+      invoker.invoke(request, s"Create descriptor for ${eServiceId.toString} ")
     }
   }
 
@@ -105,7 +105,10 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
           descriptorId = descriptorId,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Publishing Descriptor $descriptorId EService for $eServiceId from Catalog Process")
+      invoker.invoke(
+        request,
+        s"Publishing Descriptor ${descriptorId.toString} EService for ${eServiceId.toString} from Catalog Process"
+      )
     }
 
   override def suspendDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit
@@ -118,7 +121,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         descriptorId = descriptorId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Suspending EService $eServiceId from Catalog Process")
+    invoker.invoke(request, s"Suspending EService ${eServiceId.toString} from Catalog Process")
   }
 
   def updateEServiceDocumentById(
@@ -138,7 +141,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(
       request,
-      s"Updating document $documentId on eService $eServiceId for descriptor $descriptorId with seed $updateEServiceDescriptorDocumentSeed from Catalog Process"
+      s"Updating document ${documentId.toString} on eService ${eServiceId.toString} for descriptor ${descriptorId.toString} with seed $updateEServiceDescriptorDocumentSeed from Catalog Process"
     )
   }
 
@@ -152,7 +155,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         descriptorId = descriptorId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Cloning EService $eServiceId with descriptor $descriptorId")
+    invoker.invoke(request, s"Cloning EService ${eServiceId.toString} with descriptor ${descriptorId.toString}")
   }
 
   override def deleteEServiceDocumentById(eServiceId: UUID, descriptorId: UUID, documentId: UUID)(implicit
@@ -166,7 +169,10 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         documentId = documentId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Deleting document $documentId on eService $eServiceId for descriptor $descriptorId")
+    invoker.invoke(
+      request,
+      s"Deleting document ${documentId.toString} on eService ${eServiceId.toString} for descriptor ${descriptorId.toString}"
+    )
   }
 
   override def updateDraftDescriptor(
@@ -178,14 +184,14 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       val request: ApiRequest[EService] =
         api.updateDraftDescriptor(
           xCorrelationId = correlationId,
-          eServiceId = eServiceId.toString,
-          descriptorId = descriptorId.toString,
+          eServiceId = eServiceId,
+          descriptorId = descriptorId,
           updateEServiceDescriptorSeed = updateEServiceDescriptorSeed,
           xForwardedFor = ip
         )(BearerToken(bearerToken))
       invoker.invoke(
         request,
-        s"Update draft descriptor $descriptorId for EService $eServiceId with seed $updateEServiceDescriptorSeed"
+        s"Update draft descriptor ${descriptorId.toString} for EService ${eServiceId.toString} with seed $updateEServiceDescriptorSeed"
       )
     }
 
@@ -197,8 +203,8 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     val request: ApiRequest[EService] =
       api.createEServiceDocument(
         xCorrelationId = correlationId,
-        eServiceId = eServiceId.toString,
-        descriptorId = descriptorId.toString,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
         createEServiceDescriptorDocumentSeed = documentSeed,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
@@ -213,7 +219,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     val request: ApiRequest[EService] =
       api.updateEServiceById(
         xCorrelationId = correlationId,
-        eServiceId = eServiceId.toString,
+        eServiceId = eServiceId,
         updateEServiceSeed = updateEServiceSeed,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
@@ -231,7 +237,10 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         documentId = documentId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving document $documentId of EService $eServiceId from Catalog Process")
+    invoker.invoke(
+      request,
+      s"Retrieving document ${documentId.toString} of EService ${eServiceId.toString} from Catalog Process"
+    )
   }
 
   override def deleteDraft(eServiceId: UUID, descriptorId: UUID)(implicit
@@ -244,7 +253,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         descriptorId = descriptorId,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Deleting draft descriptor $descriptorId for E-Service $eServiceId")
+    invoker.invoke(request, s"Deleting draft descriptor ${descriptorId.toString} for E-Service ${eServiceId.toString}")
   }
 
   override def deleteEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =
@@ -267,6 +276,6 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         limit = limit,
         xForwardedFor = ip
       )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving consumers for EService $eServiceId from Catalog Process")
+    invoker.invoke(request, s"Retrieving consumers for EService ${eServiceId.toString} from Catalog Process")
   }
 }
