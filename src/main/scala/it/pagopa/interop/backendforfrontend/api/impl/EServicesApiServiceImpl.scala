@@ -150,8 +150,11 @@ final case class EServicesApiServiceImpl(
     val result = for {
       eServiceUuid   <- eServiceId.toFutureUUID
       descriptorUuid <- descriptorId.toFutureUUID
-      descriptor     <- catalogProcessService
-        .updateDraftDescriptor(eServiceUuid, descriptorUuid, updateEServiceDescriptorSeed.toProcess)(contexts)
+      descriptor     <- catalogProcessService.updateDraftDescriptor(
+        eServiceUuid,
+        descriptorUuid,
+        updateEServiceDescriptorSeed.toProcess
+      )(contexts)
     } yield descriptor.toApi
 
     onComplete(result) {
