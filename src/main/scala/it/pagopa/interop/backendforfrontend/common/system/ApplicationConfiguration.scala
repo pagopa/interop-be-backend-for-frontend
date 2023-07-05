@@ -99,5 +99,7 @@ object ApplicationConfiguration {
     config.getString("backend-for-frontend.privacy-notices.table-name-privacy-notices")
   val privacyNoticesUsersTableName: String =
     config.getString("backend-for-frontend.privacy-notices.table-name-privacy-notices-users")
-
+  val privacyNoticesContainer: String      = config.getString("backend-for-frontend.privacy-notices.container")
+  val privacyNoticesPath: String           = config.getString("backend-for-frontend.privacy-notices.path")
+  val privacyNoticesFileName: String       = config.getString("backend-for-frontend.privacy-notices.filename")
 }

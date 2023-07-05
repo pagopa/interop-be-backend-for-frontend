@@ -8809,6 +8809,79 @@ paths:
                 schema:
                   type: integer
                 description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /privacyNotices/{consentType}:
+    parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+        - $ref: '#/components/parameters/IpAddress'
+        - name: consentType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ConsentType'
+    get:
+        tags:
+          - privacyNotices
+        operationId: getPrivacyNoticeContent
+        description: Retrieve the content of the privacy notice version
+        responses:
+          '200':
+            description: Retrieve Privacy Notice
+            content:
+              application/octet-stream:
+                schema:
+                  type: string
+                  format: binary
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          '400':
+            description: Bad Request
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/Problem'
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          '404':
+            description: Not found
+            content:
+              application/problem+json:
+                schema:
+                  $ref: '#/components/schemas/Problem'
+            headers:
+              'X-Rate-Limit-Limit':
+                schema:
+                  type: integer
+                description: Max allowed requests within time interval
+              'X-Rate-Limit-Remaining':
+                schema:
+                  type: integer
+                description: Remaining requests within time interval
+              'X-Rate-Limit-Interval':
+                schema:
+                  type: integer
+                description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /support:
     parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'

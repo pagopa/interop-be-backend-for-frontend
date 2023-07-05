@@ -296,7 +296,7 @@ trait Dependencies {
       )
 
     val privacyNoticesApi: PrivacyNoticesApi = new PrivacyNoticesApi(
-      PrivacyNoticesApiServiceImpl(consentTypeMap, privacyNoticesProcess),
+      PrivacyNoticesApiServiceImpl(consentTypeMap, privacyNoticesProcess, fileManager(blockingEc)),
       PrivacyNoticesApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
