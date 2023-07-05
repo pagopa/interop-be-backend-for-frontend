@@ -210,7 +210,10 @@ final case class AgreementsApiServiceImpl(
   override def archiveAgreement(
     agreementId: String
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
-    val result: Future[Unit] = agreementId.toFutureUUID.flatMap(agreementProcessService.archiveAgreement).void
+    val result: Future[Unit] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      _             <- agreementProcessService.archiveAgreement(agreementUuid)
+    } yield ()
 
     onComplete(result) {
       handleError(s"Error archiving agreement $agreementId") orElse { case Success(_) => archiveAgreement204 }
