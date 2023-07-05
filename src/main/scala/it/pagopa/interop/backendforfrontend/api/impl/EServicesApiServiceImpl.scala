@@ -86,12 +86,16 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+
   override def activateDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Unit] =
-      catalogProcessService.activateDescriptor(eServiceId, descriptorId)(contexts)
+    val result: Future[Unit] = for {
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      _              <- catalogProcessService.activateDescriptor(eServiceUuid, descriptorUuid)(contexts)
+    } yield ()
 
     onComplete(result) {
       handleError(s"Error activating descriptor $descriptorId on eservice $eServiceId") orElse { case Success(_) =>
@@ -104,8 +108,11 @@ final case class EServicesApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Unit] =
-      catalogProcessService.publishDescriptor(eServiceId, descriptorId)(contexts)
+    val result: Future[Unit] = for {
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      _              <- catalogProcessService.publishDescriptor(eServiceUuid, descriptorUuid)(contexts)
+    } yield ()
 
     onComplete(result) {
       handleError(s"Error publishing descriptor $descriptorId for eservice $eServiceId") orElse { case Success(_) =>
@@ -120,9 +127,8 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
     val result: Future[CreatedResource] = for {
-      eServiceIdUUID <- eServiceId.toFutureUUID
-      descriptor     <- catalogProcessService
-        .createDescriptor(eServiceIdUUID, eServiceDescriptorSeed.toProcess)(contexts)
+      eServiceUuid <- eServiceId.toFutureUUID
+      descriptor   <- catalogProcessService.createDescriptor(eServiceUuid, eServiceDescriptorSeed.toProcess)(contexts)
     } yield descriptor.toApi
 
     onComplete(result) {
@@ -142,10 +148,13 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
     val result = for {
-      eServiceIdUUID   <- eServiceId.toFutureUUID
-      descriptorIdUUID <- descriptorId.toFutureUUID
-      descriptor       <- catalogProcessService
-        .updateDraftDescriptor(eServiceIdUUID, descriptorIdUUID, updateEServiceDescriptorSeed.toProcess)(contexts)
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      descriptor     <- catalogProcessService.updateDraftDescriptor(
+        eServiceUuid,
+        descriptorUuid,
+        updateEServiceDescriptorSeed.toProcess
+      )(contexts)
     } yield descriptor.toApi
 
     onComplete(result) {
@@ -160,6 +169,7 @@ final case class EServicesApiServiceImpl(
   override def getEServicesCatalog(
     q: Option[String],
     producersIds: String,
+    attributesIds: String,
     states: String,
     agreementStates: String,
     offset: Int,
@@ -174,10 +184,12 @@ final case class EServicesApiServiceImpl(
       apiStates          <- parseArrayParameters(states).traverse(EServiceDescriptorState.fromValue).toFuture
       apiAgreementStates <- parseArrayParameters(agreementStates).traverse(AgreementState.fromValue).toFuture
       producersUuids     <- parseArrayParameters(producersIds).traverse(_.toFutureUUID)
+      attributesUuids    <- parseArrayParameters(attributesIds).traverse(_.toFutureUUID)
       pagedResults       <- catalogProcessService.getEServices(
         name = q,
         eServicesIds = Nil,
         producersIds = producersUuids,
+        attributesIds = attributesUuids,
         agreementStates = apiAgreementStates.map(CatalogProcess.AgreementState.fromApi),
         states = apiStates.map(CatalogProcess.EServiceDescriptorState.fromApi),
         offset = offset,
@@ -283,6 +295,7 @@ final case class EServicesApiServiceImpl(
       name = q,
       eServicesIds = eServicesIds,
       producersIds = List(producerId),
+      attributesIds = Nil,
       agreementStates = Nil,
       states = Nil,
       offset = offset,
@@ -509,14 +522,17 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerEServiceDoc: ToEntityMarshaller[EServiceDoc],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[EServiceDoc] = catalogProcessService
-      .updateEServiceDocumentById(
-        eServiceId = eServiceId,
-        descriptorId = descriptorId,
-        documentId = documentId,
+    val result: Future[EServiceDoc] = for {
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      documentUuid   <- documentId.toFutureUUID
+      document       <- catalogProcessService.updateEServiceDocumentById(
+        eServiceId = eServiceUuid,
+        descriptorId = descriptorUuid,
+        documentId = documentUuid,
         updateEServiceDescriptorDocumentSeed = updateEServiceDescriptorDocumentSeed.toProcess
       )(contexts)
-      .map(_.toApi)
+    } yield document.toApi
 
     onComplete(result) {
       handleError(s"Error updating document $documentId on eService $eServiceId for descriptor $descriptorId") orElse {
@@ -545,8 +561,12 @@ final case class EServicesApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Unit] =
-      catalogProcessService.suspendDescriptor(eServiceId, descriptorId)(contexts)
+    val result: Future[Unit] = for {
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      _              <- catalogProcessService.suspendDescriptor(eServiceUuid, descriptorUuid)(contexts)
+    } yield ()
+
     onComplete(result) {
       handleError(s"Error suspending descriptor $descriptorId") orElse { case Success(_) =>
         suspendDescriptor204
@@ -560,11 +580,10 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedEServiceDescriptor]
   ): Route = {
     val result: Future[CreatedEServiceDescriptor] = for {
-      eServiceIdUUID   <- eServiceId.toFutureUUID
-      descriptorIdUUID <- descriptorId.toFutureUUID
-      eservice         <- catalogProcessService
-        .cloneEServiceByDescriptor(eServiceIdUUID, descriptorIdUUID)
-      descriptorId     <- eservice.descriptors.headOption.map(_.id).toFuture(NoDescriptorInEservice(eServiceIdUUID))
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      eservice       <- catalogProcessService.cloneEServiceByDescriptor(eServiceUuid, descriptorUuid)
+      descriptorId   <- eservice.descriptors.headOption.map(_.id).toFuture(NoDescriptorInEservice(eServiceUuid))
     } yield eservice.toApiWithDescriptorId(descriptorId)
 
     onComplete(result) {
@@ -579,8 +598,13 @@ final case class EServicesApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Unit] =
-      catalogProcessService.deleteEServiceDocumentById(eServiceId, descriptorId, documentId)(contexts)
+    val result: Future[Unit] = for {
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      documentUuid   <- documentId.toFutureUUID
+      _ <- catalogProcessService.deleteEServiceDocumentById(eServiceUuid, descriptorUuid, documentUuid)(contexts)
+    } yield ()
+
     onComplete(result) {
       handleError(s"Error deleting document $documentId for eService $eServiceId descriptor $descriptorId") orElse {
         case Success(_) => deleteEServiceDocumentById204
@@ -593,8 +617,10 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
-    val result: Future[CreatedResource] =
-      catalogProcessService.updateEServiceById(eServiceId, updateEServiceSeed.toProcess)(contexts).map(_.toApi)
+    val result: Future[CreatedResource] = for {
+      eServiceUuid <- eServiceId.toFutureUUID
+      eService     <- catalogProcessService.updateEServiceById(eServiceUuid, updateEServiceSeed.toProcess)(contexts)
+    } yield eService.toApi
 
     onComplete(result) {
       handleError(s"Error updating eservice with Id: $eServiceId") orElse { case Success(eservice) =>
@@ -617,9 +643,12 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerFile: ToEntityMarshaller[File]
   ): Route = {
     val result: Future[HttpEntity.Strict] = for {
-      document    <- catalogProcessService.getEServiceDocumentById(eServiceId, descriptorId, documentId)
-      contentType <- getDocumentContentType(document)
-      byteStream  <- fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(document.path)
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      documentUuid   <- documentId.toFutureUUID
+      document       <- catalogProcessService.getEServiceDocumentById(eServiceUuid, descriptorUuid, documentUuid)
+      contentType    <- getDocumentContentType(document)
+      byteStream     <- fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(document.path)
     } yield HttpEntity(contentType, byteStream.toByteArray())
 
     onComplete(result) {
@@ -642,10 +671,11 @@ final case class EServicesApiServiceImpl(
         catalogProcessService.deleteEService(eService.id)
 
     val result: Future[Unit] = for {
-      eServiceUUID <- eServiceId.toFutureUUID
-      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
-      _            <- catalogProcessService.deleteDraft(eServiceId, descriptorId)
-      _            <- deleteEServiceIfEmpty(eService)
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      eService       <- catalogProcessService.getEServiceById(eServiceUuid)
+      _              <- catalogProcessService.deleteDraft(eServiceUuid, descriptorUuid)
+      _              <- deleteEServiceIfEmpty(eService)
     } yield ()
 
     onComplete(result) {
