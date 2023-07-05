@@ -24,6 +24,8 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   EServicesApiServiceImpl,
   HealthApiMarshallerImpl,
   HealthServiceApiImpl,
+  SupportApiMarshallerImpl,
+  SupportApiServiceImpl,
   PartyApiMarshallerImpl,
   PartyApiServiceImpl,
   PurposesApiMarshallerImpl,
@@ -191,6 +193,12 @@ trait Dependencies {
       }
     )
 
+    val supportApi: SupportApi = new SupportApi(
+      SupportApiServiceImpl(sessionTokenGenerator, tenantProcess, OffsetDateTimeSupplier),
+      SupportApiMarshallerImpl,
+      SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
+    )
+
     val authorizationApi: AuthorizationApi = new AuthorizationApi(
       AuthorizationApiServiceImpl(
         jwtReader,
@@ -288,7 +296,7 @@ trait Dependencies {
       )
 
     val privacyNoticesApi: PrivacyNoticesApi = new PrivacyNoticesApi(
-      PrivacyNoticesApiServiceImpl(consentTypeMap, privacyNoticesProcess),
+      PrivacyNoticesApiServiceImpl(consentTypeMap, privacyNoticesProcess, fileManager(blockingEc)),
       PrivacyNoticesApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
@@ -306,7 +314,8 @@ trait Dependencies {
       tools = toolsApi,
       health = healthApi,
       privacyNotices = privacyNoticesApi,
-      validationExceptionToRoute = validationExceptionToRoute.some
+      validationExceptionToRoute = validationExceptionToRoute.some,
+      support = supportApi
     )(actorSystem.classicSystem)
   }
 

@@ -5,10 +5,12 @@ import it.pagopa.interop.commons.ratelimiter.model.LimiterConfig
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
+import java.util.UUID
 
 object ApplicationConfiguration {
   val config: Config = ConfigFactory.load()
 
+  val pagoPaTenantId: UUID     = UUID.fromString(config.getString("backend-for-frontend.pagopa-tenant-id"))
   val serverPort: Int          = config.getInt("backend-for-frontend.port")
   val jwtAudience: Set[String] =
     config.getString("backend-for-frontend.jwt.audience").split(",").toSet.filter(_.nonEmpty)
@@ -20,7 +22,11 @@ object ApplicationConfiguration {
   val generatedJwtAudience: Set[String] =
     config.getString("backend-for-frontend.generated-jwt.audience").split(",").toSet.filter(_.nonEmpty)
   val generatedJwtDuration: Long        = config.getLong("backend-for-frontend.generated-jwt.duration-seconds")
-
+  val supportLandingJwtDuration: Long   =
+    config.getLong("backend-for-frontend.saml2-jwt.support-landing-token-duration-seconds")
+  val supportJwtDuration: Long        = config.getLong("backend-for-frontend.saml2-jwt.support-token-duration-seconds")
+  val saml2CallbackUrl: String        = config.getString("backend-for-frontend.saml2-jwt.callback-url")
+  val saml2CallbackErrorUrl: String   = config.getString("backend-for-frontend.saml2-jwt.callback-error-url")
   val rsaKeysIdentifiers: Set[String] =
     config.getString("backend-for-frontend.rsa-keys-identifiers").split(",").toSet.filter(_.nonEmpty)
 
@@ -93,5 +99,7 @@ object ApplicationConfiguration {
     config.getString("backend-for-frontend.privacy-notices.table-name-privacy-notices")
   val privacyNoticesUsersTableName: String =
     config.getString("backend-for-frontend.privacy-notices.table-name-privacy-notices-users")
-
+  val privacyNoticesContainer: String      = config.getString("backend-for-frontend.privacy-notices.container")
+  val privacyNoticesPath: String           = config.getString("backend-for-frontend.privacy-notices.path")
+  val privacyNoticesFileName: String       = config.getString("backend-for-frontend.privacy-notices.filename")
 }

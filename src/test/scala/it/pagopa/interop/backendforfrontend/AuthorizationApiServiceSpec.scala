@@ -5,7 +5,6 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import cats.syntax.all._
 import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.backendforfrontend.SpecHelper._
-import it.pagopa.interop.backendforfrontend.api.impl.AuthorizationApiMarshallerImpl._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
@@ -110,7 +109,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful("sessionToken"))
 
-      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
       ) ~> check {
@@ -200,7 +199,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful("sessionToken"))
 
-      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
       ) ~> check {
@@ -256,7 +255,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           )
         )
 
-      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
       ) ~> check {
@@ -374,7 +373,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful("sessionToken"))
 
-      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
       ) ~> check {
@@ -492,7 +491,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful("sessionToken"))
 
-      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
       ) ~> check {
@@ -555,7 +554,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           )
         )
 
-      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
       ) ~> check {
@@ -572,7 +571,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Failure(new RuntimeException("JWT reading fails")))
 
-      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
       ) ~> check {
@@ -661,7 +660,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.failed(new RuntimeException("Session token generator fails")))
 
-      Post() ~> service.getSessionToken(IdentityToken(bearerToken))(
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
       ) ~> check {
