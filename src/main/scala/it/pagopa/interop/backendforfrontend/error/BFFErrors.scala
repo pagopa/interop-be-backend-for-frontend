@@ -120,4 +120,7 @@ object BFFErrors {
   final case class DynamoReadingError(message: String)
       extends ComponentError("0028", s"Error while reading data from Dynamo -> $message")
 
+  final case class SamlNotValid(message: String)
+      extends ComponentError("0029", s"Error while validating saml -> $message")
+
 }
