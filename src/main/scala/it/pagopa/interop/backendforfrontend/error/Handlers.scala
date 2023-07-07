@@ -9,7 +9,6 @@ import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => Author
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf, serviceCode}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.model.{Problem, TokenGenerationValidationResult}
-import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiError => CatalogProcessError}
 import it.pagopa.interop.commons.jwt.errors.InvalidJWTClaim
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
@@ -38,7 +37,6 @@ object Handlers {
     case Failure(err: PurposeProcessError[_])       => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: AgreementProcessError[_])     => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: AttributeRegistryError[_])    => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: CatalogManagementError[_])    => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: CatalogProcessError[_])       => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: TenantManagementError[_])     => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: TenantProcessError[_])        => completeWithError(err.code, err.responseContent, logMessage)

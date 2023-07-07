@@ -5,7 +5,7 @@ import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeM
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
-import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.catalogmanagement.model._
 import it.pagopa.interop.catalogprocess.client.model.EServiceTechnology.{REST, SOAP}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 
@@ -122,28 +122,6 @@ object CatalogProcessServiceTypes {
     }
   }
 
-  implicit class AttributesConverter(private val a: CatalogProcess.Attributes) extends AnyVal {
-    def toManagement: CatalogManagement.Attributes =
-      CatalogManagement.Attributes(
-        certified = a.certified.map(_.toManagement),
-        declared = a.declared.map(_.toManagement),
-        verified = a.verified.map(_.toManagement)
-      )
-  }
-
-  implicit class AttributeConverter(private val a: CatalogProcess.Attribute) extends AnyVal {
-    def toManagement: CatalogManagement.Attribute =
-      CatalogManagement.Attribute(
-        single = a.single.map(_.toManagement),
-        group = a.group.nested.map(_.toManagement).value
-      )
-  }
-
-  implicit class AttributeValueConverter(private val a: CatalogProcess.AttributeValue) extends AnyVal {
-    def toManagement: CatalogManagement.AttributeValue =
-      CatalogManagement.AttributeValue(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
-  }
-
   implicit class AgreementApprovalPolicyWrapper(private val aap: CatalogProcess.AgreementApprovalPolicy)
       extends AnyVal {
     def toApi: AgreementApprovalPolicy = aap match {
@@ -179,7 +157,35 @@ object CatalogProcessServiceTypes {
 
   final case class AttributeDetails(name: String, description: String)
 
+  implicit class AttributeValueWrapper(private val av: CatalogProcess.AttributeValue) extends AnyVal {
+    def toPersistent: CatalogAttributeValue = CatalogAttributeValue(av.id, av.explicitAttributeVerification)
+  }
+
+  implicit class AttributeSingleWrapper(private val a: CatalogProcess.AttributeValue) extends AnyVal {
+    def toPersistentSingle: SingleAttribute = SingleAttribute(id =
+      CatalogAttributeValue(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
+    )
+  }
+
+  implicit class AttributeGroupWrapper(private val a: Seq[CatalogProcess.AttributeValue]) extends AnyVal {
+    def toPersistentGroup: GroupAttribute = GroupAttribute(ids =
+      a.map(v => CatalogAttributeValue(id = v.id, explicitAttributeVerification = v.explicitAttributeVerification))
+    )
+  }
+
   implicit class AttributesWrapper(private val eServiceAttributes: CatalogProcess.Attributes) extends AnyVal {
+
+    def toPersistent: CatalogAttributes = CatalogAttributes(
+      certified = eServiceAttributes.certified.flatMap(a =>
+        a.single.map(_.toPersistentSingle).toList ++ a.group.map(_.toPersistentGroup).toList
+      ),
+      declared = eServiceAttributes.declared.flatMap(a =>
+        a.single.map(_.toPersistentSingle).toList ++ a.group.map(_.toPersistentGroup).toList
+      ),
+      verified = eServiceAttributes.declared.flatMap(a =>
+        a.single.map(_.toPersistentSingle).toList ++ a.group.map(_.toPersistentGroup).toList
+      )
+    )
 
     def toApi(attributes: Seq[AttributeManagement.Attribute]): Future[DescriptorAttributes] = {
       val attributeNames: Map[UUID, AttributeDetails] =
