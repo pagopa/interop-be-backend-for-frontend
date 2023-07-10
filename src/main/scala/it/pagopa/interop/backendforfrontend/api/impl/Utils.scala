@@ -6,7 +6,6 @@ import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeR
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute._
-import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
@@ -60,16 +59,6 @@ object Utils {
 
   def canBeUpgraded(eService: CatalogProcess.EService, a: AgreementProcess.Agreement): Boolean =
     eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, eService.descriptors))
-
-  def isUpgradable(
-    descriptor: CatalogManagement.EServiceDescriptor,
-    descriptors: Seq[CatalogManagement.EServiceDescriptor]
-  ): Boolean = descriptors
-    .filter(_.version.toInt > descriptor.version.toInt)
-    .exists(d =>
-      d.state == CatalogManagement.EServiceDescriptorState.PUBLISHED ||
-        d.state == CatalogManagement.EServiceDescriptorState.SUSPENDED
-    )
 
   def isUpgradable(
     descriptor: CatalogProcess.EServiceDescriptor,

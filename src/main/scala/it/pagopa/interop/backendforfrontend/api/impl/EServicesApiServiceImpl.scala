@@ -252,8 +252,8 @@ final case class EServicesApiServiceImpl(
         },
         isMine = eService.producerId == requesterId,
         hasCertifiedAttributes = certifiedAttributesSatisfied(
-          descriptor.attributes.toManagement,
-          consumerAttributes = requesterTenant.attributes.mapFilter(_.certified).map(_.toManagement)
+          descriptor.attributes.toPersistent,
+          consumerAttributes = requesterTenant.attributes.mapFilter(_.certified).map(_.toPersistent)
         ),
         isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
         activeDescriptor =
@@ -347,8 +347,8 @@ final case class EServicesApiServiceImpl(
     latestAgreement <- agreementProcessService.getLatestAgreement(requesterId, eService)
     hasCertifiedAttributes = activeDescriptor.fold(false)(descriptor =>
       certifiedAttributesSatisfied(
-        descriptor.attributes.toManagement,
-        requesterTenant.attributes.mapFilter(_.certified).map(_.toManagement)
+        descriptor.attributes.toPersistent,
+        requesterTenant.attributes.mapFilter(_.certified).map(_.toPersistent)
       )
     )
   } yield CatalogEService(

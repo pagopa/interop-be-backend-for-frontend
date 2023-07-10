@@ -3,6 +3,7 @@ package it.pagopa.interop.backendforfrontend.service.types
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import it.pagopa.interop.tenantmanagement.client.{model => TenantManagement}
+import it.pagopa.interop.tenantmanagement.model.tenant.PersistentCertifiedAttribute
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.impl.Utils
 
@@ -106,6 +107,13 @@ object TenantProcessServiceTypes {
       assignmentTimestamp = a.assignmentTimestamp,
       revocationTimestamp = a.revocationTimestamp
     )
+
+    def toPersistent: PersistentCertifiedAttribute = PersistentCertifiedAttribute(
+      id = a.id,
+      assignmentTimestamp = a.assignmentTimestamp,
+      revocationTimestamp = a.revocationTimestamp
+    )
+
   }
 
   implicit class TenantDeltaConverter(private val delta: TenantDelta) extends AnyVal {

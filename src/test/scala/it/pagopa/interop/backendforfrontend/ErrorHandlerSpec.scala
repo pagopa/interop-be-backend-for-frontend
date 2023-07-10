@@ -10,7 +10,6 @@ import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError =>
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{Problem, ProblemError}
-import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError => CatalogManagementError}
 import it.pagopa.interop.catalogprocess.client.invoker.{ApiError => CatalogProcessError}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
@@ -78,15 +77,6 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
 
     "handle Attribute Registry error" in {
       val error = AttributeRegistryError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
-
-      Get() ~> handleError("error message")(contexts, logger)(Failure(error)) ~> check {
-        status.intValue shouldBe error.code
-        responseAs[Problem] shouldBe expectedProblem(StatusCodes.NotFound, problemError.code, problemError.detail)
-      }
-    }
-
-    "handle Catalog Management error" in {
-      val error = CatalogManagementError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger)(Failure(error)) ~> check {
         status.intValue shouldBe error.code
