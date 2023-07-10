@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
-import cats.implicits._
+import cats.syntax.all._
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
@@ -204,6 +204,19 @@ final case class AgreementsApiServiceImpl(
       handleError(s"Error rejecting agreement $agreementId") orElse { case Success(agreement) =>
         rejectAgreement200(agreement)
       }
+    }
+  }
+
+  override def archiveAgreement(
+    agreementId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] = for {
+      agreementUuid <- agreementId.toFutureUUID
+      _             <- agreementProcessService.archiveAgreement(agreementUuid)
+    } yield ()
+
+    onComplete(result) {
+      handleError(s"Error archiving agreement $agreementId") orElse { case Success(_) => archiveAgreement204 }
     }
   }
 

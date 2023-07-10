@@ -140,6 +140,14 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
       invoker.invoke(request, s"Rejecting agreement $agreementId")
     }
 
+  override def archiveAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
+    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+      val request = api.archiveAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      invoker.invoke(request, s"Archiving agreement $agreementId")
+    }
+
   override def addConsumerDocument(agreementId: UUID, seed: DocumentSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[Document] = withHeaders[Document] { (bearerToken, correlationId, ip) =>
