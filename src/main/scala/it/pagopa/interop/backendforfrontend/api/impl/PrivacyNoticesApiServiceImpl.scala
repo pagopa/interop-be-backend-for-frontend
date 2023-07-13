@@ -89,20 +89,25 @@ final case class PrivacyNoticesApiServiceImpl(
       _                 <- Future
         .failed(PrivacyNoticeVersionIsNotTheLatest(seed.latestVersionId))
         .unlessA(latest.privacyNoticeVersion.versionId == seed.latestVersionId)
-      _                 <- privacyNoticesService.put(
-        PersistentModel.UserPrivacyNotice(
-          pnIdWithUserId = s"$privacyNoticeUuid#$userUuid",
-          versionNumber = latest.privacyNoticeVersion.version,
-          privacyNoticeId = privacyNoticeUuid,
-          userId = userUuid,
-          acceptedAt = OffsetDateTimeSupplier.get(),
-          version = PersistentModel.UserPrivacyNoticeVersion(
-            versionId = seed.latestVersionId,
-            kind = typeOfConsent.toPersistent,
-            version = latest.privacyNoticeVersion.version
+      latestVersionByUser <- privacyNoticesService.getByUserId(privacyNoticeUuid, userUuid)
+      _                   <- latestVersionByUser match {
+        case Some(value) if (value.versionNumber == latest.privacyNoticeVersion.version) => Future.successful(())
+        case _                                                                           =>
+          privacyNoticesService.put(
+            PersistentModel.UserPrivacyNotice(
+              pnIdWithUserId = s"$privacyNoticeUuid#$userUuid",
+              versionNumber = latest.privacyNoticeVersion.version,
+              privacyNoticeId = privacyNoticeUuid,
+              userId = userUuid,
+              acceptedAt = OffsetDateTimeSupplier.get(),
+              version = PersistentModel.UserPrivacyNoticeVersion(
+                versionId = seed.latestVersionId,
+                kind = typeOfConsent.toPersistent,
+                version = latest.privacyNoticeVersion.version
+              )
+            )
           )
-        )
-      )
+      }
     } yield ()
 
     onComplete(result) {
