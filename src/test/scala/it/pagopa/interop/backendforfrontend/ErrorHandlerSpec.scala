@@ -17,7 +17,6 @@ import it.pagopa.interop.commons.utils.errors.Problem.defaultProblemType
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareError}
-import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => AuthorizationProcessError}
 
@@ -86,15 +85,6 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
 
     "handle Party Process error" in {
       val error = PartyProcessError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
-
-      Get() ~> handleError("error message")(contexts, logger)(Failure(error)) ~> check {
-        status.intValue shouldBe error.code
-        responseAs[Problem] shouldBe expectedProblem(StatusCodes.NotFound, problemError.code, problemError.detail)
-      }
-    }
-
-    "handle Tenant Management error" in {
-      val error = TenantManagementError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger)(Failure(error)) ~> check {
         status.intValue shouldBe error.code

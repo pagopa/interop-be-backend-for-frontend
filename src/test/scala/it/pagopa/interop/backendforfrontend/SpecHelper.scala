@@ -13,7 +13,6 @@ import it.pagopa.interop.backendforfrontend.model.{Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   PartyProcessService,
-  TenantManagementService,
   TenantProcessService
 }
 import it.pagopa.interop.commons.jwt.model.Token
@@ -60,7 +59,6 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   val mockSessionTokenGenerator: SessionTokenGenerator      = mock[SessionTokenGenerator]
   val mockInteropTokenGenerator: InteropTokenGenerator      = mock[InteropTokenGenerator]
   val mockRateLimiter: RateLimiter                          = mock[RateLimiter]
-  val mockTenantManagement: TenantManagementService         = mock[TenantManagementService]
   val mockTenantProcess: TenantProcessService               = mock[TenantProcessService]
   val mockPartyProcess: PartyProcessService                 = mock[PartyProcessService]
   val mockAuthorizationProcess: AuthorizationProcessService = mock[AuthorizationProcessService]
@@ -70,7 +68,6 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
     mockJwtReader,
     mockSessionTokenGenerator,
     mockInteropTokenGenerator,
-    mockTenantManagement,
     mockTenantProcess,
     mockPartyProcess,
     allowList,

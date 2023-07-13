@@ -148,8 +148,6 @@ trait Dependencies {
       new AgreementProcessServiceImpl(ApplicationConfiguration.agreementProcessURL, blockingEc)
     val catalogProcess: CatalogProcessService                           =
       new CatalogProcessServiceImpl(ApplicationConfiguration.catalogProcessURL, blockingEc)
-    val tenantManagement: TenantManagementService                       =
-      new TenantManagementServiceImpl(ApplicationConfiguration.tenantManagementURL, blockingEc)
     val userRegistry: UserRegistryService                               =
       new UserRegistryServiceImpl(ApplicationConfiguration.userRegistryURL, ApplicationConfiguration.userRegistryApiKey)
     val tenantProcess: TenantProcessService                             =
@@ -204,7 +202,6 @@ trait Dependencies {
         jwtReader,
         sessionTokenGenerator,
         interopTokenGenerator,
-        tenantManagement,
         tenantProcess,
         partyProcess,
         allowList,

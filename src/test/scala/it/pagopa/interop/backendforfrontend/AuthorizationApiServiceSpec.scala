@@ -12,9 +12,8 @@ import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.selfcare.partyprocess.client.model.Institution
-import it.pagopa.interop.tenantmanagement.client.invoker.ApiError
-import it.pagopa.interop.tenantmanagement.client.model.{ExternalId, Tenant}
-import it.pagopa.interop.tenantprocess
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcessModel}
+import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantApiError}
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -55,16 +54,16 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockTenantManagement
-        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
-        .expects(selfcareId, *)
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
         .once()
         .returns(
           Future.successful(
-            Tenant(
+            TenantProcessModel.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = ExternalId("IPA", "externalId"),
+              externalId = TenantProcessModel.ExternalId("IPA", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -145,16 +144,16 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockTenantManagement
-        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
-        .expects(selfcareId, *)
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
         .once()
         .returns(
           Future.successful(
-            Tenant(
+            TenantProcessModel.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = ExternalId("other-origin", "externalId"),
+              externalId = TenantProcessModel.ExternalId("other-origin", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -211,7 +210,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
     "succeed when the tenant is present and its origin is not IPA and is not in allowlist" in {
 
       val uid: String        = UUID.randomUUID().toString
-      val selfcareId: String = "selfcareId-not-in-allowlist"
+      val selfcareId: String = UUID.randomUUID().toString
       val tenantId: UUID     = UUID.randomUUID()
 
       val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
@@ -235,16 +234,16 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockTenantManagement
-        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
-        .expects(selfcareId, *)
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
         .once()
         .returns(
           Future.successful(
-            Tenant(
+            TenantProcessModel.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = ExternalId("other-origin", "externalId"),
+              externalId = TenantProcessModel.ExternalId("other-origin", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -291,11 +290,11 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockTenantManagement
-        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
-        .expects(selfcareId, *)
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
         .once()
-        .returns(Future.failed(ApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+        .returns(Future.failed(TenantApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
 
       (mockPartyProcess
         .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
@@ -325,10 +324,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(
           Future.successful(
-            tenantprocess.client.model.Tenant(
+            TenantProcessModel.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = tenantprocess.client.model.ExternalId("IPA", "IPACode"),
+              externalId = TenantProcessModel.ExternalId("IPA", "IPACode"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -409,11 +408,11 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockTenantManagement
-        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
-        .expects(selfcareId, *)
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
         .once()
-        .returns(Future.failed(ApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+        .returns(Future.failed(TenantApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
 
       (mockPartyProcess
         .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
@@ -443,10 +442,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(
           Future.successful(
-            tenantprocess.client.model.Tenant(
+            TenantProcessModel.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = tenantprocess.client.model.ExternalId("other-origin", "externalId"),
+              externalId = TenantProcessModel.ExternalId("other-origin", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -526,11 +525,11 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockTenantManagement
-        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
-        .expects(selfcareId, *)
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
         .once()
-        .returns(Future.failed(ApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+        .returns(Future.failed(TenantApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
 
       (mockPartyProcess
         .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
@@ -606,16 +605,16 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.successful(internalToken))
 
-      (mockTenantManagement
-        .getBySelfcareId(_: String)(_: Seq[(String, String)]))
-        .expects(selfcareId, *)
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
         .once()
         .returns(
           Future.successful(
-            Tenant(
+            TenantProcessModel.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = ExternalId("IPA", "externalId"),
+              externalId = TenantProcessModel.ExternalId("IPA", "externalId"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),

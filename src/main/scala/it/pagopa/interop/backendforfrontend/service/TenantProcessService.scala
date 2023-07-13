@@ -1,6 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service
 
 import it.pagopa.interop.tenantprocess.client.model._
+import it.pagopa.interop.tenantprocess.client.invoker.ApiError
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -34,4 +35,13 @@ trait TenantProcessService {
   def updateVerifiedAttribute(tenantId: UUID, attributeId: UUID, seed: UpdateVerifiedTenantAttributeSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenant]
+
+  def getBySelfcareId(selfcareId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant]
+}
+
+object TenantProcessService {
+  def is404(ex: Throwable): Boolean = ex match {
+    case ApiError(code, _, _, _, _) => 404 == code
+    case _                          => false
+  }
 }
