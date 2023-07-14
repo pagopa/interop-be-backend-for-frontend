@@ -10,7 +10,11 @@ import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute.AdaptableTenantAttributeOps
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryProcessService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.{
+  SelfcareClientService,
+  AttributeRegistryProcessService,
+  TenantProcessService
+}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.tenantprocess.client.model.{TenantAttribute => DepTenantAttribute}
@@ -20,7 +24,8 @@ import scala.util.Success
 
 final case class TenantsApiServiceImpl(
   attributeRegistryService: AttributeRegistryProcessService,
-  tenantProcessService: TenantProcessService
+  tenantProcessService: TenantProcessService,
+  selfcareClient: SelfcareClientService
 )(implicit ec: ExecutionContext)
     extends TenantsApiService {
 

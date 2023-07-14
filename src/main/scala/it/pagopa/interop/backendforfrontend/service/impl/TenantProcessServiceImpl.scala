@@ -28,10 +28,10 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
   system: ActorSystem[_]
 ) extends TenantProcessService {
 
-  val invoker: ApiInvoker = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
-  val api: TenantApi      = TenantApi(tenantprocessUrl)
+  val invoker: ApiInvoker           = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
+  val api: TenantApi                = TenantApi(tenantprocessUrl)
   implicit val ec: ExecutionContext = blockingEc
-  
+
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
@@ -119,8 +119,9 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
         api.getTenantBySelfcareId(xCorrelationId = correlationId, selfcareId = selfcareId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Retrieving Tenant with selfcareId $selfcareId")
-      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(SelfcareNotFound(selfcareId))}
+      invoker
+        .invoke(request, s"Retrieving Tenant with selfcareId $selfcareId")
+        .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(SelfcareNotFound(selfcareId)) }
     }
 
   override def getTenants(name: Option[String], offset: Int, limit: Int)(implicit

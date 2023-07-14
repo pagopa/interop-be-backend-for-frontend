@@ -91,7 +91,7 @@ final case class AuthorizationApiServiceImpl(
       (tenantId, origin) <- tenantProcessService
         .getBySelfcareId(selfcareUuid)
         .map(t => (t.id, t.externalId.origin))
-        .recoverWith { case ex: SelfcareNotFound => alternative }
+        .recoverWith { case _: SelfcareNotFound => alternative }
       _                  <- assertTenantAllowed(selfcareId, origin)
     } yield tenantId
   }
