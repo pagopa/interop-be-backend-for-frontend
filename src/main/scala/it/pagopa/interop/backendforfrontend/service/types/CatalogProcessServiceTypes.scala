@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import cats.syntax.all._
-import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeManagement}
+import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeProcess}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
@@ -187,7 +187,7 @@ object CatalogProcessServiceTypes {
       )
     )
 
-    def toApi(attributes: Seq[AttributeManagement.Attribute]): Future[DescriptorAttributes] = {
+    def toApi(attributes: Seq[AttributeProcess.Attribute]): Future[DescriptorAttributes] = {
       val attributeNames: Map[UUID, AttributeDetails] =
         attributes.map(attr => attr.id -> AttributeDetails(attr.name, attr.description)).toMap
 

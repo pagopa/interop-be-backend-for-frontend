@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
-import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
+import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiError => AttributeRegistryError}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => AuthorizationProcessError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf, serviceCode}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
@@ -21,7 +21,6 @@ import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProce
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareV2Error}
-import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
 import spray.json._
 
@@ -38,7 +37,6 @@ object Handlers {
     case Failure(err: AgreementProcessError[_])     => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: AttributeRegistryError[_])    => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: CatalogProcessError[_])       => completeWithError(err.code, err.responseContent, logMessage)
-    case Failure(err: TenantManagementError[_])     => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: TenantProcessError[_])        => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: PartyProcessError[_])         => completeWithError(err.code, err.responseContent, logMessage)
     case Failure(err: UserRegistryError[_])         => completeWithError(err.code, err.responseContent, logMessage)

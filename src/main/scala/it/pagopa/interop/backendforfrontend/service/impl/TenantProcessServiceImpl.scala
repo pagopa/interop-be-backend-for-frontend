@@ -1,11 +1,13 @@
 package it.pagopa.interop.backendforfrontend.service.impl
 
+import akka.actor.typed.ActorSystem
+import it.pagopa.interop.commons.utils.withHeaders
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.TenantProcessService
 import it.pagopa.interop.tenantprocess.client.invoker.ApiInvoker
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.tenantprocess.client.api.{EnumsSerializers, TenantApi}
-import it.pagopa.interop.tenantprocess.client.invoker.BearerToken
+import it.pagopa.interop.tenantprocess.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.tenantprocess.client.model.{
   DeclaredTenantAttributeSeed,
   ExternalId,
@@ -16,19 +18,19 @@ import it.pagopa.interop.tenantprocess.client.model.{
   VerifiedTenantAttributeSeed,
   UpdateVerifiedTenantAttributeSeed
 }
+import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareNotFound
 
 import java.util.UUID
-import scala.concurrent.{ExecutionContextExecutor, Future}
-import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
-import akka.actor.typed.ActorSystem
-import it.pagopa.interop.commons.utils.withHeaders
+import scala.concurrent.{ExecutionContextExecutor, Future, ExecutionContext}
 
 class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
 ) extends TenantProcessService {
 
-  val invoker: ApiInvoker = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
-  val api: TenantApi      = TenantApi(tenantprocessUrl)
+  val invoker: ApiInvoker           = ApiInvoker(EnumsSerializers.all, blockingEc)(system.classicSystem)
+  val api: TenantApi                = TenantApi(tenantprocessUrl)
+  implicit val ec: ExecutionContext = blockingEc
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
@@ -109,6 +111,17 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       val request: ApiRequest[Tenant] =
         api.getTenant(xCorrelationId = correlationId, xForwardedFor = ip, id = tenantId)(BearerToken(bearerToken))
       invoker.invoke(request, s"Getting tenant with id $tenantId")
+    }
+
+  override def getBySelfcareId(selfcareId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
+    withHeaders[Tenant] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Tenant] =
+        api.getTenantBySelfcareId(xCorrelationId = correlationId, selfcareId = selfcareId, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker
+        .invoke(request, s"Retrieving Tenant with selfcareId $selfcareId")
+        .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(SelfcareNotFound(selfcareId)) }
     }
 
   override def getTenants(name: Option[String], offset: Int, limit: Int)(implicit

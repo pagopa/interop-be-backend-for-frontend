@@ -4,12 +4,13 @@ import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistryprocess.client.api.{AttributeApi, EnumsSerializers}
 import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiInvoker, BearerToken}
-import it.pagopa.interop.attributeregistryprocess.client.model.{AttributeKind, Attributes}
+import it.pagopa.interop.attributeregistryprocess.client.model.{AttributeKind, Attributes, Attribute, AttributeSeed}
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContextExecutor, Future, ExecutionContext}
+import java.util.UUID
 
 class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, blockingEc: ExecutionContextExecutor)(
   implicit system: ActorSystem[_]
@@ -34,4 +35,60 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
     )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving attributes")
   }
+
+  def getAttributeByOriginAndCode(origin: String, code: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Attribute] = withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+    val request =
+      api.getAttributeByOriginAndCode(xCorrelationId = correlationId, origin = origin, code = code, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+    invoker.invoke(request, s"Retrieving attribute with origin $origin and code $code")
+  }
+
+  def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Attribute] =
+    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+      val request = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      invoker.invoke(request, s"Retrieving attribute with id $attributeId")
+    }
+
+  override def getBulkAttributes(
+    ids: Seq[UUID]
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Seq[Attribute]] = {
+
+    def getAttributesFrom(offset: Int): Future[Seq[Attribute]] =
+      getBulkAttributes(requestBody = ids, limit = 50, offset = offset)
+        .map(_.results)
+
+    def go(start: Int)(as: Seq[Attribute]): Future[Seq[Attribute]] =
+      getAttributesFrom(start).flatMap(attrs =>
+        if (attrs.size < 50) Future.successful(as ++ attrs) else go(start + 50)(as ++ attrs)
+      )
+
+    go(0)(Nil)
+  }
+
+  def getBulkAttributes(requestBody: Seq[UUID], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Attributes] = withHeaders[Attributes] { (bearerToken, correlationId, ip) =>
+    val request = api.getBulkedAttributes(
+      xCorrelationId = correlationId,
+      requestBody = requestBody.map(_.toString),
+      offset = offset,
+      limit = limit,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving attributes in bulk by id in [$requestBody]")
+  }
+
+  def createAttribute(attributeSeed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute] =
+    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.createAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Creating attribute with name ${attributeSeed.name}")
+    }
 }

@@ -12,7 +12,7 @@ import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfigurati
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
 import it.pagopa.interop.backendforfrontend.service.{
-  AttributeRegistryManagementService,
+  AttributeRegistryProcessService,
   PartyProcessService,
   TenantProcessService,
   UserRegistryService
@@ -28,7 +28,7 @@ import scala.util.{Failure, Success}
 final case class PartyApiServiceImpl(
   partyProcessService: PartyProcessService,
   userRegistryService: UserRegistryService,
-  attributeRegistryService: AttributeRegistryManagementService,
+  attributeRegistryService: AttributeRegistryProcessService,
   tenantProcessService: TenantProcessService
 )(implicit ec: ExecutionContext)
     extends PartyApiService {

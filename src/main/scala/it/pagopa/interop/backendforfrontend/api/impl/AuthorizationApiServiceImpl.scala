@@ -9,10 +9,10 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.UnknownTenantOrigin
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
-import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantManagementService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantProcessService}
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -32,7 +32,6 @@ final case class AuthorizationApiServiceImpl(
   jwtReader: JWTReader,
   sessionTokenGenerator: SessionTokenGenerator,
   interopTokenGenerator: InteropTokenGenerator,
-  tenantManagementService: TenantManagementService,
   tenantProcessService: TenantProcessService,
   partyProcess: PartyProcessService,
   allowList: List[String],
@@ -88,12 +87,11 @@ final case class AuthorizationApiServiceImpl(
     selfcareId: String
   )(alternative: => Future[(UUID, String)])(implicit contexts: Seq[(String, String)]): Future[UUID] = {
     for {
-      (tenantId, origin) <- tenantManagementService
-        .getBySelfcareId(selfcareId)
+      selfcareUuid       <- selfcareId.toFutureUUID
+      (tenantId, origin) <- tenantProcessService
+        .getBySelfcareId(selfcareUuid)
         .map(t => (t.id, t.externalId.origin))
-        .recoverWith {
-          case ex if TenantManagementService.is404(ex) => alternative
-        }
+        .recoverWith { case _: SelfcareNotFound => alternative }
       _                  <- assertTenantAllowed(selfcareId, origin)
     } yield tenantId
   }

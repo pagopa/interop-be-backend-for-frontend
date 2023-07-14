@@ -6,7 +6,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.invoker.{ApiError => AgreementProcessError}
-import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError => AttributeRegistryError}
+import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiError => AttributeRegistryError}
 import it.pagopa.interop.backendforfrontend.api.impl.{problemFormat, problemOf}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{Problem, ProblemError}
@@ -17,7 +17,6 @@ import it.pagopa.interop.commons.utils.errors.Problem.defaultProblemType
 import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
 import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareError}
-import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError => TenantManagementError}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => AuthorizationProcessError}
 
@@ -86,15 +85,6 @@ class ErrorHandlerSpec extends AnyWordSpecLike with ScalatestRouteTest with Spra
 
     "handle Party Process error" in {
       val error = PartyProcessError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
-
-      Get() ~> handleError("error message")(contexts, logger)(Failure(error)) ~> check {
-        status.intValue shouldBe error.code
-        responseAs[Problem] shouldBe expectedProblem(StatusCodes.NotFound, problemError.code, problemError.detail)
-      }
-    }
-
-    "handle Tenant Management error" in {
-      val error = TenantManagementError(404, message = "An error", responseContent = Some(problem.toJson.compactPrint))
 
       Get() ~> handleError("error message")(contexts, logger)(Failure(error)) ~> check {
         status.intValue shouldBe error.code

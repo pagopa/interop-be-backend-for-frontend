@@ -38,4 +38,6 @@ trait TenantProcessService {
   def updateVerifiedAttribute(tenantId: UUID, attributeId: UUID, seed: UpdateVerifiedTenantAttributeSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenant]
+
+  def getBySelfcareId(selfcareId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant]
 }

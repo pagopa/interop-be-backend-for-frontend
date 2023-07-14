@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.directives.FileInfo
 import cats.syntax.all._
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.AgreementsApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
@@ -41,7 +41,7 @@ import scala.util.Success
 
 final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
-  attributeRegistryService: AttributeRegistryManagementService,
+  attributeRegistryService: AttributeRegistryProcessService,
   catalogProcessService: CatalogProcessService,
   partyProcessService: PartyProcessService,
   tenantProcessService: TenantProcessService,
@@ -310,7 +310,7 @@ final case class AgreementsApiServiceImpl(
     agreementDeclaredAttrs  = filterAttributes(attributes, agreement.declaredAttributes.map(_.id))
       .map(_.toDeclaredAttribute)
 
-    tenantAttributes = Utils.enhanceTenantAttributes(consumerTenant.attributes, attributes.attributes)
+    tenantAttributes = Utils.enhanceTenantAttributes(consumerTenant.attributes, attributes)
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
@@ -363,10 +363,10 @@ final case class AgreementsApiServiceImpl(
   }
 
   def filterAttributes(
-    registryAttributes: MgmtAttributesResponse,
+    registryAttributes: Seq[AttributeRegistry.Attribute],
     filterIds: Seq[UUID]
   ): Seq[AttributeRegistry.Attribute] =
-    filterIds.flatMap(id => registryAttributes.attributes.find(_.id == id))
+    filterIds.flatMap(id => registryAttributes.find(_.id == id))
 
   override def addAgreementConsumerDocument(
     name: String,

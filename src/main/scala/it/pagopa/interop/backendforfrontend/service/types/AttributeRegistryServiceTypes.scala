@@ -1,9 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
-import it.pagopa.interop._
 import it.pagopa.interop.backendforfrontend.model.AttributeKind.{CERTIFIED, DECLARED, VERIFIED}
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeProcess}
-import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeModel}
 import it.pagopa.interop.backendforfrontend.model.{
   Attribute,
   AttributeKind,
@@ -15,21 +13,17 @@ import it.pagopa.interop.backendforfrontend.model.{
 }
 
 object AttributeRegistryServiceTypes {
-  type MgmtAttribute          = AttributeModel.Attribute
-  type MgmtAttributesResponse = AttributeModel.AttributesResponse
-  type MgmtAttributeKind      = AttributeModel.AttributeKind
-  type MgmtAttributeSeed      = AttributeModel.AttributeSeed
 
-  private def toModel(kind: MgmtAttributeKind): AttributeKind = kind match {
-    case attributeregistrymanagement.client.model.AttributeKind.CERTIFIED => CERTIFIED
-    case attributeregistrymanagement.client.model.AttributeKind.DECLARED  => DECLARED
-    case attributeregistrymanagement.client.model.AttributeKind.VERIFIED  => VERIFIED
+  private def toModel(kind: AttributeProcess.AttributeKind): AttributeKind = kind match {
+    case AttributeProcess.AttributeKind.CERTIFIED => CERTIFIED
+    case AttributeProcess.AttributeKind.DECLARED  => DECLARED
+    case AttributeProcess.AttributeKind.VERIFIED  => VERIFIED
   }
 
-  private def fromModel(kind: AttributeKind): MgmtAttributeKind = kind match {
-    case CERTIFIED => attributeregistrymanagement.client.model.AttributeKind.CERTIFIED
-    case DECLARED  => attributeregistrymanagement.client.model.AttributeKind.DECLARED
-    case VERIFIED  => attributeregistrymanagement.client.model.AttributeKind.VERIFIED
+  private def fromModel(kind: AttributeKind): AttributeProcess.AttributeKind = kind match {
+    case CERTIFIED => AttributeProcess.AttributeKind.CERTIFIED
+    case DECLARED  => AttributeProcess.AttributeKind.DECLARED
+    case VERIFIED  => AttributeProcess.AttributeKind.VERIFIED
   }
 
   implicit class AttributeKindProcessConverter(private val ak: AttributeKind) extends AnyVal {
@@ -44,7 +38,7 @@ object AttributeRegistryServiceTypes {
     def toApi: CompactAttribute = CompactAttribute(id = attribute.id, name = attribute.name)
   }
 
-  implicit class AttributeRegistryManagementConverter(private val attribute: MgmtAttribute) extends AnyVal {
+  implicit class AttributeRegistryConverter(private val attribute: AttributeProcess.Attribute) extends AnyVal {
     def toAttribute: Attribute = Attribute(
       id = attribute.id,
       code = attribute.code,
@@ -66,7 +60,7 @@ object AttributeRegistryServiceTypes {
   }
 
   implicit class AttributeSeedConverter(private val seed: AttributeSeed) extends AnyVal {
-    def toSeed: MgmtAttributeSeed = attributeregistrymanagement.client.model.AttributeSeed(
+    def toSeed: AttributeProcess.AttributeSeed = AttributeProcess.AttributeSeed(
       code = seed.code,
       kind = fromModel(seed.kind),
       description = seed.description,
