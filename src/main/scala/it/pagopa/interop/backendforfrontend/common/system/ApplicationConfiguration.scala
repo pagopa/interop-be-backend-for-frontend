@@ -68,10 +68,6 @@ object ApplicationConfiguration {
 
   val attributeRegistryProcessURL: String =
     config.getString("backend-for-frontend.services.attribute-registry-process")
-
-  val attributeRegistryManagementURL: String =
-    config.getString("backend-for-frontend.services.attribute-registry-management")
-
   val agreementProcessURL: String        = config.getString("backend-for-frontend.services.agreement-process")
   val catalogProcessURL: String          = config.getString("backend-for-frontend.services.catalog-process")
   val tenantProcessURL: String           = config.getString("backend-for-frontend.services.tenant-process")
