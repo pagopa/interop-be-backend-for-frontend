@@ -5,7 +5,7 @@ import it.pagopa.interop.backendforfrontend.service.SelfcareClientService
 import it.pagopa.interop.selfcare.v2.client.invoker.{ApiInvoker, ApiKeyValue}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.selfcare.v2.client.api.{InstitutionsApi, EnumsSerializers}
-import it.pagopa.interop.selfcare.v2.client.model.{ProductResource, InstitutionResource}
+import it.pagopa.interop.selfcare.v2.client.model.{Institution, ProductResource, InstitutionResource}
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -36,6 +36,12 @@ class SelfcareClientServiceImpl(selfcareClientServiceURL: String, selfcareClient
     val request =
       institutionsApi.getInstitutionsUsingGET(userIdForAuth = userId.toString)
     invoker.invoke(request, s"Retrieving Institutions for User $userId")
+  }
+
+  override def getInstitution(id: UUID)(implicit contexts: Seq[(String, String)]): Future[Institution] = {
+    val request =
+      institutionsApi.getInstitution(id = id)
+    invoker.invoke(request, s"Retrieving Institution with id $id")
   }
 
 }

@@ -22,6 +22,10 @@ trait TenantProcessService {
 
   def getTenant(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant]
 
+  def getTenants(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenants]
+
   def getProducers(name: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenants]

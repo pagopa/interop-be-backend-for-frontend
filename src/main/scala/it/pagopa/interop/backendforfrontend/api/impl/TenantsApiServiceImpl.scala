@@ -10,7 +10,11 @@ import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute.AdaptableTenantAttributeOps
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryManagementService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.{
+  SelfcareClientService,
+  AttributeRegistryManagementService,
+  TenantProcessService
+}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.tenantprocess.client.model.{TenantAttribute => DepTenantAttribute}
@@ -20,12 +24,42 @@ import scala.util.Success
 
 final case class TenantsApiServiceImpl(
   attributeRegistryService: AttributeRegistryManagementService,
-  tenantProcessService: TenantProcessService
+  tenantProcessService: TenantProcessService,
+  selfcareClient: SelfcareClientService
 )(implicit ec: ExecutionContext)
     extends TenantsApiService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+
+  override def getTenants(name: Option[String], limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerTenants: ToEntityMarshaller[Tenants],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    def fillLogo(tenant: CompactTenant): Future[CompactTenant] = for {
+      selfcareUuid <- tenant.selfcareId.traverse(_.toFutureUUID)
+      institution  <- selfcareUuid.traverse(selfcareClient.getInstitution)
+    } yield tenant.copy(logoUrl = institution.fold[Option[String]](none)(_.logo))
+
+    val offset: Int             = 0
+    val result: Future[Tenants] =
+      for {
+        pagedResults <- tenantProcessService.getTenants(name = name, offset = offset, limit = limit)
+        tenants = pagedResults.results.map(t => CompactTenant(id = t.id, name = t.name, selfcareId = t.selfcareId))
+        results <- Future.traverse(tenants)(fillLogo)
+      } yield Tenants(
+        results = results,
+        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+      )
+
+    onComplete(result) {
+      handleError(s"Error retrieving tenants for name $name, offset $offset, limit $limit") orElse { case Success(r) =>
+        getTenants200(r)
+      }
+    }
+  }
 
   override def getProducers(q: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],

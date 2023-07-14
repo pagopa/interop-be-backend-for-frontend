@@ -111,6 +111,17 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       invoker.invoke(request, s"Getting tenant with id $tenantId")
     }
 
+  override def getTenants(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenants] =
+    withHeaders[Tenants] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Tenants] =
+        api.getTenants(xCorrelationId = correlationId, xForwardedFor = ip, name = name, limit = limit, offset = offset)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Getting tenants with name $name, limit $limit, offset $offset")
+    }
+
   override def getProducers(name: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenants] =
