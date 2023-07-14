@@ -241,7 +241,7 @@ trait Dependencies {
     )
 
     val tenantsApi: TenantsApi = new TenantsApi(
-      TenantsApiServiceImpl(attributeRegistryManagement, tenantProcess),
+      TenantsApiServiceImpl(attributeRegistryManagement, tenantProcess, selfcareClient),
       TenantsApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )

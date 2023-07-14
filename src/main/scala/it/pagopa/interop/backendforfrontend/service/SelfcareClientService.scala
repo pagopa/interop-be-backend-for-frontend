@@ -12,4 +12,5 @@ trait SelfcareClientService {
 
   def getInstitutions(userId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[InstitutionResource]]
 
+  def getInstitution(id: UUID)(implicit contexts: Seq[(String, String)]): Future[Institution]
 }
