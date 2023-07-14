@@ -123,4 +123,6 @@ object BFFErrors {
   final case class SamlNotValid(message: String)
       extends ComponentError("0029", s"Error while validating saml -> $message")
 
+  final case class SelfcareNotFound(selfcare: UUID)
+      extends ComponentError("0030", s"Tenant with selfcare $selfcare not found")
 }

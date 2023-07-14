@@ -9,7 +9,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.UnknownTenantOrigin
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantProcessService}
@@ -91,9 +91,7 @@ final case class AuthorizationApiServiceImpl(
       (tenantId, origin) <- tenantProcessService
         .getBySelfcareId(selfcareUuid)
         .map(t => (t.id, t.externalId.origin))
-        .recoverWith {
-          case ex if TenantProcessService.is404(ex) => alternative
-        }
+        .recoverWith { case ex: SelfcareNotFound => alternative }
       _                  <- assertTenantAllowed(selfcareId, origin)
     } yield tenantId
   }
