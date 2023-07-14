@@ -6896,6 +6896,85 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/tenants':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: limit
+        required: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 50
+    get:
+      tags:
+        - tenants
+      operationId: getTenants
+      description: Retrieve Tenants by name
+      responses:
+        '200':
+          description: Tenants retrieved
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenants'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /clients:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -9723,7 +9802,7 @@ components:
           type: string
           format: uuid
         producer:
-          $ref: '#/components/schemas/CompactTenant'
+          $ref: '#/components/schemas/CompactOrganization'
         consumer:
           $ref: '#/components/schemas/Tenant'
         eservice:
@@ -10904,16 +10983,6 @@ components:
       required:
         - results
         - pagination
-    CompactTenant:
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-      required:
-        - id
-        - name
     ExternalId:
       properties:
         origin:
@@ -10923,6 +10992,33 @@ components:
       required:
         - origin
         - value
+    Tenants:
+      title: Tenants
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompactTenant'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - results
+        - pagination    
+    CompactTenant:
+      properties:
+        id:
+          type: string
+          format: uuid
+        selfcareId:
+          type: string
+        name:
+          type: string
+        logoUrl:
+          type: string
+      required:
+        - id
+        - name
     Tenant:
       properties:
         id:

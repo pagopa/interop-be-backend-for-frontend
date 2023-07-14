@@ -314,7 +314,7 @@ final case class AgreementsApiServiceImpl(
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
-    producer = CompactTenant(id = agreement.producerId, name = producerTenant.name),
+    producer = CompactOrganization(id = agreement.producerId, name = producerTenant.name),
     consumer = Tenant(
       id = agreement.consumerId,
       selfcareId = consumerTenant.id.some,

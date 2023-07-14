@@ -123,6 +123,17 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(SelfcareNotFound(selfcareId))}
     }
 
+  override def getTenants(name: Option[String], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenants] =
+    withHeaders[Tenants] { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Tenants] =
+        api.getTenants(xCorrelationId = correlationId, xForwardedFor = ip, name = name, limit = limit, offset = offset)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Getting tenants with name $name, limit $limit, offset $offset")
+    }
+
   override def getProducers(name: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenants] =
