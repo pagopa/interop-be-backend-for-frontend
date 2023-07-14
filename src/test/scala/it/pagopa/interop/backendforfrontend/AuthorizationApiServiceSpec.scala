@@ -7,13 +7,13 @@ import com.typesafe.scalalogging.LoggerTakingImplicit
 import it.pagopa.interop.backendforfrontend.SpecHelper._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareNotFound
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
 import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.selfcare.partyprocess.client.model.Institution
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcessModel}
-import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantApiError}
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -294,7 +294,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
         .expects(UUID.fromString(selfcareId), *)
         .once()
-        .returns(Future.failed(TenantApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+        .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
 
       (mockPartyProcess
         .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
@@ -412,7 +412,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
         .expects(UUID.fromString(selfcareId), *)
         .once()
-        .returns(Future.failed(TenantApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+        .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
 
       (mockPartyProcess
         .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
@@ -529,7 +529,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
         .expects(UUID.fromString(selfcareId), *)
         .once()
-        .returns(Future.failed(TenantApiError[Problem](404, "oh no!", None, new Exception, Map.empty)))
+        .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
 
       (mockPartyProcess
         .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
