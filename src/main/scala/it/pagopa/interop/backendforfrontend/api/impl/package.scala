@@ -24,12 +24,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val tenantDelta: RootJsonFormat[TenantDelta] = jsonFormat2(TenantDelta)
 
-  implicit val tenantFormat: RootJsonFormat[CompactTenant] = jsonFormat2(CompactTenant)
+  implicit val tenantFormat: RootJsonFormat[CompactTenant] = jsonFormat4(CompactTenant)
 
   implicit val paginationFormat: RootJsonFormat[Pagination] = jsonFormat3(Pagination)
-
-  implicit val tenantEntryFormat: RootJsonFormat[TenantEntry] = jsonFormat4(TenantEntry)
-  implicit val tenantsFormat: RootJsonFormat[Tenants]         = jsonFormat2(Tenants)
+  implicit val tenantsFormat: RootJsonFormat[Tenants]       = jsonFormat2(Tenants)
 
   implicit val compactOrganizationFormat: RootJsonFormat[CompactOrganization]       = jsonFormat2(CompactOrganization)
   implicit val compactDescriptorFormat: RootJsonFormat[CompactDescriptor]           = jsonFormat4(CompactDescriptor)

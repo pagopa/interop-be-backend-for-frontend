@@ -38,7 +38,7 @@ final case class TenantsApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
-    def fillLogo(tenant: TenantEntry): Future[TenantEntry] = for {
+    def fillLogo(tenant: CompactTenant): Future[CompactTenant] = for {
       selfcareUuid <- tenant.selfcareId.traverse(_.toFutureUUID)
       institution  <- selfcareUuid.traverse(selfcareClient.getInstitution)
     } yield tenant.copy(logoUrl = institution.fold[Option[String]](none)(_.logo))
@@ -47,7 +47,7 @@ final case class TenantsApiServiceImpl(
     val result: Future[Tenants] =
       for {
         pagedResults <- tenantProcessService.getTenants(name = name, offset = offset, limit = limit)
-        tenants = pagedResults.results.map(t => TenantEntry(id = t.id, name = t.name, selfcareId = t.selfcareId))
+        tenants = pagedResults.results.map(t => CompactTenant(id = t.id, name = t.name, selfcareId = t.selfcareId))
         results <- Future.traverse(tenants)(fillLogo)
       } yield Tenants(
         results = results,

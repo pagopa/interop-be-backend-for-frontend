@@ -9802,7 +9802,7 @@ components:
           type: string
           format: uuid
         producer:
-          $ref: '#/components/schemas/CompactTenant'
+          $ref: '#/components/schemas/CompactOrganization'
         consumer:
           $ref: '#/components/schemas/Tenant'
         eservice:
@@ -10983,16 +10983,6 @@ components:
       required:
         - results
         - pagination
-    CompactTenant:
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-      required:
-        - id
-        - name
     ExternalId:
       properties:
         origin:
@@ -11009,13 +10999,13 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/TenantEntry'
+            $ref: '#/components/schemas/CompactTenant'
         pagination:
           $ref: '#/components/schemas/Pagination'
       required:
         - results
         - pagination    
-    TenantEntry:
+    CompactTenant:
       properties:
         id:
           type: string
