@@ -10,7 +10,7 @@ import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute.AdaptableTenantAttributeOps
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryManagementService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.{AttributeRegistryProcessService, TenantProcessService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.tenantprocess.client.model.{TenantAttribute => DepTenantAttribute}
@@ -19,7 +19,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 final case class TenantsApiServiceImpl(
-  attributeRegistryService: AttributeRegistryManagementService,
+  attributeRegistryService: AttributeRegistryProcessService,
   tenantProcessService: TenantProcessService
 )(implicit ec: ExecutionContext)
     extends TenantsApiService {
@@ -191,7 +191,7 @@ final case class TenantsApiServiceImpl(
       tenantAttributes = tenant.attributes.mapFilter(attributeFromTenantAttribute)
       attributeIds     = tenantAttributes.map(_.id)
       registryAttributes <- attributeRegistryService.getBulkAttributes(attributeIds)
-    } yield Utils.tenantAttributesToApi(tenantAttributes, registryAttributes.attributes)
+    } yield Utils.tenantAttributesToApi(tenantAttributes, registryAttributes)
 
   override def getTenant(tenantId: String)(implicit
     contexts: Seq[(String, String)],
@@ -201,7 +201,7 @@ final case class TenantsApiServiceImpl(
     val result: Future[Tenant] = for {
       tenant       <- tenantId.toFutureUUID >>= tenantProcessService.getTenant
       selfcareUUID <- tenant.selfcareId.traverse(_.toFutureUUID)
-      attributes   <- attributeRegistryService.getBulkAttributes(Utils.tenantAttributesIds(tenant)).map(_.attributes)
+      attributes   <- attributeRegistryService.getBulkAttributes(Utils.tenantAttributesIds(tenant))
     } yield tenant.toApi(selfcareUUID, attributes)
 
     onComplete(result) {

@@ -71,9 +71,6 @@ object Dependencies {
     lazy val attributeRegistryProcessClient =
       namespace %% "interop-be-attribute-registry-process-client" % attributeRegistryProcessVersion
 
-    lazy val attributeRegistryManagementClient =
-      namespace %% "interop-be-attribute-registry-management-client" % attributeRegistryManagementVersion
-
     lazy val selfcareV2Client =
       namespace %% "interop-selfcare-v2-client" % selfcareV2ClientVersion
 
@@ -165,7 +162,6 @@ object Dependencies {
       pagopa.purposeProcessClient              % Compile,
       pagopa.userRegistryClient                % Compile,
       pagopa.attributeRegistryProcessClient    % Compile,
-      pagopa.attributeRegistryManagementClient % Compile,
       pagopa.selfcareV2Client                  % Compile,
       pagopa.signer                            % Compile,
       pagopa.fileManager                       % Compile,

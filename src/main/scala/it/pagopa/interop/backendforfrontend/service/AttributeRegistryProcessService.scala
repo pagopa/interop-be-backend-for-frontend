@@ -1,12 +1,28 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.attributeregistryprocess.client.model.Attributes
-import it.pagopa.interop.attributeregistryprocess.client.model.AttributeKind
+import it.pagopa.interop.attributeregistryprocess.client.model.{Attribute, Attributes, AttributeKind, AttributeSeed}
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, ExecutionContext}
+import java.util.UUID
 
 trait AttributeRegistryProcessService {
   def getAttributes(q: Option[String], limit: Int, offset: Int, kinds: Seq[AttributeKind])(implicit
     contexts: Seq[(String, String)]
   ): Future[Attributes]
+
+  def getAttributeByOriginAndCode(origin: String, code: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Attribute]
+
+  def getAttributeById(id: UUID)(implicit contexts: Seq[(String, String)]): Future[Attribute]
+
+  def getBulkAttributes(
+    ids: Seq[UUID]
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Seq[Attribute]]
+
+  def getBulkAttributes(requestBody: Seq[UUID], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Attributes]
+
+  def createAttribute(seed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute]
 }

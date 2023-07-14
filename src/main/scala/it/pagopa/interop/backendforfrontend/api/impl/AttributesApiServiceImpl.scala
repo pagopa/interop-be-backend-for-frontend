@@ -8,10 +8,7 @@ import it.pagopa.interop.backendforfrontend.api.AttributesApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.{
-  AttributeRegistryManagementService,
-  AttributeRegistryProcessService
-}
+import it.pagopa.interop.backendforfrontend.service.AttributeRegistryProcessService
 
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
@@ -21,11 +18,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import cats.implicits._
 
-final case class AttributesApiServiceImpl(
-  attributeRegistryManagementApiService: AttributeRegistryManagementService,
-  attributeRegistryProcessApiService: AttributeRegistryProcessService
-)(implicit ec: ExecutionContext)
-    extends AttributesApiService {
+final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: AttributeRegistryProcessService)(implicit
+  ec: ExecutionContext
+) extends AttributesApiService {
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
@@ -37,7 +32,7 @@ final case class AttributesApiServiceImpl(
   ): Route = {
     val result: Future[Attribute] = for {
       attributeUuid <- attributeId.toFutureUUID
-      response      <- attributeRegistryManagementApiService.getAttributeById(attributeUuid)(contexts)
+      response      <- attributeRegistryProcessApiService.getAttributeById(attributeUuid)(contexts)
       converted = response.toAttribute
     } yield converted
 
@@ -54,7 +49,7 @@ final case class AttributesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[Attribute] =
-      attributeRegistryManagementApiService.getAttributeByOriginAndCode(origin, code)(contexts).map(_.toAttribute)
+      attributeRegistryProcessApiService.getAttributeByOriginAndCode(origin, code)(contexts).map(_.toAttribute)
 
     onComplete(result) {
       handleError(s"Error retrieving attribute with origin = $origin and code = $code") orElse {
@@ -69,7 +64,7 @@ final case class AttributesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[Attribute] =
-      attributeRegistryManagementApiService.createAttribute(attributeSeed.toSeed).map(_.toAttribute)
+      attributeRegistryProcessApiService.createAttribute(attributeSeed.toSeed).map(_.toAttribute)
 
     onComplete(result) {
       handleError(s"Error creating attribute with seed $attributeSeed") orElse { case Success(attribute) =>

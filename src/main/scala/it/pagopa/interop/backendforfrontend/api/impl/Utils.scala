@@ -1,8 +1,8 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import cats.syntax.all._
-import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
-import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.attributeregistryprocess.client.model.Attribute
+import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute._

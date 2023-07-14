@@ -3,7 +3,7 @@ package it.pagopa.interop.backendforfrontend.service.types
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import it.pagopa.interop.tenantmanagement.model.tenant.PersistentCertifiedAttribute
-import it.pagopa.interop.attributeregistrymanagement.client.{model => AttributeRegistry}
+import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.api.impl.Utils
 
 import java.util.UUID

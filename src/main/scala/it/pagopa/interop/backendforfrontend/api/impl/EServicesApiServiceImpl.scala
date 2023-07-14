@@ -44,7 +44,7 @@ import akka.http.scaladsl.model.HttpResponse
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
-  attributeRegistryManagementService: AttributeRegistryManagementService,
+  attributeRegistryProcessService: AttributeRegistryProcessService,
   catalogProcessService: CatalogProcessService,
   tenantProcessService: TenantProcessService,
   partyProcessService: PartyProcessService,
@@ -220,9 +220,8 @@ final case class EServicesApiServiceImpl(
       descriptor                     <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      attributes                     <- attributeRegistryManagementService
-        .getBulkAttributes(extractIdsFromAttributes(descriptor.attributes))(contexts)
-        .map(_.attributes)
+      attributes                     <- attributeRegistryProcessService
+        .getBulkAttributes(extractIdsFromAttributes(descriptor.attributes))
       descriptorAttributes           <- descriptor.attributes.toApi(attributes)
       requesterTenant                <- tenantProcessService.getTenant(requesterId)
       producerTenant                 <- tenantProcessService.getTenant(eService.producerId)
@@ -410,9 +409,8 @@ final case class EServicesApiServiceImpl(
       descriptor                     <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      attributes                     <- attributeRegistryManagementService
-        .getBulkAttributes(extractIdsFromAttributes(descriptor.attributes))(contexts)
-        .map(_.attributes)
+      attributes                     <- attributeRegistryProcessService
+        .getBulkAttributes(extractIdsFromAttributes(descriptor.attributes))
       descriptorAttributes           <- descriptor.attributes.toApi(attributes)
       requesterTenant                <- tenantProcessService.getTenant(eService.producerId)
     } yield ProducerEServiceDescriptor(
