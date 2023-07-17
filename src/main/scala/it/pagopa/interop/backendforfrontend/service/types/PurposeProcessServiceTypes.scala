@@ -136,6 +136,8 @@ object PurposeProcessServiceTypes {
       PurposeProcess.PurposeUpdateContent(
         title = puc.title,
         description = puc.description,
+        eserviceId = puc.eserviceId,
+        consumerId = puc.consumerId,
         isFreeOfCharge = puc.isFreeOfCharge,
         freeOfChargeReason = puc.freeOfChargeReason,
         riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess)

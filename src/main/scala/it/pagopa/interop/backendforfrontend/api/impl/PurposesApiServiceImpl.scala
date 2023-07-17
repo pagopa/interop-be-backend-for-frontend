@@ -482,6 +482,8 @@ final case class PurposesApiServiceImpl(
 
     val result: Future[PurposeVersionResource] = for {
       purposeUUID    <- purposeId.toFutureUUID
+      _              <- catalogProcessService.getEServiceById(purposeUpdateContent.eserviceId)
+      _              <- tenantProcessService.getTenant(purposeUpdateContent.consumerId)
       updatedPurpose <- purposeProcessService
         .updatePurpose(purposeUUID, purposeUpdateContent.toProcess)
       versionUUID    <- getCurrentVersion(updatedPurpose).map(_.id).toFuture(PurposeNotFound(purposeUUID))
