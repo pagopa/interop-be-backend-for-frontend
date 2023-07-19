@@ -1,42 +1,42 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{onComplete, redirect}
+import akka.http.scaladsl.server.Route
+import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.commons.jwt.service.SessionTokenGenerator
-import it.pagopa.interop.commons.jwt._
-import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
-import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.api.SupportApiService
-import it.pagopa.interop.backendforfrontend.service.TenantProcessService
-import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
-import it.pagopa.interop.backendforfrontend.service.model.JsonFormats._
-import it.pagopa.interop.backendforfrontend.service.model.{Organization, Role}
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
-import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.TenantProcessService
+import it.pagopa.interop.backendforfrontend.service.model.JsonFormats._
+import it.pagopa.interop.backendforfrontend.service.model.{Organization, Role}
+import it.pagopa.interop.commons.jwt._
+import it.pagopa.interop.commons.jwt.service.SessionTokenGenerator
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
-import javax.xml.parsers.DocumentBuilderFactory
-import spray.json._
-import org.w3c.dom
+import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import org.opensaml.DefaultBootstrap
 import org.opensaml.saml2.core.Response
 import org.opensaml.security.SAMLSignatureProfileValidator
-import org.opensaml.xml.validation.ValidationException
-import org.opensaml.xml.{XMLObject, Configuration}
-import org.opensaml.DefaultBootstrap
 import org.opensaml.xml.io.{Unmarshaller, UnmarshallerFactory}
+import org.opensaml.xml.validation.ValidationException
+import org.opensaml.xml.{Configuration, XMLObject}
+import org.w3c.dom
+import spray.json._
 
-import cats.syntax.all._
-import java.time.{OffsetDateTime, Instant, ZoneOffset}
 import java.io.ByteArrayInputStream
+import java.time.{Instant, OffsetDateTime, ZoneOffset}
+import javax.xml.parsers.DocumentBuilderFactory
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
-import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Success, Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 final case class SupportApiServiceImpl(
   sessionTokenGenerator: SessionTokenGenerator,
@@ -53,25 +53,25 @@ final case class SupportApiServiceImpl(
   val SELFCARE_OPERATOR_ROLE: String = "OPERATOR"
 
   override def samlLoginCallback(
-    sAMLResponse: SAMLResponse
+    sAMLResponse: String
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
 
     logger.info(s"Calling Support SAML")
 
     val result: Future[(String, String)] = for {
-      responseXml  <- parseResponse(sAMLResponse.response).toFuture
-      _            <- validate(responseXml).toFuture
-      tenant       <- tenantProcessService.getTenant(ApplicationConfiguration.pagoPaTenantId)
-      selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
-      sessionToken <- sessionTokenGenerator.generate(
+      responseDecoded <- sAMLResponse.decodeBase64.toFuture
+      responseXml     <- parseResponse(responseDecoded).toFuture
+      _               <- validate(responseXml).toFuture
+      tenant          <- tenantProcessService.getTenant(ApplicationConfiguration.pagoPaTenantId)
+      selfcareId      <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
+      sessionToken    <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
         claimsSet = buildClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = ApplicationConfiguration.supportLandingJwtDuration
       )
-      base64       <- sAMLResponse.response.encodeBase64.toFuture
-    } yield (base64, sessionToken)
+    } yield (sAMLResponse, sessionToken)
 
     onComplete(result) {
       case Failure(_)                      => {
@@ -80,25 +80,26 @@ final case class SupportApiServiceImpl(
         redirect(redirectUrl, StatusCodes.Found)
       }
       case Success((base64, sessionToken)) => {
-        val redirectUrl = s"${ApplicationConfiguration.saml2CallbackUrl}#saml2=${base64}&jwt=${sessionToken}"
+        val redirectUrl = s"${ApplicationConfiguration.saml2CallbackUrl}#saml2=$base64&jwt=$sessionToken"
         redirect(redirectUrl, StatusCodes.Found)
       }
     }
   }
 
-  override def getSaml2Token(tenantId: String, sAMLResponse: SAMLResponse)(implicit
-    contexts: Seq[(String, String)],
+  override def getSaml2Token(sAMLResponse: String, tenantId: String)(implicit
+    contexts: Seq[(BearerToken, BearerToken)],
     toEntityMarshallerSessionToken: ToEntityMarshaller[SessionToken],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     logger.info(s"Calling get SAML2 token")
 
     val result: Future[SessionToken] = for {
-      responseXml  <- parseResponse(sAMLResponse.response).toFuture
-      _            <- validate(responseXml).toFuture
-      tenant       <- tenantId.toFutureUUID.flatMap(tenantProcessService.getTenant)
-      selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
-      sessionToken <- sessionTokenGenerator.generate(
+      decodeResponse <- sAMLResponse.decodeBase64.toFuture
+      responseXml    <- parseResponse(decodeResponse).toFuture
+      _              <- validate(responseXml).toFuture
+      tenant         <- tenantId.toFutureUUID.flatMap(tenantProcessService.getTenant)
+      selfcareId     <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
+      sessionToken   <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
         claimsSet = buildClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
@@ -116,12 +117,12 @@ final case class SupportApiServiceImpl(
 
   private def parseResponse(responseXml: String): Try[XMLObject] = Try {
     DefaultBootstrap.bootstrap()
-    val documentBuilderFactory: DocumentBuilderFactory = DocumentBuilderFactory.newInstance();
-    documentBuilderFactory.setNamespaceAware(true);
+    val documentBuilderFactory: DocumentBuilderFactory = DocumentBuilderFactory.newInstance()
+    documentBuilderFactory.setNamespaceAware(true)
 
     val document: dom.Document                   =
-      documentBuilderFactory.newDocumentBuilder().parse(new ByteArrayInputStream(responseXml.getBytes()));
-    val element: dom.Element                     = document.getDocumentElement();
+      documentBuilderFactory.newDocumentBuilder().parse(new ByteArrayInputStream(responseXml.getBytes()))
+    val element: dom.Element                     = document.getDocumentElement()
     val unmarshallerFactory: UnmarshallerFactory = Configuration.getUnmarshallerFactory()
     val unmarshaller: Unmarshaller               = unmarshallerFactory.getUnmarshaller(element)
     unmarshaller.unmarshall(element)
