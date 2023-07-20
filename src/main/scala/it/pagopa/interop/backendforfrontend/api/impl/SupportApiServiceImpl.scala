@@ -75,8 +75,8 @@ final case class SupportApiServiceImpl(
     } yield (sAMLResponse, sessionToken)
 
     onComplete(result) {
-      case Failure(_)                      => {
-        logger.error(s"Error calling support SAML")
+      case Failure(ex)                     => {
+        logger.error(s"Error calling support SAML - ${ex.getMessage}")
         val redirectUrl = s"${ApplicationConfiguration.saml2CallbackErrorUrl}"
         redirect(redirectUrl, StatusCodes.Found)
       }
@@ -129,82 +129,78 @@ final case class SupportApiServiceImpl(
     unmarshaller.unmarshall(element)
   }
 
-  private def validate(xmlObject: XMLObject): Either[Throwable, Response] = {
-    val res = for {
-      response  <- Either
-        .catchNonFatal(xmlObject.asInstanceOf[Response])
-        .leftMap {
-          case e: ClassCastException => SamlNotValid(e.getMessage())
-          case e                     => e
-        }
-      signature <- Option(response.getSignature).toRight(SamlNotValid("Missing Signature"))
-      assertions = response.getAssertions().asScala.toList
-      _ <- Either.cond(assertions.isEmpty, SamlNotValid("Missing Assertions"), assertions).swap
-      audienceRestrictions = assertions.map(_.getConditions()).flatMap(_.getAudienceRestrictions().asScala.toList)
-      _ <- Either
-        .cond(audienceRestrictions.isEmpty, SamlNotValid("Missing Audience Restricions"), audienceRestrictions)
-        .swap
-      notBeforeConditions = assertions.map(_.getConditions()).map(_.getNotBefore())
-      _ <- Either
-        .cond(notBeforeConditions.isEmpty, SamlNotValid("Missing Not Before Restricions"), notBeforeConditions)
-        .swap
-      notOnOrAfterConditions = assertions.map(_.getConditions()).map(_.getNotOnOrAfter())
-      _ <- Either
-        .cond(notOnOrAfterConditions.isEmpty, SamlNotValid("Missing On Or After Restricions"), notOnOrAfterConditions)
-        .swap
-      attributeStatements = assertions.flatMap(_.getAttributeStatements().asScala.toList)
-      _ <- Either
-        .cond(attributeStatements.isEmpty, SamlNotValid("Missing Attribute Statements"), attributeStatements)
-        .swap
-      attributes = attributeStatements.flatMap(_.getAttributes().asScala.toList)
-      _ <- Either.cond(attributes.isEmpty, SamlNotValid("Missing Attributes"), attributes).swap
-      notBefore =
-        notBeforeConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
-      notAfter  =
-        notOnOrAfterConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
-      now       = offsetDateTimeSupplier.get()
-      _ <- Either
-        .catchNonFatal {
-          new SAMLSignatureProfileValidator().validate(
-            signature
-          ) // Indicates signature did not conform to SAML Signature profile
-        }
-        .void
-        .leftMap {
-          case e: ValidationException => SamlNotValid(e.getMessage())
-          case e                      => e
-        }
-      _ <- Either.cond(
-        notBefore.exists(nb => now.isAfter(nb)),
-        (),
-        SamlNotValid("Conditions NotBefore are not compliant")
+  private def validate(xmlObject: XMLObject): Either[Throwable, Response] = for {
+    response  <- Either
+      .catchNonFatal(xmlObject.asInstanceOf[Response])
+      .leftMap {
+        case e: ClassCastException => SamlNotValid(e.getMessage())
+        case e                     => e
+      }
+    signature <- Option(response.getSignature).toRight(SamlNotValid("Missing Signature"))
+    assertions = response.getAssertions().asScala.toList
+    _ <- Either.cond(assertions.isEmpty, SamlNotValid("Missing Assertions"), assertions).swap
+    audienceRestrictions = assertions.map(_.getConditions()).flatMap(_.getAudienceRestrictions().asScala.toList)
+    _ <- Either
+      .cond(audienceRestrictions.isEmpty, SamlNotValid("Missing Audience Restricions"), audienceRestrictions)
+      .swap
+    notBeforeConditions = assertions.map(_.getConditions()).map(_.getNotBefore())
+    _ <- Either
+      .cond(notBeforeConditions.isEmpty, SamlNotValid("Missing Not Before Restricions"), notBeforeConditions)
+      .swap
+    notOnOrAfterConditions = assertions.map(_.getConditions()).map(_.getNotOnOrAfter())
+    _ <- Either
+      .cond(notOnOrAfterConditions.isEmpty, SamlNotValid("Missing On Or After Restricions"), notOnOrAfterConditions)
+      .swap
+    attributeStatements = assertions.flatMap(_.getAttributeStatements().asScala.toList)
+    _ <- Either
+      .cond(attributeStatements.isEmpty, SamlNotValid("Missing Attribute Statements"), attributeStatements)
+      .swap
+    attributes = attributeStatements.flatMap(_.getAttributes().asScala.toList)
+    _ <- Either.cond(attributes.isEmpty, SamlNotValid("Missing Attributes"), attributes).swap
+    notBefore =
+      notBeforeConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
+    notAfter  =
+      notOnOrAfterConditions.map(dt => OffsetDateTime.ofInstant(Instant.ofEpochMilli(dt.getMillis()), ZoneOffset.UTC))
+    now       = offsetDateTimeSupplier.get()
+    _ <- Either
+      .catchNonFatal {
+        new SAMLSignatureProfileValidator().validate(
+          signature
+        ) // Indicates signature did not conform to SAML Signature profile
+      }
+      .void
+      .leftMap {
+        case e: ValidationException => SamlNotValid(e.getMessage())
+        case e                      => e
+      }
+    _ <- Either.cond(
+      notBefore.exists(nb => now.isAfter(nb)),
+      (),
+      SamlNotValid("Conditions NotBefore are not compliant")
+    )
+    _ <- Either.cond(
+      notAfter.exists(na => now.isBefore(na) || now.isEqual(na)),
+      (),
+      SamlNotValid("Conditions NotOnOrAfter are not compliant")
+    )
+    _ <- attributes
+      .find(a =>
+        a.getName == SUPPORT_LEVEL_NAME && (a
+          .getAttributeValues()
+          .asScala
+          .toList
+          .exists(av => SUPPORT_LEVELS.contains(av.getDOM().getTextContent())))
       )
-      _ <- Either.cond(
-        notAfter.exists(na => now.isBefore(na) || now.isEqual(na)),
-        (),
-        SamlNotValid("Conditions NotOnOrAfter are not compliant")
-      )
-      _ <- attributes
-        .find(a =>
-          a.getName == SUPPORT_LEVEL_NAME && (a
-            .getAttributeValues()
-            .asScala
-            .toList
-            .exists(av => SUPPORT_LEVELS.contains(av.getDOM().getTextContent())))
-        )
-        .void
-        .toRight(SamlNotValid("Support level is not compliant"))
-      _ <- Either.cond(
-        audienceRestrictions
-          .flatMap(_.getAudiences().asScala.toList)
-          .exists(aud => ApplicationConfiguration.saml2Audience == aud.getAudienceURI),
-        (),
-        SamlNotValid("Conditions Audience are not compliant")
-      )
-    } yield (response)
-
-    res
-  }
+      .void
+      .toRight(SamlNotValid("Support level is not compliant"))
+    _ <- Either.cond(
+      audienceRestrictions
+        .flatMap(_.getAudiences().asScala.toList)
+        .exists(aud => ApplicationConfiguration.saml2Audience == aud.getAudienceURI),
+      (),
+      SamlNotValid("Conditions Audience are not compliant")
+    )
+  } yield response
 
   private def buildClaims(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] =
     Map(
