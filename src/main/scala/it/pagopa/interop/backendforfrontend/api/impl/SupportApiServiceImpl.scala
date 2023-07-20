@@ -130,7 +130,7 @@ final case class SupportApiServiceImpl(
   }
 
   private def validate(xmlObject: XMLObject): Either[Throwable, Response] = {
-    for {
+    val res = for {
       response  <- Either
         .catchNonFatal(xmlObject.asInstanceOf[Response])
         .leftMap {
@@ -197,11 +197,13 @@ final case class SupportApiServiceImpl(
       _ <- Either.cond(
         audienceRestrictions
           .flatMap(_.getAudiences().asScala.toList)
-          .exists(aud => ApplicationConfiguration.generatedJwtAudience.contains(aud.getAudienceURI)),
+          .exists(aud => ApplicationConfiguration.saml2Audience == aud.getAudienceURI),
         (),
         SamlNotValid("Conditions Audience are not compliant")
       )
     } yield (response)
+
+    res
   }
 
   private def buildClaims(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] =
