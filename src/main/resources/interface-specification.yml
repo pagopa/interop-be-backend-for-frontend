@@ -9094,7 +9094,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/xml:
+          application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/SAMLResponse'
       responses:
@@ -9153,9 +9153,9 @@ paths:
       requestBody:
         required: true
         content:
-          application/xml:
+          application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SAMLResponse'      
+              $ref: '#/components/schemas/SAMLResponse'
       responses:
         '200':
           description: successful operation
@@ -9246,11 +9246,11 @@ components:
     SAMLResponse:
       type: object
       properties:
-        response:
+        SAMLResponse:
           type: string
           description: SAML response
       required:
-        - response
+        - SAMLResponse
     AccessTokenRequest:
       type: object
       required:
