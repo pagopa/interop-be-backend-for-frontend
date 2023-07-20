@@ -70,6 +70,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
     mockInteropTokenGenerator,
     mockTenantProcess,
     mockPartyProcess,
+    mockDateTimeSupplier,
     allowList,
     mockRateLimiter
   )
@@ -88,6 +89,9 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
 
   implicit def contexts: Seq[(String, String)] =
     Seq("bearer" -> bearerToken, USER_ROLES -> "admin", ORGANIZATION_ID_CLAIM -> UUID.randomUUID.toString)
+
+  def desiredClaimSet(tenantId: UUID): Map[String, AnyRef] =
+    Map("uid" -> "support", "user-roles" -> "support", "organizationId" -> tenantId.toString).widen[AnyRef]
 
   def desiredClaimSet(tenantId: UUID, selfcareId: UUID): Map[String, AnyRef] =
     Map(

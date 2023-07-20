@@ -9086,7 +9086,7 @@ paths:
         - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
-          - support
+          - authorization
       security: []
       operationId: samlLoginCallback
       description: This route is used to redirect support flow to the dedicated page
@@ -9141,20 +9141,12 @@ paths:
       summary: Returns the generated token
       description: Returns the generated token
       operationId: getSaml2Token
-      parameters:
-        - in: query
-          name: tenantId
-          description: The internal identifier of the tenant
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
-          application/x-www-form-urlencoded:
+          application/json:
             schema:
-              $ref: '#/components/schemas/SAMLResponse'
+              $ref: '#/components/schemas/SAMLTokenRequest'
       responses:
         '200':
           description: successful operation
@@ -9254,14 +9246,19 @@ components:
       required:
         - SAMLResponse
         - RelayState
-    SAMLResponse:
+    SAMLTokenRequest:
       type: object
       properties:
-        SAMLResponse:
+        saml2:
           type: string
-          description: SAML response
+          description: SAML
+        tenantId:
+          type: string
+          format: uuid
+          description: tenant id
       required:
-        - SAMLResponse
+        - saml2
+        - tenantId
     AccessTokenRequest:
       type: object
       required:
