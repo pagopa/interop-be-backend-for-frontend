@@ -52,9 +52,10 @@ final case class SupportApiServiceImpl(
   val SUPPORT_LEVEL_NAME: String     = "supportLevel"
   val SELFCARE_OPERATOR_ROLE: String = "OPERATOR"
 
-  override def samlLoginCallback(
-    sAMLResponse: String
-  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+  override def samlLoginCallback(sAMLResponse: String, relayState: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
 
     logger.info(s"Calling Support SAML")
 

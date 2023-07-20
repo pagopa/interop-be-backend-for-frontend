@@ -9083,7 +9083,6 @@ paths:
                 description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /support:
     parameters:
-        - $ref: '#/components/parameters/CorrelationIdHeader'
         - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
@@ -9096,7 +9095,7 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SAMLResponse'
+              $ref: '#/components/schemas/GoogleSAMLPayload'
       responses:
         '302':
           description: Redirection in case of success SAML validation or error
@@ -9243,6 +9242,17 @@ components:
       schema:
         type: string
   schemas:
+    GoogleSAMLPayload:
+      type: object
+      properties:
+        SAMLResponse:
+          type: string
+          description: SAML response
+        RelayState:
+          type: string
+      required:
+        - SAMLResponse
+        - RelayState
     SAMLResponse:
       type: object
       properties:

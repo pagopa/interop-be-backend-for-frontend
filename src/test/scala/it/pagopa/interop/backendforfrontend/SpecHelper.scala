@@ -101,6 +101,8 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
         roles = Seq(Role(partyRole = "OPERATOR", role = "support"))
       ).toJson.asJsObject
     ).widen[AnyRef]
+
+  final val emptyRelayState: String = ""
 }
 
 object SpecHelper {

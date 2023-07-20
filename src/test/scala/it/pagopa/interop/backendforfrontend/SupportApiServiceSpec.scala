@@ -69,7 +69,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         .once()
         .returns(Future.successful("sessionToken"))
 
-      Post() ~> supportService.samlLoginCallback(response) ~> check {
+      Post() ~> supportService.samlLoginCallback(response, emptyRelayState) ~> check {
         val x = status
         x shouldEqual StatusCodes.Found
       }
@@ -109,7 +109,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           )
         )
 
-      Post() ~> supportService.samlLoginCallback(response) ~> check {
+      Post() ~> supportService.samlLoginCallback(response, emptyRelayState) ~> check {
         status shouldEqual StatusCodes.Found
       }
     }
