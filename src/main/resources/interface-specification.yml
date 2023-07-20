@@ -9250,6 +9250,7 @@ components:
           description: SAML response
         RelayState:
           type: string
+          nullable: true
       required:
         - SAMLResponse
         - RelayState
