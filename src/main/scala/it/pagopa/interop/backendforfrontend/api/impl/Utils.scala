@@ -7,8 +7,6 @@ import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegi
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SamlNotValid
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.backendforfrontend.service.model.JsonFormats._
-import it.pagopa.interop.backendforfrontend.service.model.{Organization, Role}
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
@@ -23,10 +21,10 @@ import org.opensaml.xml.io.{Unmarshaller, UnmarshallerFactory}
 import org.opensaml.xml.validation.ValidationException
 import org.opensaml.xml.{Configuration, XMLObject}
 import org.w3c.dom
-import spray.json._
 
 import java.io.ByteArrayInputStream
 import java.time.{Instant, OffsetDateTime, ZoneOffset}
+import java.util
 import java.util.UUID
 import javax.xml.parsers.DocumentBuilderFactory
 import scala.jdk.CollectionConverters._
@@ -105,6 +103,7 @@ object Utils {
 
   final val SUPPORT_LEVELS: Seq[String]    = Seq("L2", "L3")
   final val SUPPORT_LEVEL_NAME: String     = "supportLevel"
+  final val SUPPORT_USER_ID: String        = UUID.fromString("5119b1fa-825a-4297-8c9c-152e055cabca").toString
   final val SELFCARE_OPERATOR_ROLE: String = "OPERATOR"
 
   def validate(xmlObject: XMLObject)(offsetDateTimeSupplier: OffsetDateTimeSupplier): Either[Throwable, Response] =
@@ -181,19 +180,42 @@ object Utils {
       )
     } yield response
 
-  def buildClaimsWithoutOrganization(tenantId: UUID): Map[String, AnyRef] =
-    Map(USER_ROLES -> SUPPORT_ROLE, ORGANIZATION_ID_CLAIM -> tenantId.toString, UID -> SUPPORT_ROLE)
+  def buildClaims(tenantId: UUID): Map[String, AnyRef] = {
 
-  def buildClaimsWithOrganization(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] =
+    val role: util.Map[String, AnyRef] = new util.HashMap()
+    role.put("partyRole", SELFCARE_OPERATOR_ROLE)
+    role.put("role", SUPPORT_ROLE)
+
+    val organization: util.Map[String, AnyRef] = new util.HashMap()
+    organization.put("id", tenantId.toString)
+    organization.put("name", SUPPORT_ROLE)
+    organization.put("roles", List(role).asJava)
+
+    Map(
+      USER_ROLES            -> SUPPORT_ROLE,
+      ORGANIZATION_ID_CLAIM -> tenantId.toString,
+      ORGANIZATION          -> organization,
+      UID                   -> SUPPORT_USER_ID
+    )
+  }
+
+  def buildClaimsByTenant(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] = {
+
+    val role: util.Map[String, AnyRef] = new util.HashMap()
+    role.put("partyRole", SELFCARE_OPERATOR_ROLE)
+    role.put("role", SUPPORT_ROLE)
+
+    val organization: util.Map[String, AnyRef] = new util.HashMap()
+    organization.put("id", selfcareId)
+    organization.put("name", tenant.name)
+    organization.put("roles", List(role).asJava)
+
     Map(
       USER_ROLES            -> SUPPORT_ROLE,
       ORGANIZATION_ID_CLAIM -> tenant.id.toString,
       SELFCARE_ID_CLAIM     -> selfcareId,
-      ORGANIZATION          -> Organization(
-        id = selfcareId,
-        name = tenant.name,
-        roles = Seq(Role(partyRole = SELFCARE_OPERATOR_ROLE, role = SUPPORT_ROLE))
-      ).toJson.asJsObject.fields.asJava,
-      UID                   -> SUPPORT_ROLE
+      ORGANIZATION          -> organization,
+      UID                   -> SUPPORT_USER_ID
     )
+  }
 }

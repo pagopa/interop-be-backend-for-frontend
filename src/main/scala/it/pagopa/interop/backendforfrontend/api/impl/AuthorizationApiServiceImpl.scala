@@ -8,7 +8,7 @@ import cats.implicits._
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaimsWithoutOrganization, parseResponse, validate}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaims, parseResponse, validate}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -142,7 +142,7 @@ final case class AuthorizationApiServiceImpl(
       _               <- validate(responseXml)(offsetDateTimeSupplier).toFuture
       sessionToken    <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
-        claimsSet = buildClaimsWithoutOrganization(ApplicationConfiguration.pagoPaTenantId),
+        claimsSet = buildClaims(ApplicationConfiguration.pagoPaTenantId),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = ApplicationConfiguration.supportLandingJwtDuration

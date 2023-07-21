@@ -41,7 +41,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          buildClaimsWithoutOrganization(tenantId),
+          buildClaims(tenantId),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportLandingJwtDuration
@@ -107,7 +107,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          buildClaimsWithOrganization(selfcareId.toString, tenant),
+          buildClaimsByTenant(selfcareId.toString, tenant),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportJwtDuration
