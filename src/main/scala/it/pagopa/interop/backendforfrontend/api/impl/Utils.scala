@@ -7,9 +7,13 @@ import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegi
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SamlNotValid
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.model.JsonFormats._
+import it.pagopa.interop.backendforfrontend.service.model.{Organization, Role}
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.commons.jwt.SUPPORT_ROLE
+import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import org.opensaml.DefaultBootstrap
@@ -19,6 +23,7 @@ import org.opensaml.xml.io.{Unmarshaller, UnmarshallerFactory}
 import org.opensaml.xml.validation.ValidationException
 import org.opensaml.xml.{Configuration, XMLObject}
 import org.w3c.dom
+import spray.json._
 
 import java.io.ByteArrayInputStream
 import java.time.{Instant, OffsetDateTime, ZoneOffset}
@@ -175,4 +180,20 @@ object Utils {
         SamlNotValid("Conditions Audience are not compliant")
       )
     } yield response
+
+  def buildClaimsWithoutOrganization(tenantId: UUID): Map[String, AnyRef] =
+    Map(USER_ROLES -> SUPPORT_ROLE, ORGANIZATION_ID_CLAIM -> tenantId.toString, UID -> SUPPORT_ROLE)
+
+  def buildClaimsWithOrganization(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] =
+    Map(
+      USER_ROLES            -> SUPPORT_ROLE,
+      ORGANIZATION_ID_CLAIM -> tenant.id.toString,
+      SELFCARE_ID_CLAIM     -> selfcareId,
+      ORGANIZATION          -> Organization(
+        id = selfcareId,
+        name = tenant.name,
+        roles = Seq(Role(partyRole = SELFCARE_OPERATOR_ROLE, role = SUPPORT_ROLE))
+      ).toJson.asJsObject.fields.asJava,
+      UID                   -> SUPPORT_ROLE
+    )
 }

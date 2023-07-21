@@ -5,23 +5,18 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.SupportApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{SELFCARE_OPERATOR_ROLE, parseResponse, validate}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaimsWithOrganization, parseResponse, validate}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.TenantProcessService
-import it.pagopa.interop.backendforfrontend.service.model.JsonFormats._
-import it.pagopa.interop.backendforfrontend.service.model.{Organization, Role}
-import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.SessionTokenGenerator
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
-import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
-import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -51,7 +46,7 @@ final case class SupportApiServiceImpl(
       selfcareId     <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken   <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
-        claimsSet = buildClaims(selfcareId, tenant),
+        claimsSet = buildClaimsWithOrganization(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = ApplicationConfiguration.supportJwtDuration
@@ -65,16 +60,4 @@ final case class SupportApiServiceImpl(
     }
   }
 
-  private def buildClaims(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] =
-    Map(
-      USER_ROLES            -> SUPPORT_ROLE,
-      ORGANIZATION_ID_CLAIM -> tenant.id.toString,
-      SELFCARE_ID_CLAIM     -> selfcareId,
-      ORGANIZATION          -> Organization(
-        id = selfcareId,
-        name = tenant.name,
-        roles = Seq(Role(partyRole = SELFCARE_OPERATOR_ROLE, role = SUPPORT_ROLE))
-      ).toJson.asJsObject,
-      UID                   -> SUPPORT_ROLE
-    )
 }

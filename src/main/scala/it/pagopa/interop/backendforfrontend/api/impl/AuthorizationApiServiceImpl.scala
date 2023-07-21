@@ -8,14 +8,14 @@ import cats.implicits._
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{parseResponse, validate}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaimsWithoutOrganization, parseResponse, validate}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantProcessService}
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, SessionTokenGenerator}
-import it.pagopa.interop.commons.jwt.{SUPPORT_ROLE, getUserRoles, organizationClaim}
+import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.ratelimiter.RateLimiter
 import it.pagopa.interop.commons.ratelimiter.model.{Headers, RateLimitStatus}
@@ -142,7 +142,7 @@ final case class AuthorizationApiServiceImpl(
       _               <- validate(responseXml)(offsetDateTimeSupplier).toFuture
       sessionToken    <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
-        claimsSet = buildClaims(ApplicationConfiguration.pagoPaTenantId),
+        claimsSet = buildClaimsWithoutOrganization(ApplicationConfiguration.pagoPaTenantId),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = ApplicationConfiguration.supportLandingJwtDuration
@@ -160,6 +160,4 @@ final case class AuthorizationApiServiceImpl(
     }
   }
 
-  private def buildClaims(tenantId: UUID): Map[String, AnyRef] =
-    Map(USER_ROLES -> SUPPORT_ROLE, ORGANIZATION_ID_CLAIM -> tenantId.toString, UID -> SUPPORT_ROLE)
 }

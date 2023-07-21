@@ -2,6 +2,7 @@ package it.pagopa.interop.backendforfrontend
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import it.pagopa.interop.backendforfrontend.api.impl.Utils._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.model.{Problem, SAMLTokenRequest}
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
@@ -40,7 +41,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          desiredClaimSet(tenantId),
+          buildClaimsWithoutOrganization(tenantId),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportLandingJwtDuration
@@ -84,32 +85,29 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
 
       val tenantId: UUID   = UUID.randomUUID()
       val selfcareId: UUID = UUID.randomUUID()
+      val tenant: Tenant   = Tenant(
+        id = tenantId,
+        selfcareId = Some(selfcareId.toString),
+        externalId = ExternalId("IPA", "externalId"),
+        features = Nil,
+        attributes = Nil,
+        createdAt = OffsetDateTimeSupplier.get(),
+        updatedAt = None,
+        mails = Nil,
+        name = "PagoPa"
+      )
 
       (mockTenantProcess
         .getTenant(_: UUID)(_: Seq[(String, String)]))
         .expects(tenantId, *)
         .once()
-        .returns(
-          Future.successful(
-            Tenant(
-              id = tenantId,
-              selfcareId = Some(selfcareId.toString),
-              externalId = ExternalId("IPA", "externalId"),
-              features = Nil,
-              attributes = Nil,
-              createdAt = OffsetDateTimeSupplier.get(),
-              updatedAt = None,
-              mails = Nil,
-              name = "PagoPa"
-            )
-          )
-        )
+        .returns(Future.successful(tenant))
 
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          desiredClaimSet(tenantId, selfcareId),
+          buildClaimsWithOrganization(selfcareId.toString, tenant),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportJwtDuration
