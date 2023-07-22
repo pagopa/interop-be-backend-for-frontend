@@ -2,8 +2,9 @@ package it.pagopa.interop.backendforfrontend
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import it.pagopa.interop.backendforfrontend.api.impl.Utils._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.model.Problem
+import it.pagopa.interop.backendforfrontend.model.{Problem, SAMLTokenRequest}
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions.StringOps
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
@@ -34,34 +35,13 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      val tenantId: UUID   = ApplicationConfiguration.pagoPaTenantId
-      val selfcareId: UUID = UUID.randomUUID()
-
-      (mockTenantProcess
-        .getTenant(_: UUID)(_: Seq[(String, String)]))
-        .expects(tenantId, *)
-        .once()
-        .returns(
-          Future.successful(
-            Tenant(
-              id = tenantId,
-              selfcareId = Some(selfcareId.toString),
-              externalId = ExternalId("IPA", "externalId"),
-              features = Nil,
-              attributes = Nil,
-              createdAt = OffsetDateTimeSupplier.get(),
-              updatedAt = None,
-              mails = Nil,
-              name = "PagoPa"
-            )
-          )
-        )
+      val tenantId: UUID = ApplicationConfiguration.pagoPaTenantId
 
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          desiredClaimSet(tenantId, selfcareId),
+          buildClaims(tenantId),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportLandingJwtDuration
@@ -69,9 +49,8 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         .once()
         .returns(Future.successful("sessionToken"))
 
-      Post() ~> supportService.samlLoginCallback(response) ~> check {
-        val x = status
-        x shouldEqual StatusCodes.Found
+      Post() ~> authorizationService.samlLoginCallback(response, emptyRelayState) ~> check {
+        status shouldEqual StatusCodes.Found
       }
     }
 
@@ -87,29 +66,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      val tenantId: UUID = ApplicationConfiguration.pagoPaTenantId
-
-      (mockTenantProcess
-        .getTenant(_: UUID)(_: Seq[(String, String)]))
-        .expects(tenantId, *)
-        .once()
-        .returns(
-          Future.successful(
-            Tenant(
-              id = tenantId,
-              selfcareId = None,
-              externalId = ExternalId("IPA", "externalId"),
-              features = Nil,
-              attributes = Nil,
-              createdAt = OffsetDateTimeSupplier.get(),
-              updatedAt = None,
-              mails = Nil,
-              name = "PagoPa"
-            )
-          )
-        )
-
-      Post() ~> supportService.samlLoginCallback(response) ~> check {
+      Post() ~> authorizationService.samlLoginCallback(response, emptyRelayState) ~> check {
         status shouldEqual StatusCodes.Found
       }
     }
@@ -128,32 +85,29 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
 
       val tenantId: UUID   = UUID.randomUUID()
       val selfcareId: UUID = UUID.randomUUID()
+      val tenant: Tenant   = Tenant(
+        id = tenantId,
+        selfcareId = Some(selfcareId.toString),
+        externalId = ExternalId("IPA", "externalId"),
+        features = Nil,
+        attributes = Nil,
+        createdAt = OffsetDateTimeSupplier.get(),
+        updatedAt = None,
+        mails = Nil,
+        name = "PagoPa"
+      )
 
       (mockTenantProcess
         .getTenant(_: UUID)(_: Seq[(String, String)]))
         .expects(tenantId, *)
         .once()
-        .returns(
-          Future.successful(
-            Tenant(
-              id = tenantId,
-              selfcareId = Some(selfcareId.toString),
-              externalId = ExternalId("IPA", "externalId"),
-              features = Nil,
-              attributes = Nil,
-              createdAt = OffsetDateTimeSupplier.get(),
-              updatedAt = None,
-              mails = Nil,
-              name = "PagoPa"
-            )
-          )
-        )
+        .returns(Future.successful(tenant))
 
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          desiredClaimSet(tenantId, selfcareId),
+          buildClaimsByTenant(selfcareId.toString, tenant),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportJwtDuration
@@ -161,7 +115,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         .once()
         .returns(Future.successful("sessionToken"))
 
-      Post() ~> supportService.getSaml2Token(response, tenantId.toString) ~> check {
+      Post() ~> supportService.getSaml2Token(SAMLTokenRequest(response, tenantId)) ~> check {
         status shouldEqual StatusCodes.OK
       }
     }
@@ -200,7 +154,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
           )
         )
 
-      Post() ~> supportService.getSaml2Token(response, tenantId.toString) ~> check {
+      Post() ~> supportService.getSaml2Token(SAMLTokenRequest(response, tenantId)) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         val problem = responseAs[Problem]
         problem.status shouldBe StatusCodes.InternalServerError.intValue
@@ -219,7 +173,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       val timestamp = OffsetDateTime.now(ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      Post() ~> supportService.getSaml2Token(response, UUID.randomUUID().toString) ~> check {
+      Post() ~> supportService.getSaml2Token(SAMLTokenRequest(response, UUID.randomUUID())) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         val problem = responseAs[Problem]
         problem.status shouldBe StatusCodes.InternalServerError.intValue
@@ -241,7 +195,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
 
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      Post() ~> supportService.getSaml2Token(response, tenantId.toString) ~> check {
+      Post() ~> supportService.getSaml2Token(SAMLTokenRequest(response, tenantId)) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         val problem = responseAs[Problem]
         problem.status shouldBe StatusCodes.InternalServerError.intValue
@@ -264,7 +218,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
 
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      Post() ~> supportService.getSaml2Token(response, tenantId.toString) ~> check {
+      Post() ~> supportService.getSaml2Token(SAMLTokenRequest(response, tenantId)) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         val problem = responseAs[Problem]
         problem.status shouldBe StatusCodes.InternalServerError.intValue

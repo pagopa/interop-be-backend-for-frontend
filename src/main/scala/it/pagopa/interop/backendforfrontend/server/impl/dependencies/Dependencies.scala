@@ -24,16 +24,16 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   EServicesApiServiceImpl,
   HealthApiMarshallerImpl,
   HealthServiceApiImpl,
-  SupportApiMarshallerImpl,
-  SupportApiServiceImpl,
   PartyApiMarshallerImpl,
   PartyApiServiceImpl,
+  PrivacyNoticesApiMarshallerImpl,
+  PrivacyNoticesApiServiceImpl,
   PurposesApiMarshallerImpl,
   PurposesApiServiceImpl,
   SelfcareApiMarshallerImpl,
   SelfcareApiServiceImpl,
-  PrivacyNoticesApiMarshallerImpl,
-  PrivacyNoticesApiServiceImpl,
+  SupportApiMarshallerImpl,
+  SupportApiServiceImpl,
   TenantsApiMarshallerImpl,
   TenantsApiServiceImpl,
   ToolsApiMarshallerImpl,
@@ -43,6 +43,7 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   serviceErrorCodePrefix
 }
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
+import it.pagopa.interop.backendforfrontend.model.ConsentType
 import it.pagopa.interop.backendforfrontend.server.Controller
 import it.pagopa.interop.backendforfrontend.service._
 import it.pagopa.interop.backendforfrontend.service.impl._
@@ -67,8 +68,7 @@ import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupp
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import org.scanamo._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import it.pagopa.interop.backendforfrontend.service.impl.PrivacyNoticesServiceImpl
-import it.pagopa.interop.backendforfrontend.model.ConsentType
+
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 trait Dependencies {
@@ -192,7 +192,7 @@ trait Dependencies {
     val supportApi: SupportApi = new SupportApi(
       SupportApiServiceImpl(sessionTokenGenerator, tenantProcess, OffsetDateTimeSupplier),
       SupportApiMarshallerImpl,
-      SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
+      oauthAndRateLimitingDirective
     )
 
     val authorizationApi: AuthorizationApi = new AuthorizationApi(
@@ -202,6 +202,7 @@ trait Dependencies {
         interopTokenGenerator,
         tenantProcess,
         partyProcess,
+        OffsetDateTimeSupplier,
         allowList,
         rateLimiter
       ),

@@ -2,16 +2,17 @@ package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.{complete, onComplete}
+import akka.http.scaladsl.server.Directives.{complete, onComplete, redirect}
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaims, parseResponse, validate}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
-import it.pagopa.interop.backendforfrontend.model.{IdentityToken, SessionToken}
+import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantProcessService}
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
@@ -22,11 +23,12 @@ import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
+import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsScala
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 final case class AuthorizationApiServiceImpl(
   jwtReader: JWTReader,
@@ -34,6 +36,7 @@ final case class AuthorizationApiServiceImpl(
   interopTokenGenerator: InteropTokenGenerator,
   tenantProcessService: TenantProcessService,
   partyProcess: PartyProcessService,
+  offsetDateTimeSupplier: OffsetDateTimeSupplier,
   allowList: List[String],
   rateLimiter: RateLimiter
 )(implicit ec: ExecutionContext)
@@ -125,5 +128,36 @@ final case class AuthorizationApiServiceImpl(
     orgClaimsMap = orgClaims.asScala.toMap
     organizationId <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization in selfcare token"))
   } yield organizationId.toString
+
+  override def samlLoginCallback(sAMLResponse: String, relayState: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+
+    logger.info(s"Calling Support SAML")
+
+    val result: Future[(String, String)] = for {
+      responseDecoded <- sAMLResponse.decodeBase64.toFuture
+      responseXml     <- parseResponse(responseDecoded).toFuture
+      _               <- validate(responseXml)(offsetDateTimeSupplier).toFuture
+      sessionToken    <- sessionTokenGenerator.generate(
+        signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
+        claimsSet = buildClaims(ApplicationConfiguration.pagoPaTenantId),
+        audience = ApplicationConfiguration.generatedJwtAudience,
+        tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
+        validityDurationInSeconds = ApplicationConfiguration.supportLandingJwtDuration
+      )
+    } yield (sAMLResponse, sessionToken)
+
+    onComplete(result) {
+      case Failure(ex)                     =>
+        logger.error(s"Error calling support SAML - ${ex.getMessage}")
+        val redirectUrl = s"${ApplicationConfiguration.saml2CallbackErrorUrl}"
+        redirect(redirectUrl, StatusCodes.Found)
+      case Success((base64, sessionToken)) =>
+        val redirectUrl = s"${ApplicationConfiguration.saml2CallbackUrl}#saml2=$base64&jwt=$sessionToken"
+        redirect(redirectUrl, StatusCodes.Found)
+    }
+  }
 
 }
