@@ -208,7 +208,7 @@ object Utils {
     organization.put("roles", List(role).asJava)
 
     Map(
-      USER_ROLES            -> SUPPORT_ROLE
+      USER_ROLES            -> SUPPORT_ROLE,
       ORGANIZATION_ID_CLAIM -> tenant.id.toString,
       SELFCARE_ID_CLAIM     -> selfcareId,
       ORGANIZATION          -> organization,
