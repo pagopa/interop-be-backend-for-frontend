@@ -31,6 +31,8 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 object Utils {
 
+  val PAGOPA = "PagoPA"
+
   def tenantAttributesToApi[DepAttribute, ApiAttribute](
     tenantAttributes: Seq[DepAttribute],
     registryAttributes: Seq[Attribute]
@@ -188,15 +190,10 @@ object Utils {
 
     val organization: util.Map[String, AnyRef] = new util.HashMap()
     organization.put("id", tenantId.toString)
-    organization.put("name", SUPPORT_ROLE)
+    organization.put("name", PAGOPA)
     organization.put("roles", List(role).asJava)
 
-    Map(
-      USER_ROLES            -> SUPPORT_ROLE,
-      ORGANIZATION_ID_CLAIM -> tenantId.toString,
-      ORGANIZATION          -> organization,
-      UID                   -> SUPPORT_USER_ID
-    )
+    Map(ORGANIZATION_ID_CLAIM -> tenantId.toString, ORGANIZATION -> organization, UID -> SUPPORT_USER_ID)
   }
 
   def buildClaimsByTenant(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] = {
@@ -207,11 +204,10 @@ object Utils {
 
     val organization: util.Map[String, AnyRef] = new util.HashMap()
     organization.put("id", selfcareId)
-    organization.put("name", tenant.name)
+    organization.put("name", PAGOPA)
     organization.put("roles", List(role).asJava)
 
     Map(
-      USER_ROLES            -> SUPPORT_ROLE,
       ORGANIZATION_ID_CLAIM -> tenant.id.toString,
       SELFCARE_ID_CLAIM     -> selfcareId,
       ORGANIZATION          -> organization,
