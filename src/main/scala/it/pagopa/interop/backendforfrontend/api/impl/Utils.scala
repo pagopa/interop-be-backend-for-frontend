@@ -204,10 +204,11 @@ object Utils {
 
     val organization: util.Map[String, AnyRef] = new util.HashMap()
     organization.put("id", selfcareId)
-    organization.put("name", PAGOPA)
+    organization.put("name", tenant.name)
     organization.put("roles", List(role).asJava)
 
     Map(
+      USER_ROLES            -> SUPPORT_ROLE
       ORGANIZATION_ID_CLAIM -> tenant.id.toString,
       SELFCARE_ID_CLAIM     -> selfcareId,
       ORGANIZATION          -> organization,
