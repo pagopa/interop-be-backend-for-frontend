@@ -31,6 +31,8 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 object Utils {
 
+  val PAGOPA = "PagoPA S.p.A."
+
   def tenantAttributesToApi[DepAttribute, ApiAttribute](
     tenantAttributes: Seq[DepAttribute],
     registryAttributes: Seq[Attribute]
@@ -188,7 +190,7 @@ object Utils {
 
     val organization: util.Map[String, AnyRef] = new util.HashMap()
     organization.put("id", tenantId.toString)
-    organization.put("name", SUPPORT_ROLE)
+    organization.put("name", PAGOPA)
     organization.put("roles", List(role).asJava)
 
     Map(
