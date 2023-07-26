@@ -10497,9 +10497,6 @@ components:
         eserviceId:
           type: string
           format: uuid
-        consumerId:
-          type: string
-          format: uuid
         isFreeOfCharge:
           type: boolean
         freeOfChargeReason:
