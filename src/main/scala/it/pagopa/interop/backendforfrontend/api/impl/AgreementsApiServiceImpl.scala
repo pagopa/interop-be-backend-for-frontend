@@ -345,7 +345,7 @@ final case class AgreementsApiServiceImpl(
     createdAt = agreement.createdAt,
     updatedAt = agreement.updatedAt,
     suspendedAt = agreement.suspendedAt,
-    existsContactMail = consumerTenant.mails.filter(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).nonEmpty
+    existsContactMail = consumerTenant.mails.exists(_.kind == TenantProcess.MailKind.CONTACT_EMAIL)
   )
 
   def descriptorAttributesIds(descriptor: CatalogProcess.EServiceDescriptor): Seq[UUID] = {
