@@ -10507,7 +10507,6 @@ components:
         - title
         - description
         - eserviceId
-        - consumerId
         - isFreeOfCharge
     Purposes:
       type: object
