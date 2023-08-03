@@ -463,12 +463,24 @@ final case class EServicesApiServiceImpl(
       case _         => false
     }
 
-    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] =
-      if (isInterface)
-        (InterfaceParser.parseOpenApi(bytes).flatMap(InterfaceParserUtils.getUrls[Json]) orElse
-          InterfaceParser.parseWSDL(bytes).flatMap(InterfaceParserUtils.getUrls[Elem]))
-          .leftMap(_ => InvalidInterfaceFileDetected(eServiceId))
-      else Right(List.empty)
+    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (
+      isInterface
+    ) {
+      def getUrlsAndValidateEndpointsForOpenApi: Either[Throwable, List[String]] = for {
+        doc  <- InterfaceParser.parseOpenApi(bytes)
+        urls <- InterfaceParserUtils.getUrls[Json](doc)
+        _    <- InterfaceParserUtils.getEndpoints[Json](doc)
+      } yield urls
+
+      def getUrlsAndValidateEndpointsForWSDL: Either[Throwable, List[String]] = for {
+        doc  <- InterfaceParser.parseWSDL(bytes)
+        urls <- InterfaceParserUtils.getUrls[Elem](doc)
+        _    <- InterfaceParserUtils.getEndpoints[Elem](doc)
+      } yield urls
+
+      (getUrlsAndValidateEndpointsForOpenApi orElse getUrlsAndValidateEndpointsForWSDL)
+        .leftMap(_ => InvalidInterfaceFileDetected(eServiceId))
+    } else Right(List.empty)
 
     val documentIdUuid: UUID = uuidSupplier.get()
 
