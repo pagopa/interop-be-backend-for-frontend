@@ -83,7 +83,7 @@ object AuthorizationProcessServiceTypes {
 
   implicit class ClientSeedConverter(private val seed: ClientSeed) extends AnyVal {
     def toProcess: AuthorizationProcess.ClientSeed =
-      AuthorizationProcess.ClientSeed(name = seed.name, description = seed.description)
+      AuthorizationProcess.ClientSeed(name = seed.name, description = seed.description, members = seed.members)
   }
 
   implicit class CompactClientConverter(private val c: AuthorizationProcess.Client) extends AnyVal {
