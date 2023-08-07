@@ -9857,6 +9857,8 @@ components:
         suspendedAt:
           type: string
           format: date-time
+        existsContactMail:
+          type: boolean
       additionalProperties: false
       required:
         - id
@@ -9872,6 +9874,7 @@ components:
         - consumerDocuments
         - createdAt
         - isContractPresent
+        - existsContactMail
     Agreements:
       type: object
       properties:
