@@ -10126,7 +10126,7 @@ components:
         dailyCalls:
           type: integer
           format: int32
-          minimum: 0
+          minimum: 0  
       required:
         - eserviceId
         - consumerId
@@ -10478,8 +10478,13 @@ components:
           type: string
         description:
           type: string
+        members:
+          items:
+            type: string
+            format: uuid    
       required:
         - name
+        - members
     CompactClient:
       type: object
       properties:
