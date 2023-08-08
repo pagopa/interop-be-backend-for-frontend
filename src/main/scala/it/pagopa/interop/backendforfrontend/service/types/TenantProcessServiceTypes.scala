@@ -154,9 +154,10 @@ object TenantProcessServiceTypes {
   }
 
   implicit class TenantFeatureWrapper(private val t: TenantProcess.TenantFeature) extends AnyVal {
-    def toApi: TenantFeature = t.certifier match {
-      case Some(certifier) => TenantFeature(certifier = Certifier(certifier.certifierId).some)
-      case None            => TenantFeature(certifier = None)
+    def toApi: TenantFeature = t match {
+      case TenantProcess.TenantFeature(Some(certifier)) =>
+        TenantFeature(certifier = Certifier(certifier.certifierId).some)
+      case TenantProcess.TenantFeature(None)            => TenantFeature(certifier = None)
     }
   }
 
