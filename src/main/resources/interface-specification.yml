@@ -10123,12 +10123,17 @@ components:
           type: boolean
         freeOfChargeReason:
           type: string
+        dailyCalls:
+          type: integer
+          format: int32
+          minimum: 0  
       required:
         - eserviceId
         - consumerId
         - title
         - description
         - isFreeOfCharge
+        - dailyCalls
     WaitingForApprovalPurposeVersionUpdateContentSeed:
       type: object
       description: contains the expected payload for purpose version update.
@@ -10473,8 +10478,13 @@ components:
           type: string
         description:
           type: string
+        members:
+          items:
+            type: string
+            format: uuid    
       required:
         - name
+        - members
     CompactClient:
       type: object
       properties:

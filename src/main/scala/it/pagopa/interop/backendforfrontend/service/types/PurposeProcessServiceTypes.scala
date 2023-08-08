@@ -37,7 +37,8 @@ object PurposeProcessServiceTypes {
       title = seed.title,
       description = seed.description,
       isFreeOfCharge = seed.isFreeOfCharge,
-      freeOfChargeReason = seed.freeOfChargeReason
+      freeOfChargeReason = seed.freeOfChargeReason,
+      dailyCalls = seed.dailyCalls
     )
   }
 
