@@ -11029,7 +11029,20 @@ components:
           $ref: '#/components/schemas/Pagination'
       required:
         - results
-        - pagination    
+        - pagination
+    TenantFeature:
+      type: object
+      properties:
+        certifier:
+          $ref: '#/components/schemas/Certifier'
+    Certifier:
+      description: Certifier Tenant Feature
+      type: object
+      properties:
+        certifierId:
+          type: string
+      required:
+        - certifierId
     CompactTenant:
       properties:
         id:
@@ -11054,6 +11067,10 @@ components:
           format: uuid
         externalId:
           $ref: '#/components/schemas/ExternalId'
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantFeature'
         createdAt:
           type: string
           format: date-time
@@ -11069,6 +11086,7 @@ components:
       required:
         - id
         - externalId
+        - features
         - name
         - attributes
         - createdAt

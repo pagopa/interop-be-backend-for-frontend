@@ -1,5 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
+import cats.implicits.catsSyntaxOptionId
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import it.pagopa.interop.tenantmanagement.model.tenant.PersistentCertifiedAttribute
@@ -152,6 +153,14 @@ object TenantProcessServiceTypes {
       Utils.enhanceTenantAttributes(as, attributes)
   }
 
+  implicit class TenantFeatureWrapper(private val t: TenantProcess.TenantFeature) extends AnyVal {
+    def toApi: TenantFeature = t match {
+      case TenantProcess.TenantFeature(Some(certifier)) =>
+        TenantFeature(certifier = Certifier(certifier.certifierId).some)
+      case TenantProcess.TenantFeature(None)            => TenantFeature(certifier = None)
+    }
+  }
+
   implicit class TenantConverter(private val t: TenantProcess.Tenant) extends AnyVal {
     def toApi(selfcareUUID: Option[UUID], attributes: Seq[AttributeRegistry.Attribute]): Tenant = Tenant(
       id = t.id,
@@ -161,7 +170,8 @@ object TenantProcessServiceTypes {
       updatedAt = t.updatedAt,
       name = t.name,
       attributes = t.attributes.toApi(attributes),
-      contactMail = t.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
+      contactMail = t.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi),
+      features = t.features.map(_.toApi)
     )
   }
 
