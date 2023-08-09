@@ -58,6 +58,23 @@ final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: At
     }
   }
 
+  override def createCertifiedAttribute(attributeSeed: CertifiedAttributeSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Attribute] =
+      attributeRegistryProcessApiService
+        .createCertifiedAttribute(attributeSeed.toSeed)
+        .map(_.toAttribute)
+
+    onComplete(result) {
+      handleError(s"Error creating certified attribute with seed $attributeSeed") orElse { case Success(attribute) =>
+        createCertifiedAttribute200(attribute)
+      }
+    }
+  }
+
   override def createDeclaredAttribute(attributeSeed: AttributeSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],

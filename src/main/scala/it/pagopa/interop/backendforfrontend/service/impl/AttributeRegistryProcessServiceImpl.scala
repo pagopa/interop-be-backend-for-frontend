@@ -4,7 +4,13 @@ import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistryprocess.client.api.{AttributeApi, EnumsSerializers}
 import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiInvoker, BearerToken}
-import it.pagopa.interop.attributeregistryprocess.client.model.{AttributeKind, Attributes, Attribute, AttributeSeed}
+import it.pagopa.interop.attributeregistryprocess.client.model.{
+  AttributeKind,
+  Attributes,
+  Attribute,
+  AttributeSeed,
+  CertifiedAttributeSeed
+}
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
@@ -82,6 +88,19 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
     )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving attributes in bulk by id in [$requestBody]")
   }
+
+  override def createCertifiedAttribute(
+    attributeSeed: CertifiedAttributeSeed
+  )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
+    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.createCertifiedAttribute(
+          xCorrelationId = correlationId,
+          certifiedAttributeSeed = attributeSeed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Creating certified attribute with name ${attributeSeed.name}")
+    }
 
   override def createDeclaredAttribute(
     attributeSeed: AttributeSeed

@@ -1,6 +1,12 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.attributeregistryprocess.client.model.{Attribute, Attributes, AttributeKind, AttributeSeed}
+import it.pagopa.interop.attributeregistryprocess.client.model.{
+  Attribute,
+  Attributes,
+  AttributeKind,
+  AttributeSeed,
+  CertifiedAttributeSeed
+}
 
 import scala.concurrent.{Future, ExecutionContext}
 import java.util.UUID
@@ -26,4 +32,7 @@ trait AttributeRegistryProcessService {
 
   def createDeclaredAttribute(seed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute]
   def createVerifiedAttribute(seed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute]
+  def createCertifiedAttribute(seed: CertifiedAttributeSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Attribute]
 }

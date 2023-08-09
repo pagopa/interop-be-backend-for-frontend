@@ -6,6 +6,7 @@ import it.pagopa.interop.backendforfrontend.model.{
   Attribute,
   AttributeKind,
   AttributeSeed,
+  CertifiedAttributeSeed,
   CertifiedAttribute,
   CompactAttribute,
   DeclaredAttribute,
@@ -56,6 +57,16 @@ object AttributeRegistryServiceTypes {
   implicit class AttributeSeedConverter(private val seed: AttributeSeed) extends AnyVal {
     def toSeed: AttributeProcess.AttributeSeed =
       AttributeProcess.AttributeSeed(description = seed.description, name = seed.name)
+  }
+
+  implicit class CertifiedAttributeSeedConverter(private val seed: CertifiedAttributeSeed) extends AnyVal {
+    def toSeed: AttributeProcess.CertifiedAttributeSeed =
+      AttributeProcess.CertifiedAttributeSeed(
+        description = seed.description,
+        name = seed.name,
+        code = seed.code,
+        origin = seed.origin
+      )
   }
 
 }
