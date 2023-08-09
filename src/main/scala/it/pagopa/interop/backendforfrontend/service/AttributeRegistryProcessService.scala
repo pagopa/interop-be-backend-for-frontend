@@ -24,5 +24,6 @@ trait AttributeRegistryProcessService {
     contexts: Seq[(String, String)]
   ): Future[Attributes]
 
-  def createAttribute(seed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute]
+  def createDeclaredAttribute(seed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute]
+  def createVerifiedAttribute(seed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute]
 }

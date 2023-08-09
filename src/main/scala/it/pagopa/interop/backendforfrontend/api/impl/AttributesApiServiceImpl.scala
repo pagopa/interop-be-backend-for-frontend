@@ -58,17 +58,36 @@ final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: At
     }
   }
 
-  override def createAttribute(attributeSeed: AttributeSeed)(implicit
+  override def createDeclaredAttribute(attributeSeed: AttributeSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[Attribute] =
-      attributeRegistryProcessApiService.createAttribute(attributeSeed.toSeed).map(_.toAttribute)
+      attributeRegistryProcessApiService
+        .createDeclaredAttribute(attributeSeed.toSeed)
+        .map(_.toAttribute)
 
     onComplete(result) {
-      handleError(s"Error creating attribute with seed $attributeSeed") orElse { case Success(attribute) =>
-        createAttribute200(attribute)
+      handleError(s"Error creating declared attribute with seed $attributeSeed") orElse { case Success(attribute) =>
+        createDeclaredAttribute200(attribute)
+      }
+    }
+  }
+
+  override def createVerifiedAttribute(attributeSeed: AttributeSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Attribute] =
+      attributeRegistryProcessApiService
+        .createVerifiedAttribute(attributeSeed.toSeed)
+        .map(_.toAttribute)
+
+    onComplete(result) {
+      handleError(s"Error creating verified attribute with seed $attributeSeed") orElse { case Success(attribute) =>
+        createVerifiedAttribute200(attribute)
       }
     }
   }

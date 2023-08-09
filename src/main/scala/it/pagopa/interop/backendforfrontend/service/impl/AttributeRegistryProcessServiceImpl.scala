@@ -83,10 +83,23 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
     invoker.invoke(request, s"Retrieving attributes in bulk by id in [$requestBody]")
   }
 
-  def createAttribute(attributeSeed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute] =
+  override def createDeclaredAttribute(
+    attributeSeed: AttributeSeed
+  )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
     withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
       val request =
-        api.createAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
+        api.createDeclaredAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Creating attribute with name ${attributeSeed.name}")
+    }
+
+  override def createVerifiedAttribute(
+    attributeSeed: AttributeSeed
+  )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
+    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.createVerifiedAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Creating attribute with name ${attributeSeed.name}")
