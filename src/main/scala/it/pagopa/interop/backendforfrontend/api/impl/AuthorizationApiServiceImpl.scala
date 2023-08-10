@@ -61,10 +61,13 @@ final case class AuthorizationApiServiceImpl(
       tenant <- getTenantOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
       rateLimitStatus <- rateLimiter.rateLimiting(tenant.id)
       customClaims: Map[String, AnyRef] = Map(
-        USER_ROLES            -> roles,
-        ORGANIZATION_ID_CLAIM -> tenant.id.toString,
-        SELFCARE_ID_CLAIM     -> selfcareId,
-        EXTERNAL_ID_CLAIM     -> Map(ORIGIN -> tenant.externalId.origin, VALUE -> tenant.externalId.value).asJava
+        USER_ROLES                     -> roles,
+        ORGANIZATION_ID_CLAIM          -> tenant.id.toString,
+        SELFCARE_ID_CLAIM              -> selfcareId,
+        ORGANIZATION_EXTERNAL_ID_CLAIM -> Map(
+          ORGANIZATION_EXTERNAL_ID_ORIGIN -> tenant.externalId.origin,
+          ORGANIZATION_EXTERNAL_ID_VALUE  -> tenant.externalId.value
+        ).asJava
       )
       token <- sessionTokenGenerator.generate(
         SignatureAlgorithm.RSAPkcs1Sha256,
