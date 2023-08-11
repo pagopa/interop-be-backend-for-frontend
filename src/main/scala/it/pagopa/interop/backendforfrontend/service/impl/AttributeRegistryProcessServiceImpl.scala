@@ -110,7 +110,7 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
         api.createDeclaredAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Creating attribute with name ${attributeSeed.name}")
+      invoker.invoke(request, s"Creating declared attribute with name ${attributeSeed.name}")
     }
 
   override def createVerifiedAttribute(
@@ -121,6 +121,6 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
         api.createVerifiedAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Creating attribute with name ${attributeSeed.name}")
+      invoker.invoke(request, s"Creating verified attribute with name ${attributeSeed.name}")
     }
 }

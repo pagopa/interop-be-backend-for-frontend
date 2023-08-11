@@ -11041,7 +11041,6 @@ components:
         - description
         - name
         - code
-        - origin
     AttributeSeed:
       title: AttributeSeed
       type: object
