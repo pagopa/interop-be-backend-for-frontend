@@ -3,6 +3,7 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.HttpHeader
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AttributesApiService
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -13,6 +14,7 @@ import it.pagopa.interop.backendforfrontend.service.AttributeRegistryProcessServ
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -37,8 +39,9 @@ final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: At
     } yield converted
 
     onComplete(result) {
-      handleError(s"Error retrieving attribute with id $attributeId") orElse { case Success(attribute) =>
-        getAttributeById200(attribute)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving attribute with id $attributeId", headers) orElse { case Success(attribute) =>
+        getAttributeById200(headers)(attribute)
       }
     }
   }
@@ -52,8 +55,9 @@ final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: At
       attributeRegistryProcessApiService.getAttributeByOriginAndCode(origin, code)(contexts).map(_.toAttribute)
 
     onComplete(result) {
-      handleError(s"Error retrieving attribute with origin = $origin and code = $code") orElse {
-        case Success(attribute) => getAttributeByOriginAndCode200(attribute)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving attribute with origin = $origin and code = $code", headers) orElse {
+        case Success(attribute) => getAttributeByOriginAndCode200(headers)(attribute)
       }
     }
   }
@@ -67,8 +71,9 @@ final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: At
       attributeRegistryProcessApiService.createAttribute(attributeSeed.toSeed).map(_.toAttribute)
 
     onComplete(result) {
-      handleError(s"Error creating attribute with seed $attributeSeed") orElse { case Success(attribute) =>
-        createAttribute200(attribute)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error creating attribute with seed $attributeSeed", headers) orElse { case Success(attribute) =>
+        createAttribute200(headers)(attribute)
       }
     }
   }
@@ -88,10 +93,12 @@ final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: At
         )
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error retrieving attributes with name = $q, limit = $limit, offset = $offset, kinds = $kinds"
+        s"Error retrieving attributes with name = $q, limit = $limit, offset = $offset, kinds = $kinds",
+        headers
       ) orElse { case Success(attributes) =>
-        getAttributes200(attributes)
+        getAttributes200(headers)(attributes)
       }
     }
   }

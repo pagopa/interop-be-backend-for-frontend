@@ -1,10 +1,11 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, HttpHeader}
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
@@ -32,6 +33,7 @@ import it.pagopa.interop.commons.utils.Digester
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.{UUIDSupplier, OffsetDateTimeSupplier}
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import java.time.format.DateTimeFormatter
 
 import java.io.File
@@ -40,7 +42,6 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.xml.Elem
-import akka.http.scaladsl.model.HttpResponse
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -81,8 +82,9 @@ final case class EServicesApiServiceImpl(
       catalogProcessService.createEService(eServiceSeed.toProcess)(contexts).map(_.toApi)
 
     onComplete(result) {
-      handleError(s"Error creating eservice with seed: $eServiceSeed") orElse { case Success(eservice) =>
-        createEService200(eservice)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error creating eservice with seed: $eServiceSeed", headers) orElse { case Success(eservice) =>
+        createEService200(headers)(eservice)
       }
     }
   }
@@ -98,8 +100,10 @@ final case class EServicesApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error activating descriptor $descriptorId on eservice $eServiceId") orElse { case Success(_) =>
-        activateDescriptor204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error activating descriptor $descriptorId on eservice $eServiceId", headers) orElse {
+        case Success(_) =>
+          activateDescriptor204(headers)
       }
     }
   }
@@ -115,8 +119,10 @@ final case class EServicesApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error publishing descriptor $descriptorId for eservice $eServiceId") orElse { case Success(_) =>
-        publishDescriptor204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error publishing descriptor $descriptorId for eservice $eServiceId", headers) orElse {
+        case Success(_) =>
+          publishDescriptor204(headers)
       }
     }
   }
@@ -132,8 +138,10 @@ final case class EServicesApiServiceImpl(
     } yield descriptor.toApi
 
     onComplete(result) {
-      handleError(s"Error creating descriptor with seed: $eServiceDescriptorSeed") orElse { case Success(descriptor) =>
-        createDescriptor200(descriptor)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error creating descriptor with seed: $eServiceDescriptorSeed", headers) orElse {
+        case Success(descriptor) =>
+          createDescriptor200(headers)(descriptor)
       }
     }
   }
@@ -158,10 +166,12 @@ final case class EServicesApiServiceImpl(
     } yield descriptor.toApi
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error updating draft descriptor $descriptorId on service $eServiceId with seed: $updateEServiceDescriptorSeed"
+        s"Error updating draft descriptor $descriptorId on service $eServiceId with seed: $updateEServiceDescriptorSeed",
+        headers
       ) orElse { case Success(resource) =>
-        updateDraftDescriptor200(resource)
+        updateDraftDescriptor200(headers)(resource)
       }
     }
   }
@@ -202,8 +212,9 @@ final case class EServicesApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error retrieving Catalog EServices") orElse { case Success(eServices) =>
-        getEServicesCatalog200(eServices)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving Catalog EServices", headers) orElse { case Success(eServices) =>
+        getEServicesCatalog200(headers)(eServices)
       }
     }
   }
@@ -266,8 +277,9 @@ final case class EServicesApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error retrieving descriptor $descriptorId of eservice $eserviceId from catalog") orElse {
-        case Success(descriptor) => getCatalogEServiceDescriptor200(descriptor)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving descriptor $descriptorId of eservice $eserviceId from catalog", headers) orElse {
+        case Success(descriptor) => getCatalogEServiceDescriptor200(headers)(descriptor)
       }
     }
   }
@@ -317,8 +329,9 @@ final case class EServicesApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error retrieving Producer EServices") orElse { case Success(eServices) =>
-        getProducerEServices200(eServices)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving Producer EServices", headers) orElse { case Success(eServices) =>
+        getProducerEServices200(headers)(eServices)
       }
     }
   }
@@ -389,8 +402,9 @@ final case class EServicesApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error retrieving producer eservice $eserviceId") orElse { case Success(eService) =>
-        getProducerEServiceDetails200(eService)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving producer eservice $eserviceId", headers) orElse { case Success(eService) =>
+        getProducerEServiceDetails200(headers)(eService)
       }
     }
   }
@@ -439,8 +453,9 @@ final case class EServicesApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error retrieving producer descriptor $descriptorId of eservice $eserviceId") orElse {
-        case Success(descriptor) => getProducerEServiceDescriptor200(descriptor)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving producer descriptor $descriptorId of eservice $eserviceId", headers) orElse {
+        case Success(descriptor) => getProducerEServiceDescriptor200(headers)(descriptor)
       }
     }
   }
@@ -514,10 +529,12 @@ final case class EServicesApiServiceImpl(
     } yield CreatedResource(documentIdUuid)
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error creating eService document of kind $kind and name $prettyName for eService $eServiceId and descriptor $descriptorId"
+        s"Error creating eService document of kind $kind and name $prettyName for eService $eServiceId and descriptor $descriptorId",
+        headers
       ) orElse { case Success(document) =>
-        createEServiceDocument200(document)
+        createEServiceDocument200(headers)(document)
       }
     }
   }
@@ -545,9 +562,12 @@ final case class EServicesApiServiceImpl(
     } yield document.toApi
 
     onComplete(result) {
-      handleError(s"Error updating document $documentId on eService $eServiceId for descriptor $descriptorId") orElse {
-        case Success(eServiceDoc) =>
-          updateEServiceDocumentById200(eServiceDoc)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error updating document $documentId on eService $eServiceId for descriptor $descriptorId",
+        headers
+      ) orElse { case Success(eServiceDoc) =>
+        updateEServiceDocumentById200(headers)(eServiceDoc)
       }
     }
   }
@@ -578,8 +598,9 @@ final case class EServicesApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error suspending descriptor $descriptorId") orElse { case Success(_) =>
-        suspendDescriptor204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error suspending descriptor $descriptorId", headers) orElse { case Success(_) =>
+        suspendDescriptor204(headers)
       }
     }
   }
@@ -597,9 +618,10 @@ final case class EServicesApiServiceImpl(
     } yield eservice.toApiWithDescriptorId(descriptorId)
 
     onComplete(result) {
-      handleError(s"Error cloning EService ${eServiceId} with descriptor ${descriptorId}") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error cloning EService ${eServiceId} with descriptor ${descriptorId}", headers) orElse {
         case Success(eservice) =>
-          cloneEServiceByDescriptor200(eservice)
+          cloneEServiceByDescriptor200(headers)(eservice)
       }
     }
   }
@@ -616,8 +638,12 @@ final case class EServicesApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error deleting document $documentId for eService $eServiceId descriptor $descriptorId") orElse {
-        case Success(_) => deleteEServiceDocumentById204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error deleting document $documentId for eService $eServiceId descriptor $descriptorId",
+        headers
+      ) orElse { case Success(_) =>
+        deleteEServiceDocumentById204(headers)
       }
     }
   }
@@ -633,8 +659,9 @@ final case class EServicesApiServiceImpl(
     } yield eService.toApi
 
     onComplete(result) {
-      handleError(s"Error updating eservice with Id: $eServiceId") orElse { case Success(eservice) =>
-        updateEServiceById200(eservice)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error updating eservice with Id: $eServiceId", headers) orElse { case Success(eservice) =>
+        updateEServiceById200(headers)(eservice)
       }
     }
   }
@@ -662,9 +689,10 @@ final case class EServicesApiServiceImpl(
     } yield HttpEntity(contentType, byteStream.toByteArray())
 
     onComplete(result) {
-      handleError(s"Error getting document $documentId of eservice $eServiceId") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error getting document $documentId of eservice $eServiceId", headers) orElse {
         case Success(documentEntity) =>
-          complete(documentEntity)
+          complete(StatusCodes.OK, headers, documentEntity)
       }
     }
   }
@@ -689,9 +717,10 @@ final case class EServicesApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error while deleting draft descriptor $descriptorId for E-Service $eServiceId") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error while deleting draft descriptor $descriptorId for E-Service $eServiceId", headers) orElse {
         case Success(_) =>
-          deleteDraft204
+          deleteDraft204(headers)
       }
     }
   }
@@ -705,8 +734,9 @@ final case class EServicesApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error while deleting E-Service $eServiceId") orElse { case Success(_) =>
-        deleteEService204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error while deleting E-Service $eServiceId", headers) orElse { case Success(_) =>
+        deleteEService204(headers)
       }
     }
   }
@@ -735,21 +765,24 @@ final case class EServicesApiServiceImpl(
       lines.mkString("\n").getBytes()
     }
 
-    val result: Future[HttpResponse] = for {
+    val result: Future[(String, HttpEntity.Strict)] = for {
       eServiceUUID <- eServiceId.toFutureUUID
       eService     <- catalogProcessService.getEServiceById(eServiceUUID)
       consumers    <- catalogProcessService.getAllEServiceConsumers(eServiceUUID)
       filename     = s"${offsetDateTimeSupplier.get().format(dtf)}-lista-fruitori-${eService.name}.csv"
       apiConsumers = consumers.map(_.toApi)
       byteStream   = getLines(apiConsumers)
-    } yield HttpResponse(
-      entity = HttpEntity(ContentType(MediaTypes.`application/octet-stream`), byteStream),
-      headers = Seq(`Content-Disposition`(attachment, Map("filename" -> filename)))
-    )
+    } yield (filename, HttpEntity(ContentType(MediaTypes.`application/octet-stream`), byteStream))
 
     onComplete(result) {
-      handleError(s"Error getting consumers of eservice $eServiceId") orElse { case Success(resource) =>
-        complete(resource)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error getting consumers of eservice $eServiceId", headers) orElse {
+        case Success((filename, resource)) =>
+          complete(
+            StatusCodes.OK,
+            headers ++ Seq(`Content-Disposition`(attachment, Map("filename" -> filename))),
+            resource
+          )
       }
     }
   }
