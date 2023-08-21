@@ -126,7 +126,9 @@ object PurposeProcessServiceTypes {
       suspendedByConsumer = p.suspendedByConsumer,
       suspendedByProducer = p.suspendedByProducer,
       isFreeOfCharge = p.isFreeOfCharge,
-      freeOfChargeReason = p.freeOfChargeReason
+      freeOfChargeReason = p.freeOfChargeReason,
+      dailyCallsPerConsumer = currentDescriptor.dailyCallsPerConsumer,
+      dailyCallsTotal = currentDescriptor.dailyCallsTotal
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
