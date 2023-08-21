@@ -22,18 +22,24 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getAttributes(name: Option[String], limit: Int, offset: Int, kinds: Seq[AttributeKind])(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Attributes] = withHeaders[Attributes] { (bearerToken, correlationId, ip) =>
-    val request = api.getAttributes(
-      xCorrelationId = correlationId,
-      limit = limit,
-      offset = offset,
-      kinds = kinds,
-      xForwardedFor = ip,
-      name = name
-    )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving attributes")
+  override def getAttributes(
+    name: Option[String],
+    origin: Option[String],
+    limit: Int,
+    offset: Int,
+    kinds: Seq[AttributeKind]
+  )(implicit contexts: Seq[(String, String)]): Future[Attributes] = withHeaders[Attributes] {
+    (bearerToken, correlationId, ip) =>
+      val request = api.getAttributes(
+        xCorrelationId = correlationId,
+        limit = limit,
+        offset = offset,
+        kinds = kinds,
+        xForwardedFor = ip,
+        name = name,
+        origin = origin
+      )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving attributes")
   }
 
   def getAttributeByOriginAndCode(origin: String, code: String)(implicit

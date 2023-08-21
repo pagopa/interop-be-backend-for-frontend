@@ -6,8 +6,8 @@ import scala.concurrent.{Future, ExecutionContext}
 import java.util.UUID
 
 trait AttributeRegistryProcessService {
-  def getAttributes(q: Option[String], limit: Int, offset: Int, kinds: Seq[AttributeKind])(implicit
-    contexts: Seq[(String, String)]
+  def getAttributes(q: Option[String], origin: Option[String], limit: Int, offset: Int, kinds: Seq[AttributeKind])(
+    implicit contexts: Seq[(String, String)]
   ): Future[Attributes]
 
   def getAttributeByOriginAndCode(origin: String, code: String)(implicit

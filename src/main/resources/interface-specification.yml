@@ -6464,6 +6464,11 @@ paths:
           schema:
             type: string
         - in: query
+          name: origin
+          description: Query to filter Attributes by origin
+          schema:
+            type: string
+        - in: query
           name: limit
           schema:
             type: integer
