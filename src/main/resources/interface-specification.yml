@@ -10541,6 +10541,14 @@ components:
           type: boolean
         freeOfChargeReason:
           type: string
+        dailyCallsPerConsumer:
+          description: 'maximum number of daily calls that this descriptor can afford.'
+          type: integer
+          format: int32
+        dailyCallsTotal:
+          description: 'total daily calls available for this e-service.'
+          type: integer
+          format: int32
       required:
         - id
         - title
@@ -10551,6 +10559,8 @@ components:
         - eservice
         - agreement
         - isFreeOfCharge
+        - dailyCallsPerConsumer
+        - dailyCallsTotal
     PurposeAdditionDetailsSeed:
       type: object
       properties:

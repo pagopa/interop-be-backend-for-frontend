@@ -21,6 +21,7 @@ import java.util.UUID
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import scala.jdk.CollectionConverters._
 import com.nimbusds.jwt.JWTClaimsSet
 
 class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with ScalatestRouteTest {
@@ -79,6 +80,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         "user-roles"     -> "admin,anotherRole",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId,
+        "externalId"     -> Map("origin" -> "IPA", "value" -> "externalId").asJava,
         "organization"   -> Map(
           "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
@@ -169,6 +171,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         "user-roles"     -> "admin,anotherRole",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId,
+        "externalId"     -> Map("origin" -> "other-origin", "value" -> "externalId").asJava,
         "organization"   -> Map(
           "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
@@ -343,6 +346,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         "user-roles"     -> "admin,anotherRole",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId,
+        "externalId"     -> Map("origin" -> "IPA", "value" -> "IPACode").asJava,
         "organization"   -> Map(
           "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
@@ -461,6 +465,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         "user-roles"     -> "admin,anotherRole",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId,
+        "externalId"     -> Map("origin" -> "other-origin", "value" -> "externalId").asJava,
         "organization"   -> Map(
           "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
@@ -630,6 +635,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         "user-roles"     -> "admin",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId,
+        "externalId"     -> Map("origin" -> "IPA", "value" -> "externalId").asJava,
         "organization"   -> Map(
           "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
