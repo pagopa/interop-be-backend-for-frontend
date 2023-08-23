@@ -109,7 +109,7 @@ final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: At
     }
   }
 
-  override def getAttributes(q: Option[String], limit: Int, offset: Int, kinds: String)(implicit
+  override def getAttributes(q: Option[String], origin: Option[String], limit: Int, offset: Int, kinds: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerAttributes: ToEntityMarshaller[Attributes]
   ): Route = {
@@ -119,7 +119,7 @@ final case class AttributesApiServiceImpl(attributeRegistryProcessApiService: At
         .toFuture
         .flatMap(attributeKindList =>
           attributeRegistryProcessApiService
-            .getAttributes(q, limit, offset, attributeKindList.map(_.toProcess))
+            .getAttributes(q, origin, limit, offset, attributeKindList.map(_.toProcess))
             .map(a => Attributes(Pagination(offset, limit, a.totalCount), a.results.map(_.toApi)))
         )
 

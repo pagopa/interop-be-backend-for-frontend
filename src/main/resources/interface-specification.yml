@@ -6746,6 +6746,11 @@ paths:
           schema:
             type: string
         - in: query
+          name: origin
+          description: Query to filter Attributes by origin
+          schema:
+            type: string
+        - in: query
           name: limit
           schema:
             type: integer
@@ -11046,7 +11051,7 @@ components:
         code:
           type: string
         origin:
-          type: string     
+          type: string
       required:
         - description
         - name
