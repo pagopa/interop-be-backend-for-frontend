@@ -6,6 +6,7 @@ import it.pagopa.interop.backendforfrontend.model.{
   Attribute,
   AttributeKind,
   AttributeSeed,
+  CertifiedAttributeSeed,
   CertifiedAttribute,
   CompactAttribute,
   DeclaredAttribute,
@@ -18,12 +19,6 @@ object AttributeRegistryServiceTypes {
     case AttributeProcess.AttributeKind.CERTIFIED => CERTIFIED
     case AttributeProcess.AttributeKind.DECLARED  => DECLARED
     case AttributeProcess.AttributeKind.VERIFIED  => VERIFIED
-  }
-
-  private def fromModel(kind: AttributeKind): AttributeProcess.AttributeKind = kind match {
-    case CERTIFIED => AttributeProcess.AttributeKind.CERTIFIED
-    case DECLARED  => AttributeProcess.AttributeKind.DECLARED
-    case VERIFIED  => AttributeProcess.AttributeKind.VERIFIED
   }
 
   implicit class AttributeKindProcessConverter(private val ak: AttributeKind) extends AnyVal {
@@ -60,13 +55,13 @@ object AttributeRegistryServiceTypes {
   }
 
   implicit class AttributeSeedConverter(private val seed: AttributeSeed) extends AnyVal {
-    def toSeed: AttributeProcess.AttributeSeed = AttributeProcess.AttributeSeed(
-      code = seed.code,
-      kind = fromModel(seed.kind),
-      description = seed.description,
-      origin = seed.origin,
-      name = seed.name
-    )
+    def toSeed: AttributeProcess.AttributeSeed =
+      AttributeProcess.AttributeSeed(description = seed.description, name = seed.name)
+  }
+
+  implicit class CertifiedAttributeSeedConverter(private val seed: CertifiedAttributeSeed) extends AnyVal {
+    def toSeed: AttributeProcess.CertifiedAttributeSeed =
+      AttributeProcess.CertifiedAttributeSeed(description = seed.description, name = seed.name, code = seed.code)
   }
 
 }
