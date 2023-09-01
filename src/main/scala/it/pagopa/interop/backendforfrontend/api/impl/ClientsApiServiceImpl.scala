@@ -6,9 +6,10 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   CatalogProcessService,
+  PartyProcessService,
   PurposeProcessService,
   TenantProcessService,
-  PartyProcessService
+  UserRegistryService
 }
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
@@ -16,16 +17,17 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.model.{RelationshipState, _}
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => PartyProcessApiError}
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcessModel}
-import it.pagopa.interop.selfcare.partyprocess.client.model.RelationshipState.ACTIVE
+import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
+import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 final case class ClientsApiServiceImpl(
@@ -33,7 +35,8 @@ final case class ClientsApiServiceImpl(
   tenantProcessService: TenantProcessService,
   catalogProcessService: CatalogProcessService,
   purposeProcessService: PurposeProcessService,
-  partyProcessService: PartyProcessService
+  partyProcessService: PartyProcessService,
+  userRegistryService: UserRegistryService
 )(implicit ec: ExecutionContext)
     extends ClientsApiService {
 
@@ -151,7 +154,8 @@ final case class ClientsApiServiceImpl(
     val result: Future[PublicKey] = for {
       clientUuid    <- clientId.toFutureUUID
       readClientKey <- authorizationProcessService.getClientKeyById(clientUuid, keyId)
-      key           <- decorateKey(readClientKey)
+      user          <- userRegistryService.findById(readClientKey.relationshipId)
+      key           <- decorateKey(readClientKey, user)
     } yield key
 
     onComplete(result) {
@@ -202,11 +206,11 @@ final case class ClientsApiServiceImpl(
 
     val result: Future[EncodedClientKey] = for {
       clientUuid       <- clientId.toFutureUUID
-      encodedClientKey <- authorizationProcessService.getEncodedClientKeyById(clientUuid, keyId)
-    } yield (encodedClientKey.toApi)
+      encodedClientKey <- authorizationProcessService.getClientKeyById(clientUuid, keyId)
+    } yield EncodedClientKey(encodedClientKey.encodedPem)
 
     onComplete(result) {
-      handleError(s"Error retrieving key $keyId for client ${clientId.toString}") orElse { case Success(key) =>
+      handleError(s"Error retrieving key $keyId for client ${clientId}") orElse { case Success(key) =>
         getEncodedClientKeyById200(key)
       }
     }
@@ -282,7 +286,12 @@ final case class ClientsApiServiceImpl(
     val result: Future[PublicKeys] = for {
       clientUuid     <- clientId.toFutureUUID
       readClientKeys <- authorizationProcessService.getClientKeys(clientUuid, Seq.empty)
-      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
+      keys           <- Future.traverse(readClientKeys.keys)(key =>
+        for {
+          user         <- userRegistryService.findById(key.relationshipId)
+          decoratedKey <- decorateKey(key, user)
+        } yield decoratedKey
+      )
     } yield PublicKeys(keys)
 
     onComplete(result) {
@@ -292,19 +301,23 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  private def decorateKey(
-    key: AuthorizationProcessModel.ReadClientKey
-  )(implicit contexts: Seq[(String, String)]): Future[PublicKey] =
-    partyProcessService
-      .getRelationship(key.operator.relationshipId)
-      .map(_.state match {
-        case ACTIVE => key.toApi(isOrphan = false)
-        case _      => key.toApi(isOrphan = true)
-      })
-      .recoverWith {
-        case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true))
-        case other                                 => Future.failed(other)
-      }
+  private def decorateKey(key: AuthorizationProcessModel.Key, user: UserResource)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[PublicKey] = {
+
+    val result: Future[PublicKey] = for {
+      relationship     <- partyProcessService.getRelationship(key.relationshipId)
+      relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
+    } yield relationshipInfo.state match {
+      case RelationshipState.ACTIVE => key.toApi(isOrphan = false, user)
+      case _                        => key.toApi(isOrphan = true, user)
+    }
+
+    result.recoverWith {
+      case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true, user))
+      case other                                 => Future.failed(other)
+    }
+  }
 
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
@@ -365,7 +378,12 @@ final case class ClientsApiServiceImpl(
       clientUuid       <- clientId.toFutureUUID
       relationshipUuid <- relationshipId.toFutureUUID
       readClientKeys   <- authorizationProcessService.getClientKeys(clientUuid, Seq(relationshipUuid))
-      keys             <- Future.traverse(readClientKeys.keys)(decorateKey)
+      keys             <- Future.traverse(readClientKeys.keys)(key =>
+        for {
+          user         <- userRegistryService.findById(key.relationshipId)
+          decoratedKey <- decorateKey(key, user)
+        } yield decoratedKey
+      )
     } yield PublicKeys(keys)
 
     onComplete(result) {

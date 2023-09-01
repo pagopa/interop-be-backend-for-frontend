@@ -2,6 +2,9 @@ package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
+
+import java.util.UUID
 
 object AuthorizationProcessServiceTypes {
 
@@ -76,11 +79,6 @@ object AuthorizationProcessServiceTypes {
       AuthorizationProcess.KeySeed(key = seed.key, use = seed.use.toProcess, alg = seed.alg, name = seed.name)
   }
 
-  implicit class EncodedClientKeyProcessConverter(private val eck: AuthorizationProcess.EncodedClientKey)
-      extends AnyVal {
-    def toApi: EncodedClientKey = EncodedClientKey(key = eck.key)
-  }
-
   implicit class ClientSeedConverter(private val seed: ClientSeed) extends AnyVal {
     def toProcess: AuthorizationProcess.ClientSeed =
       AuthorizationProcess.ClientSeed(name = seed.name, description = seed.description, members = seed.members)
@@ -96,18 +94,21 @@ object AuthorizationProcessServiceTypes {
       CompactClient(id = c.client.id, name = c.client.name, hasKeys = c.keys.nonEmpty)
   }
 
-  implicit class OperatorDetailsConverter(private val od: AuthorizationProcess.OperatorDetails) extends AnyVal {
-    def toApi: SelfcareUser =
-      SelfcareUser(relationshipId = od.relationshipId, familyName = od.familyName, name = od.name)
+  implicit class OperatorDetailsConverter(private val u: UserResource) extends AnyVal {
+    def toApi(relationshipId: UUID): SelfcareUser = {
+      val name       = u.name.map(_.value).getOrElse("")
+      val familyName = u.familyName.map(_.value).getOrElse("")
+      SelfcareUser(relationshipId = relationshipId, familyName = familyName, name = name)
+    }
   }
 
-  implicit class ReadClientKeyConverter(private val rck: AuthorizationProcess.ReadClientKey) extends AnyVal {
-    def toApi(isOrphan: Boolean): PublicKey =
+  implicit class ReadClientKeyConverter(private val k: AuthorizationProcess.Key) extends AnyVal {
+    def toApi(isOrphan: Boolean, user: UserResource): PublicKey =
       PublicKey(
-        keyId = rck.key.kid,
-        name = rck.name,
-        operator = rck.operator.toApi,
-        createdAt = rck.createdAt,
+        keyId = k.kid,
+        name = k.name,
+        operator = user.toApi(k.relationshipId),
+        createdAt = k.createdAt,
         isOrphan = isOrphan
       )
   }
