@@ -17,7 +17,7 @@ import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.backendforfrontend.model.{RelationshipState, _}
+import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
