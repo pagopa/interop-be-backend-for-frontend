@@ -96,9 +96,15 @@ object AuthorizationProcessServiceTypes {
 
   implicit class OperatorDetailsConverter(private val u: UserResource) extends AnyVal {
     def toApi(relationshipId: UUID): SelfcareUser = {
-      val name       = u.name.map(_.value).getOrElse("")
-      val familyName = u.familyName.map(_.value).getOrElse("")
-      SelfcareUser(relationshipId = relationshipId, familyName = familyName, name = name)
+      (u.name, u.familyName) match {
+        case (None, None) => SelfcareUser(relationshipId = relationshipId, name = "Utente", familyName = u.id.toString)
+        case _            =>
+          SelfcareUser(
+            relationshipId = relationshipId,
+            name = u.name.map(_.value).getOrElse(""),
+            familyName = u.familyName.map(_.value).getOrElse("")
+          )
+      }
     }
   }
 
