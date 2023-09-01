@@ -154,8 +154,7 @@ final case class ClientsApiServiceImpl(
     val result: Future[PublicKey] = for {
       clientUuid    <- clientId.toFutureUUID
       readClientKey <- authorizationProcessService.getClientKeyById(clientUuid, keyId)
-      user          <- userRegistryService.findById(readClientKey.relationshipId)
-      key           <- decorateKey(readClientKey, user)
+      key           <- decorateKey(readClientKey)
     } yield key
 
     onComplete(result) {
@@ -286,12 +285,7 @@ final case class ClientsApiServiceImpl(
     val result: Future[PublicKeys] = for {
       clientUuid     <- clientId.toFutureUUID
       readClientKeys <- authorizationProcessService.getClientKeys(clientUuid, Seq.empty)
-      keys           <- Future.traverse(readClientKeys.keys)(key =>
-        for {
-          user         <- userRegistryService.findById(key.relationshipId)
-          decoratedKey <- decorateKey(key, user)
-        } yield decoratedKey
-      )
+      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
     onComplete(result) {
@@ -301,7 +295,16 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  private def decorateKey(key: AuthorizationProcessModel.Key, user: UserResource)(implicit
+  private def decorateKey(
+    key: AuthorizationProcessModel.Key
+  )(implicit contexts: Seq[(String, String)]): Future[PublicKey] = {
+    for {
+      user         <- userRegistryService.findById(key.relationshipId)
+      decoratedKey <- decorateKeyInternal(key, user)
+    } yield decoratedKey
+  }
+
+  private def decorateKeyInternal(key: AuthorizationProcessModel.Key, user: UserResource)(implicit
     contexts: Seq[(String, String)]
   ): Future[PublicKey] = {
 
@@ -378,12 +381,7 @@ final case class ClientsApiServiceImpl(
       clientUuid       <- clientId.toFutureUUID
       relationshipUuid <- relationshipId.toFutureUUID
       readClientKeys   <- authorizationProcessService.getClientKeys(clientUuid, Seq(relationshipUuid))
-      keys             <- Future.traverse(readClientKeys.keys)(key =>
-        for {
-          user         <- userRegistryService.findById(key.relationshipId)
-          decoratedKey <- decorateKey(key, user)
-        } yield decoratedKey
-      )
+      keys             <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
     onComplete(result) {
