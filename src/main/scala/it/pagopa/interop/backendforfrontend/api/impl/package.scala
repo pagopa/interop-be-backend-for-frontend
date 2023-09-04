@@ -107,7 +107,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val compactAttributeFormat: RootJsonFormat[CompactAttribute] = jsonFormat2(CompactAttribute)
   implicit val attributesResponseFormat: RootJsonFormat[Attributes]     = jsonFormat2(Attributes)
 
-  implicit val attributeSeedFormat: RootJsonFormat[AttributeSeed] = jsonFormat5(AttributeSeed)
+  implicit val certifiedAttributeSeedFormat: RootJsonFormat[CertifiedAttributeSeed] = jsonFormat4(
+    CertifiedAttributeSeed
+  )
+  implicit val attributeSeedFormat: RootJsonFormat[AttributeSeed]                   = jsonFormat2(AttributeSeed)
 
   implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                         = jsonFormat4(EServiceDoc)
   implicit val eServiceAttributeValueFormat: RootJsonFormat[DescriptorAttributeValue] =
@@ -144,17 +147,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val clientPurposeFormat: RootJsonFormat[ClientPurpose]                   = jsonFormat3(ClientPurpose)
   implicit val clientFormat: RootJsonFormat[Client]                                 = jsonFormat7(Client)
 
-  implicit val purposeFormat: RootJsonFormat[Purpose]                                 = jsonFormat15(Purpose)
+  implicit val purposeFormat: RootJsonFormat[Purpose]                                 = jsonFormat17(Purpose)
   implicit val purposesFormat: RootJsonFormat[Purposes]                               = jsonFormat2(Purposes)
   implicit val purposeAdditionDetailsSeed: RootJsonFormat[PurposeAdditionDetailsSeed] = jsonFormat1(
     PurposeAdditionDetailsSeed
   )
 
-  implicit val purposeUpdateContentFormat: RootJsonFormat[PurposeUpdateContent] = jsonFormat6(PurposeUpdateContent)
-
-  implicit val DraftPurposeVersionUpdateContentFormat: RootJsonFormat[DraftPurposeVersionUpdateContent] = jsonFormat1(
-    DraftPurposeVersionUpdateContent
-  )
+  implicit val purposeUpdateContentFormat: RootJsonFormat[PurposeUpdateContent] = jsonFormat7(PurposeUpdateContent)
 
   implicit val DescriptorAttributeValueSeedFormat: RootJsonFormat[DescriptorAttributeValueSeed] = jsonFormat2(
     DescriptorAttributeValueSeed

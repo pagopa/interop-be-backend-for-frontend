@@ -4,7 +4,13 @@ import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.attributeregistryprocess.client.api.{AttributeApi, EnumsSerializers}
 import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiInvoker, BearerToken}
-import it.pagopa.interop.attributeregistryprocess.client.model.{AttributeKind, Attributes, Attribute, AttributeSeed}
+import it.pagopa.interop.attributeregistryprocess.client.model.{
+  AttributeKind,
+  Attributes,
+  Attribute,
+  AttributeSeed,
+  CertifiedAttributeSeed
+}
 import it.pagopa.interop.backendforfrontend.service.AttributeRegistryProcessService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
@@ -22,18 +28,24 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getAttributes(name: Option[String], limit: Int, offset: Int, kinds: Seq[AttributeKind])(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Attributes] = withHeaders[Attributes] { (bearerToken, correlationId, ip) =>
-    val request = api.getAttributes(
-      xCorrelationId = correlationId,
-      limit = limit,
-      offset = offset,
-      kinds = kinds,
-      xForwardedFor = ip,
-      name = name
-    )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Retrieving attributes")
+  override def getAttributes(
+    name: Option[String],
+    origin: Option[String],
+    limit: Int,
+    offset: Int,
+    kinds: Seq[AttributeKind]
+  )(implicit contexts: Seq[(String, String)]): Future[Attributes] = withHeaders[Attributes] {
+    (bearerToken, correlationId, ip) =>
+      val request = api.getAttributes(
+        xCorrelationId = correlationId,
+        limit = limit,
+        offset = offset,
+        kinds = kinds,
+        xForwardedFor = ip,
+        name = name,
+        origin = origin
+      )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Retrieving attributes")
   }
 
   def getAttributeByOriginAndCode(origin: String, code: String)(implicit
@@ -83,12 +95,38 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
     invoker.invoke(request, s"Retrieving attributes in bulk by id in [$requestBody]")
   }
 
-  def createAttribute(attributeSeed: AttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Attribute] =
+  override def createCertifiedAttribute(
+    attributeSeed: CertifiedAttributeSeed
+  )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
     withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
       val request =
-        api.createAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
+        api.createCertifiedAttribute(
+          xCorrelationId = correlationId,
+          certifiedAttributeSeed = attributeSeed,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Creating certified attribute with name ${attributeSeed.name}")
+    }
+
+  override def createDeclaredAttribute(
+    attributeSeed: AttributeSeed
+  )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
+    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.createDeclaredAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Creating attribute with name ${attributeSeed.name}")
+      invoker.invoke(request, s"Creating declared attribute with name ${attributeSeed.name}")
+    }
+
+  override def createVerifiedAttribute(
+    attributeSeed: AttributeSeed
+  )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
+    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+      val request =
+        api.createVerifiedAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Creating verified attribute with name ${attributeSeed.name}")
     }
 }

@@ -422,33 +422,6 @@ final case class PurposesApiServiceImpl(
     }
   }
 
-  override def updateDraftPurposeVersion(
-    purposeId: String,
-    versionId: String,
-    draftPurposeVersionUpdateContent: DraftPurposeVersionUpdateContent
-  )(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerPurposeVersion: ToEntityMarshaller[PurposeVersionResource],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    logger.info(s"Updating draft version $versionId of purpose $purposeId")
-
-    val result: Future[PurposeVersionResource] = for {
-      purposeUUID <- purposeId.toFutureUUID
-      versionUUID <- versionId.toFutureUUID
-      _           <- purposeProcessService
-        .updateDraftPurposeVersion(purposeUUID, versionUUID, draftPurposeVersionUpdateContent.toProcess)
-    } yield PurposeVersionResource(purposeUUID, versionUUID)
-
-    onComplete(result) {
-      val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error updating draft version $versionId of purpose $purposeId", headers) orElse {
-        case Success(response) =>
-          updateDraftPurposeVersion200(headers)(response)
-      }
-    }
-  }
-
   override def createPurpose(purposeSeed: PurposeSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],

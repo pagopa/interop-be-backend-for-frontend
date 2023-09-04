@@ -13,8 +13,6 @@ import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
 object PurposeProcessServiceTypes {
 
-  type DraftPurposeVersionProcess = PurposeProcess.DraftPurposeVersionUpdateContent
-
   implicit class PurposeVersionStateConverter(private val v: PurposeProcess.PurposeVersionState) extends AnyVal {
     def toApi: PurposeVersionState = v match {
       case PurposeProcess.PurposeVersionState.ACTIVE               => PurposeVersionState.ACTIVE
@@ -55,12 +53,6 @@ object PurposeProcessServiceTypes {
       extends AnyVal {
     def toSeed: PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent =
       PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent(expectedApprovalDate = seed.expectedApprovalDate)
-  }
-
-  implicit class DraftPurposeVersionUpdateContentConverter(private val dpvc: DraftPurposeVersionUpdateContent)
-      extends AnyVal {
-    def toProcess: DraftPurposeVersionProcess =
-      PurposeProcess.DraftPurposeVersionUpdateContent(dailyCalls = dpvc.dailyCalls)
   }
 
   implicit class PurposeVersionsConverter(private val pv: PurposeProcess.PurposeVersion) extends AnyVal {
@@ -126,7 +118,9 @@ object PurposeProcessServiceTypes {
       suspendedByConsumer = p.suspendedByConsumer,
       suspendedByProducer = p.suspendedByProducer,
       isFreeOfCharge = p.isFreeOfCharge,
-      freeOfChargeReason = p.freeOfChargeReason
+      freeOfChargeReason = p.freeOfChargeReason,
+      dailyCallsPerConsumer = currentDescriptor.dailyCallsPerConsumer,
+      dailyCallsTotal = currentDescriptor.dailyCallsTotal
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
@@ -140,7 +134,8 @@ object PurposeProcessServiceTypes {
         eserviceId = puc.eserviceId,
         isFreeOfCharge = puc.isFreeOfCharge,
         freeOfChargeReason = puc.freeOfChargeReason,
-        riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess)
+        riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess),
+        dailyCalls = puc.dailyCalls
       )
   }
 
