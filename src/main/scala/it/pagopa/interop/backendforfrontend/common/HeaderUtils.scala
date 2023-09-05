@@ -8,6 +8,6 @@ import it.pagopa.interop.commons.utils.CONTENT_LANGUAGE
 
 object HeaderUtils {
   def headersFromContext()(implicit contexts: Seq[(String, String)]): List[HttpHeader] = {
-    List(getAcceptLanguage(contexts).toOption.map(RawHeader(CONTENT_LANGUAGE, _))).flatten
+    getAcceptLanguage(contexts).fold(_ => Nil, hdr => List(RawHeader(CONTENT_LANGUAGE, hdr)))
   }
 }
