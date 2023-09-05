@@ -5,6 +5,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import it.pagopa.interop.backendforfrontend.api.HealthApiService
 import it.pagopa.interop.backendforfrontend.model.Problem
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 
 class HealthServiceApiImpl extends HealthApiService {
 
@@ -20,6 +21,6 @@ class HealthServiceApiImpl extends HealthApiService {
       title = StatusCodes.OK.defaultMessage,
       errors = Seq.empty
     )
-    getStatus200(response)
+    getStatus200(headersFromContext())(response)
   }
 }

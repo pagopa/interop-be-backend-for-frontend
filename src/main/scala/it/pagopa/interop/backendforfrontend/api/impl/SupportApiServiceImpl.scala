@@ -3,6 +3,7 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.HttpHeader
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.SupportApiService
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaimsByTenant, parseResponse, validate}
@@ -17,6 +18,7 @@ import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -54,8 +56,9 @@ final case class SupportApiServiceImpl(
     } yield SessionToken(sessionToken)
 
     onComplete(result) {
-      handleError(s"Error creating a session token") orElse { case Success(token) =>
-        getSaml2Token200(token)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error creating a session token", headers) orElse { case Success(token) =>
+        getSaml2Token200(headers)(token)
       }
     }
   }

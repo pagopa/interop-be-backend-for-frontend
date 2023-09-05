@@ -1,9 +1,10 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import akka.http.scaladsl.server.Directives.{complete, onComplete, redirect}
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.{HttpHeader, StatusCodes}
 import cats.implicits._
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
@@ -79,8 +80,9 @@ final case class AuthorizationApiServiceImpl(
     } yield (SessionToken(token), rateLimitStatus)
 
     onComplete(result) {
-      handleError(s"Error creating a session token") orElse { case Success((token, rateLimitStatus)) =>
-        complete(StatusCodes.OK, Headers.headersFromStatus(rateLimitStatus), token)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error creating a session token", headers) orElse { case Success((token, rateLimitStatus)) =>
+        complete(StatusCodes.OK, headers ++ Headers.headersFromStatus(rateLimitStatus), token)
       }
     }
   }

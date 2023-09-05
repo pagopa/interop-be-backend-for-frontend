@@ -4,6 +4,7 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.{ContentType, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.{HttpHeader, StatusCodes}
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.authorizationprocess.client.model.ClientWithKeys
@@ -22,6 +23,7 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 
 import java.io.File
 import java.util.UUID
@@ -62,9 +64,11 @@ final case class PurposesApiServiceImpl(
       getPurposes(q, eServicesIds, consumersIds, producersIds, states, offset, limit, false)
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
-      ) orElse { case Success(r) => getConsumerPurposes200(r) }
+        s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit",
+        headers
+      ) orElse { case Success(r) => getConsumerPurposes200(headers)(r) }
     }
   }
 
@@ -84,9 +88,11 @@ final case class PurposesApiServiceImpl(
     val result: Future[Purposes] = getPurposes(q, eServicesIds, consumersIds, producersIds, states, offset, limit, true)
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit"
-      ) orElse { case Success(r) => getProducerPurposes200(r) }
+        s"Error retrieving Purposes for name $q, EServices $eServicesIds, Consumers $consumersIds offset $offset, limit $limit",
+        headers
+      ) orElse { case Success(r) => getProducerPurposes200(headers)(r) }
     }
   }
 
@@ -142,9 +148,10 @@ final case class PurposesApiServiceImpl(
     } yield PurposeVersionResource(purposeId = purposeUuid, versionId = versionUuid)
 
     onComplete(result) {
-      handleError(s"Error archiving purpose $purposeId with version $versionId") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error archiving purpose $purposeId with version $versionId", headers) orElse {
         case Success(compactPurpose) =>
-          archivePurposeVersion200(compactPurpose)
+          archivePurposeVersion200(headers)(compactPurpose)
       }
     }
   }
@@ -171,9 +178,12 @@ final case class PurposesApiServiceImpl(
     } yield PurposeVersionResource(purposeId = purposeUuid, versionId = purposeVersion.id)
 
     onComplete(result) {
-      handleError(s"Error updating purpose $purposeId with version $versionId in waiting for approval state") orElse {
-        case Success(resource) =>
-          updateWaitingForApprovalPurposeVersion200(resource)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error updating purpose $purposeId with version $versionId in waiting for approval state",
+        headers
+      ) orElse { case Success(resource) =>
+        updateWaitingForApprovalPurposeVersion200(headers)(resource)
       }
     }
   }
@@ -207,10 +217,12 @@ final case class PurposesApiServiceImpl(
       } yield HttpEntity(contentType, byteStream.toByteArray())
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error downloading risk analysis document $documentId from purpose $purposeId with version $versionId"
+        s"Error downloading risk analysis document $documentId from purpose $purposeId with version $versionId",
+        headers
       ) orElse { case Success(document) =>
-        complete(document)
+        complete(StatusCodes.OK, headers, document)
       }
     }
   }
@@ -228,10 +240,12 @@ final case class PurposesApiServiceImpl(
     } yield PurposeVersionResource(purposeId = purposeVersion.id, versionId = purposeVersion.id)
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}"
+        s"Error creating version for purpose $purposeId with dailyCalls ${purposeVersionSeed.dailyCalls}",
+        headers
       ) orElse { case Success(resource) =>
-        createPurposeVersion200(resource)
+        createPurposeVersion200(headers)(resource)
       }
     }
   }
@@ -250,8 +264,9 @@ final case class PurposesApiServiceImpl(
       } yield result
 
     onComplete(result) {
-      handleError(s"Error deleting version $versionId of purpose $purposeId") orElse { case Success(_) =>
-        deletePurposeVersion204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error deleting version $versionId of purpose $purposeId", headers) orElse { case Success(_) =>
+        deletePurposeVersion204(headers)
       }
     }
   }
@@ -268,8 +283,9 @@ final case class PurposesApiServiceImpl(
       } yield ()
 
     onComplete(result) {
-      handleError(s"Error deleting purpose $purposeId") orElse { case Success(_) =>
-        deletePurpose204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error deleting purpose $purposeId", headers) orElse { case Success(_) =>
+        deletePurpose204(headers)
       }
     }
   }
@@ -357,8 +373,9 @@ final case class PurposesApiServiceImpl(
     } yield PurposeVersionResource(purpose.id, draftVersion.id)
 
     onComplete(result) {
-      handleError(s"Error cloning purpose $purposeId") orElse { case Success(resource) =>
-        clonePurpose200(resource)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error cloning purpose $purposeId", headers) orElse { case Success(resource) =>
+        clonePurpose200(headers)(resource)
       }
     }
   }
@@ -377,8 +394,9 @@ final case class PurposesApiServiceImpl(
     } yield PurposeVersionResource(purposeUUID, versionUUID)
 
     onComplete(result) {
-      handleError(s"Error suspending Version $versionId of Purpose $purposeId") orElse { case Success(r) =>
-        suspendPurposeVersion200(r)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error suspending Version $versionId of Purpose $purposeId", headers) orElse { case Success(r) =>
+        suspendPurposeVersion200(headers)(r)
       }
     }
   }
@@ -397,8 +415,9 @@ final case class PurposesApiServiceImpl(
     } yield PurposeVersionResource(purposeUUID, versionUUID)
 
     onComplete(result) {
-      handleError(s"Error activating Version $versionId of Purpose $purposeId") orElse { case Success(r) =>
-        activatePurposeVersion200(r)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error activating Version $versionId of Purpose $purposeId", headers) orElse { case Success(r) =>
+        activatePurposeVersion200(headers)(r)
       }
     }
   }
@@ -414,10 +433,12 @@ final case class PurposesApiServiceImpl(
       purposeProcessService.createPurpose(purposeSeed.toProcess)(contexts).map(_.toApiResource)
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error creating Purpose with eService ${purposeSeed.eserviceId} and consumer ${purposeSeed.consumerId}"
+        s"Error creating Purpose with eService ${purposeSeed.eserviceId} and consumer ${purposeSeed.consumerId}",
+        headers
       ) orElse { case Success(purpose) =>
-        createPurpose200(purpose)
+        createPurpose200(headers)(purpose)
       }
     }
   }
@@ -442,8 +463,9 @@ final case class PurposesApiServiceImpl(
     } yield enhancedPurpose
 
     onComplete(result) {
-      handleError(s"Error retrieving purpose $purposeId") orElse { case Success(response) =>
-        getPurpose200(response)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving purpose $purposeId", headers) orElse { case Success(response) =>
+        getPurpose200(headers)(response)
       }
     }
   }
@@ -463,8 +485,9 @@ final case class PurposesApiServiceImpl(
     } yield PurposeVersionResource(purposeUUID, versionUUID)
 
     onComplete(result) {
-      handleError(s"Error updating Purpose $purposeId") orElse { case Success(response) =>
-        updatePurpose200(response)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error updating Purpose $purposeId", headers) orElse { case Success(response) =>
+        updatePurpose200(headers)(response)
       }
     }
   }
@@ -481,8 +504,9 @@ final case class PurposesApiServiceImpl(
       .map(_.toApi)
 
     onComplete(result) {
-      handleError(s"Error retrieving latest risk analysis configuration") orElse { case Success(response) =>
-        retrieveLatestRiskAnalysisConfiguration200(response)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving latest risk analysis configuration", headers) orElse { case Success(response) =>
+        retrieveLatestRiskAnalysisConfiguration200(headers)(response)
       }
     }
   }
@@ -499,9 +523,10 @@ final case class PurposesApiServiceImpl(
       .map(_.toApi)
 
     onComplete(result) {
-      handleError(s"Error retrieving risk analysis configuration for version $riskAnalysisVersion") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving risk analysis configuration for version $riskAnalysisVersion", headers) orElse {
         case Success(response) =>
-          retrieveRiskAnalysisConfigurationByVersion200(response)
+          retrieveRiskAnalysisConfigurationByVersion200(headers)(response)
       }
     }
   }
