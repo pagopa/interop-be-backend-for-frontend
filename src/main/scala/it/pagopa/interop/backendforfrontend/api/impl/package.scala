@@ -92,7 +92,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val certifierFormat: RootJsonFormat[Certifier]                   = jsonFormat1(Certifier)
   implicit val tenantFeatureFormat: RootJsonFormat[TenantFeature]           = jsonFormat1(TenantFeature)
   implicit val institutionFormat: RootJsonFormat[Tenant]                    = jsonFormat9(Tenant)
-  implicit val agreementFormat: RootJsonFormat[Agreement]                   = jsonFormat20(Agreement)
+  implicit val agreementFormat: RootJsonFormat[Agreement]                   = jsonFormat19(Agreement)
   implicit val agreementListEntryFormat: RootJsonFormat[AgreementListEntry] = jsonFormat9(AgreementListEntry)
   implicit val agreementsFormat: RootJsonFormat[Agreements]                 = jsonFormat2(Agreements)
 
