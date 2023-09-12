@@ -4,8 +4,8 @@ import cats.syntax.all._
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeProcess}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.catalogmanagement.{model => CatalogManagement}
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
-import it.pagopa.interop.catalogmanagement.model._
 import it.pagopa.interop.catalogprocess.client.model.EServiceTechnology.{REST, SOAP}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 
@@ -29,21 +29,16 @@ object CatalogProcessServiceTypes {
     }
   }
 
-  implicit class EServiceAttributeValueSeedConverter(private val a: DescriptorAttributeValueSeed) extends AnyVal {
-    def toProcess: CatalogProcess.AttributeValueSeed =
-      CatalogProcess.AttributeValueSeed(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
-  }
-
-  implicit class EServiceAttributeSeedConverter(private val e: DescriptorAttributeSeed) extends AnyVal {
+  implicit class EServiceAttributeSeedConverter(private val a: DescriptorAttributeSeed) extends AnyVal {
     def toProcess: CatalogProcess.AttributeSeed =
-      CatalogProcess.AttributeSeed(single = e.single.map(_.toProcess), group = e.group.nested.map(_.toProcess).value)
+      CatalogProcess.AttributeSeed(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
   }
 
   implicit class EServiceAttributesSeedConverter(private val esa: DescriptorAttributesSeed) extends AnyVal {
     def toProcess: CatalogProcess.AttributesSeed = CatalogProcess.AttributesSeed(
-      certified = esa.certified.map(_.toProcess),
-      declared = esa.declared.map(_.toProcess),
-      verified = esa.verified.map(_.toProcess)
+      certified = esa.certified.map(_.map(_.toProcess)),
+      declared = esa.declared.map(_.map(_.toProcess)),
+      verified = esa.verified.map(_.map(_.toProcess))
     )
   }
 
@@ -157,34 +152,17 @@ object CatalogProcessServiceTypes {
 
   final case class AttributeDetails(name: String, description: String)
 
-  implicit class AttributeValueWrapper(private val av: CatalogProcess.AttributeValue) extends AnyVal {
-    def toPersistent: CatalogAttributeValue = CatalogAttributeValue(av.id, av.explicitAttributeVerification)
-  }
-
-  implicit class AttributeSingleWrapper(private val a: CatalogProcess.AttributeValue) extends AnyVal {
-    def toPersistentSingle: SingleAttribute = SingleAttribute(id =
-      CatalogAttributeValue(id = a.id, explicitAttributeVerification = a.explicitAttributeVerification)
-    )
-  }
-
-  implicit class AttributeGroupWrapper(private val a: Seq[CatalogProcess.AttributeValue]) extends AnyVal {
-    def toPersistentGroup: GroupAttribute = GroupAttribute(ids =
-      a.map(v => CatalogAttributeValue(id = v.id, explicitAttributeVerification = v.explicitAttributeVerification))
-    )
+  implicit class AttributeValueWrapper(private val av: CatalogProcess.Attribute) extends AnyVal {
+    def toPersistent: CatalogManagement.CatalogAttribute =
+      CatalogManagement.CatalogAttribute(av.id, av.explicitAttributeVerification)
   }
 
   implicit class AttributesWrapper(private val eServiceAttributes: CatalogProcess.Attributes) extends AnyVal {
 
-    def toPersistent: CatalogAttributes = CatalogAttributes(
-      certified = eServiceAttributes.certified.flatMap(a =>
-        a.single.map(_.toPersistentSingle).toList ++ a.group.map(_.toPersistentGroup).toList
-      ),
-      declared = eServiceAttributes.declared.flatMap(a =>
-        a.single.map(_.toPersistentSingle).toList ++ a.group.map(_.toPersistentGroup).toList
-      ),
-      verified = eServiceAttributes.declared.flatMap(a =>
-        a.single.map(_.toPersistentSingle).toList ++ a.group.map(_.toPersistentGroup).toList
-      )
+    def toPersistent: CatalogManagement.CatalogAttributes = CatalogManagement.CatalogAttributes(
+      certified = eServiceAttributes.certified.map(_.map(_.toPersistent)),
+      declared = eServiceAttributes.declared.map(_.map(_.toPersistent)),
+      verified = eServiceAttributes.verified.map(_.map(_.toPersistent))
     )
 
     def toApi(attributes: Seq[AttributeProcess.Attribute]): Future[DescriptorAttributes] = {
@@ -192,28 +170,20 @@ object CatalogProcessServiceTypes {
         attributes.map(attr => attr.id -> AttributeDetails(attr.name, attr.description)).toMap
 
       for {
-        certified <- eServiceAttributes.certified.traverse(convertToApiAttribute(attributeNames))
-        declared  <- eServiceAttributes.declared.traverse(convertToApiAttribute(attributeNames))
-        verified  <- eServiceAttributes.verified.traverse(convertToApiAttribute(attributeNames))
+        certified <- eServiceAttributes.certified.traverse(_.traverse(convertToApiAttribute(attributeNames)))
+        declared  <- eServiceAttributes.declared.traverse(_.traverse(convertToApiAttribute(attributeNames)))
+        verified  <- eServiceAttributes.verified.traverse(_.traverse(convertToApiAttribute(attributeNames)))
       } yield DescriptorAttributes(certified = certified, declared = declared, verified = verified)
     }.toFuture
 
     private def convertToApiAttribute(
       attributeNames: Map[UUID, AttributeDetails]
-    )(attribute: CatalogProcess.Attribute): Either[AttributeNotExists, DescriptorAttribute] =
-      for {
-        single <- attribute.single.traverse(convertToApiAttributeValue(attributeNames))
-        group  <- attribute.group.nested.traverse(convertToApiAttributeValue(attributeNames))
-      } yield DescriptorAttribute(single = single, group = group.value)
-
-    private def convertToApiAttributeValue(
-      attributeNames: Map[UUID, AttributeDetails]
-    )(value: CatalogProcess.AttributeValue): Either[AttributeNotExists, DescriptorAttributeValue] =
+    )(value: CatalogProcess.Attribute): Either[AttributeNotExists, DescriptorAttribute] =
       attributeNames
         .get(value.id)
         .toRight(AttributeNotExists(value.id))
         .map(attribute =>
-          DescriptorAttributeValue(
+          DescriptorAttribute(
             id = value.id,
             name = attribute.name,
             description = attribute.description,

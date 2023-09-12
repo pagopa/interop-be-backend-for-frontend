@@ -370,17 +370,7 @@ final case class AgreementsApiServiceImpl(
   )
 
   def descriptorAttributesIds(descriptor: CatalogProcess.EServiceDescriptor): Seq[UUID] = {
-    val attrs: Seq[CatalogProcess.Attribute] =
-      descriptor.attributes.verified ++ descriptor.attributes.declared ++ descriptor.attributes.certified
-    attrs
-      .mapFilter(a =>
-        (a.single, a.group) match {
-          case (Some(s), Some(g)) => Some(s :: g.toList)
-          case (Some(s), None)    => Some(s :: Nil)
-          case (None, g)          => g
-        }
-      )
-      .flatten
+    (descriptor.attributes.verified.flatten ++ descriptor.attributes.declared.flatten ++ descriptor.attributes.certified.flatten)
       .map(_.id)
   }
 
