@@ -225,7 +225,7 @@ final case class ClientsApiServiceImpl(
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error retrieving key $keyId for client ${clientId.toString}", headers) orElse { case Success(key) =>
+      handleError(s"Error retrieving key $keyId for client $clientId", headers) orElse { case Success(key) =>
         getEncodedClientKeyById200(headers)(key)
       }
     }
