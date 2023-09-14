@@ -3,6 +3,7 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.HttpHeader
 import cats.data.NonEmptyList
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
@@ -30,6 +31,7 @@ import it.pagopa.interop.clientassertionvalidation.{NimbusClientAssertionValidat
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -69,9 +71,12 @@ final case class ToolsApiServiceImpl(
         _             <- verifyPlatformState(keyWithClient, validation, eService).toFuture
       } yield successfulValidationResult(clientKind = keyWithClient.client.kind.toApi, eService = eService)
 
-    onComplete(result)(
-      handleTokenValidationError(s"Error validating token generation request")(validateTokenGeneration200)
-    )
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleTokenValidationError(s"Error validating token generation request", headers)(
+        validateTokenGeneration200(headers)
+      )
+    }
   }
 
   private def validateClientAssertion(

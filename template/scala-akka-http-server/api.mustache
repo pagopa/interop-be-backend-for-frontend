@@ -1,7 +1,7 @@
 package {{package}}
 
 import akka.event.Logging
-import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.{HttpRequest,HttpHeader}
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry}
 import akka.http.scaladsl.server.{Directive0, Directive1, Route, RouteResult}
 import akka.http.scaladsl.server.Directives._
@@ -77,9 +77,9 @@ import akka.http.scaladsl.server.directives.FileInfo
 
     trait {{classname}}Service {
     {{#operation}}
-        {{#responses}}  def {{operationId}}{{#vendorExtensions.x-is-default}}Default{{/vendorExtensions.x-is-default}}{{^vendorExtensions.x-is-default}}{{code}}{{/vendorExtensions.x-is-default}}{{#baseType}}({{#vendorExtensions.x-is-default}}statusCode: Int, {{/vendorExtensions.x-is-default}}response{{baseType}}{{containerType}}: {{dataType}}){{^isPrimitiveType}}(implicit toEntityMarshaller{{baseType}}{{containerType}}: ToEntityMarshaller[{{dataType}}]){{/isPrimitiveType}}{{/baseType}}{{^baseType}}{{#vendorExtensions.x-is-default}}(statusCode: Int){{/vendorExtensions.x-is-default}}{{/baseType}}: Route ={{#vendorExtensions.x-empty-response}}
+        {{#responses}}  def {{operationId}}{{#vendorExtensions.x-is-default}}Default{{/vendorExtensions.x-is-default}}{{^vendorExtensions.x-is-default}}{{code}}(headers: List[HttpHeader]){{/vendorExtensions.x-is-default}}{{#baseType}}({{#vendorExtensions.x-is-default}}statusCode: Int, {{/vendorExtensions.x-is-default}}response{{baseType}}{{containerType}}: {{dataType}}){{^isPrimitiveType}}(implicit toEntityMarshaller{{baseType}}{{containerType}}: ToEntityMarshaller[{{dataType}}]){{/isPrimitiveType}}{{/baseType}}{{^baseType}}{{#vendorExtensions.x-is-default}}(statusCode: Int){{/vendorExtensions.x-is-default}}{{/baseType}}: Route ={{#vendorExtensions.x-empty-response}}
             complete({{#vendorExtensions.x-is-default}}statusCode{{/vendorExtensions.x-is-default}}{{^vendorExtensions.x-is-default}}StatusCodes.getForKey({{code}}){{/vendorExtensions.x-is-default}}){{/vendorExtensions.x-empty-response}}{{^vendorExtensions.x-empty-response}}
-            complete(({{#vendorExtensions.x-is-default}}statusCode{{/vendorExtensions.x-is-default}}{{^vendorExtensions.x-is-default}}{{code}}{{/vendorExtensions.x-is-default}}, {{#baseType}}response{{baseType}}{{containerType}}{{/baseType}}{{^baseType}}"{{message}}"{{/baseType}})){{/vendorExtensions.x-empty-response}}
+            complete({{#vendorExtensions.x-is-default}}statusCode{{/vendorExtensions.x-is-default}}{{^vendorExtensions.x-is-default}}{{code}}{{/vendorExtensions.x-is-default}}, headers ,{{#baseType}}response{{baseType}}{{containerType}}{{/baseType}}{{^baseType}}"{{message}}"{{/baseType}}){{/vendorExtensions.x-empty-response}}
         {{/responses}}
         /**
         {{#responses}}   * {{#code}}Code: {{.}}{{/code}}{{#message}}, Message: {{.}}{{/message}}{{#dataType}}, DataType: {{.}}{{/dataType}}

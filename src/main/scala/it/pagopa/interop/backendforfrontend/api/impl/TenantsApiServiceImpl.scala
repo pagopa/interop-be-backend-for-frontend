@@ -3,6 +3,7 @@ package it.pagopa.interop.backendforfrontend.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.HttpHeader
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.TenantsApiService
@@ -17,6 +18,7 @@ import it.pagopa.interop.backendforfrontend.service.{
 }
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.tenantprocess.client.model.{TenantAttribute => DepTenantAttribute}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -55,8 +57,10 @@ final case class TenantsApiServiceImpl(
       )
 
     onComplete(result) {
-      handleError(s"Error retrieving tenants for name $name, offset $offset, limit $limit") orElse { case Success(r) =>
-        getTenants200(r)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving tenants for name $name, offset $offset, limit $limit", headers) orElse {
+        case Success(r) =>
+          getTenants200(headers)(r)
       }
     }
   }
@@ -75,8 +79,10 @@ final case class TenantsApiServiceImpl(
       )
 
     onComplete(result) {
-      handleError(s"Error retrieving producers for name $q, offset $offset, limit $limit") orElse { case Success(r) =>
-        getProducers200(r)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving producers for name $q, offset $offset, limit $limit", headers) orElse {
+        case Success(r) =>
+          getProducers200(headers)(r)
       }
     }
   }
@@ -95,8 +101,10 @@ final case class TenantsApiServiceImpl(
       )
 
     onComplete(result) {
-      handleError(s"Error retrieving consumers for name $q, offset $offset, limit $limit") orElse { case Success(r) =>
-        getConsumers200(r)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving consumers for name $q, offset $offset, limit $limit", headers) orElse {
+        case Success(r) =>
+          getConsumers200(headers)(r)
       }
     }
   }
@@ -107,8 +115,10 @@ final case class TenantsApiServiceImpl(
     toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse]
   ): Route =
     onComplete(getTenantAttributes(tenantId, _.certified)) {
-      handleError(s"Error retrieving certified attributes for tenant $tenantId") orElse { case Success(attributes) =>
-        getCertifiedAttributes200(CertifiedAttributesResponse(attributes))
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving certified attributes for tenant $tenantId", headers) orElse {
+        case Success(attributes) =>
+          getCertifiedAttributes200(headers)(CertifiedAttributesResponse(attributes))
       }
     }
 
@@ -118,8 +128,10 @@ final case class TenantsApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route =
     onComplete(getTenantAttributes(tenantId, _.verified)) {
-      handleError(s"Error retrieving verified attributes for tenant $tenantId") orElse { case Success(attributes) =>
-        getVerifiedAttributes200(VerifiedAttributesResponse(attributes))
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving verified attributes for tenant $tenantId", headers) orElse {
+        case Success(attributes) =>
+          getVerifiedAttributes200(headers)(VerifiedAttributesResponse(attributes))
       }
     }
 
@@ -129,8 +141,10 @@ final case class TenantsApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route =
     onComplete(getTenantAttributes(tenantId, _.declared)) {
-      handleError(s"Error retrieving declared attributes for tenant $tenantId") orElse { case Success(attributes) =>
-        getDeclaredAttributes200(DeclaredAttributesResponse(attributes))
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving declared attributes for tenant $tenantId", headers) orElse {
+        case Success(attributes) =>
+          getDeclaredAttributes200(headers)(DeclaredAttributesResponse(attributes))
       }
     }
 
@@ -140,8 +154,10 @@ final case class TenantsApiServiceImpl(
     val result: Future[Unit] = tenantProcessService.addDeclaredAttribute(seed.toSeed).void
 
     onComplete(result) {
-      handleError(s"Error adding declared attribute ${seed.id} to requester tenant") orElse { case Success(_) =>
-        addDeclaredAttribute204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error adding declared attribute ${seed.id} to requester tenant", headers) orElse {
+        case Success(_) =>
+          addDeclaredAttribute204(headers)
       }
     }
   }
@@ -156,8 +172,10 @@ final case class TenantsApiServiceImpl(
       } yield ()
 
     onComplete(result) {
-      handleError(s"Error revoking declared attribute $attributeId to requester tenant") orElse { case Success(_) =>
-        revokeDeclaredAttribute204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error revoking declared attribute $attributeId to requester tenant", headers) orElse {
+        case Success(_) =>
+          revokeDeclaredAttribute204(headers)
       }
     }
   }
@@ -172,8 +190,10 @@ final case class TenantsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error verifying verified attribute ${seed.id} to tenant $tenantId") orElse { case Success(_) =>
-        verifyVerifiedAttribute204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error verifying verified attribute ${seed.id} to tenant $tenantId", headers) orElse {
+        case Success(_) =>
+          verifyVerifiedAttribute204(headers)
       }
     }
   }
@@ -190,8 +210,10 @@ final case class TenantsApiServiceImpl(
       } yield ()
 
     onComplete(result) {
-      handleError(s"Error revoking verified attribute $attributeId to tenant $tenantId") orElse { case Success(_) =>
-        revokeDeclaredAttribute204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error revoking verified attribute $attributeId to tenant $tenantId", headers) orElse {
+        case Success(_) =>
+          revokeDeclaredAttribute204(headers)
       }
     }
   }
@@ -206,8 +228,9 @@ final case class TenantsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error updating tenant with id $tenantId") orElse { case Success(_) =>
-        updateTenant204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error updating tenant with id $tenantId", headers) orElse { case Success(_) =>
+        updateTenant204(headers)
       }
     }
   }
@@ -239,8 +262,9 @@ final case class TenantsApiServiceImpl(
     } yield tenant.toApi(selfcareUUID, attributes)
 
     onComplete(result) {
-      handleError(s"Error retrieving tenant with tenantId $tenantId)") orElse { case Success(t) =>
-        getTenant200(t)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving tenant with tenantId $tenantId)", headers) orElse { case Success(t) =>
+        getTenant200(headers)(t)
       }
     }
   }
@@ -257,9 +281,12 @@ final case class TenantsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error updating expirationDate for verified attribute ${attributeId} to tenant $tenantId") orElse {
-        case Success(_) =>
-          updateVerifiedAttribute204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error updating expirationDate for verified attribute ${attributeId} to tenant $tenantId",
+        headers
+      ) orElse { case Success(_) =>
+        updateVerifiedAttribute204(headers)
       }
     }
   }

@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, HttpHeader, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives.{onComplete, complete}
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
@@ -18,6 +18,7 @@ import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import cats.syntax.all._
 
 import java.io.File
@@ -66,8 +67,10 @@ final case class PrivacyNoticesApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error retrieving privacy notices for consentType $consentType") orElse { case Success(res) =>
-        getPrivacyNotice200(res)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving privacy notices for consentType $consentType", headers) orElse {
+        case Success(res) =>
+          getPrivacyNotice200(headers)(res)
       }
     }
   }
@@ -110,8 +113,9 @@ final case class PrivacyNoticesApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error accepting privacy notices for consentType $consentType") orElse { case Success(_) =>
-        acceptPrivacyNotice204(_)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error accepting privacy notices for consentType $consentType", headers) orElse { case Success(_) =>
+        acceptPrivacyNotice204(headers)(_)
       }
     }
   }
@@ -136,8 +140,10 @@ final case class PrivacyNoticesApiServiceImpl(
     } yield HttpEntity(ContentType(MediaTypes.`application/json`), byteStream.toByteArray())
 
     onComplete(result) {
-      handleError(s"Error retrieving privacy notices for consent type $consentType") orElse { case Success(privacy) =>
-        complete(privacy)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving privacy notices for consent type $consentType", headers) orElse {
+        case Success(privacy) =>
+          complete(StatusCodes.OK, headers, privacy)
       }
     }
   }

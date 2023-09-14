@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{HttpHeader, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import cats.implicits._
@@ -10,6 +10,7 @@ import it.pagopa.interop.backendforfrontend.api.PartyApiService
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.model.{Problem, RelationshipInfo}
 import it.pagopa.interop.backendforfrontend.service.{
   AttributeRegistryProcessService,
@@ -42,6 +43,8 @@ final case class PartyApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     logger.info(s"Retrieving relationship $relationshipId")
+    val headers: List[HttpHeader] = headersFromContext()
+
     val result: Future[RelationshipInfo] = for {
       uuid             <- relationshipId.toFutureUUID
       relationship     <- partyProcessService.getRelationship(uuid)
@@ -50,14 +53,15 @@ final case class PartyApiServiceImpl(
     } yield relationshipInfo
 
     onComplete(result) {
-      case Success(relationshipInfo)          => getRelationship200(relationshipInfo)
+      case Success(relationshipInfo)          => getRelationship200(headers)(relationshipInfo)
       case Failure(ex: ResourceNotFoundError) =>
         logger.error(s"Error while retrieving relationship $relationshipId - ${ex.getMessage}")
-        getRelationship404(problemOf(StatusCodes.NotFound, RelationshipNotFound(relationshipId)))
+        getRelationship404(headers)(problemOf(StatusCodes.NotFound, RelationshipNotFound(relationshipId)))
       case Failure(ex)                        =>
         logger.error(s"Error while retrieving relationship $relationshipId - ${ex.getMessage}")
         complete(
           StatusCodes.InternalServerError,
+          headers,
           problemOf(
             StatusCodes.InternalServerError,
             GenericError(s"Something went wrong trying to get relationship $relationshipId - ${ex.getMessage}")
@@ -78,6 +82,7 @@ final case class PartyApiServiceImpl(
     toEntityMarshallerRelationshipInfoarray: ToEntityMarshaller[Seq[RelationshipInfo]]
   ): Route = {
     logger.info(s"Retrieving relationships for institutions $tenantId")
+    val headers: List[HttpHeader] = headersFromContext()
 
     val result: Future[Seq[RelationshipInfo]] = for {
       personIdUUID <- personId.traverse(_.toFutureUUID)
@@ -103,13 +108,14 @@ final case class PartyApiServiceImpl(
     } yield filterByUserName(relationshipsInfo, query)
 
     onComplete(result) {
-      case Success(relationshipsInfo) => getUserInstitutionRelationships200(relationshipsInfo)
+      case Success(relationshipsInfo) => getUserInstitutionRelationships200(headers)(relationshipsInfo)
       case Failure(ex)                =>
         logger.error(
           s"Error while retrieving relationships for institutions corresponding to tenant $tenantId - ${ex.getMessage}"
         )
         complete(
           StatusCodes.InternalServerError,
+          headers,
           problemOf(
             StatusCodes.InternalServerError,
             GenericError(

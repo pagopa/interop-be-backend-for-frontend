@@ -10,10 +10,11 @@ import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareClientTypes._
-
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.HttpHeader
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -46,8 +47,9 @@ final case class SelfcareApiServiceImpl(
       } yield apiResults
 
     onComplete(result) {
-      handleError(s"Error retrieving products for institution") orElse { case Success(resources) =>
-        getInstitutionUserProducts200(resources)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving products for institution", headers) orElse { case Success(resources) =>
+        getInstitutionUserProducts200(headers)(resources)
       }
     }
   }
@@ -65,8 +67,9 @@ final case class SelfcareApiServiceImpl(
       } yield apiResults
 
     onComplete(result) {
-      handleError(s"Error retrieving institutions") orElse { case Success(resources) =>
-        getInstitutions200(resources)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving institutions", headers) orElse { case Success(resources) =>
+        getInstitutions200(headers)(resources)
       }
     }
   }

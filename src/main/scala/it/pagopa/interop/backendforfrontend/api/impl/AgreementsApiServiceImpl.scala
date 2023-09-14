@@ -1,9 +1,11 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, HttpHeader}
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.syntax.all._
 import it.pagopa.interop.commons.utils.AkkaUtils._
@@ -33,6 +35,7 @@ import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 
 import java.io.File
 import java.util.UUID
@@ -63,9 +66,11 @@ final case class AgreementsApiServiceImpl(
     } yield CreatedResource(result.id)
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error creating agreement for EService ${payload.eserviceId} and Descriptor ${payload.descriptorId}"
-      ) orElse { case Success(resource) => createAgreement200(resource) }
+        s"Error creating agreement for EService ${payload.eserviceId} and Descriptor ${payload.descriptorId}",
+        headers
+      ) orElse { case Success(resource) => createAgreement200(headers)(resource) }
     }
   }
 
@@ -75,7 +80,10 @@ final case class AgreementsApiServiceImpl(
     val result: Future[Unit] = agreementId.toFutureUUID >>= agreementProcessService.deleteAgreement
 
     onComplete(result) {
-      handleError(s"Error deleting agreement $agreementId") orElse { case Success(_) => deleteAgreement204 }
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error deleting agreement $agreementId", headers) orElse { case Success(_) =>
+        deleteAgreement204(headers)
+      }
     }
   }
 
@@ -91,8 +99,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      handleError(s"Error retrieving agreement $agreementId") orElse { case Success(agreement) =>
-        getAgreementById200(agreement)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving agreement $agreementId", headers) orElse { case Success(agreement) =>
+        getAgreementById200(headers)(agreement)
       }
     }
   }
@@ -131,7 +140,10 @@ final case class AgreementsApiServiceImpl(
     )
 
     onComplete(agreements) {
-      handleError(s"Error retrieving agreements") orElse { case Success(agreements) => getAgreements200(agreements) }
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving agreements", headers) orElse { case Success(agreements) =>
+        getAgreements200(headers)(agreements)
+      }
     }
   }
 
@@ -147,8 +159,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      handleError(s"Error activating agreement $agreementId") orElse { case Success(agreement) =>
-        activateAgreement200(agreement)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error activating agreement $agreementId", headers) orElse { case Success(agreement) =>
+        activateAgreement200(headers)(agreement)
       }
     }
   }
@@ -165,8 +178,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      handleError(s"Error submitting agreement $agreementId") orElse { case Success(agreement) =>
-        submitAgreement200(agreement)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error submitting agreement $agreementId", headers) orElse { case Success(agreement) =>
+        submitAgreement200(headers)(agreement)
       }
     }
   }
@@ -183,8 +197,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      handleError(s"Error suspending agreement $agreementId") orElse { case Success(agreement) =>
-        suspendAgreement200(agreement)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error suspending agreement $agreementId", headers) orElse { case Success(agreement) =>
+        suspendAgreement200(headers)(agreement)
       }
     }
   }
@@ -201,8 +216,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      handleError(s"Error rejecting agreement $agreementId") orElse { case Success(agreement) =>
-        rejectAgreement200(agreement)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error rejecting agreement $agreementId", headers) orElse { case Success(agreement) =>
+        rejectAgreement200(headers)(agreement)
       }
     }
   }
@@ -216,7 +232,10 @@ final case class AgreementsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error archiving agreement $agreementId") orElse { case Success(_) => archiveAgreement204 }
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error archiving agreement $agreementId", headers) orElse { case Success(_) =>
+        archiveAgreement204(headers)
+      }
     }
   }
 
@@ -232,8 +251,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      handleError(s"Error updating agreement $agreementId") orElse { case Success(agreement) =>
-        updateAgreement200(agreement)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error updating agreement $agreementId", headers) orElse { case Success(agreement) =>
+        updateAgreement200(headers)(agreement)
       }
     }
   }
@@ -250,8 +270,9 @@ final case class AgreementsApiServiceImpl(
     } yield apiAgreement
 
     onComplete(agreement) {
-      handleError(s"Error upgrading agreement $agreementId") orElse { case Success(agreement) =>
-        upgradeAgreement200(agreement)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error upgrading agreement $agreementId", headers) orElse { case Success(agreement) =>
+        upgradeAgreement200(headers)(agreement)
       }
     }
   }
@@ -349,17 +370,7 @@ final case class AgreementsApiServiceImpl(
   )
 
   def descriptorAttributesIds(descriptor: CatalogProcess.EServiceDescriptor): Seq[UUID] = {
-    val attrs: Seq[CatalogProcess.Attribute] =
-      descriptor.attributes.verified ++ descriptor.attributes.declared ++ descriptor.attributes.certified
-    attrs
-      .mapFilter(a =>
-        (a.single, a.group) match {
-          case (Some(s), Some(g)) => Some(s :: g.toList)
-          case (Some(s), None)    => Some(s :: Nil)
-          case (None, g)          => g
-        }
-      )
-      .flatten
+    (descriptor.attributes.verified.flatten ++ descriptor.attributes.declared.flatten ++ descriptor.attributes.certified.flatten)
       .map(_.id)
   }
 
@@ -401,8 +412,10 @@ final case class AgreementsApiServiceImpl(
       } yield document.toApi
 
     onComplete(result) {
-      handleError(s"Error Adding consumer document to agreement $agreementId") orElse { case Success(contract) =>
-        complete(contract)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error Adding consumer document to agreement $agreementId", headers) orElse {
+        case Success(contract) =>
+          complete(StatusCodes.OK, headers, contract)
       }
     }
   }
@@ -424,8 +437,9 @@ final case class AgreementsApiServiceImpl(
       } yield HttpEntity(contentType, byteStream.toByteArray())
 
     onComplete(result) {
-      handleError(s"Error downloading contract fro agreement $agreementId") orElse { case Success(contract) =>
-        complete(contract)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error downloading contract fro agreement $agreementId", headers) orElse { case Success(contract) =>
+        complete(StatusCodes.OK, headers, contract)
       }
     }
   }
@@ -452,8 +466,9 @@ final case class AgreementsApiServiceImpl(
       } yield HttpEntity(ContentType(MediaTypes.`application/pdf`), byteStream.toByteArray())
 
     onComplete(result) {
-      handleError(s"Error downloading contract fro agreement $agreementId") orElse { case Success(contract) =>
-        complete(contract)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error downloading contract fro agreement $agreementId", headers) orElse { case Success(contract) =>
+        complete(StatusCodes.OK, headers, contract)
       }
     }
   }
@@ -472,8 +487,9 @@ final case class AgreementsApiServiceImpl(
       } yield result
 
     onComplete(result) {
-      handleError(s"Error deleting consumer document $documentId for agreement $agreementId") orElse {
-        case Success(_) => removeAgreementConsumerDocument204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error deleting consumer document $documentId for agreement $agreementId", headers) orElse {
+        case Success(_) => removeAgreementConsumerDocument204(headers)
       }
     }
   }
@@ -491,8 +507,9 @@ final case class AgreementsApiServiceImpl(
     } yield CreatedResource(result.id)
 
     onComplete(result) {
-      handleError(s"Error cloning agreement $agreementId") orElse { case Success(resource) =>
-        cloneAgreement200(resource)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error cloning agreement $agreementId", headers) orElse { case Success(resource) =>
+        cloneAgreement200(headers)(resource)
       }
     }
   }
@@ -530,10 +547,12 @@ final case class AgreementsApiServiceImpl(
     }
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit",
+        headers
       ) orElse { case Success(producers) =>
-        getAgreementEServiceProducers200(producers)
+        getAgreementEServiceProducers200(headers)(producers)
       }
     }
   }
@@ -571,10 +590,12 @@ final case class AgreementsApiServiceImpl(
     }
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit"
+        s"Error retrieving eservices from agreement filtered by eservice name $q, offset $offset, limit $limit",
+        headers
       ) orElse { case Success(consumers) =>
-        getAgreementEServiceConsumers200(consumers)
+        getAgreementEServiceConsumers200(headers)(consumers)
       }
     }
   }
@@ -605,10 +626,12 @@ final case class AgreementsApiServiceImpl(
     }
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error retrieving producers from agreement filtered by producer name $q, offset $offset, limit $limit"
+        s"Error retrieving producers from agreement filtered by producer name $q, offset $offset, limit $limit",
+        headers
       ) orElse { case Success(producers) =>
-        getAgreementProducers200(producers)
+        getAgreementProducers200(headers)(producers)
       }
     }
   }
@@ -639,10 +662,12 @@ final case class AgreementsApiServiceImpl(
     }
 
     onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
       handleError(
-        s"Error retrieving consumers from agreement filtered by consumer name $q, offset $offset, limit $limit"
+        s"Error retrieving consumers from agreement filtered by consumer name $q, offset $offset, limit $limit",
+        headers
       ) orElse { case Success(consumers) =>
-        getAgreementConsumers200(consumers)
+        getAgreementConsumers200(headers)(consumers)
       }
     }
   }

@@ -6,17 +6,19 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   CatalogProcessService,
-  PartyProcessService,
   PurposeProcessService,
   TenantProcessService,
+  PartyProcessService,
   UserRegistryService
 }
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.HttpHeader
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
@@ -27,7 +29,7 @@ import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProc
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
 import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Success
 
 final case class ClientsApiServiceImpl(
@@ -49,7 +51,10 @@ final case class ClientsApiServiceImpl(
     val result: Future[Unit] = authorizationProcessService.deleteClient(clientId)
 
     onComplete(result) {
-      handleError(s"Error deleting client $clientId") orElse { case Success(_) => deleteClient204 }
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error deleting client $clientId", headers) orElse { case Success(_) =>
+        deleteClient204(headers)
+      }
     }
   }
 
@@ -65,8 +70,9 @@ final case class ClientsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error removing purpose $purposeId for client $clientId") orElse { case Success(_) =>
-        removeClientPurpose204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error removing purpose $purposeId for client $clientId", headers) orElse { case Success(_) =>
+        removeClientPurpose204(headers)
       }
     }
   }
@@ -82,8 +88,9 @@ final case class ClientsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error deleting key $keyId of client $clientId") orElse { case Success(_) =>
-        deleteClientKeyById204
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error deleting key $keyId of client $clientId", headers) orElse { case Success(_) =>
+        deleteClientKeyById204(headers)
       }
     }
   }
@@ -100,9 +107,10 @@ final case class ClientsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error removing operator relationship $relationshipId of client $clientId") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error removing operator relationship $relationshipId of client $clientId", headers) orElse {
         case Success(_) =>
-          removeClientOperatorRelationship204
+          removeClientOperatorRelationship204(headers)
       }
     }
   }
@@ -120,9 +128,10 @@ final case class ClientsApiServiceImpl(
     } yield (result.toCreatedResource)
 
     onComplete(result) {
-      handleError(s"Error binding operator relationship $relationshipId to client $clientId") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error binding operator relationship $relationshipId to client $clientId", headers) orElse {
         case Success(resource) =>
-          clientOperatorRelationshipBinding200(resource)
+          clientOperatorRelationshipBinding200(headers)(resource)
       }
     }
   }
@@ -138,9 +147,10 @@ final case class ClientsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error adding purpose ${purposeAdditionDetailsSeed.purposeId} to client $clientId") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error adding purpose ${purposeAdditionDetailsSeed.purposeId} to client $clientId", headers) orElse {
         case Success(_) =>
-          addClientPurpose204
+          addClientPurpose204(headers)
       }
     }
   }
@@ -158,8 +168,9 @@ final case class ClientsApiServiceImpl(
     } yield key
 
     onComplete(result) {
-      handleError(s"Error retrieving key $keyId of client $clientId") orElse { case Success(key) =>
-        getClientKeyById200(key)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving key $keyId of client $clientId", headers) orElse { case Success(key) =>
+        getClientKeyById200(headers)(key)
       }
     }
   }
@@ -176,8 +187,9 @@ final case class ClientsApiServiceImpl(
     } yield (operators.map(_.toApi))
 
     onComplete(result) {
-      handleError(s"Error retrieving operators for client $clientId") orElse { case Success(operators) =>
-        getClientOperators200(operators)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving operators for client $clientId", headers) orElse { case Success(operators) =>
+        getClientOperators200(headers)(operators)
       }
     }
   }
@@ -193,7 +205,10 @@ final case class ClientsApiServiceImpl(
     } yield ()
 
     onComplete(result) {
-      handleError(s"Error creating keys for client $clientId") orElse { case Success(_) => createKeys204(_) }
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error creating keys for client $clientId", headers) orElse { case Success(_) =>
+        createKeys204(headers)(_)
+      }
     }
   }
 
@@ -209,8 +224,9 @@ final case class ClientsApiServiceImpl(
     } yield EncodedClientKey(encodedClientKey.encodedPem)
 
     onComplete(result) {
-      handleError(s"Error retrieving key $keyId for client ${clientId}") orElse { case Success(key) =>
-        getEncodedClientKeyById200(key)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving key $keyId for client ${clientId.toString}", headers) orElse { case Success(key) =>
+        getEncodedClientKeyById200(headers)(key)
       }
     }
   }
@@ -225,8 +241,10 @@ final case class ClientsApiServiceImpl(
       authorizationProcessService.createConsumerClient(clientSeed.toProcess) map (_.toCreatedResource)
 
     onComplete(result) {
-      handleError(s"Error creating consumer client with name ${clientSeed.name}") orElse { case Success(resource) =>
-        createConsumerClient200(resource)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error creating consumer client with name ${clientSeed.name}", headers) orElse {
+        case Success(resource) =>
+          createConsumerClient200(headers)(resource)
       }
     }
   }
@@ -241,8 +259,9 @@ final case class ClientsApiServiceImpl(
       authorizationProcessService.createApiClient(clientSeed.toProcess) map (_.toCreatedResource)
 
     onComplete(result) {
-      handleError(s"Error creating api client with name ${clientSeed.name}") orElse { case Success(resource) =>
-        createApiClient200(resource)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error creating api client with name ${clientSeed.name}", headers) orElse { case Success(resource) =>
+        createApiClient200(headers)(resource)
       }
     }
   }
@@ -272,7 +291,10 @@ final case class ClientsApiServiceImpl(
     )
 
     onComplete(result) {
-      handleError(s"Error retrieving clients") orElse { case Success(clients) => getClients200(clients) }
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving clients", headers) orElse { case Success(clients) =>
+        getClients200(headers)(clients)
+      }
     }
   }
 
@@ -289,8 +311,9 @@ final case class ClientsApiServiceImpl(
     } yield PublicKeys(keys)
 
     onComplete(result) {
-      handleError(s"Error retrieving keys of client $clientId") orElse { case Success(keys) =>
-        getClientKeys200(keys)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving keys of client $clientId", headers) orElse { case Success(keys) =>
+        getClientKeys200(headers)(keys)
       }
     }
   }
@@ -335,8 +358,9 @@ final case class ClientsApiServiceImpl(
     } yield apiClient
 
     onComplete(result) {
-      handleError(s"Error retrieving client $clientId") orElse { case Success(client) =>
-        getClient200(client)
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving client $clientId", headers) orElse { case Success(client) =>
+        getClient200(headers)(client)
       }
     }
   }
@@ -385,9 +409,10 @@ final case class ClientsApiServiceImpl(
     } yield PublicKeys(keys)
 
     onComplete(result) {
-      handleError(s"Error retrieving keys to client $clientId and relationship $relationshipId") orElse {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving keys to client $clientId and relationship $relationshipId", headers) orElse {
         case Success(keys) =>
-          getClientRelationshipKeys200(keys)
+          getClientRelationshipKeys200(headers)(keys)
       }
     }
   }
