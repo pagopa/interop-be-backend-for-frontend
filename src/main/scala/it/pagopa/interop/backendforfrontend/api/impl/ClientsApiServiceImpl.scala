@@ -194,14 +194,15 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def createKeys(clientId: String, keySeed: Seq[KeySeed])(implicit
+  override def createKeys(relationshipIds: String, clientId: String, keySeed: Seq[KeySeed])(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
     val result: Future[Unit] = for {
-      clientUuid <- clientId.toFutureUUID
-      _          <- authorizationProcessService.createKeys(clientUuid, keySeed.map(_.toProcess))
+      clientUuid        <- clientId.toFutureUUID
+      relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
+      _ <- authorizationProcessService.createKeys(relationshipsUuid, clientUuid, keySeed.map(_.toProcess))
     } yield ()
 
     onComplete(result) {
