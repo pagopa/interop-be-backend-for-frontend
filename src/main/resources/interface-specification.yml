@@ -8311,16 +8311,6 @@ paths:
           schema:
             type: string
             format: uuid
-        - in: query
-          name: relationshipIds
-          description: comma separated sequence of relationship IDs
-          schema:
-            type: array
-            items:
-              type: string
-              format: uuid
-            default: []
-          explode: false   
       responses:
         '204':
           description: Keys created
