@@ -328,7 +328,10 @@ final case class ClientsApiServiceImpl(
       relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
     } yield relationshipInfo.state match {
       case RelationshipState.ACTIVE => key.toApi(isOrphan = false, user)
-      case _                        => key.toApi(isOrphan = true, user) // COULD BE OBSOLETE WITH NEW SELFCARE API
+      case _                        =>
+        // It could be that in the new API, when a user is removed, a 404 error is returned.
+        // At this moment, it should return the relationship with the state set to Deleted.
+        key.toApi(isOrphan = true, user)
     }
 
     result.recoverWith {
