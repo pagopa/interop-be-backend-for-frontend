@@ -25,7 +25,7 @@ object PagopaVersions {
   lazy val partyManagementVersion             = "1.0.9"
   lazy val tenantManagementVersion            = "1.0.9"
   lazy val tenantProcessVersion               = "1.0.10"
-  lazy val purposeProcessVersion              = "1.0.14"
+  lazy val purposeProcessVersion              = "1.0.15"
   lazy val userRegistryVersion                = "1.0.9"
   lazy val attributeRegistryProcessVersion    = "1.0.4"
   lazy val authorizationManagementVersion     = "1.0.14"
