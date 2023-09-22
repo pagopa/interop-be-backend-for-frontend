@@ -10607,9 +10607,6 @@ components:
           type: string
         description:
           type: string
-        eserviceId:
-          type: string
-          format: uuid
         isFreeOfCharge:
           type: boolean
         freeOfChargeReason:
@@ -10623,7 +10620,6 @@ components:
       required:
         - title
         - description
-        - eserviceId
         - isFreeOfCharge
         - dailyCalls
     Purposes:
