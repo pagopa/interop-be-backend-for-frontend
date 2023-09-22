@@ -29,7 +29,6 @@ import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProc
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
 import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
@@ -336,7 +335,7 @@ final case class ClientsApiServiceImpl(
 
     result.recoverWith {
       case PartyProcessApiError(404, _, _, _, _) =>
-        Future.successful(key.toApi(isOrphan = true, UserResource(id = UUID.randomUUID())))
+        Future.successful(key.toApi(isOrphan = true, UserResource(id = key.relationshipId)))
       case other                                 => Future.failed(other)
     }
   }
