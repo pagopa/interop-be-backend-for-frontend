@@ -10853,30 +10853,26 @@ components:
         certified:
           type: array
           items:
-            $ref: '#/components/schemas/DescriptorAttribute'
+            type: array
+            items:
+              $ref: '#/components/schemas/DescriptorAttribute'
         declared:
           type: array
           items:
-            $ref: '#/components/schemas/DescriptorAttribute'
+            type: array
+            items:
+              $ref: '#/components/schemas/DescriptorAttribute'
         verified:
           type: array
           items:
-            $ref: '#/components/schemas/DescriptorAttribute'
-      additionalProperties: false
+            type: array
+            items:
+              $ref: '#/components/schemas/DescriptorAttribute'
       required:
         - certified
         - declared
         - verified
     DescriptorAttribute:
-      type: object
-      properties:
-        single:
-          $ref: '#/components/schemas/DescriptorAttributeValue'
-        group:
-          type: array
-          items:
-            $ref: '#/components/schemas/DescriptorAttributeValue'
-    DescriptorAttributeValue:
       type: object
       properties:
         id:
@@ -10899,30 +10895,27 @@ components:
         certified:
           type: array
           items:
-            $ref: '#/components/schemas/DescriptorAttributeSeed'
+            type: array
+            items:
+              $ref: '#/components/schemas/DescriptorAttributeSeed'
         declared:
           type: array
           items:
-            $ref: '#/components/schemas/DescriptorAttributeSeed'
+            type: array
+            items:
+              $ref: '#/components/schemas/DescriptorAttributeSeed'
         verified:
           type: array
           items:
-            $ref: '#/components/schemas/DescriptorAttributeSeed'
+            type: array
+            items:
+              $ref: '#/components/schemas/DescriptorAttributeSeed'
       additionalProperties: false
       required:
         - certified
         - declared
         - verified
     DescriptorAttributeSeed:
-      type: object
-      properties:
-        single:
-          $ref: '#/components/schemas/DescriptorAttributeValueSeed'
-        group:
-          type: array
-          items:
-            $ref: '#/components/schemas/DescriptorAttributeValueSeed'
-    DescriptorAttributeValueSeed:
       type: object
       properties:
         id:

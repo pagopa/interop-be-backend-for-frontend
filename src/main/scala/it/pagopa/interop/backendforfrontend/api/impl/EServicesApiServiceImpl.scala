@@ -285,16 +285,9 @@ final case class EServicesApiServiceImpl(
   }
 
   private def extractIdsFromAttributes(attributes: CatalogProcess.Attributes): Seq[UUID] =
-    attributes.certified.flatMap(extractIdsFromAttribute) ++
-      attributes.declared.flatMap(extractIdsFromAttribute) ++
-      attributes.verified.flatMap(extractIdsFromAttribute)
-
-  private def extractIdsFromAttribute(attribute: CatalogProcess.Attribute): Seq[UUID] = {
-    val fromSingle: Seq[UUID] = attribute.single.toSeq.map(_.id)
-    val fromGroup: Seq[UUID]  = attribute.group.toSeq.flatMap(_.map(_.id))
-
-    fromSingle ++ fromGroup
-  }
+    attributes.certified.flatMap(_.map(_.id)) ++
+      attributes.declared.flatMap(_.map(_.id)) ++
+      attributes.verified.flatMap(_.map(_.id))
 
   override def getProducerEServices(q: Option[String], consumersIds: String, offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],

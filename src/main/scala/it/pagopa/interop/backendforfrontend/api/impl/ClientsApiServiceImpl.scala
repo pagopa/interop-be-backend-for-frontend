@@ -6,9 +6,10 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   CatalogProcessService,
+  PartyProcessService,
   PurposeProcessService,
   TenantProcessService,
-  PartyProcessService
+  UserRegistryService
 }
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
@@ -25,9 +26,10 @@ import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProc
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => PartyProcessApiError}
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcessModel}
-import it.pagopa.interop.selfcare.partyprocess.client.model.RelationshipState.ACTIVE
+import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
+import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 final case class ClientsApiServiceImpl(
@@ -35,7 +37,8 @@ final case class ClientsApiServiceImpl(
   tenantProcessService: TenantProcessService,
   catalogProcessService: CatalogProcessService,
   purposeProcessService: PurposeProcessService,
-  partyProcessService: PartyProcessService
+  partyProcessService: PartyProcessService,
+  userRegistryService: UserRegistryService
 )(implicit ec: ExecutionContext)
     extends ClientsApiService {
 
@@ -217,12 +220,12 @@ final case class ClientsApiServiceImpl(
 
     val result: Future[EncodedClientKey] = for {
       clientUuid       <- clientId.toFutureUUID
-      encodedClientKey <- authorizationProcessService.getEncodedClientKeyById(clientUuid, keyId)
-    } yield (encodedClientKey.toApi)
+      encodedClientKey <- authorizationProcessService.getClientKeyById(clientUuid, keyId)
+    } yield EncodedClientKey(encodedClientKey.encodedPem)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error retrieving key $keyId for client ${clientId.toString}", headers) orElse { case Success(key) =>
+      handleError(s"Error retrieving key $keyId for client $clientId", headers) orElse { case Success(key) =>
         getEncodedClientKeyById200(headers)(key)
       }
     }
@@ -316,18 +319,26 @@ final case class ClientsApiServiceImpl(
   }
 
   private def decorateKey(
-    key: AuthorizationProcessModel.ReadClientKey
-  )(implicit contexts: Seq[(String, String)]): Future[PublicKey] =
-    partyProcessService
-      .getRelationship(key.operator.relationshipId)
-      .map(_.state match {
-        case ACTIVE => key.toApi(isOrphan = false)
-        case _      => key.toApi(isOrphan = true)
-      })
-      .recoverWith {
-        case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true))
-        case other                                 => Future.failed(other)
-      }
+    key: AuthorizationProcessModel.Key
+  )(implicit contexts: Seq[(String, String)]): Future[PublicKey] = {
+    val result = for {
+      relationship     <- partyProcessService.getRelationship(key.relationshipId)
+      user             <- userRegistryService.findById(relationship.from)
+      relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
+    } yield relationshipInfo.state match {
+      case RelationshipState.ACTIVE => key.toApi(isOrphan = false, user)
+      case _                        =>
+        // It could be that in the new API, when a user is removed, a 404 error is returned.
+        // At this moment, it should return the relationship with the state set to Deleted.
+        key.toApi(isOrphan = true, user)
+    }
+
+    result.recoverWith {
+      case PartyProcessApiError(404, _, _, _, _) =>
+        Future.successful(key.toApi(isOrphan = true, UserResource(id = key.relationshipId)))
+      case other                                 => Future.failed(other)
+    }
+  }
 
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
