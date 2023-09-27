@@ -3374,6 +3374,325 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  /eservices/{eServiceId}/riskAnalysis:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - eservices
+      summary: add a risk analysis to an EService
+      operationId: addRiskAnalysisToEService
+      parameters:
+        - name: eServiceId
+          in: path
+          description: the eservice id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EServiceRiskAnalysisSeed'
+      responses:
+        '204':
+          description: Risk analysis added
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Invalid input
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /eservices/{eServiceId}/riskAnalysis/{riskAnalysisId}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - eservices
+      summary: get EService risk analysis
+      operationId: getEServiceRiskAnalysis
+      parameters:
+        - name: eServiceId
+          in: path
+          description: the eservice id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: riskAnalysisId
+          in: path
+          description: the risk analysis id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Risk analysis retrieved
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EServiceRiskAnalysis'
+        '400':
+          description: Invalid input
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - eservices
+      summary: update EService risk analysis
+      operationId: updateEServiceRiskAnalysis
+      parameters:
+        - name: eServiceId
+          in: path
+          description: the eservice id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: riskAnalysisId
+          in: path
+          description: the risk analysis id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EServiceRiskAnalysisSeed'
+      responses:
+        '204':
+          description: Risk analysis updated
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Invalid input
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - eservices
+      summary: delete EService risk analysis
+      operationId: deleteEServiceRiskAnalysis
+      parameters:
+        - name: eServiceId
+          in: path
+          description: the eservice id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: riskAnalysisId
+          in: path
+          description: the risk analysis id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Risk analysis deleted
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Invalid input
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/producers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -3882,6 +4201,98 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProducerEServiceDescriptor'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Eservice not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/producers/purposes':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+        - eservices
+      summary: create a purposes with an EService risk analysis
+      description: create a purposes with an EService risk analysis
+      operationId: createPurposeForReceiveEservice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProducerPurposeSeed'
+      responses:
+        '200':
+          description: Purpose created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purpose'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -9522,6 +9933,7 @@ components:
         - name
         - description
         - technology
+        - mode
       properties:
         name:
           type: string
@@ -9529,12 +9941,15 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
+        mode:
+          $ref: '#/components/schemas/EServiceMode'
     EServiceSeed:
       type: object
       required:
         - name
         - description
         - technology
+        - mode
       properties:
         name:
           type: string
@@ -9542,6 +9957,8 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
+        mode:
+          $ref: '#/components/schemas/EServiceMode'
     UpdateEServiceDescriptorSeed:
       required:
         - audience
@@ -9733,6 +10150,8 @@ components:
         - producer
         - description
         - technology
+        - mode
+        - riskAnalysis
         - descriptors
         - isMine
         - hasCertifiedAttributes
@@ -9749,6 +10168,12 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
+        mode:
+          $ref: '#/components/schemas/EServiceMode'
+        riskAnalysis:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceRiskAnalysis'
         descriptors:
           type: array
           items:
@@ -9772,6 +10197,8 @@ components:
         - name
         - description
         - technology
+        - mode
+        - riskAnalysis
       properties:
         id:
           type: string
@@ -9782,6 +10209,84 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
+        mode:
+          $ref: '#/components/schemas/EServiceMode'
+        riskAnalysis:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceRiskAnalysis'
+    EServiceMode:
+      type: string
+      description: Risk Analysis Mode
+      enum:
+        - RECEIVE
+        - DELIVER
+    EServiceRiskAnalysisSeed:
+      type: object
+      required:
+        - name
+        - riskAnalysisForm
+      properties:
+        name:
+          type: string
+        riskAnalysisForm:
+          $ref: '#/components/schemas/EServiceRiskAnalysisForm'
+    EServiceRiskAnalysis:
+      type: object
+      required:
+        - id
+        - name
+        - riskAnalysisForm
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        riskAnalysisForm:
+          $ref: '#/components/schemas/EServiceRiskAnalysisForm'
+        createdAt:
+          type: string
+          format: date-time
+    EServiceRiskAnalysisForm:
+      type: object
+      required:
+        - version
+        - singleAnswers
+        - multiAnswers
+      properties:
+        version:
+          type: string
+        singleAnswers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceRiskAnalysisSingleAnswer'
+        multiAnswers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceRiskAnalysisMultiAnswer'
+    EServiceRiskAnalysisSingleAnswer:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    EServiceRiskAnalysisMultiAnswer:
+      type: object
+      required:
+        - key
+        - values
+      properties:
+        key:
+          type: string
+        values:
+          type: array
+          items:
+            type: string
     ProducerEServiceDescriptor:
       type: object
       required:
@@ -9842,6 +10347,8 @@ components:
         - name
         - description
         - technology
+        - mode
+        - riskAnalysis
         - descriptors
       properties:
         id:
@@ -9853,6 +10360,12 @@ components:
           type: string
         technology:
           $ref: '#/components/schemas/EServiceTechnology'
+        mode:
+          $ref: '#/components/schemas/EServiceMode'
+        riskAnalysis:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceRiskAnalysis'
         descriptors:
           type: array
           items:
@@ -10224,6 +10737,41 @@ components:
         - description
         - isFreeOfCharge
         - dailyCalls
+    ProducerPurposeSeed:
+      type: object
+      description: contains the expected payload for purpose creation.
+      properties:
+        eserviceId:
+          type: string
+          format: uuid
+        consumerId:
+          type: string
+          format: uuid
+        riskAnalysisId:
+          type: string
+          format: uuid
+        riskAnalysisForm:
+          $ref: '#/components/schemas/RiskAnalysisForm'
+        title:
+          type: string
+        description:
+          type: string
+        isFreeOfCharge:
+          type: boolean
+        freeOfChargeReason:
+          type: string
+        dailyCalls:
+          type: integer
+          format: int32
+          minimum: 0
+      required:
+        - eserviceId
+        - consumerId
+        - riskAnalysisId
+        - title
+        - description
+        - isFreeOfCharge
+        - dailyCalls
     WaitingForApprovalPurposeVersionUpdateContentSeed:
       type: object
       description: contains the expected payload for purpose version update.
@@ -10239,12 +10787,21 @@ components:
       required:
         - id
         - name
+        - kind
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
+        kind:
+          $ref: '#/components/schemas/TenantKind'
+    TenantKind:
+      type: string
+      enum:
+        - PA
+        - PRIVATE
+        - GSP
     CompactOrganizations:
       type: object
       properties:
@@ -10413,6 +10970,9 @@ components:
           type: string
         consumer:
           $ref: '#/components/schemas/CompactOrganization'
+        riskAnalysisId:
+          type: string
+          format: uuid
         riskAnalysisForm:
           $ref: '#/components/schemas/RiskAnalysisForm'
         eservice:
