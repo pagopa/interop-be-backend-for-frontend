@@ -90,7 +90,7 @@ final case class AuthorizationApiServiceImpl(
   private def assertTenantAllowed(selfcareId: String, origin: String): Future[Unit] =
     Future
       .failed(UnknownTenantOrigin(selfcareId))
-      .unlessA(origin == "IPA" || allowList.contains(selfcareId))
+      .unlessA(origin == "IPA" || origin == "ANAC" || allowList.contains(selfcareId))
 
   private def getTenantOr(
     selfcareId: String
