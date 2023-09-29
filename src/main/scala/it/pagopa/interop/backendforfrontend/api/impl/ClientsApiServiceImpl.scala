@@ -6,9 +6,9 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   CatalogProcessService,
+  PartyProcessService,
   PurposeProcessService,
   TenantProcessService,
-  PartyProcessService,
   UserRegistryService
 }
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
@@ -29,7 +29,7 @@ import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProc
 import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
 import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 final case class ClientsApiServiceImpl(
@@ -322,26 +322,21 @@ final case class ClientsApiServiceImpl(
   private def decorateKey(
     key: AuthorizationProcessModel.Key
   )(implicit contexts: Seq[(String, String)]): Future[PublicKey] = {
-    for {
-      user         <- userRegistryService.findById(key.relationshipId)
-      decoratedKey <- decorateKeyInternal(key, user)
-    } yield decoratedKey
-  }
-
-  private def decorateKeyInternal(key: AuthorizationProcessModel.Key, user: UserResource)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[PublicKey] = {
-
-    val result: Future[PublicKey] = for {
+    val result = for {
       relationship     <- partyProcessService.getRelationship(key.relationshipId)
+      user             <- userRegistryService.findById(relationship.from)
       relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
     } yield relationshipInfo.state match {
       case RelationshipState.ACTIVE => key.toApi(isOrphan = false, user)
-      case _                        => key.toApi(isOrphan = true, user)
+      case _                        =>
+        // It could be that in the new API, when a user is removed, a 404 error is returned.
+        // At this moment, it should return the relationship with the state set to Deleted.
+        key.toApi(isOrphan = true, user)
     }
 
     result.recoverWith {
-      case PartyProcessApiError(404, _, _, _, _) => Future.successful(key.toApi(isOrphan = true, user))
+      case PartyProcessApiError(404, _, _, _, _) =>
+        Future.successful(key.toApi(isOrphan = true, UserResource(id = key.relationshipId)))
       case other                                 => Future.failed(other)
     }
   }
