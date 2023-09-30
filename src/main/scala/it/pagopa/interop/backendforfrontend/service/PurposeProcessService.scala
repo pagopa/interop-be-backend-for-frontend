@@ -66,4 +66,8 @@ trait PurposeProcessService {
     contexts: Seq[(String, String)]
   ): Future[RiskAnalysisFormConfigResponse]
 
+  def createPurposeFromEService(eServicePurposeSeed: EServicePurposeSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Purpose]
+
 }

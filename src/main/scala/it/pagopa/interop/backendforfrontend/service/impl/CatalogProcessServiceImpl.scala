@@ -278,4 +278,54 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving consumers for EService ${eServiceId.toString} from Catalog Process")
   }
+
+  override def createRiskAnalysis(eServiceId: UUID, eServiceRiskAnalysisSeed: EServiceRiskAnalysisSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.createRiskAnalysis(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        eServiceRiskAnalysisSeed = eServiceRiskAnalysisSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Create Risk Analysis with name ${eServiceRiskAnalysisSeed.name} for EService ${eServiceId.toString} from Catalog Process"
+    )
+  }
+
+  override def updateRiskAnalysis(
+    eServiceId: UUID,
+    riskAnalysisId: UUID,
+    eServiceRiskAnalysisSeed: EServiceRiskAnalysisSeed
+  )(implicit contexts: Seq[(String, String)]) = withHeaders { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Unit] =
+      api.updateRiskAnalysis(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        riskAnalysisId = riskAnalysisId,
+        eServiceRiskAnalysisSeed = eServiceRiskAnalysisSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Update Risk Analysis ${riskAnalysisId.toString} for EService ${eServiceId.toString} from Catalog Process"
+    )
+  }
+
+  override def deleteRiskAnalysis(eServiceId: UUID, riskAnalysisId: UUID)(implicit contexts: Seq[(String, String)]) =
+    withHeaders { (bearerToken, correlationId, ip) =>
+      val request: ApiRequest[Unit] =
+        api.deleteRiskAnalysis(
+          xCorrelationId = correlationId,
+          eServiceId = eServiceId,
+          riskAnalysisId = riskAnalysisId,
+          xForwardedFor = ip
+        )(BearerToken(bearerToken))
+      invoker.invoke(
+        request,
+        s"Delete Risk Analysis ${riskAnalysisId.toString} for EService ${eServiceId.toString} from Catalog Process"
+      )
+    }
 }

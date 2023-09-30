@@ -87,4 +87,14 @@ trait CatalogProcessService {
 
     go(0)(Nil)
   }
+
+  def createRiskAnalysis(eServiceId: UUID, eServiceRiskAnalysisSeed: EServiceRiskAnalysisSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
+
+  def updateRiskAnalysis(eServiceId: UUID, riskAnalysisId: UUID, eServiceRiskAnalysisSeed: EServiceRiskAnalysisSeed)(
+    implicit contexts: Seq[(String, String)]
+  ): Future[Unit]
+
+  def deleteRiskAnalysis(eServiceId: UUID, riskAnalysisId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 }

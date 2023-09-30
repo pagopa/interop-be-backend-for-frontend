@@ -69,6 +69,20 @@ object PurposeProcessServiceTypes {
     )
   }
 
+  implicit class PurposeEServiceSeedConverter(private val seed: PurposeEServiceSeed) extends AnyVal {
+    def toProcess: PurposeProcess.EServicePurposeSeed =
+      PurposeProcess.EServicePurposeSeed(
+        eServiceId = seed.eserviceId,
+        consumerId = seed.consumerId,
+        riskAnalysisId = seed.riskAnalysisId,
+        title = seed.title,
+        description = seed.description,
+        isFreeOfCharge = seed.isFreeOfCharge,
+        freeOfChargeReason = seed.freeOfChargeReason,
+        dailyCalls = seed.dailyCalls
+      )
+  }
+
   implicit class ClientConverter(private val c: AuthorizationProcess.Client) extends AnyVal {
     def toApi(hasKeys: Boolean): CompactClient = CompactClient(id = c.id, name = c.name, hasKeys = hasKeys)
   }
@@ -120,7 +134,16 @@ object PurposeProcessServiceTypes {
       isFreeOfCharge = p.isFreeOfCharge,
       freeOfChargeReason = p.freeOfChargeReason,
       dailyCallsPerConsumer = currentDescriptor.dailyCallsPerConsumer,
-      dailyCallsTotal = currentDescriptor.dailyCallsTotal
+      dailyCallsTotal = currentDescriptor.dailyCallsTotal,
+      riskAnalysisId = {
+        if (eService.mode == CatalogProcess.EServiceMode.DELIVER) {
+          p.riskAnalysisForm
+            .flatMap(form => form.riskAnalysisId)
+            .toList
+            .intersect(eService.riskAnalysis.map(_.id))
+            .headOption
+        } else None
+      }
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)

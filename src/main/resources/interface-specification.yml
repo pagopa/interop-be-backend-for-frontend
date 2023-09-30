@@ -3394,6 +3394,7 @@ paths:
             type: string
             format: uuid
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -3559,6 +3560,7 @@ paths:
             type: string
             format: uuid
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -4271,25 +4273,18 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/purposes/eservice/{eserviceId}':
+  /reverse/purposes::
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
       - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
-        - eservices
+        - purposes
       summary: create a purposes with an EService risk analysis
       description: create a purposes with an EService risk analysis
       operationId: createPurposeForReceiveEservice
-      parameters:
-        - name: eserviceId
-          in: path
-          description: The internal identifier of the eservice
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -10238,7 +10233,7 @@ components:
         name:
           type: string
         riskAnalysisForm:
-          $ref: '#/components/schemas/EServiceRiskAnalysisForm'
+          $ref: '#/components/schemas/EServiceRiskAnalysisFormSeed'
     EServiceRiskAnalysis:
       type: object
       required:
@@ -10257,6 +10252,44 @@ components:
         createdAt:
           type: string
           format: date-time
+    EServiceRiskAnalysisFormSeed:
+      type: object
+      required:
+        - version
+        - singleAnswers
+        - multiAnswers
+      properties:
+        version:
+          type: string
+        singleAnswers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceRiskAnalysisSingleAnswerSeed'
+        multiAnswers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceRiskAnalysisMultiAnswerSeed'
+    EServiceRiskAnalysisSingleAnswerSeed:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    EServiceRiskAnalysisMultiAnswerSeed:
+      type: object
+      required:
+        - key
+        - values
+      properties:
+        key:
+          type: string
+        values:
+          type: array
+          items:
+            type: string      
     EServiceRiskAnalysisForm:
       type: object
       required:
@@ -10749,14 +10782,15 @@ components:
       type: object
       description: contains the expected payload for purpose creation.
       properties:
+        eserviceId:
+          type: string
+          format: uuid
         consumerId:
           type: string
           format: uuid
         riskAnalysisId:
           type: string
           format: uuid
-        riskAnalysisForm:
-          $ref: '#/components/schemas/RiskAnalysisForm'
         title:
           type: string
         description:
@@ -10792,7 +10826,6 @@ components:
       required:
         - id
         - name
-        - kind
       properties:
         id:
           type: string

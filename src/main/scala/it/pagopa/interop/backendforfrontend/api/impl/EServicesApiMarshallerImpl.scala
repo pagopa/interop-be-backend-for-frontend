@@ -53,5 +53,12 @@ object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonS
   override implicit def toEntityMarshallerCreatedEServiceDescriptor: ToEntityMarshaller[CreatedEServiceDescriptor] =
     sprayJsonMarshaller[CreatedEServiceDescriptor]
 
+  override implicit def fromEntityUnmarshallerEServiceRiskAnalysisSeed
+    : FromEntityUnmarshaller[EServiceRiskAnalysisSeed] =
+    sprayJsonUnmarshaller[EServiceRiskAnalysisSeed]
+
+  override implicit def toEntityMarshallerEServiceRiskAnalysis: ToEntityMarshaller[EServiceRiskAnalysis] =
+    sprayJsonMarshaller[EServiceRiskAnalysis]
+
   override implicit def toEntityMarshallerFile: ToEntityMarshaller[File] = entityMarshallerFile
 }
