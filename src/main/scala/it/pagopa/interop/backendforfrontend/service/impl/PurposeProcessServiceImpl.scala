@@ -186,6 +186,21 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retriving purpose with purposeId $id")
   }
 
+  override def createPurposeFromEService(eServicePurposeSeed: EServicePurposeSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Purpose] = withHeaders[Purpose] { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Purpose] =
+      api.createPurposeFromEService(
+        xCorrelationId = correlationId,
+        eServicePurposeSeed = eServicePurposeSeed,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(
+      request,
+      s"Creating purpose from ESErvice ${eServicePurposeSeed.eServiceId} and Risk Analysis ${eServicePurposeSeed.riskAnalysisId}"
+    )
+  }
+
   override def updatePurpose(id: UUID, purposeUpdateContent: PurposeUpdateContent)(implicit
     contexts: Seq[(String, String)]
   ): Future[Purpose] = withHeaders[Purpose] { (bearerToken, correlationId, ip) =>

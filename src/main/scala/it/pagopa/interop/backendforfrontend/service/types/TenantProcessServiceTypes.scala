@@ -180,4 +180,12 @@ object TenantProcessServiceTypes {
     def toSeed: TenantProcess.UpdateVerifiedTenantAttributeSeed =
       TenantProcess.UpdateVerifiedTenantAttributeSeed(expirationDate = seed.expirationDate)
   }
+
+  implicit class TenantKindConverter(private val t: TenantProcess.TenantKind) extends AnyVal {
+    def toApi: TenantKind = t match {
+      case TenantProcess.TenantKind.PA      => TenantKind.PA
+      case TenantProcess.TenantKind.PRIVATE => TenantKind.PRIVATE
+      case TenantProcess.TenantKind.GSP     => TenantKind.GSP
+    }
+  }
 }

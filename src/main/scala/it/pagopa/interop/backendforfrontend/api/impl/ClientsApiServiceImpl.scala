@@ -21,6 +21,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.utils.AkkaUtils._
+import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
@@ -388,7 +389,11 @@ final case class ClientsApiServiceImpl(
   } yield ClientPurpose(
     purposeId = purpose.id,
     title = purpose.title,
-    eservice = CompactEService(id = eService.id, name = eService.name, CompactOrganization(producer.id, producer.name))
+    eservice = CompactEService(
+      id = eService.id,
+      name = eService.name,
+      CompactOrganization(producer.id, producer.name, producer.kind.map(_.toApi))
+    )
   )
 
   override def getClientRelationshipKeys(clientId: String, relationshipId: String)(implicit

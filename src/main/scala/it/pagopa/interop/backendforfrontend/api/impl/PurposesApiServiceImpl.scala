@@ -531,4 +531,24 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  override def createPurposeForReceiveEservice(seed: PurposeEServiceSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Creating purpose from ESErvice ${seed.eserviceId} and Risk Analysis ${seed.riskAnalysisId}")
+
+    val result: Future[CreatedResource] =
+      purposeProcessService.createPurposeFromEService(seed.toProcess)(contexts).map(_.toApiResource)
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error creating Purpose with eService ${seed.eserviceId} and consumer ${seed.consumerId}",
+        headers
+      ) orElse { case Success(purpose) =>
+        createPurpose200(headers)(purpose)
+      }
+    }
+  }
 }

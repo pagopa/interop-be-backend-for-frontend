@@ -38,4 +38,8 @@ object PurposesApiMarshallerImpl extends PurposesApiMarshaller with SprayJsonSup
 
   override implicit def toEntityMarshallerRiskAnalysisFormConfig: ToEntityMarshaller[RiskAnalysisFormConfig] =
     sprayJsonMarshaller[RiskAnalysisFormConfig]
+
+  override implicit def fromEntityUnmarshallerPurposeEServiceSeed: FromEntityUnmarshaller[PurposeEServiceSeed] =
+    sprayJsonUnmarshaller[PurposeEServiceSeed]
+
 }

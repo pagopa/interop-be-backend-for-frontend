@@ -6,7 +6,6 @@ import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.catalogmanagement.{model => CatalogManagement}
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
-import it.pagopa.interop.catalogprocess.client.model.EServiceTechnology.{REST, SOAP}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 
 import java.util.UUID
@@ -18,14 +17,62 @@ object CatalogProcessServiceTypes {
     def toProcess: CatalogProcess.UpdateEServiceSeed = CatalogProcess.UpdateEServiceSeed(
       name = ues.name,
       description = ues.description,
-      technology = ues.technology.toProcess
+      technology = ues.technology.toProcess,
+      mode = ues.mode.toProcess
     )
+  }
+
+  implicit class EServiceModeConverter(private val esm: EServiceMode) extends AnyVal {
+    def toProcess: CatalogProcess.EServiceMode = esm match {
+      case EServiceMode.DELIVER => CatalogProcess.EServiceMode.DELIVER
+      case EServiceMode.RECEIVE => CatalogProcess.EServiceMode.RECEIVE
+    }
+  }
+
+  implicit class CatalogEServiceModeConverter(private val esm: CatalogProcess.EServiceMode) extends AnyVal {
+    def toApi: EServiceMode = esm match {
+      case CatalogProcess.EServiceMode.DELIVER => EServiceMode.DELIVER
+      case CatalogProcess.EServiceMode.RECEIVE => EServiceMode.RECEIVE
+    }
+  }
+
+  implicit class CatalogEServiceRiskAnalysisConverter(private val era: CatalogProcess.EServiceRiskAnalysis)
+      extends AnyVal {
+    def toApi: EServiceRiskAnalysis = EServiceRiskAnalysis(
+      id = era.id,
+      name = era.name,
+      riskAnalysisForm = era.riskAnalysisForm.toApi,
+      createdAt = era.createdAt
+    )
+  }
+
+  implicit class CatalogEServiceRiskAnalysisFormConverter(private val eraf: CatalogProcess.EServiceRiskAnalysisForm)
+      extends AnyVal {
+    def toApi: EServiceRiskAnalysisForm = EServiceRiskAnalysisForm(
+      version = eraf.version,
+      singleAnswers = eraf.singleAnswers.map(_.toApi),
+      multiAnswers = eraf.multiAnswers.map(_.toApi)
+    )
+  }
+
+  implicit class CatalogEServiceRiskAnalysisSingleAnswerConverter(
+    private val answer: CatalogProcess.EServiceRiskAnalysisSingleAnswer
+  ) extends AnyVal {
+    def toApi: EServiceRiskAnalysisSingleAnswer =
+      EServiceRiskAnalysisSingleAnswer(key = answer.key, value = answer.value)
+  }
+
+  implicit class CatalogEServiceRiskAnalysisMultiAnswerConverter(
+    private val answer: CatalogProcess.EServiceRiskAnalysisMultiAnswer
+  ) extends AnyVal {
+    def toApi: EServiceRiskAnalysisMultiAnswer =
+      EServiceRiskAnalysisMultiAnswer(key = answer.key, values = answer.values)
   }
 
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcess.EServiceTechnology = est match {
-      case EServiceTechnology.REST => REST
-      case EServiceTechnology.SOAP => SOAP
+      case EServiceTechnology.REST => CatalogProcess.EServiceTechnology.REST
+      case EServiceTechnology.SOAP => CatalogProcess.EServiceTechnology.SOAP
     }
   }
 
@@ -44,7 +91,12 @@ object CatalogProcessServiceTypes {
 
   implicit class EServiceSeedConverter(private val es: EServiceSeed) extends AnyVal {
     def toProcess: CatalogProcess.EServiceSeed =
-      CatalogProcess.EServiceSeed(name = es.name, description = es.description, technology = es.technology.toProcess)
+      CatalogProcess.EServiceSeed(
+        name = es.name,
+        description = es.description,
+        technology = es.technology.toProcess,
+        mode = es.mode.toProcess
+      )
   }
 
   implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed) extends AnyVal {
@@ -202,6 +254,31 @@ object CatalogProcessServiceTypes {
       agreementApprovalPolicy = usds.agreementApprovalPolicy.toProcess,
       attributes = usds.attributes.toProcess
     )
+  }
+
+  implicit class EServiceRiskAnalysisSeedConverter(private val eras: EServiceRiskAnalysisSeed) extends AnyVal {
+    def toProcess: CatalogProcess.EServiceRiskAnalysisSeed =
+      CatalogProcess.EServiceRiskAnalysisSeed(name = eras.name, riskAnalysisForm = eras.riskAnalysisForm.toProcess)
+  }
+
+  implicit class EServiceRiskAnalysisFormSeedConverter(private val erafs: EServiceRiskAnalysisFormSeed) extends AnyVal {
+    def toProcess: CatalogProcess.EServiceRiskAnalysisFormSeed = CatalogProcess.EServiceRiskAnalysisFormSeed(
+      version = erafs.version,
+      singleAnswers = erafs.singleAnswers.map(_.toProcess),
+      multiAnswers = erafs.multiAnswers.map(_.toProcess)
+    )
+  }
+
+  implicit class EServiceRiskAnalysisSingleAnswerSeedConverter(private val answer: EServiceRiskAnalysisSingleAnswerSeed)
+      extends AnyVal {
+    def toProcess: CatalogProcess.EServiceRiskAnalysisSingleAnswerSeed =
+      CatalogProcess.EServiceRiskAnalysisSingleAnswerSeed(key = answer.key, value = answer.value)
+  }
+
+  implicit class EServiceRiskAnalysisMultiAnswerSeedConverter(private val answer: EServiceRiskAnalysisMultiAnswerSeed)
+      extends AnyVal {
+    def toProcess: CatalogProcess.EServiceRiskAnalysisMultiAnswerSeed =
+      CatalogProcess.EServiceRiskAnalysisMultiAnswerSeed(key = answer.key, values = answer.values)
   }
 
   implicit class DocumentKindWrapper(private val str: String) extends AnyVal {

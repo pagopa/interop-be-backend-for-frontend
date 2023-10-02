@@ -57,6 +57,7 @@ object Handlers {
     case Failure(err: InvalidEServiceRequester)            => forbidden(err, logMessage, headers)
     case Failure(err: AgreementDescriptorNotFound)         => notFound(err, logMessage, headers)
     case Failure(err: EServiceDescriptorNotFound)          => notFound(err, logMessage, headers)
+    case Failure(err: EServiceRiskAnalysisNotFound)        => notFound(err, logMessage, headers)
     case Failure(err: PrivacyNoticeNotFound)               => notFound(err, logMessage, headers)
     case Failure(err)                                      => internalServerError(err, logMessage, headers)
   }

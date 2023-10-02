@@ -298,11 +298,12 @@ final case class AgreementsApiServiceImpl(
   } yield AgreementListEntry(
     id = agreement.id,
     state = agreement.state.toApi,
-    consumer = CompactOrganization(consumerTenant.id, consumerTenant.name),
+    consumer =
+      CompactOrganization(id = consumerTenant.id, name = consumerTenant.name, kind = consumerTenant.kind.map(_.toApi)),
     eservice = CompactEService(
       id = eService.id,
       name = eService.name,
-      producer = CompactOrganization(producerTenant.id, producerTenant.name)
+      producer = CompactOrganization(producerTenant.id, producerTenant.name, producerTenant.kind.map(_.toApi))
     ),
     descriptor = currentDescriptor.toCompactDescriptor,
     canBeUpgraded = isUpgradable(currentDescriptor, eService.descriptors),
@@ -335,7 +336,11 @@ final case class AgreementsApiServiceImpl(
   } yield Agreement(
     id = agreement.id,
     descriptorId = agreement.descriptorId,
-    producer = CompactOrganization(id = agreement.producerId, name = producerTenant.name),
+    producer = CompactOrganization(
+      id = agreement.producerId,
+      name = producerTenant.name,
+      kind = producerTenant.kind.map(_.toApi)
+    ),
     consumer = Tenant(
       id = agreement.consumerId,
       selfcareId = consumerTenant.id.some,
@@ -615,7 +620,8 @@ final case class AgreementsApiServiceImpl(
         .getAgreementProducers(q, offset = offset, limit = limit)
         .map(pagedResults =>
           CompactOrganizations(
-            results = pagedResults.results.map(t => CompactOrganization(id = t.id, name = t.name)),
+            results = pagedResults.results
+              .map(t => CompactOrganization(id = t.id, name = t.name, kind = None)), // TODO Da gestire successivamente
             pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
           )
         )

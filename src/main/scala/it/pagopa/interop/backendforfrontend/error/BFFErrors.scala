@@ -125,4 +125,8 @@ object BFFErrors {
 
   final case class SelfcareNotFound(selfcare: UUID)
       extends ComponentError("0030", s"Tenant with selfcare $selfcare not found")
+
+  final case class EServiceRiskAnalysisNotFound(eServiceId: UUID, riskAnalysisId: UUID)
+      extends ComponentError("0031", s"RiskAnalysis ${riskAnalysisId} not found in Eservice ${eServiceId}")
+
 }

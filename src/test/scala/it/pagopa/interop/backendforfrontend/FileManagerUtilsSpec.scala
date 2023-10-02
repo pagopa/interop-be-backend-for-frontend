@@ -19,7 +19,9 @@ class FileManagerUtilsSpec() extends AnyWordSpec with Matchers with ScalaFutures
     name = "name",
     description = "description",
     technology = EServiceTechnology.REST,
-    descriptors = Seq.empty
+    descriptors = Seq.empty,
+    riskAnalysis = Seq.empty,
+    mode = EServiceMode.DELIVER
   )
   val eServiceSoap: EService = eServiceRest.copy(technology = EServiceTechnology.SOAP)
 

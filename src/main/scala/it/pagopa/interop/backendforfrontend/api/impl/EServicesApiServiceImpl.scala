@@ -253,7 +253,11 @@ final case class EServicesApiServiceImpl(
       eservice = CatalogDescriptorEService(
         id = eService.id,
         name = eService.name,
-        producer = CompactOrganization(id = producerTenant.id, name = producerTenant.name),
+        producer = CompactOrganization(
+          id = producerTenant.id,
+          name = producerTenant.name,
+          kind = producerTenant.kind.map(_.toApi)
+        ),
         description = eService.description,
         technology = eService.technology.toApi,
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
@@ -268,7 +272,9 @@ final case class EServicesApiServiceImpl(
         isSubscribed = agreement.exists(a => SUBSCRIBED_AGREEMENT_STATES.contains(a.state)),
         activeDescriptor =
           getActiveDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
-        mail = producerTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
+        mail = producerTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi),
+        mode = eService.mode.toApi,
+        riskAnalysis = eService.riskAnalysis.map(_.toApi)
       ),
       publishedAt = descriptor.publishedAt,
       suspendedAt = descriptor.suspendedAt,
@@ -280,6 +286,94 @@ final case class EServicesApiServiceImpl(
       val headers: List[HttpHeader] = headersFromContext()
       handleError(s"Error retrieving descriptor $descriptorId of eservice $eserviceId from catalog", headers) orElse {
         case Success(descriptor) => getCatalogEServiceDescriptor200(headers)(descriptor)
+      }
+    }
+  }
+
+  override def addRiskAnalysisToEService(
+    eServiceId: String,
+    eServiceRiskAnalysisSeed: EServiceRiskAnalysisSeed
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] = for {
+      eserviceUUID <- eServiceId.toFutureUUID
+      _            <- catalogProcessService.createRiskAnalysis(eserviceUUID, eServiceRiskAnalysisSeed.toProcess)
+    } yield ()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error inserting risk analysis ${eServiceRiskAnalysisSeed.name} to eservice $eServiceId from catalog",
+        headers
+      ) orElse { case Success(_) =>
+        addRiskAnalysisToEService204(headers)
+      }
+    }
+  }
+
+  override def deleteEServiceRiskAnalysis(eServiceId: String, riskAnalysisId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] = for {
+      eserviceUUID     <- eServiceId.toFutureUUID
+      riskAnalysisUUID <- riskAnalysisId.toFutureUUID
+      _                <- catalogProcessService.deleteRiskAnalysis(eserviceUUID, riskAnalysisUUID)
+    } yield ()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error deleting risk analysis ${riskAnalysisId} to eservice $eServiceId from catalog",
+        headers
+      ) orElse { case Success(_) =>
+        deleteEServiceRiskAnalysis204(headers)
+      }
+    }
+  }
+
+  override def updateEServiceRiskAnalysis(
+    eServiceId: String,
+    riskAnalysisId: String,
+    eServiceRiskAnalysisSeed: EServiceRiskAnalysisSeed
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+    val result: Future[Unit] = for {
+      eserviceUUID     <- eServiceId.toFutureUUID
+      riskAnalysisUUID <- riskAnalysisId.toFutureUUID
+      _ <- catalogProcessService.updateRiskAnalysis(eserviceUUID, riskAnalysisUUID, eServiceRiskAnalysisSeed.toProcess)
+    } yield ()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error updating risk analysis ${riskAnalysisId} to eservice $eServiceId from catalog",
+        headers
+      ) orElse { case Success(_) =>
+        updateEServiceRiskAnalysis204(headers)
+      }
+    }
+  }
+
+  override def getEServiceRiskAnalysis(eServiceId: String, riskAnalysisId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEServiceRiskAnalysis: ToEntityMarshaller[EServiceRiskAnalysis],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[EServiceRiskAnalysis] = for {
+      eserviceUUID     <- eServiceId.toFutureUUID
+      riskAnalysisUUID <- riskAnalysisId.toFutureUUID
+      eService         <- catalogProcessService.getEServiceById(eserviceUUID)
+      riskAnalysis     <- eService.riskAnalysis
+        .find(_.id == riskAnalysisUUID)
+        .toFuture(EServiceRiskAnalysisNotFound(eserviceUUID, riskAnalysisUUID))
+    } yield riskAnalysis.toApi
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(
+        s"Error retrieving risk analysis ${riskAnalysisId} to eservice $eServiceId from catalog",
+        headers
+      ) orElse { case Success(riskAnalysis) =>
+        getEServiceRiskAnalysis200(headers)(riskAnalysis)
       }
     }
   }
@@ -391,7 +485,9 @@ final case class EServicesApiServiceImpl(
       id = eService.id,
       name = eService.name,
       description = eService.description,
-      technology = eService.technology.toApi
+      technology = eService.technology.toApi,
+      mode = eService.mode.toApi,
+      riskAnalysis = eService.riskAnalysis.map(_.toApi)
     )
 
     onComplete(result) {
@@ -441,7 +537,9 @@ final case class EServicesApiServiceImpl(
         descriptors = getNonDraftDescriptors(eService).map(_.toCompactDescriptor),
         draftDescriptor =
           getDraftDescriptor(eService).map(ad => CompactDescriptor(ad.id, ad.state.toApi, ad.version, ad.audience)),
-        mail = requesterTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
+        mail = requesterTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi),
+        mode = eService.mode.toApi,
+        riskAnalysis = eService.riskAnalysis.map(_.toApi)
       )
     )
 
