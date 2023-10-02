@@ -119,7 +119,98 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       }
     }
 
-    "succeed when the tenant is present and its origin is not IPA but is in allowlist" in {
+    "succeed when the tenant is present and its origin is ANAC" in {
+
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString
+      val tenantId: UUID     = UUID.randomUUID()
+
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
+        "organization" -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
+        "uid"          -> uid
+      ).asClaimSet
+
+      (mockJwtReader
+        .getClaims(_: String))
+        .expects(*)
+        .once()
+        .returns(Success(jwtClaimsSet))
+
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(internalToken))
+
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
+        .once()
+        .returns(
+          Future.successful(
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("ANAC", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
+      val desiredClaimSet: Map[String, AnyRef] = Map(
+        "uid"            -> uid,
+        "user-roles"     -> "admin,anotherRole",
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
+        "externalId"     -> Map("origin" -> "ANAC", "value" -> "externalId").asJava,
+        "organization"   -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ).toJSONObject
+      )
+
+      (mockRateLimiter
+        .rateLimiting(_: UUID)(
+          _: ExecutionContext,
+          _: LoggerTakingImplicit[ContextFieldsToLog],
+          _: Seq[(String, String)]
+        ))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
+
+      (mockSessionTokenGenerator
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .expects(
+          SignatureAlgorithm.RSAPkcs1Sha256,
+          desiredClaimSet,
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          ApplicationConfiguration.generatedJwtDuration
+        )
+        .once()
+        .returns(Future.successful("sessionToken"))
+
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
+        Seq.empty,
+        toEntityMarshallerSessionToken
+      ) ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[SessionToken] shouldEqual SessionToken("sessionToken")
+      }
+    }
+
+    "succeed when the tenant is present and its origin is not IPA or ANAC but is in allowlist" in {
 
       val uid: String        = UUID.randomUUID().toString
       val selfcareId: String = allowList.head
@@ -210,7 +301,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       }
     }
 
-    "succeed when the tenant is present and its origin is not IPA and is not in allowlist" in {
+    "succeed when the tenant is present and its origin is not IPA or ANAC and is not in allowlist" in {
 
       val uid: String        = UUID.randomUUID().toString
       val selfcareId: String = UUID.randomUUID().toString
@@ -385,7 +476,126 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       }
     }
 
-    "succeed if the tenant needs to be upserted and its origin is not IPA but is in allowlist" in {
+    "succeed if the tenant needs to be upserted and its origin is ANAC" in {
+
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString
+      val tenantId: UUID     = UUID.randomUUID()
+
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
+        "organization" -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
+        "uid"          -> uid
+      ).asClaimSet
+
+      (mockJwtReader
+        .getClaims(_: String))
+        .expects(*)
+        .once()
+        .returns(Success(jwtClaimsSet))
+
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(internalToken))
+
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
+        .once()
+        .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
+
+      (mockPartyProcess
+        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(selfcareId, *, *)
+        .once()
+        .returns(
+          Future.successful(
+            Institution(
+              id = UUID.fromString(selfcareId),
+              externalId = "whatever",
+              originId = "ANACCode",
+              description = "foo",
+              digitalAddress = "of a digital home?",
+              address = "of an actual home?",
+              zipCode = "winzip",
+              taxCode = "not mine please",
+              origin = "ANAC",
+              institutionType = None,
+              attributes = Nil
+            )
+          )
+        )
+
+      (mockTenantProcess
+        .selfcareUpsertTenant(_: String, _: String, _: String)(_: String)(_: Seq[(String, String)]))
+        .expects("ANAC", "ANACCode", "foo", selfcareId, *)
+        .once()
+        .returns(
+          Future.successful(
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("ANAC", "ANACCode"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "foo"
+            )
+          )
+        )
+
+      val desiredClaimSet: Map[String, AnyRef] = Map(
+        "uid"            -> uid,
+        "user-roles"     -> "admin,anotherRole",
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
+        "externalId"     -> Map("origin" -> "ANAC", "value" -> "ANACCode").asJava,
+        "organization"   -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ).toJSONObject
+      )
+
+      (mockRateLimiter
+        .rateLimiting(_: UUID)(
+          _: ExecutionContext,
+          _: LoggerTakingImplicit[ContextFieldsToLog],
+          _: Seq[(String, String)]
+        ))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
+
+      (mockSessionTokenGenerator
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .expects(
+          SignatureAlgorithm.RSAPkcs1Sha256,
+          desiredClaimSet,
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          ApplicationConfiguration.generatedJwtDuration
+        )
+        .once()
+        .returns(Future.successful("sessionToken"))
+
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
+        Seq.empty,
+        toEntityMarshallerSessionToken
+      ) ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[SessionToken] shouldEqual SessionToken("sessionToken")
+      }
+    }
+
+    "succeed if the tenant needs to be upserted and its origin is not IPA or ANAC but is in allowlist" in {
 
       val uid: String        = UUID.randomUUID().toString
       val selfcareId: String = allowList.head
@@ -504,7 +714,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       }
     }
 
-    "succeed if the tenant needs to be upserted and its origin is not IPA and is not in allowlist" in {
+    "succeed if the tenant needs to be upserted and its origin is not IPA or ANAC and is not in allowlist" in {
 
       val uid: String        = UUID.randomUUID().toString
       val selfcareId: String = UUID.randomUUID().toString
