@@ -87,14 +87,11 @@ final case class AuthorizationApiServiceImpl(
     }
   }
 
-  private def assertTenantAllowed(selfcareId: String, origin: String): Future[Unit] = {
-    val allowedOrigins: Set[String] = Set("IPA", "ANAC")
-    if (allowedOrigins.contains(origin) || allowList.contains(selfcareId)) {
-      Future.successful(())
-    } else {
-      Future.failed(UnknownTenantOrigin(selfcareId))
-    }
-  }
+  private final val allowedOrigins: Set[String] = Set("IPA", "ANAC")
+
+  private def assertTenantAllowed(selfcareId: String, origin: String): Future[Unit] =
+    if (allowedOrigins.contains(origin) || allowList.contains(selfcareId)) Future.successful(())
+    else Future.failed(UnknownTenantOrigin(selfcareId))
 
   private def getTenantOr(
     selfcareId: String
