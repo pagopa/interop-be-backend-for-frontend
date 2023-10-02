@@ -48,25 +48,11 @@ object CatalogProcessServiceTypes {
 
   implicit class CatalogEServiceRiskAnalysisFormConverter(private val eraf: CatalogProcess.EServiceRiskAnalysisForm)
       extends AnyVal {
-    def toApi: EServiceRiskAnalysisForm = EServiceRiskAnalysisForm(
+    def toApi: RiskAnalysisForm = RiskAnalysisForm(
       version = eraf.version,
-      singleAnswers = eraf.singleAnswers.map(_.toApi),
-      multiAnswers = eraf.multiAnswers.map(_.toApi)
+      answers =
+        (eraf.singleAnswers.map(a => a.key -> a.value.toSeq) ++ eraf.multiAnswers.map(a => a.key -> a.values)).toMap
     )
-  }
-
-  implicit class CatalogEServiceRiskAnalysisSingleAnswerConverter(
-    private val answer: CatalogProcess.EServiceRiskAnalysisSingleAnswer
-  ) extends AnyVal {
-    def toApi: EServiceRiskAnalysisSingleAnswer =
-      EServiceRiskAnalysisSingleAnswer(key = answer.key, value = answer.value)
-  }
-
-  implicit class CatalogEServiceRiskAnalysisMultiAnswerConverter(
-    private val answer: CatalogProcess.EServiceRiskAnalysisMultiAnswer
-  ) extends AnyVal {
-    def toApi: EServiceRiskAnalysisMultiAnswer =
-      EServiceRiskAnalysisMultiAnswer(key = answer.key, values = answer.values)
   }
 
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
