@@ -10242,7 +10242,7 @@ components:
         name:
           type: string
         riskAnalysisForm:
-          $ref: '#/components/schemas/EServiceRiskAnalysisFormSeed'
+          $ref: '#/components/schemas/RiskAnalysisForm'
     EServiceRiskAnalysis:
       type: object
       required:
@@ -10261,44 +10261,6 @@ components:
         createdAt:
           type: string
           format: date-time
-    EServiceRiskAnalysisFormSeed:
-      type: object
-      required:
-        - version
-        - singleAnswers
-        - multiAnswers
-      properties:
-        version:
-          type: string
-        singleAnswers:
-          type: array
-          items:
-            $ref: '#/components/schemas/EServiceRiskAnalysisSingleAnswerSeed'
-        multiAnswers:
-          type: array
-          items:
-            $ref: '#/components/schemas/EServiceRiskAnalysisMultiAnswerSeed'
-    EServiceRiskAnalysisSingleAnswerSeed:
-      type: object
-      required:
-        - key
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    EServiceRiskAnalysisMultiAnswerSeed:
-      type: object
-      required:
-        - key
-        - values
-      properties:
-        key:
-          type: string
-        values:
-          type: array
-          items:
-            type: string      
     ProducerEServiceDescriptor:
       type: object
       required:
