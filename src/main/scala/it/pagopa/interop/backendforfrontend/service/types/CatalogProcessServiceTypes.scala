@@ -55,6 +55,11 @@ object CatalogProcessServiceTypes {
     )
   }
 
+  implicit class RiskAnalysisFormConverter(private val ra: RiskAnalysisForm) extends AnyVal {
+    def toProcess: CatalogProcess.EServiceRiskAnalysisFormSeed =
+      CatalogProcess.EServiceRiskAnalysisFormSeed(version = ra.version, answers = ra.answers)
+  }
+
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
     def toProcess: CatalogProcess.EServiceTechnology = est match {
       case EServiceTechnology.REST => CatalogProcess.EServiceTechnology.REST
@@ -245,26 +250,6 @@ object CatalogProcessServiceTypes {
   implicit class EServiceRiskAnalysisSeedConverter(private val eras: EServiceRiskAnalysisSeed) extends AnyVal {
     def toProcess: CatalogProcess.EServiceRiskAnalysisSeed =
       CatalogProcess.EServiceRiskAnalysisSeed(name = eras.name, riskAnalysisForm = eras.riskAnalysisForm.toProcess)
-  }
-
-  implicit class EServiceRiskAnalysisFormSeedConverter(private val erafs: EServiceRiskAnalysisFormSeed) extends AnyVal {
-    def toProcess: CatalogProcess.EServiceRiskAnalysisFormSeed = CatalogProcess.EServiceRiskAnalysisFormSeed(
-      version = erafs.version,
-      singleAnswers = erafs.singleAnswers.map(_.toProcess),
-      multiAnswers = erafs.multiAnswers.map(_.toProcess)
-    )
-  }
-
-  implicit class EServiceRiskAnalysisSingleAnswerSeedConverter(private val answer: EServiceRiskAnalysisSingleAnswerSeed)
-      extends AnyVal {
-    def toProcess: CatalogProcess.EServiceRiskAnalysisSingleAnswerSeed =
-      CatalogProcess.EServiceRiskAnalysisSingleAnswerSeed(key = answer.key, value = answer.value)
-  }
-
-  implicit class EServiceRiskAnalysisMultiAnswerSeedConverter(private val answer: EServiceRiskAnalysisMultiAnswerSeed)
-      extends AnyVal {
-    def toProcess: CatalogProcess.EServiceRiskAnalysisMultiAnswerSeed =
-      CatalogProcess.EServiceRiskAnalysisMultiAnswerSeed(key = answer.key, values = answer.values)
   }
 
   implicit class DocumentKindWrapper(private val str: String) extends AnyVal {
