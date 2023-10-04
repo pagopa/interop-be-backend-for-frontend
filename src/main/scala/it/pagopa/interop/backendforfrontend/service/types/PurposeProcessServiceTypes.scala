@@ -160,8 +160,8 @@ object PurposeProcessServiceTypes {
   }
 
   implicit class ReversePurposeUpdateContentConverter(private val puc: ReversePurposeUpdateContent) extends AnyVal {
-    def toProcess: PurposeProcess.PurposeUpdateContent =
-      PurposeProcess.PurposeUpdateContent(
+    def toProcess: PurposeProcess.ReversePurposeUpdateContent =
+      PurposeProcess.ReversePurposeUpdateContent(
         title = puc.title,
         description = puc.description,
         isFreeOfCharge = puc.isFreeOfCharge,
