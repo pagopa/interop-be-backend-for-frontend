@@ -4295,7 +4295,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purpose'
+                $ref: '#/components/schemas/CreatedResource'
           headers:
             'X-Rate-Limit-Limit':
               schema:
