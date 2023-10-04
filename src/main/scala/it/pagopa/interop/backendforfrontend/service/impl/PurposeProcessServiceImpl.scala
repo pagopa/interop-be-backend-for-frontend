@@ -214,6 +214,19 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
     invoker.invoke(request, s"Updating purpose $id")
   }
 
+  override def updateReversePurpose(id: UUID, reversePurposeUpdateContent: ReversePurposeUpdateContent)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Purpose] = withHeaders[Purpose] { (bearerToken, correlationId, ip) =>
+    val request: ApiRequest[Purpose] =
+      api.updateReversePurpose(
+        xCorrelationId = correlationId,
+        id = id,
+        reversePurposeUpdateContent = reversePurposeUpdateContent,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+    invoker.invoke(request, s"Updating reverse purpose $id")
+  }
+
   override def retrieveLatestRiskAnalysisConfiguration()(implicit
     contexts: Seq[(String, String)]
   ): Future[RiskAnalysisFormConfigResponse] = withHeaders[RiskAnalysisFormConfigResponse] {

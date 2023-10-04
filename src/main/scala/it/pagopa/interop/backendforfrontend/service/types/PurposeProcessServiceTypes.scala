@@ -159,6 +159,17 @@ object PurposeProcessServiceTypes {
       )
   }
 
+  implicit class ReversePurposeUpdateContentConverter(private val puc: ReversePurposeUpdateContent) extends AnyVal {
+    def toProcess: PurposeProcess.ReversePurposeUpdateContent =
+      PurposeProcess.ReversePurposeUpdateContent(
+        title = puc.title,
+        description = puc.description,
+        isFreeOfCharge = puc.isFreeOfCharge,
+        freeOfChargeReason = puc.freeOfChargeReason,
+        dailyCalls = puc.dailyCalls
+      )
+  }
+
   implicit class RiskAnalysisFormConfigWrapper(
     private val riskAnalysisFormConfig: PurposeProcess.RiskAnalysisFormConfigResponse
   ) extends AnyVal {
