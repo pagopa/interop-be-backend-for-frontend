@@ -533,8 +533,8 @@ final case class PurposesApiServiceImpl(
 
   override def createPurposeForReceiveEservice(seed: PurposeEServiceSeed)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
     logger.info(s"Creating purpose from ESErvice ${seed.eserviceId} and Risk Analysis ${seed.riskAnalysisId}")
 
@@ -547,7 +547,7 @@ final case class PurposesApiServiceImpl(
         s"Error creating Purpose with eService ${seed.eserviceId} and consumer ${seed.consumerId}",
         headers
       ) orElse { case Success(purpose) =>
-        createPurpose200(headers)(purpose)
+        createPurposeForReceiveEservice200(headers)(purpose)
       }
     }
   }
