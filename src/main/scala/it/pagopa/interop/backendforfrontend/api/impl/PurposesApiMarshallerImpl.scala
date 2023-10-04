@@ -42,4 +42,7 @@ object PurposesApiMarshallerImpl extends PurposesApiMarshaller with SprayJsonSup
   override implicit def fromEntityUnmarshallerPurposeEServiceSeed: FromEntityUnmarshaller[PurposeEServiceSeed] =
     sprayJsonUnmarshaller[PurposeEServiceSeed]
 
+  override implicit def fromEntityUnmarshallerReversePurposeUpdateContent
+    : FromEntityUnmarshaller[ReversePurposeUpdateContent] =
+    sprayJsonUnmarshaller[ReversePurposeUpdateContent]
 }
