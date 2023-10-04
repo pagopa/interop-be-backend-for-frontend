@@ -135,15 +135,13 @@ object PurposeProcessServiceTypes {
       freeOfChargeReason = p.freeOfChargeReason,
       dailyCallsPerConsumer = currentDescriptor.dailyCallsPerConsumer,
       dailyCallsTotal = currentDescriptor.dailyCallsTotal,
-      riskAnalysisId = {
-        if (eService.mode == CatalogProcess.EServiceMode.DELIVER) {
-          p.riskAnalysisForm
-            .flatMap(form => form.riskAnalysisId)
-            .toList
-            .intersect(eService.riskAnalysis.map(_.id))
-            .headOption
-        } else None
-      }
+      riskAnalysisId = if (eService.mode == CatalogProcess.EServiceMode.RECEIVE) {
+        p.riskAnalysisForm
+          .flatMap(form => form.riskAnalysisId)
+          .toList
+          .intersect(eService.riskAnalysis.map(_.id))
+          .headOption
+      } else None
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
