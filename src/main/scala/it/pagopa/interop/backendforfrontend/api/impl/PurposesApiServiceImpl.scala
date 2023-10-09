@@ -492,6 +492,27 @@ final case class PurposesApiServiceImpl(
     }
   }
 
+  override def updateReversePurpose(purposeId: String, payload: ReversePurposeUpdateContent)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    logger.info(s"Updating Reverse Purpose $purposeId")
+
+    val result: Future[PurposeVersionResource] = for {
+      purposeUUID    <- purposeId.toFutureUUID
+      updatedPurpose <- purposeProcessService.updateReversePurpose(purposeUUID, payload.toProcess)
+      versionUUID    <- getCurrentVersion(updatedPurpose).map(_.id).toFuture(PurposeNotFound(purposeUUID))
+    } yield PurposeVersionResource(purposeUUID, versionUUID)
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error updating reverse Purpose $purposeId", headers) orElse { case Success(response) =>
+        updateReversePurpose200(headers)(response)
+      }
+    }
+  }
+
   override def retrieveLatestRiskAnalysisConfiguration()(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -533,8 +554,8 @@ final case class PurposesApiServiceImpl(
 
   override def createPurposeForReceiveEservice(seed: PurposeEServiceSeed)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
     logger.info(s"Creating purpose from ESErvice ${seed.eserviceId} and Risk Analysis ${seed.riskAnalysisId}")
 
@@ -547,7 +568,7 @@ final case class PurposesApiServiceImpl(
         s"Error creating Purpose with eService ${seed.eserviceId} and consumer ${seed.consumerId}",
         headers
       ) orElse { case Success(purpose) =>
-        createPurpose200(headers)(purpose)
+        createPurposeForReceiveEservice200(headers)(purpose)
       }
     }
   }

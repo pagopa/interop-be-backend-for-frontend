@@ -135,15 +135,13 @@ object PurposeProcessServiceTypes {
       freeOfChargeReason = p.freeOfChargeReason,
       dailyCallsPerConsumer = currentDescriptor.dailyCallsPerConsumer,
       dailyCallsTotal = currentDescriptor.dailyCallsTotal,
-      riskAnalysisId = {
-        if (eService.mode == CatalogProcess.EServiceMode.DELIVER) {
-          p.riskAnalysisForm
-            .flatMap(form => form.riskAnalysisId)
-            .toList
-            .intersect(eService.riskAnalysis.map(_.id))
-            .headOption
-        } else None
-      }
+      riskAnalysisId = if (eService.mode == CatalogProcess.EServiceMode.RECEIVE) {
+        p.riskAnalysisForm
+          .flatMap(form => form.riskAnalysisId)
+          .toList
+          .intersect(eService.riskAnalysis.map(_.id))
+          .headOption
+      } else None
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
@@ -157,6 +155,17 @@ object PurposeProcessServiceTypes {
         isFreeOfCharge = puc.isFreeOfCharge,
         freeOfChargeReason = puc.freeOfChargeReason,
         riskAnalysisForm = puc.riskAnalysisForm.map(_.toProcess),
+        dailyCalls = puc.dailyCalls
+      )
+  }
+
+  implicit class ReversePurposeUpdateContentConverter(private val puc: ReversePurposeUpdateContent) extends AnyVal {
+    def toProcess: PurposeProcess.ReversePurposeUpdateContent =
+      PurposeProcess.ReversePurposeUpdateContent(
+        title = puc.title,
+        description = puc.description,
+        isFreeOfCharge = puc.isFreeOfCharge,
+        freeOfChargeReason = puc.freeOfChargeReason,
         dailyCalls = puc.dailyCalls
       )
   }

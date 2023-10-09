@@ -466,6 +466,7 @@ final case class EServicesApiServiceImpl(
   private def enhanceProducerEService(eService: CatalogProcess.EService) = ProducerEService(
     id = eService.id,
     name = eService.name,
+    mode = eService.mode.toApi,
     activeDescriptor = getActiveDescriptor(eService).map(_.toCompactDescriptor),
     draftDescriptor = getDraftDescriptor(eService).map(_.toCompactDescriptor)
   )

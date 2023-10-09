@@ -44,7 +44,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val compactAgreementFormat: RootJsonFormat[CompactAgreement]         = jsonFormat3(CompactAgreement)
   implicit val catalogEServiceFormat: RootJsonFormat[CatalogEService]           = jsonFormat8(CatalogEService)
   implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]         = jsonFormat2(CatalogEServices)
-  implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]         = jsonFormat4(ProducerEService)
+  implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]         = jsonFormat5(ProducerEService)
   implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices]       = jsonFormat2(ProducerEServices)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
@@ -156,6 +156,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   )
 
   implicit val purposeUpdateContentFormat: RootJsonFormat[PurposeUpdateContent] = jsonFormat6(PurposeUpdateContent)
+  implicit val reversePurposeUpdateContentFormat: RootJsonFormat[ReversePurposeUpdateContent] =
+    jsonFormat5(ReversePurposeUpdateContent)
 
   implicit val eServiceAttributeSeedFormat: RootJsonFormat[DescriptorAttributeSeed]   = jsonFormat2(
     DescriptorAttributeSeed

@@ -4295,7 +4295,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purpose'
+                $ref: '#/components/schemas/CreatedResource'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -4366,6 +4366,70 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /reverse/purposes/{purposeId}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
+      - name: purposeId
+        in: path
+        description: the purpose id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+        - $ref: '#/components/parameters/IpAddress'
+      tags:
+        - purposes
+      operationId: updateReversePurpose
+      description: Updates a reverse Purpose
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReversePurposeUpdateContent'
+        required: true
+      responses:
+        '200':
+          description: Purpose updated
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurposeVersionResource'
+        '400':
+          description: Bad Request
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/catalog/eservices/{eserviceId}/descriptor/{descriptorId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -10866,12 +10930,15 @@ components:
       required:
         - id
         - name
+        - mode
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
+        mode:
+          $ref: '#/components/schemas/EServiceMode'
         activeDescriptor:
           $ref: '#/components/schemas/CompactDescriptor'
         draftDescriptor:
@@ -11146,6 +11213,27 @@ components:
           type: string      
         riskAnalysisForm:
           $ref: '#/components/schemas/RiskAnalysisForm'
+        dailyCalls:
+          description: 'maximum number of daily calls that this version can perform.'
+          type: integer
+          format: int32
+      required:
+        - title
+        - description
+        - isFreeOfCharge
+        - dailyCalls
+    ReversePurposeUpdateContent:
+      type: object
+      description: contains the expected payload for purpose update.
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        isFreeOfCharge:
+          type: boolean
+        freeOfChargeReason:
+          type: string
         dailyCalls:
           description: 'maximum number of daily calls that this version can perform.'
           type: integer
