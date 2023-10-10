@@ -5206,6 +5206,12 @@ paths:
       description: clone purpose
       summary: Clone Purpose
       operationId: clonePurpose
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurposeCloneSeed'
+        required: true
       responses:
         '200':
           description: Purpose Cloned
@@ -10218,6 +10224,14 @@ components:
         - purposeId
         - title
         - eservice
+    PurposeCloneSeed:
+      type: object
+      properties:
+        eserviceId:
+          type: string
+          format: uuid
+      required:
+        - eserviceId    
     CatalogDescriptorEService:
       type: object
       required:
