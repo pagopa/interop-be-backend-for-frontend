@@ -11397,15 +11397,11 @@ components:
       properties:
         version:
           type: string
-          minLength: 1
-          maxLength: 250
         answers:
           additionalProperties:
             type: array
             items:
               type: string
-              minLength: 1
-              maxLength: 250
       required:
         - version
         - answers
