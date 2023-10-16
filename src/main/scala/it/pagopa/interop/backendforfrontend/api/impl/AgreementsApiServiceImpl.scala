@@ -306,7 +306,7 @@ final case class AgreementsApiServiceImpl(
       producer = CompactOrganization(producerTenant.id, producerTenant.name, producerTenant.kind.map(_.toApi))
     ),
     descriptor = currentDescriptor.toCompactDescriptor,
-    canBeUpgraded = isUpgradable(currentDescriptor, eService.descriptors),
+    canBeUpgraded = isUpgradable(currentDescriptor, agreement, eService.descriptors),
     suspendedByConsumer = agreement.suspendedByConsumer,
     suspendedByProducer = agreement.suspendedByProducer,
     suspendedByPlatform = agreement.suspendedByPlatform
