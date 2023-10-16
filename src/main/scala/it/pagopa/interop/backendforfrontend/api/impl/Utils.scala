@@ -77,17 +77,18 @@ object Utils {
       tenant.attributes.mapFilter(_.declared.map(_.id))
 
   def canBeUpgraded(eService: CatalogProcess.EService, a: AgreementProcess.Agreement): Boolean =
-    eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, eService.descriptors))
+    eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, a, eService.descriptors))
 
   def isUpgradable(
     descriptor: CatalogProcess.EServiceDescriptor,
+    agreement: AgreementProcess.Agreement,
     descriptors: Seq[CatalogProcess.EServiceDescriptor]
   ): Boolean =
     descriptors
       .filter(_.version.toInt > descriptor.version.toInt)
       .exists(d =>
-        d.state == CatalogProcess.EServiceDescriptorState.PUBLISHED ||
-          d.state == CatalogProcess.EServiceDescriptorState.SUSPENDED
+        (d.state == CatalogProcess.EServiceDescriptorState.PUBLISHED ||
+          d.state == CatalogProcess.EServiceDescriptorState.SUSPENDED) && (agreement.state == AgreementProcess.AgreementState.ACTIVE || agreement.state == AgreementProcess.AgreementState.SUSPENDED)
       )
 
   def parseResponse(responseXml: String): Try[XMLObject] = Try {
