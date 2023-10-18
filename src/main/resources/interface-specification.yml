@@ -10992,6 +10992,9 @@ components:
           items:
             type: string
           description: User's roles on product
+        parent:
+          type: string
+          description: The name of the root parent
       required:
         - id
         - description

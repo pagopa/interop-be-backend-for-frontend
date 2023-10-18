@@ -45,8 +45,8 @@ object PurposeProcessServiceTypes {
   }
 
   implicit class RiskAnalysisFormConverter(private val raf: RiskAnalysisForm) extends AnyVal {
-    def toProcess: PurposeProcess.RiskAnalysisForm =
-      PurposeProcess.RiskAnalysisForm(version = raf.version, answers = raf.answers)
+    def toProcess: PurposeProcess.RiskAnalysisFormSeed =
+      PurposeProcess.RiskAnalysisFormSeed(version = raf.version, answers = raf.answers)
   }
 
   implicit class PurposeVersionUpdateSeedConverter(private val seed: WaitingForApprovalPurposeVersionUpdateContentSeed)

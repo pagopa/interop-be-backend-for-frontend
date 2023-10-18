@@ -198,7 +198,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     jsonFormat1(WaitingForApprovalPurposeVersionUpdateContentSeed)
 
   implicit val selfcareProductFormat: RootJsonFormat[SelfcareProduct]         = jsonFormat2(SelfcareProduct)
-  implicit val selfcareInstitutionFormat: RootJsonFormat[SelfcareInstitution] = jsonFormat3(SelfcareInstitution)
+  implicit val selfcareInstitutionFormat: RootJsonFormat[SelfcareInstitution] = jsonFormat4(SelfcareInstitution)
 
   implicit val selfcareUserFormat: RootJsonFormat[SelfcareUser] = jsonFormat3(SelfcareUser)
   implicit val publicKeyFormat: RootJsonFormat[PublicKey]       =
