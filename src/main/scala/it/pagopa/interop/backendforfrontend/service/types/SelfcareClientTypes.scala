@@ -33,20 +33,18 @@ object SelfcareClientTypes {
         id               <- i.id
         description      <- i.description
         userProductRoles <- i.userProductRoles
-        parent           <- i.rootParent.map(_.description)
       } yield SelfcareInstitution(
         id = id,
         description = description,
         userProductRoles = userProductRoles,
-        parent = parent
+        parent = i.rootParent.flatMap(_.description)
       )
 
       selfcareInstitution.toFuture {
         val missingFields: String = List(
           i.id.fold(Option("id"))(_ => Option.empty[String]),
           i.description.fold(Option("description"))(_ => Option.empty[String]),
-          i.userProductRoles.fold(Option("userProductRoles"))(_ => Option.empty[String]),
-          i.rootParent.fold(Option("parent"))(_ => Option.empty[String])
+          i.userProductRoles.fold(Option("userProductRoles"))(_ => Option.empty[String])
         ).flatten
           .mkString(", ")
         MissingSelfcareFields(i.getClass.getName, missingFields)
