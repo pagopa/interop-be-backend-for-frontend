@@ -122,7 +122,7 @@ object PurposeProcessServiceTypes {
       agreement = {
         val canBeUpgraded: Boolean = eService.descriptors
           .find(_.id == agreement.descriptorId)
-          .exists(isUpgradable(_, eService.descriptors))
+          .exists(isUpgradable(_, agreement, eService.descriptors))
         CompactAgreement(id = agreement.id, state = agreement.state.toApi, canBeUpgraded = canBeUpgraded)
       },
       currentVersion = currentVersion.map(_.toApi),
