@@ -46,7 +46,7 @@ final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
   attributeRegistryService: AttributeRegistryProcessService,
   catalogProcessService: CatalogProcessService,
-  partyProcessService: PartyProcessService,
+  selfcareV2ClientService: SelfcareV2ClientService,
   tenantProcessService: TenantProcessService,
   fileManager: FileManager,
   uuidSupplier: UUIDSupplier

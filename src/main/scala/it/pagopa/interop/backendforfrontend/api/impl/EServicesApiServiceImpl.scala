@@ -48,7 +48,7 @@ final case class EServicesApiServiceImpl(
   attributeRegistryProcessService: AttributeRegistryProcessService,
   catalogProcessService: CatalogProcessService,
   tenantProcessService: TenantProcessService,
-  partyProcessService: PartyProcessService,
+  selfcareV2ClientService: SelfcareV2ClientService,
   fileManager: FileManager,
   uuidSupplier: UUIDSupplier,
   offsetDateTimeSupplier: OffsetDateTimeSupplier

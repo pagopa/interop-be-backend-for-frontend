@@ -24,8 +24,6 @@ import it.pagopa.interop.backendforfrontend.api.impl.{
   EServicesApiServiceImpl,
   HealthApiMarshallerImpl,
   HealthServiceApiImpl,
-  PartyApiMarshallerImpl,
-  PartyApiServiceImpl,
   PrivacyNoticesApiMarshallerImpl,
   PrivacyNoticesApiServiceImpl,
   PurposesApiMarshallerImpl,
@@ -138,16 +136,12 @@ trait Dependencies {
     val oauthAndRateLimitingDirective: Directive1[Seq[(String, String)]] =
       jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
 
-    val partyProcess: PartyProcessService                         =
-      new PartyProcessServiceImpl(ApplicationConfiguration.partyProcessURL, ApplicationConfiguration.partyProcessApiKey)
     val attributeRegistryProcess: AttributeRegistryProcessService =
       new AttributeRegistryProcessServiceImpl(ApplicationConfiguration.attributeRegistryProcessURL, blockingEc)
     val agreementProcess: AgreementProcessService                 =
       new AgreementProcessServiceImpl(ApplicationConfiguration.agreementProcessURL, blockingEc)
     val catalogProcess: CatalogProcessService                     =
       new CatalogProcessServiceImpl(ApplicationConfiguration.catalogProcessURL, blockingEc)
-    val userRegistry: UserRegistryService                         =
-      new UserRegistryServiceImpl(ApplicationConfiguration.userRegistryURL, ApplicationConfiguration.userRegistryApiKey)
     val tenantProcess: TenantProcessService                       =
       new TenantProcessServiceImpl(ApplicationConfiguration.tenantProcessURL, blockingEc)
     val purposeProcess: PurposeProcessService                     =
@@ -156,8 +150,8 @@ trait Dependencies {
       new AuthorizationManagementServiceImpl(ApplicationConfiguration.authorizationManagementURL, blockingEc)
     val authorizationProcess: AuthorizationProcessService         =
       new AuthorizationProcessServiceImpl(ApplicationConfiguration.authorizationProcessURL, blockingEc)
-    val selfcareClient: SelfcareClientService                     =
-      new SelfcareClientServiceImpl(ApplicationConfiguration.selfcareV2URL, ApplicationConfiguration.selfcareV2ApiKey)
+    val selfcareV2ClientService: SelfcareV2ClientService          =
+      new SelfcareV2ClientServiceImpl(ApplicationConfiguration.selfcareV2URL, ApplicationConfiguration.selfcareV2ApiKey)
 
     implicit val scanamo: ScanamoAsync = ScanamoAsync(DynamoDbAsyncClient.create())(ec)
 
@@ -201,19 +195,13 @@ trait Dependencies {
         sessionTokenGenerator,
         interopTokenGenerator,
         tenantProcess,
-        partyProcess,
+        selfcareV2ClientService,
         OffsetDateTimeSupplier,
         allowList,
         rateLimiter
       ),
       AuthorizationApiMarshallerImpl,
       SecurityDirectives.authenticateOAuth2("SecurityRealm", AkkaUtils.PassThroughAuthenticator)
-    )
-
-    val partyApi: PartyApi = new PartyApi(
-      PartyApiServiceImpl(partyProcess, userRegistry, attributeRegistryProcess, tenantProcess),
-      PartyApiMarshallerImpl,
-      oauthAndRateLimitingDirective
     )
 
     val attributesApi: AttributesApi = new AttributesApi(
@@ -227,7 +215,7 @@ trait Dependencies {
         agreementProcess,
         attributeRegistryProcess,
         catalogProcess,
-        partyProcess,
+        selfcareV2ClientService,
         tenantProcess,
         fileManager(blockingEc),
         UUIDSupplier
@@ -237,7 +225,7 @@ trait Dependencies {
     )
 
     val tenantsApi: TenantsApi = new TenantsApi(
-      TenantsApiServiceImpl(attributeRegistryProcess, tenantProcess, selfcareClient),
+      TenantsApiServiceImpl(attributeRegistryProcess, tenantProcess, selfcareV2ClientService),
       TenantsApiMarshallerImpl,
       oauthAndRateLimitingDirective
     )
@@ -248,7 +236,7 @@ trait Dependencies {
         attributeRegistryProcess,
         catalogProcess,
         tenantProcess,
-        partyProcess,
+        selfcareV2ClientService,
         fileManager(blockingEc),
         UUIDSupplier,
         OffsetDateTimeSupplier
@@ -277,8 +265,7 @@ trait Dependencies {
           tenantProcess,
           catalogProcess,
           purposeProcess,
-          partyProcess,
-          userRegistry
+          selfcareV2ClientService
         ),
         ClientsApiMarshallerImpl,
         oauthAndRateLimitingDirective
@@ -286,7 +273,7 @@ trait Dependencies {
 
     val selfcareApi: SelfcareApi =
       new SelfcareApi(
-        SelfcareApiServiceImpl(selfcareClient, tenantProcess),
+        SelfcareApiServiceImpl(selfcareV2ClientService, tenantProcess),
         SelfcareApiMarshallerImpl,
         oauthAndRateLimitingDirective
       )
@@ -313,7 +300,6 @@ trait Dependencies {
       eservices = eServicesApi,
       purposes = purposesApi,
       clients = clientsApi,
-      party = partyApi,
       tools = toolsApi,
       health = healthApi,
       privacyNotices = privacyNoticesApi,

@@ -340,7 +340,7 @@ final case class PurposesApiServiceImpl(
       authorizationProcessService
         .getClientsWithKeys(
           name = None,
-          relationshipIds = Seq.empty,
+          userIds = Seq.empty,
           consumerId = consumerId,
           purposeId = purposeId,
           kind = None,

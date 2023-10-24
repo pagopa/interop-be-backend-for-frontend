@@ -14,7 +14,7 @@ import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfigurati
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
-import it.pagopa.interop.backendforfrontend.service.{PartyProcessService, TenantProcessService}
+import it.pagopa.interop.backendforfrontend.service.{SelfcareV2ClientService, TenantProcessService}
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -25,6 +25,7 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
 import it.pagopa.interop.tenantprocess.client.model.Tenant
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,7 +37,7 @@ final case class AuthorizationApiServiceImpl(
   sessionTokenGenerator: SessionTokenGenerator,
   interopTokenGenerator: InteropTokenGenerator,
   tenantProcessService: TenantProcessService,
-  partyProcess: PartyProcessService,
+  selfcareV2ClientService: SelfcareV2ClientService,
   offsetDateTimeSupplier: OffsetDateTimeSupplier,
   allowList: List[String],
   rateLimiter: RateLimiter
@@ -107,11 +108,12 @@ final case class AuthorizationApiServiceImpl(
 
   private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     for {
-      partyInstitution <- partyProcess.getInstitution(selfcareId)
-      _                <- assertTenantAllowed(selfcareId, partyInstitution.origin)
-      tenant           <- tenantProcessService
-        .selfcareUpsertTenant(partyInstitution.origin, partyInstitution.originId, partyInstitution.description)(
-          partyInstitution.id.toString
+      selfcareUuid <- selfcareId.toFutureUUID
+      institution  <- selfcareV2ClientService.getInstitution(selfcareUuid).map(_.toApi).flatMap(_.toFuture)
+      _            <- assertTenantAllowed(selfcareId, institution.origin)
+      tenant       <- tenantProcessService
+        .selfcareUpsertTenant(institution.origin, institution.originId, institution.description)(
+          institution.id.toString
         )
     } yield tenant
 
