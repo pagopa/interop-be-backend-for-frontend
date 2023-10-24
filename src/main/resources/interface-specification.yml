@@ -10306,7 +10306,7 @@ components:
         name:
           type: string
         riskAnalysisForm:
-          $ref: '#/components/schemas/RiskAnalysisForm'
+          $ref: '#/components/schemas/RiskAnalysisFormSeed'
     EServiceRiskAnalysis:
       type: object
       required:
@@ -10755,7 +10755,7 @@ components:
           type: string
           format: uuid
         riskAnalysisForm:
-          $ref: '#/components/schemas/RiskAnalysisForm'
+          $ref: '#/components/schemas/RiskAnalysisFormSeed'
         title:
           type: string
         description:
@@ -10831,6 +10831,8 @@ components:
           type: string
         kind:
           $ref: '#/components/schemas/TenantKind'
+        contactMail:
+          $ref: '#/components/schemas/Mail'
     TenantKind:
       type: string
       enum:
@@ -11011,9 +11013,6 @@ components:
           type: string
         consumer:
           $ref: '#/components/schemas/CompactOrganization'
-        riskAnalysisId:
-          type: string
-          format: uuid
         riskAnalysisForm:
           $ref: '#/components/schemas/RiskAnalysisForm'
         eservice:
@@ -11213,7 +11212,7 @@ components:
         freeOfChargeReason:
           type: string      
         riskAnalysisForm:
-          $ref: '#/components/schemas/RiskAnalysisForm'
+          $ref: '#/components/schemas/RiskAnalysisFormSeed'
         dailyCalls:
           description: 'maximum number of daily calls that this version can perform.'
           type: integer
@@ -11383,6 +11382,22 @@ components:
       items:
         $ref: '#/components/schemas/RelationshipInfo'
     RiskAnalysisForm:
+      type: object
+      properties:
+        version:
+          type: string
+        answers:
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        riskAnalysisId:
+          type: string
+          format: uuid
+      required:
+        - version
+        - answers
+    RiskAnalysisFormSeed:
       type: object
       properties:
         version:
