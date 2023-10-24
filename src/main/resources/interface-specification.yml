@@ -10831,6 +10831,8 @@ components:
           type: string
         kind:
           $ref: '#/components/schemas/TenantKind'
+        contactMail:
+          $ref: '#/components/schemas/Mail'
     TenantKind:
       type: string
       enum:

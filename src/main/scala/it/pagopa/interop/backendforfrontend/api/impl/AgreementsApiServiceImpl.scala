@@ -339,7 +339,8 @@ final case class AgreementsApiServiceImpl(
     producer = CompactOrganization(
       id = agreement.producerId,
       name = producerTenant.name,
-      kind = producerTenant.kind.map(_.toApi)
+      kind = producerTenant.kind.map(_.toApi),
+      contactMail = producerTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
     ),
     consumer = Tenant(
       id = agreement.consumerId,
