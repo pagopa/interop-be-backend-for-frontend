@@ -12,7 +12,6 @@ import it.pagopa.interop.commons.logging.ContextFieldsToLog
 import it.pagopa.interop.commons.ratelimiter.model.RateLimitStatus
 import it.pagopa.interop.commons.signer.model.SignatureAlgorithm
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
-import it.pagopa.interop.selfcare.partyprocess.client.model.Institution
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcessModel}
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -23,6 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.jdk.CollectionConverters._
 import com.nimbusds.jwt.JWTClaimsSet
+import it.pagopa.interop.selfcare.v2.client.model.Institution
 
 class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with ScalatestRouteTest {
 
@@ -390,24 +390,17 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
 
-      (mockPartyProcess
-        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
-        .expects(selfcareId, *, *)
+      (mockSelfcareV2ClientService
+        .getInstitution(_: UUID)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(UUID.fromString(selfcareId), *, *)
         .once()
         .returns(
           Future.successful(
             Institution(
-              id = UUID.fromString(selfcareId),
-              externalId = "whatever",
-              originId = "IPACode",
-              description = "foo",
-              digitalAddress = "of a digital home?",
-              address = "of an actual home?",
-              zipCode = "winzip",
-              taxCode = "not mine please",
-              origin = "IPA",
-              institutionType = None,
-              attributes = Nil
+              id = UUID.fromString(selfcareId).some,
+              originId = "IPACode".some,
+              description = "foo".some,
+              origin = "IPA".some
             )
           )
         )
@@ -509,24 +502,17 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
 
-      (mockPartyProcess
-        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
-        .expects(selfcareId, *, *)
+      (mockSelfcareV2ClientService
+        .getInstitution(_: UUID)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(UUID.fromString(selfcareId), *, *)
         .once()
         .returns(
           Future.successful(
             Institution(
-              id = UUID.fromString(selfcareId),
-              externalId = "whatever",
-              originId = "ANACCode",
-              description = "foo",
-              digitalAddress = "of a digital home?",
-              address = "of an actual home?",
-              zipCode = "winzip",
-              taxCode = "not mine please",
-              origin = "ANAC",
-              institutionType = None,
-              attributes = Nil
+              id = UUID.fromString(selfcareId).some,
+              originId = "ANACCode".some,
+              description = "foo".some,
+              origin = "ANAC".some
             )
           )
         )
@@ -628,24 +614,17 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
 
-      (mockPartyProcess
-        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
-        .expects(selfcareId, *, *)
+      (mockSelfcareV2ClientService
+        .getInstitution(_: UUID)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(UUID.fromString(selfcareId), *, *)
         .once()
         .returns(
           Future.successful(
             Institution(
-              id = UUID.fromString(selfcareId),
-              externalId = "whatever",
-              originId = "non-IPACode",
-              description = "foo",
-              digitalAddress = "of a digital home?",
-              address = "of an actual home?",
-              zipCode = "winzip",
-              taxCode = "not mine please",
-              origin = "non-IPA",
-              institutionType = None,
-              attributes = Nil
+              id = UUID.fromString(selfcareId).some,
+              originId = "non-IPACode".some,
+              description = "foo".some,
+              origin = "non-IPA".some
             )
           )
         )

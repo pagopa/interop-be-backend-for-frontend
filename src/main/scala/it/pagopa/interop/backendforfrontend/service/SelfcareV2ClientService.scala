@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service
 
 import it.pagopa.interop.selfcare.v2.client.model._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import java.util.UUID
 
 trait SelfcareV2ClientService {
@@ -16,7 +16,12 @@ trait SelfcareV2ClientService {
 
   def getInstitutions(userId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[InstitutionResource]]
 
-  def getInstitution(selfcareId: UUID)(implicit contexts: Seq[(String, String)]): Future[Institution]
+  def getInstitution(
+    selfcareId: UUID
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution]
 
-  def getUserById(selfcareId: UUID, userId: UUID)(implicit contexts: Seq[(String, String)]): Future[UserResponse]
+  def getUserById(selfcareId: UUID, userId: UUID)(implicit
+    contexts: Seq[(String, String)],
+    ec: ExecutionContext
+  ): Future[UserResponse]
 }

@@ -10,11 +10,12 @@ import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.commons.utils.AkkaUtils._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.GenericError
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.{StatusCodes, HttpHeader}
 
@@ -108,6 +109,16 @@ final case class SelfcareApiServiceImpl(
       case Failure(ex: UserNotFound) =>
         logger.error(s"Error while retrieving user $userId - ${ex.getMessage}")
         getUser404(headers)(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex)               =>
+        logger.error(s"Error while retrieving user $userId - ${ex.getMessage}")
+        complete(
+          StatusCodes.InternalServerError,
+          headers,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(s"Something went wrong trying to get user $userId - ${ex.getMessage}")
+          )
+        )
     }
   }
   override def getInstitutionUsers(userId: Option[String], roles: String, query: Option[String], tenantId: String)(
@@ -145,8 +156,21 @@ final case class SelfcareApiServiceImpl(
       usersApi     <- users.traverse(_.toFuture)
     } yield filterByUserName(usersApi, query)
 
-    onComplete(result) { case Success(usersInfo) =>
-      getInstitutionUsers200(headers)(usersInfo)
+    onComplete(result) {
+      case Success(usersInfo) =>
+        getInstitutionUsers200(headers)(usersInfo)
+      case Failure(ex)        =>
+        logger.error(s"Error while retrieving users corresponding to tenant $tenantId - ${ex.getMessage}")
+        complete(
+          StatusCodes.InternalServerError,
+          headers,
+          problemOf(
+            StatusCodes.InternalServerError,
+            GenericError(
+              s"Something went wrong trying to get user info for institution corresponding to tenant $tenantId - ${ex.getMessage}"
+            )
+          )
+        )
     }
   }
 }
