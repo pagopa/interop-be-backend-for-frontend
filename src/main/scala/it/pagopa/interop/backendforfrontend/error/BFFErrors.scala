@@ -129,4 +129,7 @@ object BFFErrors {
   final case class EServiceRiskAnalysisNotFound(eServiceId: UUID, riskAnalysisId: UUID)
       extends ComponentError("0031", s"RiskAnalysis ${riskAnalysisId} not found in Eservice ${eServiceId}")
 
+  final case class MissingSelfcareFields(elem: String, missingFields: String)
+      extends ComponentError("0032", s"Missing some fields for class $elem - $missingFields")
+
 }
