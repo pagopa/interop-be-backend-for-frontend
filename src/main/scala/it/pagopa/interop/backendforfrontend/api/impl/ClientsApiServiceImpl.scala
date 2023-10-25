@@ -29,6 +29,7 @@ import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProc
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
+import java.util.UUID
 
 final case class ClientsApiServiceImpl(
   authorizationProcessService: AuthorizationProcessService,
@@ -172,14 +173,14 @@ final case class ClientsApiServiceImpl(
 
   override def getClientUsers(clientId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerOperatorarray: ToEntityMarshaller[Seq[User]]
+    toEntityMarshallerUUIDarray: ToEntityMarshaller[Seq[UUID]],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
-    val result: Future[Seq[User]] = for {
+    val result: Future[Seq[UUID]] = for {
       clientUuid <- clientId.toFutureUUID
-      operators  <- authorizationProcessService.getClientOperators(clientUuid)
-    } yield (operators.map(_.toApi))
+      users      <- authorizationProcessService.getClientUsers(clientUuid)
+    } yield users
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()

@@ -11041,33 +11041,11 @@ components:
           format: uuid
       required:
         - purposeId
-    User:
-      description: Models a Client User
-      type: object
-      properties:
-        userId:
-          type: string
-          format: uuid
-        taxCode:
-          type: string
-        name:
-          type: string
-        familyName:
-          type: string
-        roles:
-          type: array
-          items:
-            type: string
-      required:
-        - userId
-        - taxCode
-        - name
-        - familyName
-        - roles
     Users:
       type: array
       items:
-        $ref: '#/components/schemas/User'
+        type: string
+        format: uuid
     KeysSeed:
       type: array
       items:

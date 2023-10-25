@@ -725,24 +725,24 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
 
-      (mockPartyProcess
-        .getInstitution(_: String)(_: Seq[(String, String)], _: ExecutionContext))
-        .expects(selfcareId, *, *)
+      (mockSelfcareV2ClientService
+        .getInstitution(_: UUID)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(UUID.fromString(selfcareId), *, *)
         .once()
         .returns(
           Future.successful(
             Institution(
-              id = UUID.fromString(selfcareId),
-              externalId = "whatever",
-              originId = "non-IPACode",
-              description = "foo",
-              digitalAddress = "of a digital home?",
-              address = "of an actual home?",
-              zipCode = "winzip",
-              taxCode = "not mine please",
-              origin = "non-IPA",
+              id = Some(UUID.fromString(selfcareId)),
+              externalId = Some("whatever"),
+              originId = Some("non-IPACode"),
+              description = Some("foo"),
+              digitalAddress = Some("of a digital home?"),
+              address = Some("of an actual home?"),
+              zipCode = Some("winzip"),
+              taxCode = Some("not mine please"),
+              origin = Some("non-IPA"),
               institutionType = None,
-              attributes = Nil
+              attributes = Some(Nil)
             )
           )
         )

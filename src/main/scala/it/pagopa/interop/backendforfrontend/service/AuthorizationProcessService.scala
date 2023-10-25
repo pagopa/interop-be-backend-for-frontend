@@ -26,7 +26,7 @@ trait AuthorizationProcessService {
 
   def getClientKeyById(clientId: UUID, keyId: String)(implicit contexts: Seq[(String, String)]): Future[Key]
 
-  def getClientOperators(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[User]]
+  def getClientUsers(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[UUID]]
 
   def createKeys(clientId: UUID, keysSeed: Seq[KeySeed])(implicit contexts: Seq[(String, String)]): Future[Keys]
 

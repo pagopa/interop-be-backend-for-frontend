@@ -30,11 +30,6 @@ object AuthorizationProcessServiceTypes {
     }
   }
 
-  implicit class UserProcessConverter(private val op: AuthorizationProcess.User) extends AnyVal {
-    def toApi: User =
-      User(userId = op.userId, taxCode = op.taxCode, name = op.name, familyName = op.familyName, roles = op.roles)
-  }
-
   implicit class KeyUseConverter(private val ku: KeyUse) extends AnyVal {
     def toProcess: AuthorizationProcess.KeyUse = ku match {
       case KeyUse.SIG => AuthorizationProcess.KeyUse.SIG
