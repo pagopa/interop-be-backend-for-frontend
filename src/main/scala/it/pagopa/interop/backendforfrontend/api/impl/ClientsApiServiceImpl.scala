@@ -184,8 +184,8 @@ final case class ClientsApiServiceImpl(
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error retrieving users for client $clientId", headers) orElse { case Success(operators) =>
-        getClientUsers200(headers)(operators)
+      handleError(s"Error retrieving users for client $clientId", headers) orElse { case Success(users) =>
+        getClientUsers200(headers)(users)
       }
     }
   }

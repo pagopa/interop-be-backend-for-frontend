@@ -62,7 +62,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         api.removeUser(clientId = clientId, userId = userId, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Removing operator relationship $userId of client ${clientId.toString}")
+      invoker.invoke(request, s"Removing user $userId of client ${clientId.toString}")
     }
 
   override def addClientPurpose(clientId: UUID, purposeAdditionDetails: PurposeAdditionDetails)(implicit
@@ -114,7 +114,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
         api.getClientUsers(clientId = clientId, xCorrelationId = correlationId, xForwardedFor = ip)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Retrieving operators for client ${clientId.toString}")
+      invoker.invoke(request, s"Retrieving users of client ${clientId.toString}")
     }
 
   override def createKeys(clientId: UUID, keySeed: Seq[KeySeed])(implicit
