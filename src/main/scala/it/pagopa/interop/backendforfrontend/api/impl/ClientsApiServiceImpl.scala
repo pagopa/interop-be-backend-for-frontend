@@ -293,7 +293,7 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def getClientKeys(relationshipIds: String, clientId: String)(implicit
+  override def getClientKeys(userIds: String, clientId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
@@ -301,8 +301,8 @@ final case class ClientsApiServiceImpl(
 
     val result: Future[PublicKeys] = for {
       clientUuid        <- clientId.toFutureUUID
-      relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
-      readClientKeys    <- authorizationProcessService.getClientKeys(clientUuid, relationshipsUuid)
+      usersUuid <- parseArrayParameters(userIds).traverse(_.toFutureUUID)
+      readClientKeys    <- authorizationProcessService.getClientKeys(clientUuid, usersUuid)
       keys              <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
