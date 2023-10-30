@@ -26,6 +26,8 @@ import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessSe
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcessModel}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.UserNotFound
+import it.pagopa.interop.selfcare.v2.client.model.UserResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -321,9 +323,9 @@ final case class ClientsApiServiceImpl(
   )(implicit contexts: Seq[(String, String)]): Future[PublicKey] = {
     for {
       selfcareUuid <- getSelfcareIdFutureUUID(contexts)
-      userResponse <- selfcareV2ClientService.getUserById(selfcareUuid, key.userId)
-      user         <- userResponse.toApi.toFuture
-    } yield key.toApi(user = user, isOrphan = true)
+      userResponse <- selfcareV2ClientService.getUserById(selfcareUuid, key.userId).recoverWith{case _: UserNotFound => Future.successful(UserResponse(id = key.userId.toString.some))}
+      (user, isOrphan)         <- userResponse.toApi.toFuture.zip(Future.successful(userResponse.name.isEmpty))
+    } yield key.toApi(user = user, isOrphan = isOrphan)
   }
 
   override def getClient(clientId: String)(implicit
