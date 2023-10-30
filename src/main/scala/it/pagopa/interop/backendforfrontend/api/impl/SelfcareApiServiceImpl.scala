@@ -46,8 +46,7 @@ final case class SelfcareApiServiceImpl(
         selfcareUuid <- getSelfcareIdFutureUUID(contexts)
         products     <- selfcareV2ClientService
           .getInstitutionUserProducts(institutionId = selfcareUuid, userId = userUuid)
-          .map(_.map(_.toApi))
-        productsApi  <- products.traverse(_.toFuture)
+        productsApi  <- products.traverse(_.toApi).toFuture
       } yield productsApi
 
     onComplete(result) {
@@ -66,8 +65,8 @@ final case class SelfcareApiServiceImpl(
     val result: Future[Seq[SelfcareInstitution]] =
       for {
         userUuid        <- getUidFutureUUID(contexts)
-        institutions    <- selfcareV2ClientService.getInstitutions(userId = userUuid).map(_.map(_.toApi))
-        institutionsApi <- institutions.traverse(_.toFuture)
+        institutions    <- selfcareV2ClientService.getInstitutions(userId = userUuid)
+        institutionsApi <- Future.traverse(institutions)(_.toApi.toFuture)
       } yield institutionsApi
 
     onComplete(result) {
@@ -80,28 +79,26 @@ final case class SelfcareApiServiceImpl(
 
   override def getUser(userId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerUserInfo: ToEntityMarshaller[UserInfo],
+    toEntityMarshallerUserInfo: ToEntityMarshaller[TenantUser],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     logger.info(s"Retrieving user $userId")
     val headers: List[HttpHeader] = headersFromContext()
 
-    val result: Future[UserInfo] = for {
+    val result: Future[TenantUser] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
       personId       <- getUidFutureUUID(contexts)
       userUuid       <- userId.toFutureUUID
       selfcareUuid   <- getSelfcareIdFutureUUID(contexts)
-      usersInfoApi   <- selfcareV2ClientService
+      users          <- selfcareV2ClientService
         .getInstitutionProductUsers(
           institutionId = selfcareUuid,
           userId = userUuid.some,
           requesterId = personId,
           roles = Seq.empty
         )
-        .map(_.map(_.toApi(organizationId)))
-
-      users    <- usersInfoApi.traverse(_.toFuture)
-      userInfo <- users.headOption.toFuture(UserNotFound(selfcareUuid, userUuid))
+      usersInfo      <- Future.traverse(users)(_.toApi(organizationId).toFuture)
+      userInfo       <- usersInfo.headOption.toFuture(UserNotFound(selfcareUuid, userUuid))
     } yield userInfo
 
     onComplete(result) {
@@ -121,16 +118,17 @@ final case class SelfcareApiServiceImpl(
         )
     }
   }
-  override def getInstitutionUsers(userId: Option[String], roles: String, query: Option[String], tenantId: String)(
+
+  override def getInstitutionUsers(personId: Option[String], roles: String, query: Option[String], tenantId: String)(
     implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerUserInfoarray: ToEntityMarshaller[Seq[UserInfo]],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerUserInfoarray: ToEntityMarshaller[Seq[TenantUser]]
   ): Route = {
     logger.info(s"Retrieving users for institutions $tenantId")
     val headers: List[HttpHeader] = headersFromContext()
 
-    def filterByUserName(users: Seq[UserInfo], query: Option[String]): Seq[UserInfo] = {
+    def filterByUserName(users: Seq[TenantUser], query: Option[String]): Seq[TenantUser] = {
       query.fold(users)(q =>
         users.filter(user =>
           user.name.toLowerCase.contains(q.toLowerCase) || user.familyName.toLowerCase.contains(q.toLowerCase)
@@ -138,8 +136,8 @@ final case class SelfcareApiServiceImpl(
       )
     }
 
-    val result: Future[Seq[UserInfo]] = for {
-      userUuid <- userId.traverse(_.toFutureUUID)
+    val result: Future[Seq[TenantUser]] = for {
+      userUuid <- personId.traverse(_.toFutureUUID)
       rolesParams = parseArrayParameters(roles)
       tenantUuid   <- tenantId.toFutureUUID
       tenant       <- tenantProcessService.getTenant(tenantUuid)
@@ -152,8 +150,7 @@ final case class SelfcareApiServiceImpl(
           requesterId = tenantUuid,
           roles = rolesParams
         )
-        .map(_.map(_.toApi(tenantUuid)))
-      usersApi     <- users.traverse(_.toFuture)
+      usersApi     <- users.traverse(_.toApi(tenantUuid)).toFuture
     } yield filterByUserName(usersApi, query)
 
     onComplete(result) {

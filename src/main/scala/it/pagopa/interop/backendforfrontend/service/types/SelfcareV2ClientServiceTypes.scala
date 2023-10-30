@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.backendforfrontend.service.model.Institution
-import it.pagopa.interop.backendforfrontend.model.{UserInfo, SelfcareProduct, SelfcareInstitution, SelfcareUser}
+import it.pagopa.interop.backendforfrontend.model.{TenantUser, SelfcareProduct, SelfcareInstitution, SelfcareUser}
 import it.pagopa.interop.selfcare.v2.client.{model => SelfcareClient}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareEntityNotFilled
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -27,7 +27,7 @@ object SelfcareV2ClientServiceTypes {
     } yield SelfcareInstitution(id = id, description = description, userProductRoles = userProductRoles)
   }
 
-  implicit class UserResponseConverter(private val ur: SelfcareClient.UserResponse) extends AnyVal {
+  implicit class SelfcareUserResponseConverter(private val ur: SelfcareClient.UserResponse) extends AnyVal {
     def toApi: Either[Throwable, SelfcareUser] = for {
       id      <- ur.id.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "id"))
       uuid    <- id.toUUID.toEither
@@ -37,14 +37,13 @@ object SelfcareV2ClientServiceTypes {
   }
 
   implicit class UserResourceConverter(private val ur: SelfcareClient.UserResource) extends AnyVal {
-    def toApi(tenantId: UUID): Either[Throwable, UserInfo] = for {
+    def toApi(tenantId: UUID): Either[Throwable, TenantUser] = for {
       id         <- ur.id.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "id"))
       name       <- ur.name.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "name"))
       surname    <- ur.surname.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "surname"))
       fiscalCode <- ur.fiscalCode.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "fiscalCode"))
-      _          <- ur.email.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "email"))
       roles      <- ur.roles.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "roles"))
-    } yield UserInfo(
+    } yield TenantUser(
       userId = id,
       tenantId = tenantId,
       name = name,

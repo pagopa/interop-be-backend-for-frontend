@@ -29,7 +29,6 @@ import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProc
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
-import java.util.UUID
 
 final case class ClientsApiServiceImpl(
   authorizationProcessService: AuthorizationProcessService,
@@ -93,7 +92,7 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def removeUser(clientId: String, userId: String)(implicit
+  override def removeUserFromClient(clientId: String, userId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
@@ -107,12 +106,12 @@ final case class ClientsApiServiceImpl(
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
       handleError(s"Error removing user $userId of client $clientId", headers) orElse { case Success(_) =>
-        removeUser204(headers)
+        removeUserFromClient204(headers)
       }
     }
   }
 
-  override def addUser(clientId: String, userId: String)(implicit
+  override def addUserToClient(clientId: String, userId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
@@ -127,7 +126,7 @@ final case class ClientsApiServiceImpl(
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
       handleError(s"Error add user $userId to client $clientId", headers) orElse { case Success(resource) =>
-        addUser200(headers)(resource)
+        addUserToClient200(headers)(resource)
       }
     }
   }
@@ -173,14 +172,17 @@ final case class ClientsApiServiceImpl(
 
   override def getClientUsers(clientId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerUUIDarray: ToEntityMarshaller[Seq[UUID]],
+    toEntityMarshallerUUIDarray: ToEntityMarshaller[Seq[SelfcareUser]],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
-    val result: Future[Seq[UUID]] = for {
-      clientUuid <- clientId.toFutureUUID
-      users      <- authorizationProcessService.getClientUsers(clientUuid)
-    } yield users
+    val result: Future[Seq[SelfcareUser]] = for {
+      clientUuid   <- clientId.toFutureUUID
+      selfcareUuid <- getSelfcareIdFutureUUID(contexts)
+      clientUsers  <- authorizationProcessService.getClientUsers(clientUuid)
+      users        <- Future.traverse(clientUsers)(selfcareV2ClientService.getUserById(selfcareUuid, _))
+      usersApi     <- Future.traverse(users)(_.toApi.toFuture)
+    } yield usersApi
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
@@ -300,10 +302,10 @@ final case class ClientsApiServiceImpl(
   ): Route = {
 
     val result: Future[PublicKeys] = for {
-      clientUuid        <- clientId.toFutureUUID
-      usersUuid <- parseArrayParameters(userIds).traverse(_.toFutureUUID)
-      readClientKeys    <- authorizationProcessService.getClientKeys(clientUuid, usersUuid)
-      keys              <- Future.traverse(readClientKeys.keys)(decorateKey)
+      clientUuid     <- clientId.toFutureUUID
+      usersUuid      <- parseArrayParameters(userIds).traverse(_.toFutureUUID)
+      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid, usersUuid)
+      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
     onComplete(result) {
@@ -319,8 +321,9 @@ final case class ClientsApiServiceImpl(
   )(implicit contexts: Seq[(String, String)]): Future[PublicKey] = {
     for {
       selfcareUuid <- getSelfcareIdFutureUUID(contexts)
-      user         <- selfcareV2ClientService.getUserById(selfcareUuid, key.userId).map(_.toApi).flatMap(_.toFuture)
-    } yield key.toApi(user)
+      userResponse <- selfcareV2ClientService.getUserById(selfcareUuid, key.userId)
+      user         <- userResponse.toApi.toFuture
+    } yield key.toApi(user = user, isOrphan = true)
   }
 
   override def getClient(clientId: String)(implicit

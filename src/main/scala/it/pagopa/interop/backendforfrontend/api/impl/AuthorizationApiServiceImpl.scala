@@ -108,12 +108,13 @@ final case class AuthorizationApiServiceImpl(
 
   private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     for {
-      selfcareUuid <- selfcareId.toFutureUUID
-      institution  <- selfcareV2ClientService.getInstitution(selfcareUuid).map(_.toApi).flatMap(_.toFuture)
-      _            <- assertTenantAllowed(selfcareId, institution.origin)
-      tenant       <- tenantProcessService
-        .selfcareUpsertTenant(institution.origin, institution.originId, institution.description)(
-          institution.id.toString
+      selfcareUuid   <- selfcareId.toFutureUUID
+      institution    <- selfcareV2ClientService.getInstitution(selfcareUuid)
+      institutionApi <- institution.toApi.toFuture
+      _              <- assertTenantAllowed(selfcareId, institutionApi.origin)
+      tenant         <- tenantProcessService
+        .selfcareUpsertTenant(institutionApi.origin, institutionApi.originId, institutionApi.description)(
+          institutionApi.id.toString
         )
     } yield tenant
 
