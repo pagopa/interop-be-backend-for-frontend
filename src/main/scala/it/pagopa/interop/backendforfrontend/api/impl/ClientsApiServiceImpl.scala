@@ -323,8 +323,11 @@ final case class ClientsApiServiceImpl(
   )(implicit contexts: Seq[(String, String)]): Future[PublicKey] = {
     for {
       selfcareUuid <- getSelfcareIdFutureUUID(contexts)
-      userResponse <- selfcareV2ClientService.getUserById(selfcareUuid, key.userId).recoverWith{case _: UserNotFound => Future.successful(UserResponse(id = key.userId.toString.some))}
-      (user, isOrphan)         <- userResponse.toApi.toFuture.zip(Future.successful(userResponse.name.isEmpty))
+      userResponse <- selfcareV2ClientService.getUserById(selfcareUuid, key.userId).recoverWith{case _: UserNotFound => Future.successful(UserResponse())}
+      (user, isOrphan)         <- userResponse match {
+        case UserResponse(_, id, _, _, _) if id == None => userResponse.toApi.toFuture.zip(Future.successful(true))
+        case _ => userResponse.toApi.toFuture.zip(Future.successful(false))
+      }
     } yield key.toApi(user = user, isOrphan = isOrphan)
   }
 
