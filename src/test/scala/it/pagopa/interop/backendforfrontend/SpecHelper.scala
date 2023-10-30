@@ -86,22 +86,6 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   implicit def contexts: Seq[(String, String)] =
     Seq("bearer" -> bearerToken, USER_ROLES -> "admin", ORGANIZATION_ID_CLAIM -> UUID.randomUUID.toString)
 
-//  def desiredClaimSet(tenantId: UUID): Map[String, AnyRef] =
-//    Map("uid" -> "support", "user-roles" -> "support", "organizationId" -> tenantId.toString).widen[AnyRef]
-//
-//  def desiredClaimSet(tenantId: UUID, selfcareId: UUID): Map[String, AnyRef] =
-//    Map(
-//      "uid"            -> "support",
-//      "user-roles"     -> "support",
-//      "organizationId" -> tenantId.toString,
-//      "selfcareId"     -> selfcareId.toString,
-//      "organization"   -> Organization(
-//        id = selfcareId.toString,
-//        name = "PagoPa",
-//        roles = Seq(Role(partyRole = "OPERATOR", role = "support"))
-//      ).toJson.asJsObject
-//    ).widen[AnyRef]
-
   final val emptyRelayState: String = ""
 }
 
