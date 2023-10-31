@@ -143,11 +143,12 @@ final case class SelfcareApiServiceImpl(
       tenant       <- tenantProcessService.getTenant(tenantUuid)
       selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       selfcareUuid <- selfcareId.toFutureUUID
+      requesterOrgId     <- getUidFutureUUID(contexts)
       users        <- selfcareV2ClientService
         .getInstitutionProductUsers(
           institutionId = selfcareUuid,
           userId = userUuid,
-          requesterId = tenantUuid,
+          requesterId = requesterOrgId,
           roles = rolesParams
         )
       usersApi     <- users.traverse(_.toApi(tenantUuid)).toFuture
