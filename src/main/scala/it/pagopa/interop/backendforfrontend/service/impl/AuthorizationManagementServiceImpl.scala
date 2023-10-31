@@ -25,14 +25,9 @@ class AuthorizationManagementServiceImpl(authorizationManagementUrl: String, blo
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   def getKeyWithClient(clientId: UUID, kid: String)(implicit contexts: Seq[(String, String)]): Future[KeyWithClient] =
-    withHeaders[KeyWithClient] { (_, correlationId, ip) =>
+    withHeaders[KeyWithClient] { (_, correlationId) =>
       val request: ApiRequest[KeyWithClient] =
-        api.getKeyWithClientByKeyId(
-          clientId = clientId,
-          keyId = kid,
-          xCorrelationId = correlationId,
-          xForwardedFor = ip
-        )
+        api.getKeyWithClientByKeyId(clientId = clientId, keyId = kid, xCorrelationId = correlationId)
       invoker
         .invoke(request, s"Retrieve key $kid of client ${clientId.toString}")
         .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(KidNotFound(clientId, kid)) }
