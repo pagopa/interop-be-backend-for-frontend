@@ -70,7 +70,6 @@ paths:
   '/agreements':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -269,7 +268,6 @@ paths:
   '/agreements/filter/producers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -358,7 +356,6 @@ paths:
   '/agreements/filter/consumers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -447,7 +444,6 @@ paths:
   '/agreements/{agreementId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: agreementId
         in: path
         description: The identifier of the agreement
@@ -638,7 +634,6 @@ paths:
   '/agreements/{agreementId}/activate':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -733,7 +728,6 @@ paths:
   '/agreements/{agreementId}/clone':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -866,7 +860,6 @@ paths:
   '/agreements/{agreementId}/consumer-documents':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: agreementId
         in: path
         schema:
@@ -981,7 +974,6 @@ paths:
   '/agreements/{agreementId}/consumer-documents/{documentId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: agreementId
         in: path
         schema:
@@ -1164,7 +1156,6 @@ paths:
   '/agreements/{agreementId}/contract':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: agreementId
         in: path
         description: The identifier of the agreement
@@ -1259,7 +1250,6 @@ paths:
   '/agreements/{agreementId}/submit':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1361,7 +1351,6 @@ paths:
   '/agreements/{agreementId}/suspend':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1456,7 +1445,6 @@ paths:
   '/agreements/{agreementId}/reject':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1576,7 +1564,6 @@ paths:
   '/agreements/{agreementId}/archive':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1686,7 +1673,6 @@ paths:
   '/agreements/{agreementId}/update':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1787,7 +1773,6 @@ paths:
   '/agreements/{agreementId}/upgrade':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1882,7 +1867,6 @@ paths:
   '/catalog':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - eservices
@@ -2009,7 +1993,6 @@ paths:
   '/consumers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - in: query
         name: q
         schema:
@@ -2095,7 +2078,6 @@ paths:
   /eservices:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2152,7 +2134,6 @@ paths:
   /eservices/{eServiceId}/consumers:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       security:
         - bearerAuth: []
@@ -2231,7 +2212,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
         - bearerAuth: []
@@ -2398,7 +2378,6 @@ paths:
   /eservices/{eServiceId}/descriptors:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2482,7 +2461,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/activate:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2581,7 +2559,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/publish:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2681,7 +2658,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/suspend:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2762,7 +2738,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/documents:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2870,7 +2845,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/documents/{documentId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
         - bearerAuth: []
@@ -3042,7 +3016,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/clone:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -3126,7 +3099,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/documents/{documentId}/update:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -3224,7 +3196,6 @@ paths:
   /eservices/{eServiceId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
         - bearerAuth: []
@@ -3377,7 +3348,6 @@ paths:
   /eservices/{eServiceId}/riskAnalysis:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -3456,7 +3426,6 @@ paths:
   /eservices/{eServiceId}/riskAnalysis/{riskAnalysisId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       security:
         - bearerAuth: []
@@ -3698,7 +3667,6 @@ paths:
   '/producers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - in: query
         name: q
         schema:
@@ -3762,7 +3730,6 @@ paths:
   '/producers/eservices':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - eservices
@@ -3842,7 +3809,6 @@ paths:
   '/producers/agreements/eservices':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -3950,7 +3916,6 @@ paths:
   '/consumers/agreements/eservices':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -4058,7 +4023,6 @@ paths:
   '/producers/eservices/{eserviceId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: eserviceId
         in: path
         description: the eservice id
@@ -4160,7 +4124,6 @@ paths:
   '/producers/eservices/{eserviceId}/descriptors/{descriptorId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: eserviceId
         in: path
         description: the eservice id
@@ -4276,7 +4239,6 @@ paths:
   /reverse/purposes:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - purposes
@@ -4369,7 +4331,6 @@ paths:
   /reverse/purposes/{purposeId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         description: the purpose id
@@ -4380,7 +4341,6 @@ paths:
     post:
       parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
       tags:
         - purposes
       operationId: updateReversePurpose
@@ -4433,7 +4393,6 @@ paths:
   '/catalog/eservices/{eserviceId}/descriptor/{descriptorId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: eserviceId
         in: path
         description: the eservice id
@@ -4530,7 +4489,6 @@ paths:
   '/session/tokens':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security: [ { } ]
       tags:
@@ -4566,7 +4524,6 @@ paths:
   '/tenants/{tenantId}/relationships':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - party
@@ -4661,7 +4618,6 @@ paths:
   '/tools/validateTokenGeneration':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - tools
@@ -4906,7 +4862,6 @@ paths:
   '/purposes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - purposes
@@ -4979,7 +4934,6 @@ paths:
   '/producer/purposes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - purposes
@@ -5086,7 +5040,6 @@ paths:
   '/consumer/purposes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - purposes
@@ -5193,7 +5146,6 @@ paths:
   /purposes/{purposeId}/clone:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -5305,7 +5257,6 @@ paths:
   /purposes/{purposeId}/versions:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         description: the purpose id
@@ -5423,7 +5374,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/documents/{documentId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       security:
         - bearerAuth: []
@@ -5534,7 +5484,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/archive:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -5652,7 +5601,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/suspend:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -5732,7 +5680,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/update/waitingForApproval:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -5784,7 +5731,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/activate:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -6000,7 +5946,6 @@ paths:
   /purposes/{purposeId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         description: the purpose id
@@ -6074,7 +6019,6 @@ paths:
     delete:
       parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
       tags:
         - purposes
       operationId: deletePurpose
@@ -6174,7 +6118,6 @@ paths:
     post:
       parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
       tags:
         - purposes
       operationId: updatePurpose
@@ -6227,7 +6170,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -6824,7 +6766,6 @@ paths:
   '/certifiedAttributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       summary: Creates attribute
       tags:
@@ -6918,7 +6859,6 @@ paths:
   '/verifiedAttributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       summary: Creates verified attribute
       tags:
@@ -7012,7 +6952,6 @@ paths:
   '/declaredAttributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       summary: Creates declared attribute
       tags:
@@ -7106,7 +7045,6 @@ paths:
   '/attributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       summary: Get attributes
       operationId: getAttributes
@@ -7165,7 +7103,6 @@ paths:
   '/attributes/{attributeId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - schema:
           type: string
           format: uuid
@@ -7304,7 +7241,6 @@ paths:
       description: 'returns the attribute in the registry corresponding to origin and code, if any.'
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - schema:
           type: string
         name: origin
@@ -7320,7 +7256,6 @@ paths:
   '/tenants/{tenantId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: tenantId
         in: path
         description: the tenant id
@@ -7470,7 +7405,6 @@ paths:
   '/tenants':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - in: query
         name: name
         schema:
@@ -7549,7 +7483,6 @@ paths:
   /clients:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - clients
@@ -7691,7 +7624,6 @@ paths:
   /clients/{clientId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       description: Retrieves a Client
       tags:
@@ -7873,7 +7805,6 @@ paths:
   /clients/{clientId}/purposes/{purposeId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     delete:
       tags:
         - clients
@@ -7971,7 +7902,6 @@ paths:
   /clients/{clientId}/keys/{keyId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - clients
@@ -8165,7 +8095,6 @@ paths:
   /clients/{clientId}/relationships/{relationshipId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: clientId
         in: path
         description: The Client id
@@ -8383,7 +8312,6 @@ paths:
   '/clients/{clientId}/purposes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - clients
@@ -8653,7 +8581,6 @@ paths:
   '/clients/{clientId}/operators':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - clients
@@ -8767,7 +8694,6 @@ paths:
   '/clients/{clientId}/keys':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - clients
@@ -9003,7 +8929,6 @@ paths:
   '/clients/{clientId}/encoded/keys/{keyId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - clients
@@ -9123,7 +9048,6 @@ paths:
   /clientsConsumer:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - clients
@@ -9197,7 +9121,6 @@ paths:
   /clientsApi:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - clients
@@ -9271,7 +9194,6 @@ paths:
   '/clients/{clientId}/relationships/{relationshipId}/keys':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: clientId
         in: path
         description: ID of the client holding the key
@@ -9353,7 +9275,6 @@ paths:
   /purposes/riskAnalysis/latest:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - purposes
@@ -9401,7 +9322,6 @@ paths:
   /purposes/riskAnalysis/version/{riskAnalysisVersion}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: riskAnalysisVersion
         in: path
         required: true
@@ -9473,7 +9393,6 @@ paths:
   /user/consent/{consentType}:
     parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
         - name: consentType
           in: path
           required: true
@@ -9591,7 +9510,6 @@ paths:
   /privacyNotices/{consentType}:
     parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
         - name: consentType
           in: path
           required: true
@@ -9662,8 +9580,6 @@ paths:
                   type: integer
                 description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /support:
-    parameters:
-        - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
           - authorization
@@ -9714,7 +9630,6 @@ paths:
   /session/saml2/tokens:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - support
@@ -9806,11 +9721,6 @@ components:
       in: header
       name: X-Correlation-Id
       required: true
-      schema:
-        type: string
-    IpAddress:
-      in: header
-      name: X-Forwarded-For
       schema:
         type: string
   schemas:

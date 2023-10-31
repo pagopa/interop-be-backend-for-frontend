@@ -23,26 +23,25 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def createAgreement(seed: AgreementPayload)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
-      val request = api.createAgreement(xCorrelationId = correlationId, agreementPayload = seed, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
+      val request =
+        api.createAgreement(xCorrelationId = correlationId, agreementPayload = seed)(BearerToken(bearerToken))
       invoker.invoke(request, s"Creating agreement with seed $seed")
     }
 
   override def deleteAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =
-    withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+    withHeaders[Unit] { (bearerToken, correlationId) =>
       val request =
-        api.deleteAgreement(xCorrelationId = correlationId, agreementId = agreementId.toString, xForwardedFor = ip)(
+        api.deleteAgreement(xCorrelationId = correlationId, agreementId = agreementId.toString)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Deleting agreement $agreementId")
     }
 
   override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
       val request =
-        api.getAgreementById(xCorrelationId = correlationId, agreementId = agreementId.toString, xForwardedFor = ip)(
+        api.getAgreementById(xCorrelationId = correlationId, agreementId = agreementId.toString)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Retrieving agreement $agreementId")
@@ -58,7 +57,7 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
     offset: Int,
     showOnlyUpgradeable: Option[Boolean]
   )(implicit contexts: Seq[(String, String)]): Future[Agreements] = withHeaders[Agreements] {
-    (bearerToken, correlationId, ip) =>
+    (bearerToken, correlationId) =>
       val request = api.getAgreements(
         xCorrelationId = correlationId,
         offset = offset,
@@ -68,127 +67,112 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
         eservicesIds = eservicesIds,
         descriptorsIds = descriptorsIds,
         states = states,
-        showOnlyUpgradeable = showOnlyUpgradeable,
-        xForwardedFor = ip
+        showOnlyUpgradeable = showOnlyUpgradeable
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving agreements")
   }
 
   override def activateAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
       val request =
-        api.activateAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
-          BearerToken(bearerToken)
-        )
+        api.activateAgreement(xCorrelationId = correlationId, agreementId = agreementId)(BearerToken(bearerToken))
       invoker.invoke(request, s"Activating agreement $agreementId")
     }
 
   override def submitAgreement(agreementId: UUID, payload: AgreementSubmissionPayload)(implicit
     contexts: Seq[(String, String)]
   ): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
       val request = api.submitAgreement(
         xCorrelationId = correlationId,
         agreementId = agreementId,
-        agreementSubmissionPayload = payload,
-        xForwardedFor = ip
+        agreementSubmissionPayload = payload
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Submitting agreement $agreementId")
     }
 
   override def suspendAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
-      val request = api.suspendAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
+      val request =
+        api.suspendAgreement(xCorrelationId = correlationId, agreementId = agreementId)(BearerToken(bearerToken))
       invoker.invoke(request, s"Suspending agreement $agreementId")
     }
 
   override def updateAgreement(agreementId: UUID, agreementUpdatePayload: AgreementUpdatePayload)(implicit
     contexts: Seq[(String, String)]
   ): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
       val request =
         api.updateAgreementById(
           xCorrelationId = correlationId,
           agreementId = agreementId,
-          agreementUpdatePayload = agreementUpdatePayload,
-          xForwardedFor = ip
+          agreementUpdatePayload = agreementUpdatePayload
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Updating agreement $agreementId")
     }
 
   override def upgradeAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
       val request =
-        api.upgradeAgreementById(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
-          BearerToken(bearerToken)
-        )
+        api.upgradeAgreementById(xCorrelationId = correlationId, agreementId = agreementId)(BearerToken(bearerToken))
       invoker.invoke(request, s"Upgrading agreement $agreementId")
     }
 
   override def rejectAgreement(agreementId: UUID, payload: AgreementRejectionPayload)(implicit
     contexts: Seq[(String, String)]
   ): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
       val request = api.rejectAgreement(
         xCorrelationId = correlationId,
         agreementId = agreementId,
-        agreementRejectionPayload = payload,
-        xForwardedFor = ip
+        agreementRejectionPayload = payload
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Rejecting agreement $agreementId")
     }
 
   override def archiveAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
-      val request = api.archiveAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
+      val request =
+        api.archiveAgreement(xCorrelationId = correlationId, agreementId = agreementId)(BearerToken(bearerToken))
       invoker.invoke(request, s"Archiving agreement $agreementId")
     }
 
   override def addConsumerDocument(agreementId: UUID, seed: DocumentSeed)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Document] = withHeaders[Document] { (bearerToken, correlationId, ip) =>
-    val request = api.addAgreementConsumerDocument(
-      xCorrelationId = correlationId,
-      agreementId = agreementId,
-      documentSeed = seed,
-      xForwardedFor = ip
-    )(BearerToken(bearerToken))
+  ): Future[Document] = withHeaders[Document] { (bearerToken, correlationId) =>
+    val request =
+      api.addAgreementConsumerDocument(xCorrelationId = correlationId, agreementId = agreementId, documentSeed = seed)(
+        BearerToken(bearerToken)
+      )
     invoker.invoke(request, s"Adding consumer document to agreement $agreementId")
   }
 
   override def getConsumerDocument(agreementId: UUID, documentId: UUID)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Document] = withHeaders[Document] { (bearerToken, correlationId, ip) =>
+  ): Future[Document] = withHeaders[Document] { (bearerToken, correlationId) =>
     val request = api.getAgreementConsumerDocument(
       xCorrelationId = correlationId,
       agreementId = agreementId,
-      documentId = documentId,
-      xForwardedFor = ip
+      documentId = documentId
     )(BearerToken(bearerToken))
     invoker.invoke(request, s"Getting consumer document $documentId from agreement $agreementId")
   }
 
   override def removeConsumerDocument(agreementId: UUID, documentId: UUID)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Unit] = withHeaders[Unit] { (bearerToken, correlationId, ip) =>
+  ): Future[Unit] = withHeaders[Unit] { (bearerToken, correlationId) =>
     val request = api.removeAgreementConsumerDocument(
       xCorrelationId = correlationId,
       agreementId = agreementId,
-      documentId = documentId,
-      xForwardedFor = ip
+      documentId = documentId
     )(BearerToken(bearerToken))
     invoker.invoke(request, s"Removing document $documentId from agreement $agreementId")
   }
 
   override def cloneAgreement(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] =
-    withHeaders[Agreement] { (bearerToken, correlationId, ip) =>
-      val request = api.cloneAgreement(xCorrelationId = correlationId, agreementId = agreementId, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
+    withHeaders[Agreement] { (bearerToken, correlationId) =>
+      val request =
+        api.cloneAgreement(xCorrelationId = correlationId, agreementId = agreementId)(BearerToken(bearerToken))
       invoker.invoke(request, s"Cloning agreement $agreementId")
     }
 
@@ -199,43 +183,40 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
     limit: Int,
     offset: Int
   )(implicit contexts: Seq[(String, String)]): Future[CompactEServices] =
-    withHeaders[CompactEServices] { (bearerToken, correlationId, ip) =>
+    withHeaders[CompactEServices] { (bearerToken, correlationId) =>
       val request = api.getAgreementEServices(
         xCorrelationId = correlationId,
         eServiceName = eServiceName,
         producersIds = producersIds,
         consumersIds = consumersIds,
         offset = offset,
-        limit = limit,
-        xForwardedFor = ip
+        limit = limit
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving eServices agreement with name $eServiceName")
     }
 
   override def getAgreementProducers(producerName: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
-  ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId, ip) =>
+  ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId) =>
     val request =
       api.getAgreementProducers(
         xCorrelationId = correlationId,
         producerName = producerName,
         offset = offset,
-        limit = limit,
-        xForwardedFor = ip
+        limit = limit
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving producers from agrements with name $producerName")
   }
 
   override def getAgreementConsumers(consumerName: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
-  ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId, ip) =>
+  ): Future[CompactOrganizations] = withHeaders[CompactOrganizations] { (bearerToken, correlationId) =>
     val request =
       api.getAgreementConsumers(
         xCorrelationId = correlationId,
         consumerName = consumerName,
         offset = offset,
-        limit = limit,
-        xForwardedFor = ip
+        limit = limit
       )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving consumers from agrements with name $consumerName")
   }
