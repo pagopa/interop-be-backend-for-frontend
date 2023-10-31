@@ -43,8 +43,8 @@ final case class SelfcareApiServiceImpl(
         tenant     <- tenantProcessService.getTenant(organizationUuId)
         selfcareId <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
         results    <- selfcareClientService.getInstitutionUserProducts(userId = userUuid, institutionId = selfcareId)
-        apiResults = results.map(_.toApi)
-      } yield apiResults
+        products   <- Future.traverse(results)(_.toApi)
+      } yield products
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
@@ -61,10 +61,10 @@ final case class SelfcareApiServiceImpl(
   ): Route = {
     val result: Future[Seq[SelfcareInstitution]] =
       for {
-        userUuid <- getUidFutureUUID(contexts)
-        results  <- selfcareClientService.getInstitutions(userId = userUuid)
-        apiResults = results.map(_.toApi)
-      } yield apiResults
+        userUuid     <- getUidFutureUUID(contexts)
+        results      <- selfcareClientService.getInstitutions(userId = userUuid)
+        institutions <- Future.traverse(results)(_.toApi)
+      } yield institutions
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()

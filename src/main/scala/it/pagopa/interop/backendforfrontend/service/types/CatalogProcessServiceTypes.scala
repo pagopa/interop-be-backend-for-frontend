@@ -55,7 +55,7 @@ object CatalogProcessServiceTypes {
     )
   }
 
-  implicit class RiskAnalysisFormConverter(private val ra: RiskAnalysisForm) extends AnyVal {
+  implicit class RiskAnalysisFormSeedConverter(private val ra: RiskAnalysisFormSeed) extends AnyVal {
     def toProcess: CatalogProcess.EServiceRiskAnalysisFormSeed =
       CatalogProcess.EServiceRiskAnalysisFormSeed(version = ra.version, answers = ra.answers)
   }
