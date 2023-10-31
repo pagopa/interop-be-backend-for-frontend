@@ -139,19 +139,19 @@ final case class SelfcareApiServiceImpl(
     val result: Future[Seq[TenantUser]] = for {
       userUuid <- personId.traverse(_.toFutureUUID)
       rolesParams = parseArrayParameters(roles)
-      tenantUuid   <- tenantId.toFutureUUID
-      tenant       <- tenantProcessService.getTenant(tenantUuid)
-      selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
-      selfcareUuid <- selfcareId.toFutureUUID
-      requesterOrgId     <- getUidFutureUUID(contexts)
-      users        <- selfcareV2ClientService
+      tenantUuid     <- tenantId.toFutureUUID
+      tenant         <- tenantProcessService.getTenant(tenantUuid)
+      selfcareId     <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
+      selfcareUuid   <- selfcareId.toFutureUUID
+      requesterOrgId <- getUidFutureUUID(contexts)
+      users          <- selfcareV2ClientService
         .getInstitutionProductUsers(
           institutionId = selfcareUuid,
           userId = userUuid,
           requesterId = requesterOrgId,
           roles = rolesParams
         )
-      usersApi     <- users.traverse(_.toApi(tenantUuid)).toFuture
+      usersApi       <- users.traverse(_.toApi(tenantUuid)).toFuture
     } yield filterByUserName(usersApi, query)
 
     onComplete(result) {
