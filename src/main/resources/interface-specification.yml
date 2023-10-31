@@ -11044,7 +11044,7 @@ components:
     Users:
       type: array
       items:
-        $ref: '#/components/schemas/SelfcareUser'
+        $ref: '#/components/schemas/User'
     KeysSeed:
       type: array
       items:
@@ -11945,7 +11945,7 @@ components:
         name:
           type: string
         user:
-          $ref: '#/components/schemas/SelfcareUser'
+          $ref: '#/components/schemas/User'
         createdAt:
           type: string
           format: date-time
@@ -11957,7 +11957,7 @@ components:
         - createdAt
         - user
         - isOrphan
-    SelfcareUser:
+    User:
       description: Contains some details about user
       type: object
       properties:

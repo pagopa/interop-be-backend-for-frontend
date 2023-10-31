@@ -183,7 +183,7 @@ final case class ClientsApiServiceImpl(
       selfcareUuid <- getSelfcareIdFutureUUID(contexts)
       clientUsers  <- authorizationProcessService.getClientUsers(clientUuid)
       users        <- Future.traverse(clientUsers)(selfcareV2ClientService.getUserById(selfcareUuid, _))
-      usersApi     <- Future.traverse(users)(_.toApi.toFuture)
+      usersApi     <- users.traverse(_.toApi).toFuture
     } yield usersApi
 
     onComplete(result) {

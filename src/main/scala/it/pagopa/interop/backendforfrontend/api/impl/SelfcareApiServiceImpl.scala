@@ -97,7 +97,7 @@ final case class SelfcareApiServiceImpl(
           requesterId = personId,
           roles = Seq.empty
         )
-      usersInfo      <- Future.traverse(users)(_.toApi(organizationId).toFuture)
+      usersInfo      <- users.traverse(_.toApi(organizationId)).toFuture
       userInfo       <- usersInfo.headOption.toFuture(UserNotFound(selfcareUuid, userUuid))
     } yield userInfo
 
