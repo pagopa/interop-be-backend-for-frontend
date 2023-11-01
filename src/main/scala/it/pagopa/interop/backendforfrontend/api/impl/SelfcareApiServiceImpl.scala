@@ -66,7 +66,7 @@ final case class SelfcareApiServiceImpl(
       for {
         userUuid        <- getUidFutureUUID(contexts)
         institutions    <- selfcareV2ClientService.getInstitutions(userId = userUuid)
-        institutionsApi <- Future.traverse(institutions)(_.toApi.toFuture)
+        institutionsApi <- institutions.traverse(_.toApi).toFuture  
       } yield institutionsApi
 
     onComplete(result) {
@@ -143,7 +143,7 @@ final case class SelfcareApiServiceImpl(
       tenant         <- tenantProcessService.getTenant(tenantUuid)
       selfcareId     <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       selfcareUuid   <- selfcareId.toFutureUUID
-      requesterOrgId <- getUidFutureUUID(contexts)
+      requesterUserId  <- getUidFutureUUID(contexts)
       users          <- selfcareV2ClientService
         .getInstitutionProductUsers(
           institutionId = selfcareUuid,
