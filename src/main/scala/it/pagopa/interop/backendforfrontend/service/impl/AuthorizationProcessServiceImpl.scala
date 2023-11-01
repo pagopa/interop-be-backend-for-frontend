@@ -86,7 +86,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
     withHeaders[Client] { (bearerToken, correlationId) =>
       val request: ApiRequest[Client] =
         api.addUser(clientId = clientId, userId = userId, xCorrelationId = correlationId)(BearerToken(bearerToken))
-      invoker.invoke(request, s"Binding User $userId to client ${clientId.toString}")
+      invoker.invoke(request, s"Add User $userId to client ${clientId.toString}")
     }
 
   override def getClientKeyById(clientId: UUID, keyId: String)(implicit contexts: Seq[(String, String)]): Future[Key] =
