@@ -35,13 +35,12 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
     offset: Int,
     kinds: Seq[AttributeKind]
   )(implicit contexts: Seq[(String, String)]): Future[Attributes] = withHeaders[Attributes] {
-    (bearerToken, correlationId, ip) =>
+    (bearerToken, correlationId) =>
       val request = api.getAttributes(
         xCorrelationId = correlationId,
         limit = limit,
         offset = offset,
         kinds = kinds,
-        xForwardedFor = ip,
         name = name,
         origin = origin
       )(BearerToken(bearerToken))
@@ -50,19 +49,18 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
 
   def getAttributeByOriginAndCode(origin: String, code: String)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Attribute] = withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+  ): Future[Attribute] = withHeaders[Attribute] { (bearerToken, correlationId) =>
     val request =
-      api.getAttributeByOriginAndCode(xCorrelationId = correlationId, origin = origin, code = code, xForwardedFor = ip)(
+      api.getAttributeByOriginAndCode(xCorrelationId = correlationId, origin = origin, code = code)(
         BearerToken(bearerToken)
       )
     invoker.invoke(request, s"Retrieving attribute with origin $origin and code $code")
   }
 
   def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Attribute] =
-    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
-      val request = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
+    withHeaders[Attribute] { (bearerToken, correlationId) =>
+      val request =
+        api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId)(BearerToken(bearerToken))
       invoker.invoke(request, s"Retrieving attribute with id $attributeId")
     }
 
@@ -84,13 +82,12 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
 
   def getBulkAttributes(requestBody: Seq[UUID], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Attributes] = withHeaders[Attributes] { (bearerToken, correlationId, ip) =>
+  ): Future[Attributes] = withHeaders[Attributes] { (bearerToken, correlationId) =>
     val request = api.getBulkedAttributes(
       xCorrelationId = correlationId,
       requestBody = requestBody.map(_.toString),
       offset = offset,
-      limit = limit,
-      xForwardedFor = ip
+      limit = limit
     )(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving attributes in bulk by id in [$requestBody]")
   }
@@ -98,22 +95,20 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
   override def createCertifiedAttribute(
     attributeSeed: CertifiedAttributeSeed
   )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
-    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+    withHeaders[Attribute] { (bearerToken, correlationId) =>
       val request =
-        api.createCertifiedAttribute(
-          xCorrelationId = correlationId,
-          certifiedAttributeSeed = attributeSeed,
-          xForwardedFor = ip
-        )(BearerToken(bearerToken))
+        api.createCertifiedAttribute(xCorrelationId = correlationId, certifiedAttributeSeed = attributeSeed)(
+          BearerToken(bearerToken)
+        )
       invoker.invoke(request, s"Creating certified attribute with name ${attributeSeed.name}")
     }
 
   override def createDeclaredAttribute(
     attributeSeed: AttributeSeed
   )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
-    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+    withHeaders[Attribute] { (bearerToken, correlationId) =>
       val request =
-        api.createDeclaredAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
+        api.createDeclaredAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Creating declared attribute with name ${attributeSeed.name}")
@@ -122,9 +117,9 @@ class AttributeRegistryProcessServiceImpl(attributeRegistryProcessURL: String, b
   override def createVerifiedAttribute(
     attributeSeed: AttributeSeed
   )(implicit contexts: Seq[(String, String)]): Future[Attribute] =
-    withHeaders[Attribute] { (bearerToken, correlationId, ip) =>
+    withHeaders[Attribute] { (bearerToken, correlationId) =>
       val request =
-        api.createVerifiedAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
+        api.createVerifiedAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Creating verified attribute with name ${attributeSeed.name}")

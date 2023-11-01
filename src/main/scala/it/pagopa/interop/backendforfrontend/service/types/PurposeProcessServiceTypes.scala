@@ -45,12 +45,13 @@ object PurposeProcessServiceTypes {
   }
 
   implicit class ProcessRiskAnalysisFormConverter(private val raf: PurposeProcess.RiskAnalysisForm) extends AnyVal {
-    def toApi: RiskAnalysisForm = RiskAnalysisForm(version = raf.version, answers = raf.answers)
+    def toApi: RiskAnalysisForm =
+      RiskAnalysisForm(version = raf.version, answers = raf.answers, riskAnalysisId = raf.riskAnalysisId)
   }
 
-  implicit class RiskAnalysisFormConverter(private val raf: RiskAnalysisForm) extends AnyVal {
-    def toProcess: PurposeProcess.RiskAnalysisForm =
-      PurposeProcess.RiskAnalysisForm(version = raf.version, answers = raf.answers)
+  implicit class RiskAnalysisFormSeedConverter(private val raf: RiskAnalysisFormSeed) extends AnyVal {
+    def toProcess: PurposeProcess.RiskAnalysisFormSeed =
+      PurposeProcess.RiskAnalysisFormSeed(version = raf.version, answers = raf.answers)
   }
 
   implicit class PurposeVersionUpdateSeedConverter(private val seed: WaitingForApprovalPurposeVersionUpdateContentSeed)
@@ -138,14 +139,7 @@ object PurposeProcessServiceTypes {
       isFreeOfCharge = p.isFreeOfCharge,
       freeOfChargeReason = p.freeOfChargeReason,
       dailyCallsPerConsumer = currentDescriptor.dailyCallsPerConsumer,
-      dailyCallsTotal = currentDescriptor.dailyCallsTotal,
-      riskAnalysisId = if (eService.mode == CatalogProcess.EServiceMode.RECEIVE) {
-        p.riskAnalysisForm
-          .flatMap(form => form.riskAnalysisId)
-          .toList
-          .intersect(eService.riskAnalysis.map(_.id))
-          .headOption
-      } else None
+      dailyCallsTotal = currentDescriptor.dailyCallsTotal
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
