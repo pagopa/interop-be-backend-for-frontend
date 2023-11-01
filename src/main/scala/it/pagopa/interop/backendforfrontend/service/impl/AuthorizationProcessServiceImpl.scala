@@ -89,11 +89,9 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   override def addUser(clientId: UUID, userId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client] =
     withHeaders[Client] { (bearerToken, correlationId) =>
       val request: ApiRequest[Client] =
-        api.clientOperatorRelationshipBinding(
-          clientId = clientId,
-          userId = userId,
-          xCorrelationId = correlationId
-        )(BearerToken(bearerToken))
+        api.clientOperatorRelationshipBinding(clientId = clientId, userId = userId, xCorrelationId = correlationId)(
+          BearerToken(bearerToken)
+        )
       invoker.invoke(request, s"Binding operator relationship $relationshipId to client ${clientId.toString}")
     }
 
