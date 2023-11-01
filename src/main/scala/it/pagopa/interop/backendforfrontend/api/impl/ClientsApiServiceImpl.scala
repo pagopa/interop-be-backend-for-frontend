@@ -174,11 +174,11 @@ final case class ClientsApiServiceImpl(
 
   override def getClientUsers(clientId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerUUIDarray: ToEntityMarshaller[Seq[SelfcareUser]],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerUUIDarray: ToEntityMarshaller[Seq[User]]
   ): Route = {
 
-    val result: Future[Seq[SelfcareUser]] = for {
+    val result: Future[Seq[User]] = for {
       clientUuid   <- clientId.toFutureUUID
       selfcareUuid <- getSelfcareIdFutureUUID(contexts)
       clientUsers  <- authorizationProcessService.getClientUsers(clientUuid)

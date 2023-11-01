@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.backendforfrontend.service.model.Institution
-import it.pagopa.interop.backendforfrontend.model.{TenantUser, SelfcareProduct, SelfcareInstitution, SelfcareUser}
+import it.pagopa.interop.backendforfrontend.model.{TenantUser, SelfcareProduct, SelfcareInstitution, User}
 import it.pagopa.interop.selfcare.v2.client.{model => SelfcareClient}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareEntityNotFilled
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -28,12 +28,12 @@ object SelfcareV2ClientServiceTypes {
   }
 
   implicit class SelfcareUserResponseConverter(private val ur: SelfcareClient.UserResponse) extends AnyVal {
-    def toApi: Either[Throwable, SelfcareUser] = for {
+    def toApi: Either[Throwable, User] = for {
       id      <- ur.id.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "id"))
       uuid    <- id.toUUID.toEither
       name    <- ur.name.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "name"))
       surname <- ur.surname.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "surname"))
-    } yield SelfcareUser(userId = uuid, name = name, surname = surname)
+    } yield User(userId = uuid, name = name, surname = surname)
   }
 
   implicit class UserResourceConverter(private val ur: SelfcareClient.UserResource) extends AnyVal {

@@ -58,7 +58,7 @@ object AuthorizationProcessServiceTypes {
   }
 
   implicit class ReadClientKeyConverter(private val k: AuthorizationProcess.Key) extends AnyVal {
-    def toApi(user: SelfcareUser, isOrphan: Boolean): PublicKey =
+    def toApi(user: User, isOrphan: Boolean): PublicKey =
       PublicKey(keyId = k.kid, name = k.name, user = user, createdAt = k.createdAt, isOrphan = isOrphan)
   }
 }

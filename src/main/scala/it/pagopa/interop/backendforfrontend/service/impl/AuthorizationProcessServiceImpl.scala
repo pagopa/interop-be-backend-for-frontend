@@ -54,12 +54,8 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   override def removeUser(clientId: UUID, userId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =
     withHeaders[Unit] { (bearerToken, correlationId) =>
       val request: ApiRequest[Unit] =
-        api.removeClientOperatorRelationship(
-          clientId = clientId,
-          relationshipId = relationshipId,
-          xCorrelationId = correlationId
-        )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Removing operator relationship $relationshipId of client ${clientId.toString}")
+        api.removeUser(clientId = clientId, userId = userId, xCorrelationId = correlationId)(BearerToken(bearerToken))
+      invoker.invoke(request, s"Removing User $userId of client ${clientId.toString}")
     }
 
   override def addClientPurpose(clientId: UUID, purposeAdditionDetails: PurposeAdditionDetails)(implicit
@@ -80,7 +76,7 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   ): Future[Keys] =
     withHeaders[Keys] { (bearerToken, correlationId) =>
       val request: ApiRequest[Keys] =
-        api.getClientKeys(clientId = clientId, userIds = userIds, xCorrelationId = correlationId, xForwardedFor = ip)(
+        api.getClientKeys(clientId = clientId, userIds = userIds, xCorrelationId = correlationId)(
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Retrieve keys of client ${clientId.toString}")
@@ -89,10 +85,8 @@ class AuthorizationProcessServiceImpl(authorizationProcessUrl: String, blockingE
   override def addUser(clientId: UUID, userId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client] =
     withHeaders[Client] { (bearerToken, correlationId) =>
       val request: ApiRequest[Client] =
-        api.clientOperatorRelationshipBinding(clientId = clientId, userId = userId, xCorrelationId = correlationId)(
-          BearerToken(bearerToken)
-        )
-      invoker.invoke(request, s"Binding operator relationship $relationshipId to client ${clientId.toString}")
+        api.addUser(clientId = clientId, userId = userId, xCorrelationId = correlationId)(BearerToken(bearerToken))
+      invoker.invoke(request, s"Binding User $userId to client ${clientId.toString}")
     }
 
   override def getClientKeyById(clientId: UUID, keyId: String)(implicit contexts: Seq[(String, String)]): Future[Key] =
