@@ -22,13 +22,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
-  implicit val tenantDelta: RootJsonFormat[TenantDelta] = jsonFormat2(TenantDelta)
-
   implicit val tenantFormat: RootJsonFormat[CompactTenant] = jsonFormat4(CompactTenant)
 
   implicit val paginationFormat: RootJsonFormat[Pagination] = jsonFormat3(Pagination)
   implicit val tenantsFormat: RootJsonFormat[Tenants]       = jsonFormat2(Tenants)
   implicit val mailFormat: RootJsonFormat[Mail]             = jsonFormat2(Mail)
+  implicit val mailSeedFormat: RootJsonFormat[MailSeed]     = jsonFormat3(MailSeed)
 
   implicit val compactOrganizationFormat: RootJsonFormat[CompactOrganization]       = jsonFormat4(CompactOrganization)
   implicit val compactDescriptorFormat: RootJsonFormat[CompactDescriptor]           = jsonFormat4(CompactDescriptor)

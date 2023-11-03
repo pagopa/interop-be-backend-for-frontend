@@ -111,14 +111,15 @@ object TenantProcessServiceTypes {
 
   }
 
-  implicit class TenantDeltaConverter(private val delta: TenantDelta) extends AnyVal {
-    def toExternalModel: TenantProcess.TenantDelta = TenantProcess.TenantDelta(mails =
-      TenantProcess.MailSeed(
-        kind = TenantProcess.MailKind.CONTACT_EMAIL,
-        address = delta.contactEmail,
-        description = delta.description
-      ) :: Nil
-    )
+  implicit class MailSeedConverter(private val seed: MailSeed) extends AnyVal {
+    def toExternalModel: TenantProcess.MailSeed =
+      TenantProcess.MailSeed(kind = seed.kind.toExternalModel, address = seed.address, description = seed.description)
+  }
+
+  implicit class MailKindConverter(private val kind: MailKind) extends AnyVal {
+    def toExternalModel: TenantProcess.MailKind = kind match {
+      case MailKind.CONTACT_EMAIL => TenantProcess.MailKind.CONTACT_EMAIL
+    }
   }
 
   implicit class TenantVerifierConverter(private val v: TenantProcess.TenantVerifier) extends AnyVal {

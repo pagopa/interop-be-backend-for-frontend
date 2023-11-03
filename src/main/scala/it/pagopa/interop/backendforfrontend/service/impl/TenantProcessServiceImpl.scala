@@ -13,10 +13,10 @@ import it.pagopa.interop.tenantprocess.client.model.{
   ExternalId,
   SelfcareTenantSeed,
   Tenant,
-  TenantDelta,
   Tenants,
   VerifiedTenantAttributeSeed,
-  UpdateVerifiedTenantAttributeSeed
+  UpdateVerifiedTenantAttributeSeed,
+  MailSeed
 }
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareNotFound
@@ -87,16 +87,6 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       invoker.invoke(request, s"Revoking verified attribute $attributeId to $tenantId")
     }
 
-  override def updateTenant(tenantId: UUID, tenantDelta: TenantDelta)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Unit] = withHeaders[Unit] { (bearerToken, correlationId) =>
-    val request: ApiRequest[Tenant] =
-      api.updateTenant(xCorrelationId = correlationId, id = tenantId, tenantDelta = tenantDelta)(
-        BearerToken(bearerToken)
-      )
-    invoker.invoke(request, s"Updating tenant with id $tenantId").map(_ => ())(blockingEc)
-  }
-
   override def getTenant(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     withHeaders[Tenant] { (bearerToken, correlationId) =>
       val request: ApiRequest[Tenant] =
@@ -159,4 +149,25 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
         )(BearerToken(bearerToken))
       invoker.invoke(request, s"Updating verified attribute $attributeId to $tenantId")
     }
+
+  override def addTenantMail(tenantId: UUID, seed: MailSeed)(implicit contexts: Seq[(String, String)]): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId) =>
+      val request: ApiRequest[Unit] =
+        api.addTenantMail(xCorrelationId = correlationId, tenantId = tenantId, mailSeed = seed)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Add mail ${seed.address} to $tenantId")
+    }
+
+  override def deleteTenantMail(tenantId: UUID, mailId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId) =>
+      val request: ApiRequest[Unit] =
+        api.deleteTenantMail(xCorrelationId = correlationId, tenantId = tenantId, mailId = mailId)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Delete mail ${mailId} to $tenantId")
+    }
+
 }

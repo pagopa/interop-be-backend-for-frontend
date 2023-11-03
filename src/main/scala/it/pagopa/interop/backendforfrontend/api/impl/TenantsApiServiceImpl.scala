@@ -218,19 +218,38 @@ final case class TenantsApiServiceImpl(
     }
   }
 
-  override def updateTenant(tenantId: String, tenantDelta: TenantDelta)(implicit
+  override def addTenantMail(tenantId: String, seed: MailSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Unit] = for {
-      tenantUUID <- tenantId.toFutureUUID
-      ()         <- tenantProcessService.updateTenant(tenantUUID, tenantDelta.toExternalModel)
-    } yield ()
+    val result: Future[Unit] =
+      for {
+        tenantUuid <- tenantId.toFutureUUID
+        _          <- tenantProcessService.addTenantMail(tenantUuid, seed.toExternalModel)
+      } yield ()
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error updating tenant with id $tenantId", headers) orElse { case Success(_) =>
-        updateTenant204(headers)
+      handleError(s"Error adding mail ${seed.address} to tenant $tenantId", headers) orElse { case Success(_) =>
+        addTenantMail204(headers)
+      }
+    }
+  }
+
+  override def deleteTenantMail(tenantId: String, mailId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] =
+      for {
+        tenantUuid <- tenantId.toFutureUUID
+        _          <- tenantProcessService.deleteTenantMail(tenantUuid, mailId)
+      } yield ()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error deleting mail $mailId to tenant $tenantId", headers) orElse { case Success(_) =>
+        deleteTenantMail204(headers)
       }
     }
   }
