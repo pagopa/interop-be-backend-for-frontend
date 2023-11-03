@@ -11741,7 +11741,8 @@ components:
     MailKind:
       type: string
       enum:
-        - CONTACT_EMAIL    
+        - CONTACT_EMAIL
+        - DIGITAL_ADDRESS
     MailSeed:
       description: A specific kind of mail
       type: object
@@ -11825,6 +11826,9 @@ components:
           $ref: '#/components/schemas/TenantAttributes'
         contactMail:
           $ref: '#/components/schemas/Mail'
+        onboardedAt:
+          type: string
+          format: date-time  
       required:
         - id
         - externalId
