@@ -59,10 +59,14 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Archive Purpose $purposeId with version $versionId")
     }
 
-  override def clonePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose] =
+  override def clonePurpose(purposeId: UUID, seed: PurposeCloneSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Purpose] =
     withHeaders[Purpose] { (bearerToken, correlationId) =>
       val request: ApiRequest[Purpose] =
-        api.clonePurpose(purposeId = purposeId, xCorrelationId = correlationId)(BearerToken(bearerToken))
+        api.clonePurpose(purposeId = purposeId, purposeCloneSeed = seed, xCorrelationId = correlationId)(
+          BearerToken(bearerToken)
+        )
       invoker.invoke(request, s"Cloning Purpose ${purposeId.toString}")
     }
 

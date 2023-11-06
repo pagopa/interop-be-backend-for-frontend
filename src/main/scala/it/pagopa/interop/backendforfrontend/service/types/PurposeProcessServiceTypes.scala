@@ -40,6 +40,10 @@ object PurposeProcessServiceTypes {
     )
   }
 
+  implicit class PurposeCloneSeedConverter(private val seed: PurposeCloneSeed) extends AnyVal {
+    def toProcess: PurposeProcess.PurposeCloneSeed = PurposeProcess.PurposeCloneSeed(eserviceId = seed.eserviceId)
+  }
+
   implicit class ProcessRiskAnalysisFormConverter(private val raf: PurposeProcess.RiskAnalysisForm) extends AnyVal {
     def toApi: RiskAnalysisForm =
       RiskAnalysisForm(version = raf.version, answers = raf.answers, riskAnalysisId = raf.riskAnalysisId)
