@@ -4,7 +4,6 @@ import it.pagopa.interop.backendforfrontend.service.model.Institution
 import it.pagopa.interop.backendforfrontend.model.{TenantUser, SelfcareProduct, SelfcareInstitution, User}
 import it.pagopa.interop.selfcare.v2.client.{model => SelfcareClient}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareEntityNotFilled
-import it.pagopa.interop.commons.utils.TypeConversions._
 
 import java.util.UUID
 
