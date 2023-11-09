@@ -34,6 +34,8 @@ object SelfcareV2ClientServiceTypes {
       name    <- ur.name.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "name"))
       surname <- ur.surname.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "surname"))
     } yield User(userId = uuid, name = name, surname = surname)
+
+    def toApi(id: UUID): User = User(userId = id, name = ur.name.getOrElse(""), surname = ur.surname.getOrElse(""))
   }
 
   implicit class UserResourceConverter(private val ur: SelfcareClient.UserResource) extends AnyVal {
