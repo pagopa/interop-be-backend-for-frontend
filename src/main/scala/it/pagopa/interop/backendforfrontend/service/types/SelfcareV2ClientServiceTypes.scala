@@ -28,14 +28,13 @@ object SelfcareV2ClientServiceTypes {
   }
 
   implicit class SelfcareUserResponseConverter(private val ur: SelfcareClient.UserResponse) extends AnyVal {
-    def toApi: Either[Throwable, User] = for {
-      id      <- ur.id.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "id"))
-      uuid    <- id.toUUID.toEither
-      name    <- ur.name.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "name"))
-      surname <- ur.surname.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "surname"))
-    } yield User(userId = uuid, name = name, surname = surname)
-
-    def toApi(id: UUID): User = User(userId = id, name = ur.name.getOrElse(""), surname = ur.surname.getOrElse(""))
+    def toApi(id: UUID): User = {
+      (ur.name, ur.surname) match {
+        case (None, None) => User(userId = id, name = "Utente", surname = ur.id.toString)
+        case _            =>
+          User(userId = id, name = ur.name.getOrElse(""), surname = ur.surname.getOrElse(""))
+      }
+    }
   }
 
   implicit class UserResourceConverter(private val ur: SelfcareClient.UserResource) extends AnyVal {

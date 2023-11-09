@@ -7,8 +7,8 @@ import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   CatalogProcessService,
   PurposeProcessService,
-  TenantProcessService,
-  SelfcareV2ClientService
+  SelfcareV2ClientService,
+  TenantProcessService
 }
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
@@ -29,6 +29,7 @@ import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProc
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.UserNotFound
 import it.pagopa.interop.selfcare.v2.client.model.UserResponse
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
@@ -182,8 +183,8 @@ final case class ClientsApiServiceImpl(
       clientUuid   <- clientId.toFutureUUID
       selfcareUuid <- getSelfcareIdFutureUUID(contexts)
       clientUsers  <- authorizationProcessService.getClientUsers(clientUuid)
-      users        <- Future.traverse(clientUsers)(selfcareV2ClientService.getUserById(selfcareUuid, _))
-      usersApi     <- users.traverse(_.toApi).toFuture
+      users        <- Future.traverse(clientUsers)(getSelfcareUserById(selfcareUuid, _))
+      usersApi = users.zip(clientUsers).map(r => r._1.toApi(r._2))
     } yield usersApi
 
     onComplete(result) {
@@ -323,13 +324,20 @@ final case class ClientsApiServiceImpl(
   )(implicit contexts: Seq[(String, String)]): Future[PublicKey] = {
     for {
       selfcareUuid <- getSelfcareIdFutureUUID(contexts)
-      userResponse <- selfcareV2ClientService.getUserById(selfcareUuid, key.userId).recoverWith {
-        case _: UserNotFound => Future.successful(UserResponse())
-      }
+      userResponse <- getSelfcareUserById(selfcareUuid, key.userId)
       isOrphan = userResponse.id.isEmpty
-      user = userResponse.toApi(key.userId)
+      user     = userResponse.toApi(key.userId)
     } yield key.toApi(user = user, isOrphan = isOrphan)
   }
+
+  private def getSelfcareUserById(selfcareId: UUID, userId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[UserResponse] =
+    selfcareV2ClientService
+      .getUserById(selfcareId, userId)
+      .recoverWith { case _: UserNotFound =>
+        Future.successful(UserResponse())
+      }
 
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
