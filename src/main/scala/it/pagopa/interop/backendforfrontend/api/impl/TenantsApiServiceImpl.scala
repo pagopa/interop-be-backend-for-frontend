@@ -12,7 +12,7 @@ import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute.AdaptableTenantAttributeOps
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.{
-  SelfcareClientService,
+  SelfcareV2ClientService,
   AttributeRegistryProcessService,
   TenantProcessService
 }
@@ -27,7 +27,7 @@ import scala.util.Success
 final case class TenantsApiServiceImpl(
   attributeRegistryService: AttributeRegistryProcessService,
   tenantProcessService: TenantProcessService,
-  selfcareClient: SelfcareClientService
+  selfcareV2ClientService: SelfcareV2ClientService
 )(implicit ec: ExecutionContext)
     extends TenantsApiService {
 
@@ -42,7 +42,7 @@ final case class TenantsApiServiceImpl(
 
     def fillLogo(tenant: CompactTenant): Future[CompactTenant] = for {
       selfcareUuid <- tenant.selfcareId.traverse(_.toFutureUUID)
-      institution  <- selfcareUuid.traverse(selfcareClient.getInstitution)
+      institution  <- selfcareUuid.traverse(selfcareV2ClientService.getInstitution)
     } yield tenant.copy(logoUrl = institution.fold[Option[String]](none)(_.logo))
 
     val offset: Int             = 0

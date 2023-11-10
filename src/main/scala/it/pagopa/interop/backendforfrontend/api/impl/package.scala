@@ -82,10 +82,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     CreatedEServiceDescriptor
   )
 
-  implicit val identityTokenFormat: RootJsonFormat[IdentityToken]       = jsonFormat1(IdentityToken)
-  implicit val sessionTokenFormat: RootJsonFormat[SessionToken]         = jsonFormat1(SessionToken)
-  implicit val productInfoFormat: RootJsonFormat[ProductInfo]           = jsonFormat3(ProductInfo)
-  implicit val relationshipInfoFormat: RootJsonFormat[RelationshipInfo] = jsonFormat11(RelationshipInfo)
+  implicit val identityTokenFormat: RootJsonFormat[IdentityToken] = jsonFormat1(IdentityToken)
+  implicit val sessionTokenFormat: RootJsonFormat[SessionToken]   = jsonFormat1(SessionToken)
+  implicit val productInfoFormat: RootJsonFormat[ProductInfo]     = jsonFormat3(ProductInfo)
+  implicit val userInfoFormat: RootJsonFormat[TenantUser]         = jsonFormat6(TenantUser)
 
   implicit val externalIdFormat: RootJsonFormat[ExternalId]                 = jsonFormat2(ExternalId)
   implicit val certifierFormat: RootJsonFormat[Certifier]                   = jsonFormat1(Certifier)
@@ -142,8 +142,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   )
   implicit val purposeVersionFormat: RootJsonFormat[PurposeVersion]                 = jsonFormat9(PurposeVersion)
   implicit val compactClientFormat: RootJsonFormat[CompactClient]                   = jsonFormat3(CompactClient)
-  implicit val relationshipProductFormat: RootJsonFormat[RelationshipProduct]       = jsonFormat3(RelationshipProduct)
-  implicit val operatorFormat: RootJsonFormat[Operator]                             = jsonFormat7(Operator)
   implicit val keySeedFormat: RootJsonFormat[KeySeed]                               = jsonFormat4(KeySeed)
   implicit val encodedClientKeyFormat: RootJsonFormat[EncodedClientKey]             = jsonFormat1(EncodedClientKey)
   implicit val clientSeedFormat: RootJsonFormat[ClientSeed]                         = jsonFormat3(ClientSeed)
@@ -201,10 +199,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val selfcareProductFormat: RootJsonFormat[SelfcareProduct]         = jsonFormat2(SelfcareProduct)
   implicit val selfcareInstitutionFormat: RootJsonFormat[SelfcareInstitution] = jsonFormat4(SelfcareInstitution)
 
-  implicit val selfcareUserFormat: RootJsonFormat[SelfcareUser] = jsonFormat3(SelfcareUser)
-  implicit val publicKeyFormat: RootJsonFormat[PublicKey]       =
+  implicit val selfcareUserFormat: RootJsonFormat[User]     = jsonFormat3(User)
+  implicit val publicKeyFormat: RootJsonFormat[PublicKey]   =
     jsonFormat5(PublicKey)
-  implicit val publicKeysFormat: RootJsonFormat[PublicKeys]     =
+  implicit val publicKeysFormat: RootJsonFormat[PublicKeys] =
     jsonFormat1(PublicKeys)
 
   implicit def dependencyFormat: RootJsonFormat[Dependency]                         =
