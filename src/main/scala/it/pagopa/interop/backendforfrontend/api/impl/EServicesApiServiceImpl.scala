@@ -182,6 +182,7 @@ final case class EServicesApiServiceImpl(
     attributesIds: String,
     states: String,
     agreementStates: String,
+    mode: Option[String],
     offset: Int,
     limit: Int
   )(implicit
@@ -192,6 +193,7 @@ final case class EServicesApiServiceImpl(
     val result: Future[CatalogEServices] = for {
       requesterUuid      <- getOrganizationIdFutureUUID(contexts)
       apiStates          <- parseArrayParameters(states).traverse(EServiceDescriptorState.fromValue).toFuture
+      mode               <- mode.traverse(EServiceMode.fromValue).toFuture
       apiAgreementStates <- parseArrayParameters(agreementStates).traverse(AgreementState.fromValue).toFuture
       producersUuids     <- parseArrayParameters(producersIds).traverse(_.toFutureUUID)
       attributesUuids    <- parseArrayParameters(attributesIds).traverse(_.toFutureUUID)
@@ -202,6 +204,7 @@ final case class EServicesApiServiceImpl(
         attributesIds = attributesUuids,
         agreementStates = apiAgreementStates.map(CatalogProcess.AgreementState.fromApi),
         states = apiStates.map(CatalogProcess.EServiceDescriptorState.fromApi),
+        mode = mode.map(CatalogProcess.EServiceMode.fromApi),
         offset = offset,
         limit = limit
       )
@@ -396,6 +399,7 @@ final case class EServicesApiServiceImpl(
       attributesIds = Nil,
       agreementStates = Nil,
       states = Nil,
+      mode = None,
       offset = offset,
       limit = limit
     )

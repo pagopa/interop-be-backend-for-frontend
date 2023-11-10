@@ -45,6 +45,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     attributesIds: Seq[UUID],
     agreementStates: Seq[AgreementState],
     states: Seq[EServiceDescriptorState],
+    mode: Option[EServiceMode],
     offset: Int,
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[EServices] =
@@ -56,6 +57,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         attributesIds = attributesIds,
         agreementStates = agreementStates,
         states = states,
+        mode = mode,
         offset = offset,
         limit = limit,
         xCorrelationId = correlationId

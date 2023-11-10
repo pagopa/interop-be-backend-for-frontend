@@ -27,6 +27,7 @@ trait CatalogProcessService {
     attributesIds: Seq[UUID],
     agreementStates: Seq[AgreementState],
     states: Seq[EServiceDescriptorState],
+    mode: Option[EServiceMode],
     offset: Int,
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[EServices]
