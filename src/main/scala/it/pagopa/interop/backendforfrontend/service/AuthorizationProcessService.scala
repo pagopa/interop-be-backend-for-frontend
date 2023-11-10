@@ -14,23 +14,19 @@ trait AuthorizationProcessService {
 
   def deleteClientKeyById(clientId: UUID, keyId: String)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
-  def removeClientOperatorRelationship(clientId: UUID, relationshipId: UUID)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Unit]
+  def removeUser(clientId: UUID, userId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
-  def clientOperatorRelationshipBinding(clientId: UUID, relationshipId: UUID)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[Client]
+  def addUser(clientId: UUID, userId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client]
 
   def addClientPurpose(clientId: UUID, purposeAdditionDetails: PurposeAdditionDetails)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit]
 
-  def getClientKeys(clientId: UUID, relationshipIds: Seq[UUID])(implicit contexts: Seq[(String, String)]): Future[Keys]
+  def getClientKeys(clientId: UUID, userIds: Seq[UUID])(implicit contexts: Seq[(String, String)]): Future[Keys]
 
   def getClientKeyById(clientId: UUID, keyId: String)(implicit contexts: Seq[(String, String)]): Future[Key]
 
-  def getClientOperators(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[Operator]]
+  def getClientUsers(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[UUID]]
 
   def createKeys(clientId: UUID, keysSeed: Seq[KeySeed])(implicit contexts: Seq[(String, String)]): Future[Keys]
 
@@ -40,7 +36,7 @@ trait AuthorizationProcessService {
 
   def getClients(
     name: Option[String],
-    relationshipIds: Seq[UUID],
+    userIds: Seq[UUID],
     consumerId: UUID,
     purposeId: Option[UUID],
     kind: Option[ClientKind],
@@ -50,7 +46,7 @@ trait AuthorizationProcessService {
 
   def getClientsWithKeys(
     name: Option[String],
-    relationshipIds: Seq[UUID],
+    userIds: Seq[UUID],
     consumerId: UUID,
     purposeId: Option[UUID],
     kind: Option[ClientKind],

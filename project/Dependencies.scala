@@ -50,12 +50,6 @@ object Dependencies {
     lazy val catalogManagementModels =
       namespace %% "interop-be-catalog-management-models" % catalogManagementVersion
   
-    lazy val partyManagementClient =
-      namespace %% "interop-selfcare-party-management-client" % partyManagementVersion
-
-    lazy val partyProcessClient =
-      namespace %% "interop-selfcare-party-process-client" % partyProcessVersion
-
     lazy val tenantManagementModels =
       namespace %% "interop-be-tenant-management-models" % tenantManagementVersion
 
@@ -64,9 +58,6 @@ object Dependencies {
 
     lazy val purposeProcessClient =
       namespace %% "interop-be-purpose-process-client" % purposeProcessVersion
-
-    lazy val userRegistryClient =
-      namespace %% "interop-selfcare-user-registry-client" % userRegistryVersion
 
     lazy val attributeRegistryProcessClient =
       namespace %% "interop-be-attribute-registry-process-client" % attributeRegistryProcessVersion
@@ -155,12 +146,9 @@ object Dependencies {
       pagopa.agreementProcessLifecycle         % Compile,
       pagopa.catalogProcessClient              % Compile,
       pagopa.catalogManagementModels           % Compile,
-      pagopa.partyProcessClient                % Compile,
-      pagopa.partyManagementClient             % Compile,
       pagopa.tenantManagementModels            % Compile,
       pagopa.tenantProcessClient               % Compile,
       pagopa.purposeProcessClient              % Compile,
-      pagopa.userRegistryClient                % Compile,
       pagopa.attributeRegistryProcessClient    % Compile,
       pagopa.selfcareV2Client                  % Compile,
       pagopa.signer                            % Compile,

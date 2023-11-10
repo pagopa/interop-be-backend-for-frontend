@@ -4,7 +4,6 @@ import it.pagopa.interop.tenantprocess.client.model._
 
 import java.util.UUID
 import scala.concurrent.Future
-import java.time.OffsetDateTime
 
 trait TenantProcessService {
 
@@ -13,13 +12,9 @@ trait TenantProcessService {
 
   def addDeclaredAttribute(seed: DeclaredTenantAttributeSeed)(implicit contexts: Seq[(String, String)]): Future[Tenant]
   def revokeDeclaredAttribute(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant]
-  def selfcareUpsertTenant(
-    origin: String,
-    externalId: String,
-    name: String,
-    mailSeed: MailSeed,
-    onboardedAt: OffsetDateTime
-  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant]
+  def selfcareUpsertTenant(origin: String, externalId: String, description: String)(selfcareId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenant]
 
   def verifyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
     contexts: Seq[(String, String)]

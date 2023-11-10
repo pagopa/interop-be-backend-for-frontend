@@ -6,11 +6,11 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.backendforfrontend.service.{
   AuthorizationProcessService,
   CatalogProcessService,
-  PartyProcessService,
   PurposeProcessService,
-  TenantProcessService,
-  UserRegistryService
+  SelfcareV2ClientService,
+  TenantProcessService
 }
+import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
 import it.pagopa.interop.backendforfrontend.api.ClientsApiService
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
@@ -25,11 +25,11 @@ import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTy
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes._
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
-import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError => PartyProcessApiError}
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcessModel}
-import it.pagopa.interop.backendforfrontend.api.impl.converters.PartyProcessConverter
-import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.UserNotFound
+import it.pagopa.interop.selfcare.v2.client.model.UserResponse
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
@@ -38,8 +38,7 @@ final case class ClientsApiServiceImpl(
   tenantProcessService: TenantProcessService,
   catalogProcessService: CatalogProcessService,
   purposeProcessService: PurposeProcessService,
-  partyProcessService: PartyProcessService,
-  userRegistryService: UserRegistryService
+  selfcareV2ClientService: SelfcareV2ClientService
 )(implicit ec: ExecutionContext)
     extends ClientsApiService {
 
@@ -96,43 +95,41 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def removeClientOperatorRelationship(clientId: String, relationshipId: String)(implicit
+  override def removeUserFromClient(clientId: String, userId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
     val result: Future[Unit] = for {
-      clientUuid       <- clientId.toFutureUUID
-      relationshipUuid <- relationshipId.toFutureUUID
-      _                <- authorizationProcessService.removeClientOperatorRelationship(clientUuid, relationshipUuid)
+      clientUuid <- clientId.toFutureUUID
+      userUuid   <- userId.toFutureUUID
+      _          <- authorizationProcessService.removeUser(clientUuid, userUuid)
     } yield ()
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error removing operator relationship $relationshipId of client $clientId", headers) orElse {
-        case Success(_) =>
-          removeClientOperatorRelationship204(headers)
+      handleError(s"Error removing user $userId of client $clientId", headers) orElse { case Success(_) =>
+        removeUserFromClient204(headers)
       }
     }
   }
 
-  override def clientOperatorRelationshipBinding(clientId: String, relationshipId: String)(implicit
+  override def addUserToClient(clientId: String, userId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
 
     val result: Future[CreatedResource] = for {
-      clientUuid       <- clientId.toFutureUUID
-      relationshipUuid <- relationshipId.toFutureUUID
-      result           <- authorizationProcessService.clientOperatorRelationshipBinding(clientUuid, relationshipUuid)
+      clientUuid <- clientId.toFutureUUID
+      userUuid   <- userId.toFutureUUID
+      result     <- authorizationProcessService.addUser(clientUuid, userUuid)
     } yield (result.toCreatedResource)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error binding operator relationship $relationshipId to client $clientId", headers) orElse {
-        case Success(resource) =>
-          clientOperatorRelationshipBinding200(headers)(resource)
+      handleError(s"Error add user $userId to client $clientId", headers) orElse { case Success(resource) =>
+        addUserToClient200(headers)(resource)
       }
     }
   }
@@ -176,21 +173,24 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def getClientOperators(clientId: String)(implicit
+  override def getClientUsers(clientId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerOperatorarray: ToEntityMarshaller[Seq[Operator]],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerUUIDarray: ToEntityMarshaller[Seq[User]]
   ): Route = {
 
-    val result: Future[Seq[Operator]] = for {
-      clientUuid <- clientId.toFutureUUID
-      operators  <- authorizationProcessService.getClientOperators(clientUuid)
-    } yield (operators.map(_.toApi))
+    val result: Future[Seq[User]] = for {
+      clientUuid   <- clientId.toFutureUUID
+      selfcareUuid <- getSelfcareIdFutureUUID(contexts)
+      clientUsers  <- authorizationProcessService.getClientUsers(clientUuid)
+      users        <- Future.traverse(clientUsers)(getSelfcareUserById(selfcareUuid, _))
+      usersApi = users.zip(clientUsers).map(r => r._1.toApi(r._2))
+    } yield usersApi
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error retrieving operators for client $clientId", headers) orElse { case Success(operators) =>
-        getClientOperators200(headers)(operators)
+      handleError(s"Error retrieving users for client $clientId", headers) orElse { case Success(users) =>
+        getClientUsers200(headers)(users)
       }
     }
   }
@@ -267,19 +267,18 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def getClients(q: Option[String], relationshipIds: String, kind: Option[String], offset: Int, limit: Int)(
-    implicit
+  override def getClients(q: Option[String], userIds: String, kind: Option[String], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCompactClients: ToEntityMarshaller[CompactClients]
   ): Route = {
     val result: Future[CompactClients] = for {
-      requesterUuid     <- getOrganizationIdFutureUUID(contexts)
-      relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
-      clientKind        <- kind.traverse(ClientKind.fromValue).toFuture
-      pagedResults      <- authorizationProcessService.getClientsWithKeys(
+      requesterUuid <- getOrganizationIdFutureUUID(contexts)
+      usersUuid     <- parseArrayParameters(userIds).traverse(_.toFutureUUID)
+      clientKind    <- kind.traverse(ClientKind.fromValue).toFuture
+      pagedResults  <- authorizationProcessService.getClientsWithKeys(
         name = q,
-        relationshipIds = relationshipsUuid,
+        userIds = usersUuid,
         consumerId = requesterUuid,
         purposeId = None,
         kind = clientKind.map(_.toProcess),
@@ -299,17 +298,17 @@ final case class ClientsApiServiceImpl(
     }
   }
 
-  override def getClientKeys(relationshipIds: String, clientId: String)(implicit
+  override def getClientKeys(userIds: String, clientId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
   ): Route = {
 
     val result: Future[PublicKeys] = for {
-      clientUuid        <- clientId.toFutureUUID
-      relationshipsUuid <- parseArrayParameters(relationshipIds).traverse(_.toFutureUUID)
-      readClientKeys    <- authorizationProcessService.getClientKeys(clientUuid, relationshipsUuid)
-      keys              <- Future.traverse(readClientKeys.keys)(decorateKey)
+      clientUuid     <- clientId.toFutureUUID
+      usersUuid      <- parseArrayParameters(userIds).traverse(_.toFutureUUID)
+      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid, usersUuid)
+      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
     onComplete(result) {
@@ -323,24 +322,22 @@ final case class ClientsApiServiceImpl(
   private def decorateKey(
     key: AuthorizationProcessModel.Key
   )(implicit contexts: Seq[(String, String)]): Future[PublicKey] = {
-    val result = for {
-      relationship     <- partyProcessService.getRelationship(key.relationshipId)
-      user             <- userRegistryService.findById(relationship.from)
-      relationshipInfo <- PartyProcessConverter.toApiRelationshipInfo(user, relationship)
-    } yield relationshipInfo.state match {
-      case RelationshipState.ACTIVE => key.toApi(isOrphan = false, user)
-      case _                        =>
-        // It could be that in the new API, when a user is removed, a 404 error is returned.
-        // At this moment, it should return the relationship with the state set to Deleted.
-        key.toApi(isOrphan = true, user)
-    }
-
-    result.recoverWith {
-      case PartyProcessApiError(404, _, _, _, _) =>
-        Future.successful(key.toApi(isOrphan = true, UserResource(id = key.relationshipId)))
-      case other                                 => Future.failed(other)
-    }
+    for {
+      selfcareUuid <- getSelfcareIdFutureUUID(contexts)
+      userResponse <- getSelfcareUserById(selfcareUuid, key.userId)
+      isOrphan = userResponse.id.isEmpty
+      user     = userResponse.toApi(key.userId)
+    } yield key.toApi(user = user, isOrphan = isOrphan)
   }
+
+  private def getSelfcareUserById(selfcareId: UUID, userId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[UserResponse] =
+    selfcareV2ClientService
+      .getUserById(selfcareId, userId)
+      .recoverWith { case _: UserNotFound =>
+        Future.successful(UserResponse())
+      }
 
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
@@ -396,24 +393,23 @@ final case class ClientsApiServiceImpl(
     )
   )
 
-  override def getClientRelationshipKeys(clientId: String, relationshipId: String)(implicit
+  override def getClientUserKeys(clientId: String, userId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
   ): Route = {
 
     val result: Future[PublicKeys] = for {
-      clientUuid       <- clientId.toFutureUUID
-      relationshipUuid <- relationshipId.toFutureUUID
-      readClientKeys   <- authorizationProcessService.getClientKeys(clientUuid, Seq(relationshipUuid))
-      keys             <- Future.traverse(readClientKeys.keys)(decorateKey)
+      clientUuid     <- clientId.toFutureUUID
+      userUuid       <- userId.toFutureUUID
+      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid, Seq(userUuid))
+      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
     } yield PublicKeys(keys)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error retrieving keys to client $clientId and relationship $relationshipId", headers) orElse {
-        case Success(keys) =>
-          getClientRelationshipKeys200(headers)(keys)
+      handleError(s"Error retrieving keys to client $clientId and user $userId", headers) orElse { case Success(keys) =>
+        getClientUserKeys200(headers)(keys)
       }
     }
   }
