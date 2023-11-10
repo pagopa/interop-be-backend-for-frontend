@@ -18,8 +18,6 @@ import it.pagopa.interop.commons.utils.errors.AkkaResponses._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, TooManyRequests}
 import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors, ServiceCode}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
-import it.pagopa.interop.selfcare.partyprocess.client.invoker.{ApiError => PartyProcessError}
-import it.pagopa.interop.selfcare.userregistry.client.invoker.{ApiError => UserRegistryError}
 import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareV2Error}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError => TenantProcessError}
 import spray.json._
@@ -40,8 +38,6 @@ object Handlers {
       completeWithError(err.code, headers, err.responseContent, logMessage)
     case Failure(err: CatalogProcessError[_]) => completeWithError(err.code, headers, err.responseContent, logMessage)
     case Failure(err: TenantProcessError[_])  => completeWithError(err.code, headers, err.responseContent, logMessage)
-    case Failure(err: PartyProcessError[_])   => completeWithError(err.code, headers, err.responseContent, logMessage)
-    case Failure(err: UserRegistryError[_])   => completeWithError(err.code, headers, err.responseContent, logMessage)
     case Failure(err: SelfcareV2Error[_])     => completeWithError(err.code, headers, err.responseContent, logMessage)
     case Failure(tmr: ratelimiter.error.Errors.TooManyRequests) =>
       tooManyRequests(

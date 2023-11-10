@@ -10,8 +10,8 @@ import java.util.UUID
 
 object BFFErrors {
 
-  final case class RelationshipNotFound(relationshipId: String)
-      extends ComponentError("0001", s"Relationship $relationshipId not found")
+  final case class UserNotFound(selfcareId: UUID, userId: UUID)
+      extends ComponentError("0001", s"User $userId not found for institution $selfcareId")
 
   final case class MissingUserFields(userId: String, missingUserFields: String)
       extends ComponentError("0002", s"Missing some fields for user $userId - $missingUserFields")
@@ -129,7 +129,9 @@ object BFFErrors {
   final case class EServiceRiskAnalysisNotFound(eServiceId: UUID, riskAnalysisId: UUID)
       extends ComponentError("0031", s"RiskAnalysis ${riskAnalysisId} not found in Eservice ${eServiceId}")
 
-  final case class MissingSelfcareFields(elem: String, missingFields: String)
-      extends ComponentError("0032", s"Missing some fields for class $elem - $missingFields")
+  final case class SelfcareEntityNotFilled(className: String, field: String)
+      extends ComponentError("0032", s"Selfcare entity $className with field $field not filled")
 
+  final case class InstitutionNotFound(selfcareId: UUID)
+      extends ComponentError("0033", s"Institution $selfcareId not found")
 }
