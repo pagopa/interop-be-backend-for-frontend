@@ -62,12 +62,14 @@ object SelfcareV2ClientServiceTypes {
       digitalAddress <- inst.digitalAddress.toRight(
         SelfcareEntityNotFilled(inst.getClass().getName(), "digitalAddress")
       )
+      subUnitType    <- inst.subunitType.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "subunitType"))
     } yield Institution(
       id = id,
       origin = origin,
       originId = originId,
       description = description,
-      digitalAddress = digitalAddress
+      digitalAddress = digitalAddress,
+      subUnitType = subUnitType
     )
   }
 

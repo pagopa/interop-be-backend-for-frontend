@@ -402,7 +402,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               originId = "IPACode".some,
               description = "foo".some,
               origin = "IPA".some,
-              digitalAddress = "foo@bar.it".some
+              digitalAddress = "foo@bar.it".some,
+              subunitType = "AOO".some
             )
           )
         )
@@ -418,10 +419,15 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
-          _: String
-        )(_: Seq[(String, String)]))
-        .expects("IPA", "IPACode", "foo", *, *, selfcareId, *)
+        .selfcareUpsertTenant(
+          _: String,
+          _: String,
+          _: String,
+          _: TenantProcessModel.MailSeed,
+          _: OffsetDateTime,
+          _: TenantProcessModel.TenantUnitType
+        )(_: String)(_: Seq[(String, String)]))
+        .expects("IPA", "IPACode", "foo", *, *, TenantProcessModel.TenantUnitType.AOO, selfcareId, *)
         .once()
         .returns(
           Future.successful(
@@ -535,7 +541,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               originId = "ANACCode".some,
               description = "foo".some,
               origin = "ANAC".some,
-              digitalAddress = "foo@bar.it".some
+              digitalAddress = "foo@bar.it".some,
+              subunitType = "AOO".some
             )
           )
         )
@@ -551,10 +558,15 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
-          _: String
-        )(_: Seq[(String, String)]))
-        .expects("ANAC", "ANACCode", "foo", *, *, selfcareId, *)
+        .selfcareUpsertTenant(
+          _: String,
+          _: String,
+          _: String,
+          _: TenantProcessModel.MailSeed,
+          _: OffsetDateTime,
+          _: TenantProcessModel.TenantUnitType
+        )(_: String)(_: Seq[(String, String)]))
+        .expects("ANAC", "ANACCode", "foo", *, *, TenantProcessModel.TenantUnitType.AOO, selfcareId, *)
         .once()
         .returns(
           Future.successful(
@@ -668,7 +680,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               originId = "non-IPACode".some,
               description = "foo".some,
               origin = "non-IPA".some,
-              digitalAddress = "foo@bar.it".some
+              digitalAddress = "foo@bar.it".some,
+              subunitType = "AOO".some
             )
           )
         )
@@ -684,10 +697,15 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
-          _: String
-        )(_: Seq[(String, String)]))
-        .expects("non-IPA", "non-IPACode", "foo", *, *, selfcareId, *)
+        .selfcareUpsertTenant(
+          _: String,
+          _: String,
+          _: String,
+          _: TenantProcessModel.MailSeed,
+          _: OffsetDateTime,
+          _: TenantProcessModel.TenantUnitType
+        )(_: String)(_: Seq[(String, String)]))
+        .expects("non-IPA", "non-IPACode", "foo", *, *, TenantProcessModel.TenantUnitType.AOO, selfcareId, *)
         .once()
         .returns(
           Future.successful(
@@ -806,7 +824,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               taxCode = Some("not mine please"),
               origin = Some("non-IPA"),
               institutionType = None,
-              attributes = Some(Nil)
+              attributes = Some(Nil),
+              subunitType = "AOO".some
             )
           )
         )
