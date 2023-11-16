@@ -174,7 +174,8 @@ object TenantProcessServiceTypes {
       attributes = t.attributes.toApi(attributes),
       contactMail = t.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi),
       features = t.features.map(_.toApi),
-      onboardedAt = t.onboardedAt
+      onboardedAt = t.onboardedAt,
+      subUnitType = t.subUnitType.map(_.toApi)
     )
   }
 
@@ -189,6 +190,13 @@ object TenantProcessServiceTypes {
       case TenantProcess.TenantKind.PA      => TenantKind.PA
       case TenantProcess.TenantKind.PRIVATE => TenantKind.PRIVATE
       case TenantProcess.TenantKind.GSP     => TenantKind.GSP
+    }
+  }
+
+  implicit class TenantUnitTypeConverter(private val tut: TenantProcess.TenantUnitType) extends AnyVal {
+    def toApi: TenantUnitType = tut match {
+      case TenantProcess.TenantUnitType.AOO => TenantUnitType.AOO
+      case TenantProcess.TenantUnitType.UO  => TenantUnitType.UO
     }
   }
 }
