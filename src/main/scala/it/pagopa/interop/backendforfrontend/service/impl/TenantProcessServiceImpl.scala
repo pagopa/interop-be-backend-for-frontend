@@ -23,6 +23,7 @@ import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareNotFound
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContextExecutor, Future, ExecutionContext}
+import java.time.OffsetDateTime
 
 class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
@@ -53,14 +54,20 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       invoker.invoke(request, s"Revoking declared attribute $attributeId to requester Tenant")
     }
 
-  def selfcareUpsertTenant(origin: String, externalId: String, description: String)(
-    selfcareId: String
-  )(implicit contexts: Seq[(String, String)]): Future[Tenant] = withHeaders[Tenant] { (bearerToken, correlationId) =>
-    val request: ApiRequest[Tenant] = api.selfcareUpsertTenant(
-      xCorrelationId = correlationId,
-      selfcareTenantSeed = SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, description)
-    )(BearerToken(bearerToken))
-    invoker.invoke(request, s"Upserting Tenant $description ($origin, $externalId) with SelfcareId $selfcareId")
+  def selfcareUpsertTenant(
+    origin: String,
+    externalId: String,
+    description: String,
+    mailSeed: MailSeed,
+    onboardedAt: OffsetDateTime
+  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant] = withHeaders[Tenant] {
+    (bearerToken, correlationId) =>
+      val request: ApiRequest[Tenant] = api.selfcareUpsertTenant(
+        xCorrelationId = correlationId,
+        selfcareTenantSeed =
+          SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, description, mailSeed, onboardedAt)
+      )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Upserting Tenant $description ($origin, $externalId) with SelfcareId $selfcareId")
   }
 
   override def verifyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
