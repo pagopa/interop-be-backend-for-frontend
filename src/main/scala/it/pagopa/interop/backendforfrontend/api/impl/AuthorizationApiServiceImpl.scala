@@ -26,7 +26,7 @@ import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
-import it.pagopa.interop.tenantprocess.client.model.Tenant
+import it.pagopa.interop.tenantprocess.client.model.{Tenant, MailSeed, MailKind}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
@@ -108,14 +108,20 @@ final case class AuthorizationApiServiceImpl(
 
   private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     for {
-      selfcareUuid   <- selfcareId.toFutureUUID
-      institution    <- selfcareV2ClientService.getInstitution(selfcareUuid)
-      institutionApi <- institution.toApi.toFuture
-      _              <- assertTenantAllowed(selfcareId, institutionApi.origin)
-      tenant         <- tenantProcessService
-        .selfcareUpsertTenant(institutionApi.origin, institutionApi.originId, institutionApi.description)(
-          institutionApi.id.toString
-        )
+      selfcareUuid      <- selfcareId.toFutureUUID
+      institution       <- selfcareV2ClientService.getInstitution(selfcareUuid)
+      institutionApi    <- institution.toApi.toFuture
+      _                 <- assertTenantAllowed(selfcareId, institutionApi.origin)
+      onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
+      onboardingDataApi <- onboardingData.toApi.toFuture
+      tenant            <- tenantProcessService
+        .selfcareUpsertTenant(
+          institutionApi.origin,
+          institutionApi.originId,
+          institutionApi.description,
+          MailSeed(MailKind.DIGITAL_ADDRESS, institutionApi.digitalAddress),
+          onboardingDataApi.onboardedAt
+        )(institutionApi.id.toString)
     } yield tenant
 
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
