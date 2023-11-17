@@ -57,7 +57,7 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
   def selfcareUpsertTenant(
     origin: String,
     externalId: String,
-    description: String,
+    name: String,
     mailSeed: MailSeed,
     onboardedAt: OffsetDateTime
   )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant] = withHeaders[Tenant] {
@@ -65,9 +65,9 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
       val request: ApiRequest[Tenant] = api.selfcareUpsertTenant(
         xCorrelationId = correlationId,
         selfcareTenantSeed =
-          SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, description, mailSeed, onboardedAt)
+          SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, name, mailSeed, onboardedAt)
       )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Upserting Tenant $description ($origin, $externalId) with SelfcareId $selfcareId")
+      invoker.invoke(request, s"Upserting Tenant $name ($origin, $externalId) with SelfcareId $selfcareId")
   }
 
   override def verifyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
@@ -163,7 +163,7 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
         api.addTenantMail(xCorrelationId = correlationId, tenantId = tenantId, mailSeed = seed)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Add mail ${seed.address} to $tenantId")
+      invoker.invoke(request, s"Add mail to tenant $tenantId")
     }
 
   override def deleteTenantMail(tenantId: UUID, mailId: String)(implicit
