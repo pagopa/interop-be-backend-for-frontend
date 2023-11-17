@@ -230,7 +230,7 @@ final case class TenantsApiServiceImpl(
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error adding mail ${seed.address} to tenant $tenantId", headers) orElse { case Success(_) =>
+      handleError(s"Error adding mail to tenant $tenantId", headers) orElse { case Success(_) =>
         addTenantMail204(headers)
       }
     }
