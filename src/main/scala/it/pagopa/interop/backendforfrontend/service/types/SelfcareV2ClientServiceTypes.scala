@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.backendforfrontend.service.model.Institution
-import it.pagopa.interop.backendforfrontend.model.{TenantUser, SelfcareProduct, SelfcareInstitution, User}
+import it.pagopa.interop.backendforfrontend.model.{User, SelfcareProduct, SelfcareInstitution, CompactUser}
 import it.pagopa.interop.selfcare.v2.client.{model => SelfcareClient}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareEntityNotFilled
 
@@ -27,23 +27,23 @@ object SelfcareV2ClientServiceTypes {
   }
 
   implicit class SelfcareUserResponseConverter(private val ur: SelfcareClient.UserResponse) extends AnyVal {
-    def toApi(id: UUID): User = {
+    def toApi(id: UUID): CompactUser = {
       (ur.name, ur.surname) match {
-        case (None, None) => User(userId = id, name = "Utente", surname = ur.id.toString)
+        case (None, None) => CompactUser(userId = id, name = "Utente", familyName = ur.id.toString)
         case _            =>
-          User(userId = id, name = ur.name.getOrElse(""), surname = ur.surname.getOrElse(""))
+          CompactUser(userId = id, name = ur.name.getOrElse(""), familyName = ur.surname.getOrElse(""))
       }
     }
   }
 
   implicit class UserResourceConverter(private val ur: SelfcareClient.UserResource) extends AnyVal {
-    def toApi(tenantId: UUID): Either[Throwable, TenantUser] = for {
+    def toApi(tenantId: UUID): Either[Throwable, User] = for {
       id         <- ur.id.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "id"))
       name       <- ur.name.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "name"))
       surname    <- ur.surname.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "surname"))
       fiscalCode <- ur.fiscalCode.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "fiscalCode"))
       roles      <- ur.roles.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "roles"))
-    } yield TenantUser(
+    } yield User(
       userId = id,
       tenantId = tenantId,
       name = name,

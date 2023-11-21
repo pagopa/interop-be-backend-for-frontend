@@ -4716,7 +4716,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TenantUser'
+                $ref: '#/components/schemas/User'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -8589,7 +8589,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Users'
+                $ref: '#/components/schemas/CompactUsers'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -10965,10 +10965,10 @@ components:
           format: uuid
       required:
         - purposeId
-    Users:
+    CompactUsers:
       type: array
       items:
-        $ref: '#/components/schemas/User'
+        $ref: '#/components/schemas/CompactUser'
     KeysSeed:
       type: array
       items:
@@ -11167,7 +11167,7 @@ components:
         - SUSPENDED
         - WAITING_FOR_APPROVAL
         - ARCHIVED
-    TenantUser:
+    User:
       type: object
       properties:
         userId:
@@ -11196,7 +11196,7 @@ components:
     TenantUsers:
       type: array
       items:
-        $ref: '#/components/schemas/TenantUser'
+        $ref: '#/components/schemas/User'
     RiskAnalysisForm:
       type: object
       properties:
@@ -11869,7 +11869,7 @@ components:
         name:
           type: string
         user:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/CompactUser'
         createdAt:
           type: string
           format: date-time
@@ -11881,7 +11881,7 @@ components:
         - createdAt
         - user
         - isOrphan
-    User:
+    CompactUser:
       description: Contains some details about user
       type: object
       properties:
@@ -11890,12 +11890,12 @@ components:
           format: uuid
         name:
           type: string
-        surname:
+        familyName:
           type: string
       required:
         - userId
         - name
-        - surname    
+        - familyName    
     PublicKeys:
       type: object
       properties:
