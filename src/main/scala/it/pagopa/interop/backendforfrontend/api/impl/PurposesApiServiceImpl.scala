@@ -532,16 +532,17 @@ final case class PurposesApiServiceImpl(
     }
   }
 
-  override def retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion: String)(implicit
+  override def retrieveRiskAnalysisConfigurationByVersion(eserviceId: String, riskAnalysisVersion: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerRiskAnalysisFormConfig: ToEntityMarshaller[RiskAnalysisFormConfig]
   ): Route = {
     logger.info(s"Retrieving risk analysis latest configuration for version $riskAnalysisVersion")
 
-    val result: Future[RiskAnalysisFormConfig] = purposeProcessService
-      .retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion)
-      .map(_.toApi)
+    val result: Future[RiskAnalysisFormConfig] = for {
+      eserviceUUID <- eserviceId.toFutureUUID
+      purpose <- purposeProcessService.retrieveRiskAnalysisConfigurationByVersion(eserviceUUID, riskAnalysisVersion)
+    } yield purpose.toApi
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
