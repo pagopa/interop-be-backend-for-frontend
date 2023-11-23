@@ -64,8 +64,7 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
     (bearerToken, correlationId) =>
       val request: ApiRequest[Tenant] = api.selfcareUpsertTenant(
         xCorrelationId = correlationId,
-        selfcareTenantSeed =
-          SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, name, mailSeed, onboardedAt)
+        selfcareTenantSeed = SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, name, mailSeed, onboardedAt)
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Upserting Tenant $name ($origin, $externalId) with SelfcareId $selfcareId")
   }
