@@ -9315,6 +9315,12 @@ paths:
         required: true
         schema:
           type: string
+      - name: eserviceId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
         - purposes
