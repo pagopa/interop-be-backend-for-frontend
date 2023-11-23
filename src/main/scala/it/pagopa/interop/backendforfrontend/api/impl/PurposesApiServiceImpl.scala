@@ -340,7 +340,7 @@ final case class PurposesApiServiceImpl(
       authorizationProcessService
         .getClientsWithKeys(
           name = None,
-          relationshipIds = Seq.empty,
+          userIds = Seq.empty,
           consumerId = consumerId,
           purposeId = purposeId,
           kind = None,
@@ -357,7 +357,7 @@ final case class PurposesApiServiceImpl(
     go(0)(Nil)
   }
 
-  override def clonePurpose(purposeId: String)(implicit
+  override def clonePurpose(purposeId: String, seed: PurposeCloneSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -366,7 +366,7 @@ final case class PurposesApiServiceImpl(
 
     val result: Future[PurposeVersionResource] = for {
       purposeUuid  <- purposeId.toFutureUUID
-      purpose      <- purposeProcessService.clonePurpose(purposeUuid)
+      purpose      <- purposeProcessService.clonePurpose(purposeUuid, seed.toProcess)
       draftVersion <- purpose.versions
         .find(_.state == PurposeProcess.PurposeVersionState.DRAFT)
         .toFuture(PurposeVersionDraftNotFound(purpose.id))

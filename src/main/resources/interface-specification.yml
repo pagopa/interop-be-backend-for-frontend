@@ -21,8 +21,8 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
-  - name: party
-    description: Party Module
+  - name: selfcare
+    description: Selfcare Module
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
@@ -70,7 +70,6 @@ paths:
   '/agreements':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -269,7 +268,6 @@ paths:
   '/agreements/filter/producers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -358,7 +356,6 @@ paths:
   '/agreements/filter/consumers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -447,7 +444,6 @@ paths:
   '/agreements/{agreementId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: agreementId
         in: path
         description: The identifier of the agreement
@@ -638,7 +634,6 @@ paths:
   '/agreements/{agreementId}/activate':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -733,7 +728,6 @@ paths:
   '/agreements/{agreementId}/clone':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -866,7 +860,6 @@ paths:
   '/agreements/{agreementId}/consumer-documents':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: agreementId
         in: path
         schema:
@@ -981,7 +974,6 @@ paths:
   '/agreements/{agreementId}/consumer-documents/{documentId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: agreementId
         in: path
         schema:
@@ -1164,7 +1156,6 @@ paths:
   '/agreements/{agreementId}/contract':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: agreementId
         in: path
         description: The identifier of the agreement
@@ -1259,7 +1250,6 @@ paths:
   '/agreements/{agreementId}/submit':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1361,7 +1351,6 @@ paths:
   '/agreements/{agreementId}/suspend':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1456,7 +1445,6 @@ paths:
   '/agreements/{agreementId}/reject':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1576,7 +1564,6 @@ paths:
   '/agreements/{agreementId}/archive':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1686,7 +1673,6 @@ paths:
   '/agreements/{agreementId}/update':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1787,7 +1773,6 @@ paths:
   '/agreements/{agreementId}/upgrade':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - agreements
@@ -1882,7 +1867,6 @@ paths:
   '/catalog':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - eservices
@@ -2009,7 +1993,6 @@ paths:
   '/consumers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - in: query
         name: q
         schema:
@@ -2095,7 +2078,6 @@ paths:
   /eservices:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2152,7 +2134,6 @@ paths:
   /eservices/{eServiceId}/consumers:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       security:
         - bearerAuth: []
@@ -2231,7 +2212,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
         - bearerAuth: []
@@ -2398,7 +2378,6 @@ paths:
   /eservices/{eServiceId}/descriptors:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2482,7 +2461,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/activate:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2581,7 +2559,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/publish:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2681,7 +2658,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/suspend:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2762,7 +2738,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/documents:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -2870,7 +2845,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/documents/{documentId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
         - bearerAuth: []
@@ -3042,7 +3016,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/clone:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -3126,7 +3099,6 @@ paths:
   /eservices/{eServiceId}/descriptors/{descriptorId}/documents/{documentId}/update:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -3224,7 +3196,6 @@ paths:
   /eservices/{eServiceId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     delete:
       security:
         - bearerAuth: []
@@ -3377,7 +3348,6 @@ paths:
   /eservices/{eServiceId}/riskAnalysis:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security:
         - bearerAuth: []
@@ -3456,7 +3426,6 @@ paths:
   /eservices/{eServiceId}/riskAnalysis/{riskAnalysisId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       security:
         - bearerAuth: []
@@ -3698,7 +3667,6 @@ paths:
   '/producers':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - in: query
         name: q
         schema:
@@ -3762,7 +3730,6 @@ paths:
   '/producers/eservices':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - eservices
@@ -3842,7 +3809,6 @@ paths:
   '/producers/agreements/eservices':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -3950,7 +3916,6 @@ paths:
   '/consumers/agreements/eservices':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - agreements
@@ -4058,7 +4023,6 @@ paths:
   '/producers/eservices/{eserviceId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: eserviceId
         in: path
         description: the eservice id
@@ -4160,7 +4124,6 @@ paths:
   '/producers/eservices/{eserviceId}/descriptors/{descriptorId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: eserviceId
         in: path
         description: the eservice id
@@ -4276,7 +4239,6 @@ paths:
   /reverse/purposes:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - purposes
@@ -4369,7 +4331,6 @@ paths:
   /reverse/purposes/{purposeId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         description: the purpose id
@@ -4380,7 +4341,6 @@ paths:
     post:
       parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
       tags:
         - purposes
       operationId: updateReversePurpose
@@ -4433,7 +4393,6 @@ paths:
   '/catalog/eservices/{eserviceId}/descriptor/{descriptorId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: eserviceId
         in: path
         description: the eservice id
@@ -4530,7 +4489,6 @@ paths:
   '/session/tokens':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       security: [ { } ]
       tags:
@@ -4563,16 +4521,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionToken'
-  '/tenants/{tenantId}/relationships':
+  '/tenants/{tenantId}/users':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
-        - party
-      summary: returns the relationships related to the institution
+        - selfcare
+      summary: returns the users related to the institution
       description: Return ok
-      operationId: getUserInstitutionRelationships
+      operationId: getInstitutionUsers
       parameters:
         - in: path
           name: tenantId
@@ -4593,24 +4550,6 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/PartyRole'
-            default: []
-          explode: false
-        - in: query
-          name: states
-          description: comma separated sequence of states to filter the response with
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/RelationshipState'
-            default: []
-          explode: false
-        - in: query
-          name: productRoles
-          description: comma separated sequence of product roles to filter the response with
-          schema:
-            type: array
-            items:
               type: string
             default: []
           explode: false
@@ -4625,7 +4564,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RelationshipsResponse'
+                $ref: '#/components/schemas/TenantUsers'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -4661,7 +4600,6 @@ paths:
   '/tools/validateTokenGeneration':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - tools
@@ -4757,17 +4695,17 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/relationships/{relationshipId}':
+  '/users/{userId}':
     get:
       tags:
-        - party
-      summary: Gets the corresponding relationship
-      description: Gets relationship
-      operationId: getRelationship
+        - selfcare
+      summary: Gets the corresponding user
+      description: Gets user
+      operationId: getUser
       parameters:
-        - name: relationshipId
+        - name: userId
           in: path
-          description: The identifier of the relationship
+          description: The identifier of the user
           required: true
           schema:
             type: string
@@ -4778,7 +4716,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RelationshipInfo'
+                $ref: '#/components/schemas/TenantUser'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -4906,7 +4844,6 @@ paths:
   '/purposes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - purposes
@@ -4979,7 +4916,6 @@ paths:
   '/producer/purposes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - purposes
@@ -5086,7 +5022,6 @@ paths:
   '/consumer/purposes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - purposes
@@ -5193,7 +5128,6 @@ paths:
   /purposes/{purposeId}/clone:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -5206,6 +5140,12 @@ paths:
       description: clone purpose
       summary: Clone Purpose
       operationId: clonePurpose
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurposeCloneSeed'
+        required: true
       responses:
         '200':
           description: Purpose Cloned
@@ -5305,7 +5245,6 @@ paths:
   /purposes/{purposeId}/versions:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         description: the purpose id
@@ -5423,7 +5362,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/documents/{documentId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       security:
         - bearerAuth: []
@@ -5534,7 +5472,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/archive:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -5652,7 +5589,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/suspend:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -5732,7 +5668,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/update/waitingForApproval:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -5784,7 +5719,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}/activate:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -6000,7 +5934,6 @@ paths:
   /purposes/{purposeId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         description: the purpose id
@@ -6074,7 +6007,6 @@ paths:
     delete:
       parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
       tags:
         - purposes
       operationId: deletePurpose
@@ -6174,7 +6106,6 @@ paths:
     post:
       parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
       tags:
         - purposes
       operationId: updatePurpose
@@ -6227,7 +6158,6 @@ paths:
   /purposes/{purposeId}/versions/{versionId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: purposeId
         in: path
         required: true
@@ -6824,7 +6754,6 @@ paths:
   '/certifiedAttributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       summary: Creates attribute
       tags:
@@ -6918,7 +6847,6 @@ paths:
   '/verifiedAttributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       summary: Creates verified attribute
       tags:
@@ -7012,7 +6940,6 @@ paths:
   '/declaredAttributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       summary: Creates declared attribute
       tags:
@@ -7106,7 +7033,6 @@ paths:
   '/attributes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       summary: Get attributes
       operationId: getAttributes
@@ -7165,7 +7091,6 @@ paths:
   '/attributes/{attributeId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - schema:
           type: string
           format: uuid
@@ -7304,7 +7229,6 @@ paths:
       description: 'returns the attribute in the registry corresponding to origin and code, if any.'
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - schema:
           type: string
         name: origin
@@ -7320,7 +7244,6 @@ paths:
   '/tenants/{tenantId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: tenantId
         in: path
         description: the tenant id
@@ -7470,7 +7393,6 @@ paths:
   '/tenants':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - in: query
         name: name
         schema:
@@ -7549,7 +7471,6 @@ paths:
   /clients:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - clients
@@ -7563,8 +7484,8 @@ paths:
           schema:
             type: string
         - in: query
-          name: relationshipIds
-          description: comma separated sequence of relationship IDs
+          name: userIds
+          description: comma separated sequence of user IDs
           schema:
             type: array
             items:
@@ -7691,7 +7612,6 @@ paths:
   /clients/{clientId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       description: Retrieves a Client
       tags:
@@ -7873,7 +7793,6 @@ paths:
   /clients/{clientId}/purposes/{purposeId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     delete:
       tags:
         - clients
@@ -7971,7 +7890,6 @@ paths:
   /clients/{clientId}/keys/{keyId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - clients
@@ -8162,10 +8080,9 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  /clients/{clientId}/relationships/{relationshipId}:
+  /clients/{clientId}/users/{userId}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: clientId
         in: path
         description: The Client id
@@ -8173,9 +8090,9 @@ paths:
         schema:
           type: string
           format: uuid
-      - name: relationshipId
+      - name: userId
         in: path
-        description: The identifier of the relationship between the security operator and the consumer
+        description: The identifier of the user between the security user and the consumer
         required: true
         schema:
           type: string
@@ -8183,12 +8100,12 @@ paths:
     post:
       tags:
         - clients
-      summary: Binds an Operator relationship to a Client
-      description: Binds a security operator belonging to a consumer to a Client
-      operationId: clientOperatorRelationshipBinding
+      summary: Binds an user to a Client
+      description: Binds a security user belonging to a consumer to a Client
+      operationId: addUserToClient
       responses:
         '200':
-          description: Operator added
+          description: User added
           content:
             application/json:
               schema:
@@ -8285,12 +8202,12 @@ paths:
     delete:
       tags:
         - clients
-      summary: Remove an operator relationship from a Client
-      description: Removes an operator relationship from a Client
-      operationId: removeClientOperatorRelationship
+      summary: Remove an user from a Client
+      description: Removes an user from a Client
+      operationId: removeUserFromClient
       responses:
         '204':
-          description: Operator relationship removed
+          description: User removed
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -8362,7 +8279,7 @@ paths:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
         '404':
-          description: Client or operator not found
+          description: Client or user not found
           content:
             application/problem+json:
               schema:
@@ -8383,7 +8300,6 @@ paths:
   '/clients/{clientId}/purposes':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - clients
@@ -8650,20 +8566,19 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/clients/{clientId}/operators':
+  '/clients/{clientId}/users':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - clients
-      summary: List client operators
-      description: List client operators
-      operationId: getClientOperators
+      summary: List client users
+      description: List client users
+      operationId: getClientUsers
       parameters:
         - name: clientId
           in: path
-          description: ID of Client the operators belong to
+          description: ID of Client the users belong to
           required: true
           schema:
             type: string
@@ -8674,7 +8589,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Operators'
+                $ref: '#/components/schemas/Users'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -8767,7 +8682,6 @@ paths:
   '/clients/{clientId}/keys':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - clients
@@ -8915,8 +8829,8 @@ paths:
             type: string
             format: uuid
         - in: query
-          name: relationshipIds
-          description: comma separated sequence of relationship IDs
+          name: userIds
+          description: comma separated sequence of user IDs
           schema:
             type: array
             items:
@@ -9003,7 +8917,6 @@ paths:
   '/clients/{clientId}/encoded/keys/{keyId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - clients
@@ -9123,7 +9036,6 @@ paths:
   /clientsConsumer:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - clients
@@ -9197,7 +9109,6 @@ paths:
   /clientsApi:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - clients
@@ -9268,10 +9179,9 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/clients/{clientId}/relationships/{relationshipId}/keys':
+  '/clients/{clientId}/users/{userId}/keys':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: clientId
         in: path
         description: ID of the client holding the key
@@ -9279,19 +9189,19 @@ paths:
         schema:
           type: string
           format: uuid
-      - name: relationshipId
+      - name: userId
         in: path
         required: true
-        description: ID of the Relationship that the added keys MUST belong to
+        description: ID of the User that the added keys MUST belong to
         schema:
           type: string
           format: uuid
     get:
       tags:
         - clients
-      summary: Returns a set of keys by relationship ID and client ID.
-      description: 'Given a relationship and a client it returns its corresponding set of keys, if any'
-      operationId: getClientRelationshipKeys
+      summary: Returns a set of keys by user ID and client ID.
+      description: 'Given a user and a client it returns its corresponding set of keys, if any'
+      operationId: getClientUserKeys
       responses:
         '200':
           description: returns the corresponding array of keys
@@ -9353,7 +9263,6 @@ paths:
   /purposes/riskAnalysis/latest:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - purposes
@@ -9401,7 +9310,6 @@ paths:
   /purposes/riskAnalysis/version/{riskAnalysisVersion}:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
       - name: riskAnalysisVersion
         in: path
         required: true
@@ -9479,7 +9387,6 @@ paths:
   /user/consent/{consentType}:
     parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
         - name: consentType
           in: path
           required: true
@@ -9597,7 +9504,6 @@ paths:
   /privacyNotices/{consentType}:
     parameters:
         - $ref: '#/components/parameters/CorrelationIdHeader'
-        - $ref: '#/components/parameters/IpAddress'
         - name: consentType
           in: path
           required: true
@@ -9668,8 +9574,6 @@ paths:
                   type: integer
                 description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /support:
-    parameters:
-        - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
           - authorization
@@ -9720,7 +9624,6 @@ paths:
   /session/saml2/tokens:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - support
@@ -9812,11 +9715,6 @@ components:
       in: header
       name: X-Correlation-Id
       required: true
-      schema:
-        type: string
-    IpAddress:
-      in: header
-      name: X-Forwarded-For
       schema:
         type: string
   schemas:
@@ -10224,6 +10122,14 @@ components:
         - purposeId
         - title
         - eservice
+    PurposeCloneSeed:
+      type: object
+      properties:
+        eserviceId:
+          type: string
+          format: uuid
+      required:
+        - eserviceId    
     CatalogDescriptorEService:
       type: object
       required:
@@ -10312,7 +10218,7 @@ components:
         name:
           type: string
         riskAnalysisForm:
-          $ref: '#/components/schemas/RiskAnalysisForm'
+          $ref: '#/components/schemas/RiskAnalysisFormSeed'
     EServiceRiskAnalysis:
       type: object
       required:
@@ -10761,7 +10667,7 @@ components:
           type: string
           format: uuid
         riskAnalysisForm:
-          $ref: '#/components/schemas/RiskAnalysisForm'
+          $ref: '#/components/schemas/RiskAnalysisFormSeed'
         title:
           type: string
         description:
@@ -10837,6 +10743,8 @@ components:
           type: string
         kind:
           $ref: '#/components/schemas/TenantKind'
+        contactMail:
+          $ref: '#/components/schemas/Mail'
     TenantKind:
       type: string
       enum:
@@ -10921,14 +10829,6 @@ components:
         - offset
         - limit
         - totalCount
-    PartyRole:
-      type: string
-      description: Represents the generic available role types for the relationship
-      enum:
-        - MANAGER
-        - DELEGATE
-        - SUB_DELEGATE
-        - OPERATOR
     ProducerEService:
       type: object
       required:
@@ -10998,6 +10898,9 @@ components:
           items:
             type: string
           description: User's roles on product
+        parent:
+          type: string
+          description: The name of the root parent
       required:
         - id
         - description
@@ -11014,9 +10917,6 @@ components:
           type: string
         consumer:
           $ref: '#/components/schemas/CompactOrganization'
-        riskAnalysisId:
-          type: string
-          format: uuid
         riskAnalysisForm:
           $ref: '#/components/schemas/RiskAnalysisForm'
         eservice:
@@ -11071,68 +10971,10 @@ components:
           format: uuid
       required:
         - purposeId
-    OperatorState:
-      type: string
-      description: Represents the Client Operator state
-      enum:
-        - ACTIVE
-        - SUSPENDED
-        - DELETED
-    OperatorRole:
-      type: string
-      description: Represents the generic available role types for the relationship
-      enum:
-        - MANAGER
-        - DELEGATE
-        - SUB_DELEGATE
-        - OPERATOR
-    Operator:
-      description: Models a Client Operator
-      type: object
-      properties:
-        relationshipId:
-          type: string
-          format: uuid
-        taxCode:
-          type: string
-        name:
-          type: string
-        familyName:
-          type: string
-        role:
-          $ref: '#/components/schemas/OperatorRole'
-        product:
-          $ref: '#/components/schemas/RelationshipProduct'
-        state:
-          $ref: '#/components/schemas/OperatorState'
-      required:
-        - relationshipId
-        - taxCode
-        - name
-        - familyName
-        - email
-        - role
-        - product
-        - state
-    Operators:
+    Users:
       type: array
       items:
-        $ref: '#/components/schemas/Operator'
-    RelationshipProduct:
-      type: object
-      properties:
-        id:
-          type: string
-        role:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-      required:
-        - id
-        - role
-        - createdAt
-        - purposeId
+        $ref: '#/components/schemas/User'
     KeysSeed:
       type: array
       items:
@@ -11216,7 +11058,7 @@ components:
         freeOfChargeReason:
           type: string      
         riskAnalysisForm:
-          $ref: '#/components/schemas/RiskAnalysisForm'
+          $ref: '#/components/schemas/RiskAnalysisFormSeed'
         dailyCalls:
           description: 'maximum number of daily calls that this version can perform.'
           type: integer
@@ -11331,25 +11173,13 @@ components:
         - SUSPENDED
         - WAITING_FOR_APPROVAL
         - ARCHIVED
-    RelationshipState:
-      type: string
-      description: Represents the party relationship state
-      enum:
-        - PENDING
-        - ACTIVE
-        - SUSPENDED
-        - DELETED
-        - REJECTED
-    RelationshipInfo:
+    TenantUser:
       type: object
       properties:
-        id:
+        userId:
           type: string
           format: uuid
-        from:
-          type: string
-          format: uuid
-        to:
+        tenantId:
           type: string
           format: uuid
         name:
@@ -11358,34 +11188,38 @@ components:
           type: string
         taxCode:
           type: string
-        role:
-          $ref: '#/components/schemas/PartyRole'
-        product:
-          $ref: '#/components/schemas/ProductInfo'
-        state:
-          $ref: '#/components/schemas/RelationshipState'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
+        roles:
+          type: array
+          items:
+            type: string
       required:
-        - id
-        - from
-        - to
+        - userId
+        - tenantId
         - name
         - familyName
         - taxCode
-        - role
-        - product
-        - state
-    RelationshipsResponse:
+        - roles
+    TenantUsers:
       type: array
       items:
-        $ref: '#/components/schemas/RelationshipInfo'
+        $ref: '#/components/schemas/TenantUser'
     RiskAnalysisForm:
+      type: object
+      properties:
+        version:
+          type: string
+        answers:
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        riskAnalysisId:
+          type: string
+          format: uuid
+      required:
+        - version
+        - answers
+    RiskAnalysisFormSeed:
       type: object
       properties:
         version:
@@ -12040,34 +11874,34 @@ components:
           type: string
         name:
           type: string
-        operator:
-          $ref: '#/components/schemas/SelfcareUser'
+        user:
+          $ref: '#/components/schemas/User'
         createdAt:
           type: string
           format: date-time
         isOrphan:
-          type: boolean    
+          type: boolean      
       required:
         - keyId
         - name
         - createdAt
-        - operator
+        - user
         - isOrphan
-    SelfcareUser:
-      description: Contains some details about operator
+    User:
+      description: Contains some details about user
       type: object
       properties:
-        relationshipId:
+        userId:
           type: string
           format: uuid
         name:
           type: string
-        familyName:
+        surname:
           type: string
       required:
-        - relationshipId
+        - userId
         - name
-        - familyName    
+        - surname    
     PublicKeys:
       type: object
       properties:

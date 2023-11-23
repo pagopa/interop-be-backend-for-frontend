@@ -46,7 +46,7 @@ final case class AgreementsApiServiceImpl(
   agreementProcessService: AgreementProcessService,
   attributeRegistryService: AttributeRegistryProcessService,
   catalogProcessService: CatalogProcessService,
-  partyProcessService: PartyProcessService,
+  selfcareV2ClientService: SelfcareV2ClientService,
   tenantProcessService: TenantProcessService,
   fileManager: FileManager,
   uuidSupplier: UUIDSupplier
@@ -306,7 +306,7 @@ final case class AgreementsApiServiceImpl(
       producer = CompactOrganization(producerTenant.id, producerTenant.name, producerTenant.kind.map(_.toApi))
     ),
     descriptor = currentDescriptor.toCompactDescriptor,
-    canBeUpgraded = isUpgradable(currentDescriptor, eService.descriptors),
+    canBeUpgraded = isUpgradable(currentDescriptor, agreement, eService.descriptors),
     suspendedByConsumer = agreement.suspendedByConsumer,
     suspendedByProducer = agreement.suspendedByProducer,
     suspendedByPlatform = agreement.suspendedByPlatform
@@ -339,7 +339,8 @@ final case class AgreementsApiServiceImpl(
     producer = CompactOrganization(
       id = agreement.producerId,
       name = producerTenant.name,
-      kind = producerTenant.kind.map(_.toApi)
+      kind = producerTenant.kind.map(_.toApi),
+      contactMail = producerTenant.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi)
     ),
     consumer = Tenant(
       id = agreement.consumerId,

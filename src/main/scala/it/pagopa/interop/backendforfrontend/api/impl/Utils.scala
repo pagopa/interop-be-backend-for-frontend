@@ -77,17 +77,18 @@ object Utils {
       tenant.attributes.mapFilter(_.declared.map(_.id))
 
   def canBeUpgraded(eService: CatalogProcess.EService, a: AgreementProcess.Agreement): Boolean =
-    eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, eService.descriptors))
+    eService.descriptors.find(_.id == a.descriptorId).exists(isUpgradable(_, a, eService.descriptors))
 
   def isUpgradable(
     descriptor: CatalogProcess.EServiceDescriptor,
+    agreement: AgreementProcess.Agreement,
     descriptors: Seq[CatalogProcess.EServiceDescriptor]
   ): Boolean =
     descriptors
       .filter(_.version.toInt > descriptor.version.toInt)
       .exists(d =>
-        d.state == CatalogProcess.EServiceDescriptorState.PUBLISHED ||
-          d.state == CatalogProcess.EServiceDescriptorState.SUSPENDED
+        (d.state == CatalogProcess.EServiceDescriptorState.PUBLISHED ||
+          d.state == CatalogProcess.EServiceDescriptorState.SUSPENDED) && (agreement.state == AgreementProcess.AgreementState.ACTIVE || agreement.state == AgreementProcess.AgreementState.SUSPENDED)
       )
 
   def parseResponse(responseXml: String): Try[XMLObject] = Try {
@@ -103,10 +104,9 @@ object Utils {
     unmarshaller.unmarshall(element)
   }
 
-  final val SUPPORT_LEVELS: Seq[String]    = Seq("L2", "L3")
-  final val SUPPORT_LEVEL_NAME: String     = "supportLevel"
-  final val SUPPORT_USER_ID: String        = UUID.fromString("5119b1fa-825a-4297-8c9c-152e055cabca").toString
-  final val SELFCARE_OPERATOR_ROLE: String = "OPERATOR"
+  final val SUPPORT_LEVELS: Seq[String] = Seq("L2", "L3")
+  final val SUPPORT_LEVEL_NAME: String  = "supportLevel"
+  final val SUPPORT_USER_ID: String     = UUID.fromString("5119b1fa-825a-4297-8c9c-152e055cabca").toString
 
   def validate(xmlObject: XMLObject)(offsetDateTimeSupplier: OffsetDateTimeSupplier): Either[Throwable, Response] =
     for {
@@ -185,7 +185,6 @@ object Utils {
   def buildClaims(tenantId: UUID): Map[String, AnyRef] = {
 
     val role: util.Map[String, AnyRef] = new util.HashMap()
-    role.put("partyRole", SELFCARE_OPERATOR_ROLE)
     role.put("role", SUPPORT_ROLE)
 
     val organization: util.Map[String, AnyRef] = new util.HashMap()
@@ -204,7 +203,6 @@ object Utils {
   def buildClaimsByTenant(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] = {
 
     val role: util.Map[String, AnyRef] = new util.HashMap()
-    role.put("partyRole", SELFCARE_OPERATOR_ROLE)
     role.put("role", SUPPORT_ROLE)
 
     val organization: util.Map[String, AnyRef] = new util.HashMap()

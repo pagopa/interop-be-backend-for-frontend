@@ -2,9 +2,6 @@ package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.backendforfrontend.model._
-import it.pagopa.interop.selfcare.userregistry.client.model.UserResource
-
-import java.util.UUID
 
 object AuthorizationProcessServiceTypes {
 
@@ -31,40 +28,6 @@ object AuthorizationProcessServiceTypes {
       case ClientKind.API      => AuthorizationProcess.ClientKind.API
       case ClientKind.CONSUMER => AuthorizationProcess.ClientKind.CONSUMER
     }
-  }
-
-  implicit class OperatorRoleProcessConverter(private val opr: AuthorizationProcess.OperatorRole) extends AnyVal {
-    def toApi: OperatorRole = opr match {
-      case AuthorizationProcess.OperatorRole.MANAGER      => OperatorRole.MANAGER
-      case AuthorizationProcess.OperatorRole.DELEGATE     => OperatorRole.DELEGATE
-      case AuthorizationProcess.OperatorRole.SUB_DELEGATE => OperatorRole.SUB_DELEGATE
-      case AuthorizationProcess.OperatorRole.OPERATOR     => OperatorRole.OPERATOR
-    }
-  }
-
-  implicit class OperatorStateProcessConverter(private val opr: AuthorizationProcess.OperatorState) extends AnyVal {
-    def toApi: OperatorState = opr match {
-      case AuthorizationProcess.OperatorState.ACTIVE    => OperatorState.ACTIVE
-      case AuthorizationProcess.OperatorState.SUSPENDED => OperatorState.SUSPENDED
-      case AuthorizationProcess.OperatorState.DELETED   => OperatorState.DELETED
-    }
-  }
-
-  implicit class RelationshipProductProcessConverter(private val rp: AuthorizationProcess.RelationshipProduct)
-      extends AnyVal {
-    def toApi: RelationshipProduct = RelationshipProduct(id = rp.id, role = rp.role, createdAt = rp.createdAt)
-  }
-
-  implicit class OperatorProcessConverter(private val op: AuthorizationProcess.Operator) extends AnyVal {
-    def toApi: Operator = Operator(
-      relationshipId = op.relationshipId,
-      taxCode = op.taxCode,
-      name = op.name,
-      familyName = op.familyName,
-      role = op.role.toApi,
-      product = op.product.toApi,
-      state = op.state.toApi
-    )
   }
 
   implicit class KeyUseConverter(private val ku: KeyUse) extends AnyVal {
@@ -94,28 +57,8 @@ object AuthorizationProcessServiceTypes {
       CompactClient(id = c.client.id, name = c.client.name, hasKeys = c.keys.nonEmpty)
   }
 
-  implicit class OperatorDetailsConverter(private val u: UserResource) extends AnyVal {
-    def toApi(relationshipId: UUID): SelfcareUser = {
-      (u.name, u.familyName) match {
-        case (None, None) => SelfcareUser(relationshipId = relationshipId, name = "Utente", familyName = u.id.toString)
-        case _            =>
-          SelfcareUser(
-            relationshipId = relationshipId,
-            name = u.name.map(_.value).getOrElse(""),
-            familyName = u.familyName.map(_.value).getOrElse("")
-          )
-      }
-    }
-  }
-
   implicit class ReadClientKeyConverter(private val k: AuthorizationProcess.Key) extends AnyVal {
-    def toApi(isOrphan: Boolean, user: UserResource): PublicKey =
-      PublicKey(
-        keyId = k.kid,
-        name = k.name,
-        operator = user.toApi(k.relationshipId),
-        createdAt = k.createdAt,
-        isOrphan = isOrphan
-      )
+    def toApi(user: User, isOrphan: Boolean): PublicKey =
+      PublicKey(keyId = k.kid, name = k.name, user = user, createdAt = k.createdAt, isOrphan = isOrphan)
   }
 }

@@ -58,12 +58,6 @@ object ApplicationConfiguration {
     "You MUST provide at least one signing key (either RSA or EC)"
   )
 
-  val partyProcessURL: String    = config.getString("backend-for-frontend.services.party-process")
-  val partyProcessApiKey: String = config.getString("backend-for-frontend.api-keys.party-process")
-
-  val userRegistryURL: String    = config.getString("backend-for-frontend.services.user-registry")
-  val userRegistryApiKey: String = config.getString("backend-for-frontend.api-keys.user-registry")
-
   val selfcareV2URL: String    = config.getString("backend-for-frontend.services.selfcare-v2")
   val selfcareV2ApiKey: String = config.getString("backend-for-frontend.api-keys.selfcare-v2")
 
@@ -87,7 +81,6 @@ object ApplicationConfiguration {
   val allowListContainer: String         = config.getString("backend-for-frontend.storage.allow-list.container")
   val allowListPath: String              = config.getString("backend-for-frontend.storage.allow-list.path")
   val allowListFilename: String          = config.getString("backend-for-frontend.storage.allow-list.filename")
-  val selfcareProductId: String          = config.getString("backend-for-frontend.selfcare-product-id")
 
   val privacyNoticePpUuid: String          = config.getString("backend-for-frontend.privacy-notices.pp-uuid")
   val privacyNoticeTosUuid: String         = config.getString("backend-for-frontend.privacy-notices.tos-uuid")

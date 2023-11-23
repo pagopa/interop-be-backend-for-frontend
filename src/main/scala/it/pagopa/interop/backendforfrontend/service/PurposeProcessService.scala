@@ -22,7 +22,7 @@ trait PurposeProcessService {
     contexts: Seq[(String, String)]
   ): Future[PurposeVersion]
 
-  def clonePurpose(purposeUuid: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose]
+  def clonePurpose(purposeUuid: UUID, seed: PurposeCloneSeed)(implicit contexts: Seq[(String, String)]): Future[Purpose]
 
   def deletePurposeVersion(purposeId: UUID, versionId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
