@@ -16,11 +16,11 @@ trait TenantProcessService {
   def selfcareUpsertTenant(
     origin: String,
     externalId: String,
-    description: String,
+    name: String,
     mailSeed: MailSeed,
     onboardedAt: OffsetDateTime,
     subUnitType: TenantUnitType
-  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant]
+  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[CompactTenant]
 
   def verifyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
     contexts: Seq[(String, String)]

@@ -27,7 +27,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClai
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.ExternalIdConverter
-import it.pagopa.interop.tenantprocess.client.model.{MailSeed, MailKind}
+import it.pagopa.interop.tenantprocess.client.model.{TenantUnitType, MailSeed, MailKind}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import java.util.UUID
@@ -92,7 +92,6 @@ final case class AuthorizationApiServiceImpl(
   }
 
   private final val allowedOrigins: Set[String] = Set("IPA", "ANAC", "IVASS")
-  private final val allowedSubType: Set[String] = Set("AOO", "UO")
 
   private def assertTenantAllowed(selfcareId: String, origin: String): Future[Unit] =
     if (allowedOrigins.contains(origin) || allowList.contains(selfcareId)) Future.successful(())
