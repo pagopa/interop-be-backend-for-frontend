@@ -17,7 +17,8 @@ import it.pagopa.interop.tenantprocess.client.model.{
   VerifiedTenantAttributeSeed,
   UpdateVerifiedTenantAttributeSeed,
   MailSeed,
-  TenantUnitType
+  TenantUnitType,
+  CompactTenant
 }
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareNotFound
@@ -58,24 +59,24 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
   def selfcareUpsertTenant(
     origin: String,
     externalId: String,
-    description: String,
+    name: String,
     mailSeed: MailSeed,
     onboardedAt: OffsetDateTime,
     subUnitType: TenantUnitType
-  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant] = withHeaders[Tenant] {
+  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[CompactTenant] = withHeaders[CompactTenant] {
     (bearerToken, correlationId) =>
-      val request: ApiRequest[Tenant] = api.selfcareUpsertTenant(
+      val request: ApiRequest[CompactTenant] = api.selfcareUpsertTenant(
         xCorrelationId = correlationId,
         selfcareTenantSeed = SelfcareTenantSeed(
           ExternalId(origin, externalId),
           selfcareId,
-          description,
+          name,
           mailSeed,
           onboardedAt,
           subUnitType
         )
       )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Upserting Tenant $description ($origin, $externalId) with SelfcareId $selfcareId")
+      invoker.invoke(request, s"Upserting Tenant $name ($origin, $externalId) with SelfcareId $selfcareId")
   }
 
   override def verifyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
@@ -171,7 +172,7 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
         api.addTenantMail(xCorrelationId = correlationId, tenantId = tenantId, mailSeed = seed)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Add mail ${seed.address} to $tenantId")
+      invoker.invoke(request, s"Add mail to tenant $tenantId")
     }
 
   override def deleteTenantMail(tenantId: UUID, mailId: String)(implicit

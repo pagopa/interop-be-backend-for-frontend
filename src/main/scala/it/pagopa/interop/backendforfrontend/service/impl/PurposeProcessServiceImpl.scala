@@ -212,12 +212,13 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving latest risk analysis configuration")
   }
 
-  override def retrieveRiskAnalysisConfigurationByVersion(riskAnalysisVersion: String)(implicit
+  override def retrieveRiskAnalysisConfigurationByVersion(eserviceId: UUID, riskAnalysisVersion: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[RiskAnalysisFormConfigResponse] = withHeaders[RiskAnalysisFormConfigResponse] {
     (bearerToken, correlationId) =>
       val request: ApiRequest[RiskAnalysisFormConfigResponse] =
         api.retrieveRiskAnalysisConfigurationByVersion(
+          eserviceId = eserviceId,
           riskAnalysisVersion = riskAnalysisVersion,
           xCorrelationId = correlationId
         )(BearerToken(bearerToken))

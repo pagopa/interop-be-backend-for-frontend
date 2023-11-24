@@ -9409,6 +9409,12 @@ paths:
         required: true
         schema:
           type: string
+      - name: eserviceId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
         - purposes
@@ -11657,12 +11663,8 @@ components:
           $ref: '#/components/schemas/MailKind'
         address:
           type: string
-          minLength: 5
-          maxLength: 320
         description:
           type: string
-          minLength: 10
-          maxLength: 250
       required:
         - kind
         - address    
