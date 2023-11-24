@@ -134,7 +134,4 @@ object BFFErrors {
 
   final case class InstitutionNotFound(selfcareId: UUID)
       extends ComponentError("0033", s"Institution $selfcareId not found")
-
-  final case class UnknownTenantSubUnitType(subUnitType: String)
-      extends ComponentError("0034", s"Tenant Sub Unit Type ${subUnitType} is not inside whitelist")
 }

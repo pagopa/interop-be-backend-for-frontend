@@ -11,11 +11,7 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaims, parseResponse, validate}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  SelfcareNotFound,
-  UnknownTenantOrigin,
-  UnknownTenantSubUnitType
-}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{SelfcareV2ClientService, TenantProcessService}
@@ -35,7 +31,6 @@ import it.pagopa.interop.tenantprocess.client.model.{Tenant, MailSeed, MailKind}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
-import it.pagopa.interop.tenantprocess.client.model.TenantUnitType
 
 final case class AuthorizationApiServiceImpl(
   jwtReader: JWTReader,
@@ -100,10 +95,6 @@ final case class AuthorizationApiServiceImpl(
     if (allowedOrigins.contains(origin) || allowList.contains(selfcareId)) Future.successful(())
     else Future.failed(UnknownTenantOrigin(selfcareId))
 
-  private def assertTenantSubUnitTypeAllowed(subUnitType: String): Future[Unit] =
-    if (allowedSubType.contains(subUnitType)) Future.successful(())
-    else Future.failed(UnknownTenantSubUnitType(subUnitType))
-
   private def getTenantOr(
     selfcareId: String
   )(alternative: => Future[Tenant])(implicit contexts: Seq[(String, String)]): Future[Tenant] = {
@@ -122,7 +113,7 @@ final case class AuthorizationApiServiceImpl(
       institution       <- selfcareV2ClientService.getInstitution(selfcareUuid)
       institutionApi    <- institution.toApi.toFuture
       _                 <- assertTenantAllowed(selfcareId, institutionApi.origin)
-      _                 <- assertTenantSubUnitTypeAllowed(institutionApi.subUnitType)
+      subUnitType       <- TenantUnitType.fromValue(institutionApi.subUnitType).toFuture
       onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
       onboardingDataApi <- onboardingData.toApi.toFuture
       tenant            <- tenantProcessService
@@ -132,7 +123,7 @@ final case class AuthorizationApiServiceImpl(
           institutionApi.description,
           MailSeed(MailKind.DIGITAL_ADDRESS, institutionApi.digitalAddress),
           onboardingDataApi.onboardedAt,
-          if (institutionApi.subUnitType == "AOO") TenantUnitType.AOO else TenantUnitType.UO
+          subUnitType
         )(institutionApi.id.toString)
     } yield tenant
 
