@@ -425,25 +425,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(
           Future.successful(
-            TenantProcessModel.Tenant(
-              id = tenantId,
-              selfcareId = selfcareId.some,
-              externalId = TenantProcessModel.ExternalId("IPA", "IPACode"),
-              features = Nil,
-              attributes = Nil,
-              createdAt = OffsetDateTimeSupplier.get(),
-              updatedAt = None,
-              mails = Seq(
-                TenantProcessModel.Mail(
-                  UUID.randomUUID().toString,
-                  TenantProcessModel.MailKind.DIGITAL_ADDRESS,
-                  "foo@bar.it",
-                  OffsetDateTimeSupplier.get()
-                )
-              ),
-              name = "foo",
-              onboardedAt = OffsetDateTimeSupplier.get().some
-            )
+            TenantProcessModel
+              .CompactTenant(id = tenantId, externalId = TenantProcessModel.ExternalId("IPA", "IPACode"))
           )
         )
 
@@ -558,25 +541,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(
           Future.successful(
-            TenantProcessModel.Tenant(
-              id = tenantId,
-              selfcareId = selfcareId.some,
-              externalId = TenantProcessModel.ExternalId("ANAC", "ANACCode"),
-              features = Nil,
-              attributes = Nil,
-              createdAt = OffsetDateTimeSupplier.get(),
-              updatedAt = None,
-              mails = Seq(
-                TenantProcessModel.Mail(
-                  UUID.randomUUID().toString,
-                  TenantProcessModel.MailKind.DIGITAL_ADDRESS,
-                  "foo@bar.it",
-                  OffsetDateTimeSupplier.get()
-                )
-              ),
-              name = "foo",
-              onboardedAt = OffsetDateTimeSupplier.get().some
-            )
+            TenantProcessModel
+              .CompactTenant(id = tenantId, externalId = TenantProcessModel.ExternalId("ANAC", "ANACCode"))
           )
         )
 
@@ -691,25 +657,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         .once()
         .returns(
           Future.successful(
-            TenantProcessModel.Tenant(
-              id = tenantId,
-              selfcareId = selfcareId.some,
-              externalId = TenantProcessModel.ExternalId("other-origin", "externalId"),
-              features = Nil,
-              attributes = Nil,
-              createdAt = OffsetDateTimeSupplier.get(),
-              updatedAt = None,
-              mails = Seq(
-                TenantProcessModel.Mail(
-                  UUID.randomUUID().toString,
-                  TenantProcessModel.MailKind.DIGITAL_ADDRESS,
-                  "foo@bar.it",
-                  OffsetDateTimeSupplier.get()
-                )
-              ),
-              name = "foo",
-              onboardedAt = OffsetDateTimeSupplier.get().some
-            )
+            TenantProcessModel
+              .CompactTenant(id = tenantId, externalId = TenantProcessModel.ExternalId("other-origin", "externalId"))
           )
         )
 
