@@ -19,7 +19,7 @@ trait TenantProcessService {
     description: String,
     mailSeed: MailSeed,
     onboardedAt: OffsetDateTime
-  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[CompactTenant]
+  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[ResourceId]
 
   def verifyVerifiedAttribute(tenantId: UUID, seed: VerifiedTenantAttributeSeed)(implicit
     contexts: Seq[(String, String)]
