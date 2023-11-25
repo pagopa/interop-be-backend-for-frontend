@@ -76,6 +76,26 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           )
         )
 
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
+        .once()
+        .returns(
+          Future.successful(
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("IPA", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin,anotherRole",
@@ -150,6 +170,26 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       (mockTenantProcess
         .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
         .expects(UUID.fromString(selfcareId), *)
+        .once()
+        .returns(
+          Future.successful(
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("ANAC", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
         .once()
         .returns(
           Future.successful(
@@ -258,6 +298,26 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           )
         )
 
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
+        .once()
+        .returns(
+          Future.successful(
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("other-origin", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
       val desiredClaimSet: Map[String, AnyRef] = Map(
         "uid"            -> uid,
         "user-roles"     -> "admin,anotherRole",
@@ -349,6 +409,26 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           )
         )
 
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
+        .once()
+        .returns(
+          Future.successful(
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("other-origin", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
       Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
         Seq.empty,
         toEntityMarshallerSessionToken
@@ -419,20 +499,30 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(
-          _: String,
-          _: String,
-          _: String,
-          _: TenantProcessModel.MailSeed,
-          _: OffsetDateTime,
-          _: TenantProcessModel.TenantUnitType
-        )(_: String)(_: Seq[(String, String)]))
-        .expects("IPA", "IPACode", "foo", *, *, TenantProcessModel.TenantUnitType.AOO, selfcareId, *)
+        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
+          _: String
+        )(_: Seq[(String, String)]))
+        .expects("IPA", "IPACode", "foo", *, *, selfcareId, *)
+        .once()
+        .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
         .once()
         .returns(
           Future.successful(
-            TenantProcessModel
-              .CompactTenant(id = tenantId, externalId = TenantProcessModel.ExternalId("IPA", "IPACode"))
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("IPA", "IPACode"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
           )
         )
 
@@ -524,8 +614,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               originId = "ANACCode".some,
               description = "foo".some,
               origin = "ANAC".some,
-              digitalAddress = "foo@bar.it".some,
-              subunitType = "AOO".some
+              digitalAddress = "foo@bar.it".some
             )
           )
         )
@@ -541,20 +630,30 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(
-          _: String,
-          _: String,
-          _: String,
-          _: TenantProcessModel.MailSeed,
-          _: OffsetDateTime,
-          _: TenantProcessModel.TenantUnitType
-        )(_: String)(_: Seq[(String, String)]))
-        .expects("ANAC", "ANACCode", "foo", *, *, TenantProcessModel.TenantUnitType.AOO, selfcareId, *)
+        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
+          _: String
+        )(_: Seq[(String, String)]))
+        .expects("ANAC", "ANACCode", "foo", *, *, selfcareId, *)
+        .once()
+        .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
         .once()
         .returns(
           Future.successful(
-            TenantProcessModel
-              .CompactTenant(id = tenantId, externalId = TenantProcessModel.ExternalId("ANAC", "ANACCode"))
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("ANAC", "ANACCode"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
           )
         )
 
@@ -646,8 +745,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               originId = "non-IPACode".some,
               description = "foo".some,
               origin = "non-IPA".some,
-              digitalAddress = "foo@bar.it".some,
-              subunitType = "AOO".some
+              digitalAddress = "foo@bar.it".some
             )
           )
         )
@@ -663,20 +761,30 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(
-          _: String,
-          _: String,
-          _: String,
-          _: TenantProcessModel.MailSeed,
-          _: OffsetDateTime,
-          _: TenantProcessModel.TenantUnitType
-        )(_: String)(_: Seq[(String, String)]))
-        .expects("non-IPA", "non-IPACode", "foo", *, *, TenantProcessModel.TenantUnitType.AOO, selfcareId, *)
+        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
+          _: String
+        )(_: Seq[(String, String)]))
+        .expects("non-IPA", "non-IPACode", "foo", *, *, selfcareId, *)
+        .once()
+        .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
         .once()
         .returns(
           Future.successful(
-            TenantProcessModel
-              .CompactTenant(id = tenantId, externalId = TenantProcessModel.ExternalId("other-origin", "externalId"))
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("other-origin", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
           )
         )
 
@@ -834,6 +942,26 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       (mockTenantProcess
         .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
         .expects(UUID.fromString(selfcareId), *)
+        .once()
+        .returns(
+          Future.successful(
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("IPA", "externalId"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
         .once()
         .returns(
           Future.successful(

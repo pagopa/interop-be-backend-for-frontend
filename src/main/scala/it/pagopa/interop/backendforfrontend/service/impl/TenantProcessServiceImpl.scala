@@ -17,8 +17,8 @@ import it.pagopa.interop.tenantprocess.client.model.{
   VerifiedTenantAttributeSeed,
   UpdateVerifiedTenantAttributeSeed,
   MailSeed,
-  TenantUnitType,
-  CompactTenant
+  ResourceId,
+  TenantUnitType
 }
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareNotFound
@@ -60,7 +60,7 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
     origin: String,
     externalId: String,
     name: String,
-    mailSeed: MailSeed,
+    mailSeed: Option[MailSeed],
     onboardedAt: OffsetDateTime,
     subUnitType: TenantUnitType
   )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[CompactTenant] = withHeaders[CompactTenant] {

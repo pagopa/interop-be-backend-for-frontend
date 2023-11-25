@@ -121,16 +121,16 @@ final case class AuthorizationApiServiceImpl(
       subUnitType       <- TenantUnitType.fromValue(institutionApi.subUnitType).toFuture
       onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
       onboardingDataApi <- onboardingData.toApi.toFuture
-      compactTenant     <- tenantProcessService
+      resourceId     <- tenantProcessService
         .selfcareUpsertTenant(
           institutionApi.origin,
           institutionApi.originId,
           institutionApi.description,
-          MailSeed(MailKind.DIGITAL_ADDRESS, institutionApi.digitalAddress),
+          None,
           onboardingDataApi.onboardedAt,
           subUnitType
         )(institutionApi.id.toString)
-    } yield (compactTenant.id, ExternalId(compactTenant.externalId.origin, compactTenant.externalId.value))
+    } yield resourceId.id
 
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
     claims        <- jwtReader.getClaims(identityToken.identity_token)
