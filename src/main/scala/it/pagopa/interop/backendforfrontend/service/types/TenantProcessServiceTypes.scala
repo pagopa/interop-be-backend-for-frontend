@@ -118,7 +118,8 @@ object TenantProcessServiceTypes {
 
   implicit class MailKindConverter(private val kind: MailKind) extends AnyVal {
     def toExternalModel: TenantProcess.MailKind = kind match {
-      case MailKind.CONTACT_EMAIL => TenantProcess.MailKind.CONTACT_EMAIL
+      case MailKind.CONTACT_EMAIL   => TenantProcess.MailKind.CONTACT_EMAIL
+      case MailKind.DIGITAL_ADDRESS => TenantProcess.MailKind.DIGITAL_ADDRESS
     }
   }
 
@@ -172,7 +173,8 @@ object TenantProcessServiceTypes {
       name = t.name,
       attributes = t.attributes.toApi(attributes),
       contactMail = t.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi),
-      features = t.features.map(_.toApi)
+      features = t.features.map(_.toApi),
+      onboardedAt = t.onboardedAt
     )
   }
 
