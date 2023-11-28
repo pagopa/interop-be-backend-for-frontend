@@ -499,9 +499,13 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
-          _: String
-        )(_: Seq[(String, String)]))
+        .selfcareUpsertTenant(
+          _: String,
+          _: String,
+          _: String,
+          _: Option[TenantProcessModel.MailSeed],
+          _: OffsetDateTime
+        )(_: String)(_: Seq[(String, String)]))
         .expects("IPA", "IPACode", "foo", *, *, selfcareId, *)
         .once()
         .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
@@ -630,9 +634,13 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
-          _: String
-        )(_: Seq[(String, String)]))
+        .selfcareUpsertTenant(
+          _: String,
+          _: String,
+          _: String,
+          _: Option[TenantProcessModel.MailSeed],
+          _: OffsetDateTime
+        )(_: String)(_: Seq[(String, String)]))
         .expects("ANAC", "ANACCode", "foo", *, *, selfcareId, *)
         .once()
         .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
@@ -761,9 +769,13 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         )
 
       (mockTenantProcess
-        .selfcareUpsertTenant(_: String, _: String, _: String, _: TenantProcessModel.MailSeed, _: OffsetDateTime)(
-          _: String
-        )(_: Seq[(String, String)]))
+        .selfcareUpsertTenant(
+          _: String,
+          _: String,
+          _: String,
+          _: Option[TenantProcessModel.MailSeed],
+          _: OffsetDateTime
+        )(_: String)(_: Seq[(String, String)]))
         .expects("non-IPA", "non-IPACode", "foo", *, *, selfcareId, *)
         .once()
         .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
