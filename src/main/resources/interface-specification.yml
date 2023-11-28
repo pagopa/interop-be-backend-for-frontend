@@ -10635,6 +10635,7 @@ components:
         - name
         - producer
         - descriptor
+        - mode
       properties:
         id:
           type: string
@@ -10645,6 +10646,8 @@ components:
           $ref: '#/components/schemas/CompactOrganization'
         descriptor:
           $ref: '#/components/schemas/CompactDescriptor'
+        mode:
+          $ref: '#/components/schemas/EServiceMode'  
     PurposeVersionSeed:
       type: object
       description: contains the expected payload for purpose version creation.
