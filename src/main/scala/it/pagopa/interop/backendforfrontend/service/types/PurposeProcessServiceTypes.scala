@@ -6,7 +6,7 @@ import it.pagopa.interop.backendforfrontend.api.impl.Utils.isUpgradable
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes.AgreementStateConverter
 import it.pagopa.interop.backendforfrontend.service.types.AuthorizationProcessServiceTypes.ClientWithKeysConverter
-import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.EServiceDescriptorStateConverter
+import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
@@ -122,7 +122,8 @@ object PurposeProcessServiceTypes {
           state = currentDescriptor.state.toApi,
           version = currentDescriptor.version,
           audience = currentDescriptor.audience
-        )
+        ),
+        mode = eService.mode.toApi
       ),
       agreement = {
         val canBeUpgraded: Boolean = eService.descriptors
