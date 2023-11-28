@@ -26,6 +26,7 @@ import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
+import it.pagopa.interop.tenantprocess.client.model.TenantUnitType
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import java.util.UUID
@@ -62,10 +63,10 @@ final case class AuthorizationApiServiceImpl(
       tenantId <- getTenantOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
       tenant   <- tenantProcessService.getTenant(tenantId)
       _        <- assertTenantAllowed(selfcareId, tenant.externalId.origin)
-      rateLimitStatus <- rateLimiter.rateLimiting(tenant.id)
+      rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, AnyRef] = Map(
         USER_ROLES                     -> roles,
-        ORGANIZATION_ID_CLAIM          -> tenant.id.toString,
+        ORGANIZATION_ID_CLAIM          -> tenantId.toString,
         SELFCARE_ID_CLAIM              -> selfcareId,
         ORGANIZATION_EXTERNAL_ID_CLAIM -> Map(
           ORGANIZATION_EXTERNAL_ID_ORIGIN_CLAIM -> tenant.externalId.origin,
@@ -113,6 +114,7 @@ final case class AuthorizationApiServiceImpl(
       institution       <- selfcareV2ClientService.getInstitution(selfcareUuid)
       institutionApi    <- institution.toApi.toFuture
       _                 <- assertTenantAllowed(selfcareId, institutionApi.origin)
+      subUnitType       <- TenantUnitType.fromValue(institutionApi.subUnitType).toFuture
       onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
       onboardingDataApi <- onboardingData.toApi.toFuture
       resourceId        <- tenantProcessService
@@ -121,7 +123,8 @@ final case class AuthorizationApiServiceImpl(
           institutionApi.originId,
           institutionApi.description,
           None,
-          onboardingDataApi.onboardedAt
+          onboardingDataApi.onboardedAt,
+          subUnitType
         )(institutionApi.id.toString)
     } yield resourceId.id
 

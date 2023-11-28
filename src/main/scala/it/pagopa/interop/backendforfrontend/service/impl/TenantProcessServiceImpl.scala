@@ -17,7 +17,8 @@ import it.pagopa.interop.tenantprocess.client.model.{
   VerifiedTenantAttributeSeed,
   UpdateVerifiedTenantAttributeSeed,
   MailSeed,
-  ResourceId
+  ResourceId,
+  TenantUnitType
 }
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareNotFound
@@ -60,12 +61,14 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
     externalId: String,
     name: String,
     mailSeed: Option[MailSeed],
-    onboardedAt: OffsetDateTime
+    onboardedAt: OffsetDateTime,
+    subUnitType: TenantUnitType
   )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[ResourceId] = withHeaders[ResourceId] {
     (bearerToken, correlationId) =>
       val request: ApiRequest[ResourceId] = api.selfcareUpsertTenant(
         xCorrelationId = correlationId,
-        selfcareTenantSeed = SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, name, mailSeed, onboardedAt)
+        selfcareTenantSeed =
+          SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, name, mailSeed, onboardedAt, subUnitType)
       )(BearerToken(bearerToken))
       invoker.invoke(request, s"Upserting Tenant $name ($origin, $externalId) with SelfcareId $selfcareId")
   }

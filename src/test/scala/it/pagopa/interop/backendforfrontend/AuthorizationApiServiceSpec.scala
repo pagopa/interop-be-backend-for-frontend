@@ -482,7 +482,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               originId = "IPACode".some,
               description = "foo".some,
               origin = "IPA".some,
-              digitalAddress = "foo@bar.it".some
+              digitalAddress = "foo@bar.it".some,
+              subunitType = "AOO".some
             )
           )
         )
@@ -503,9 +504,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           _: String,
           _: String,
           _: Option[TenantProcessModel.MailSeed],
-          _: OffsetDateTime
+          _: OffsetDateTime,
+          _: TenantProcessModel.TenantUnitType
         )(_: String)(_: Seq[(String, String)]))
-        .expects("IPA", "IPACode", "foo", *, *, selfcareId, *)
+        .expects("IPA", "IPACode", "foo", *, *, *, selfcareId, *)
         .once()
         .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
 
@@ -617,7 +619,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               originId = "ANACCode".some,
               description = "foo".some,
               origin = "ANAC".some,
-              digitalAddress = "foo@bar.it".some
+              digitalAddress = "foo@bar.it".some,
+              subunitType = "AOO".some
             )
           )
         )
@@ -638,9 +641,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           _: String,
           _: String,
           _: Option[TenantProcessModel.MailSeed],
-          _: OffsetDateTime
+          _: OffsetDateTime,
+          _: TenantProcessModel.TenantUnitType
         )(_: String)(_: Seq[(String, String)]))
-        .expects("ANAC", "ANACCode", "foo", *, *, selfcareId, *)
+        .expects("ANAC", "ANACCode", "foo", *, *, *, selfcareId, *)
         .once()
         .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
 
@@ -752,7 +756,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               originId = "non-IPACode".some,
               description = "foo".some,
               origin = "non-IPA".some,
-              digitalAddress = "foo@bar.it".some
+              digitalAddress = "foo@bar.it".some,
+              subunitType = "AOO".some
             )
           )
         )
@@ -773,9 +778,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           _: String,
           _: String,
           _: Option[TenantProcessModel.MailSeed],
-          _: OffsetDateTime
+          _: OffsetDateTime,
+          _: TenantProcessModel.TenantUnitType
         )(_: String)(_: Seq[(String, String)]))
-        .expects("non-IPA", "non-IPACode", "foo", *, *, selfcareId, *)
+        .expects("non-IPA", "non-IPACode", "foo", *, *, *, selfcareId, *)
         .once()
         .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
 
@@ -892,7 +898,8 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
               taxCode = Some("not mine please"),
               origin = Some("non-IPA"),
               institutionType = None,
-              attributes = Some(Nil)
+              attributes = Some(Nil),
+              subunitType = "AOO".some
             )
           )
         )

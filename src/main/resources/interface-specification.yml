@@ -11736,7 +11736,9 @@ components:
           $ref: '#/components/schemas/Mail'
         onboardedAt:
           type: string
-          format: date-time  
+          format: date-time
+        subUnitType:
+          $ref: '#/components/schemas/TenantUnitType'      
       required:
         - id
         - externalId
@@ -11744,6 +11746,11 @@ components:
         - name
         - attributes
         - createdAt
+    TenantUnitType:
+      type: string
+      enum:
+        - AOO
+        - UO
     TenantAttributes:
       type: object
       properties:
