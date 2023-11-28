@@ -17,7 +17,7 @@ trait TenantProcessService {
     origin: String,
     externalId: String,
     description: String,
-    mailSeed: MailSeed,
+    mailSeed: Option[MailSeed],
     onboardedAt: OffsetDateTime
   )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[ResourceId]
 

@@ -26,7 +26,6 @@ import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
-import it.pagopa.interop.tenantprocess.client.model.{MailSeed, MailKind}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import java.util.UUID
@@ -121,7 +120,7 @@ final case class AuthorizationApiServiceImpl(
           institutionApi.origin,
           institutionApi.originId,
           institutionApi.description,
-          MailSeed(MailKind.DIGITAL_ADDRESS, institutionApi.digitalAddress),
+          None,
           onboardingDataApi.onboardedAt
         )(institutionApi.id.toString)
     } yield resourceId.id
