@@ -13,7 +13,7 @@ import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaims, parseRe
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
-import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken, ExternalId}
+import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{SelfcareV2ClientService, TenantProcessService}
 import it.pagopa.interop.commons.jwt.service.{InteropTokenGenerator, JWTReader, SessionTokenGenerator}
 import it.pagopa.interop.commons.jwt.{getUserRoles, organizationClaim}
@@ -26,8 +26,7 @@ import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
-import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.ExternalIdConverter
-import it.pagopa.interop.tenantprocess.client.model.{TenantUnitType, MailSeed, MailKind}
+import it.pagopa.interop.tenantprocess.client.model.TenantUnitType
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import java.util.UUID
@@ -61,17 +60,17 @@ final case class AuthorizationApiServiceImpl(
     val result: Future[(SessionToken, RateLimitStatus)] = for {
       (sessionClaims, roles, selfcareId) <- readJwt(identityToken).toFuture
       internalContexts                   <- generateInternalTokenContexts(interopTokenGenerator, sessionClaims)
-      (tenantId, externalId) <- getTenantOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(
-        internalContexts
-      )
-      rateLimitStatus        <- rateLimiter.rateLimiting(tenantId)
+      tenantId <- getTenantOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
+      tenant   <- tenantProcessService.getTenant(tenantId)
+      _        <- assertTenantAllowed(selfcareId, tenant.externalId.origin)
+      rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, AnyRef] = Map(
         USER_ROLES                     -> roles,
         ORGANIZATION_ID_CLAIM          -> tenantId.toString,
         SELFCARE_ID_CLAIM              -> selfcareId,
         ORGANIZATION_EXTERNAL_ID_CLAIM -> Map(
-          ORGANIZATION_EXTERNAL_ID_ORIGIN_CLAIM -> externalId.origin,
-          ORGANIZATION_EXTERNAL_ID_VALUE_CLAIM  -> externalId.value
+          ORGANIZATION_EXTERNAL_ID_ORIGIN_CLAIM -> tenant.externalId.origin,
+          ORGANIZATION_EXTERNAL_ID_VALUE_CLAIM  -> tenant.externalId.value
         ).asJava
       )
       token <- sessionTokenGenerator.generate(
@@ -97,22 +96,19 @@ final case class AuthorizationApiServiceImpl(
     if (allowedOrigins.contains(origin) || allowList.contains(selfcareId)) Future.successful(())
     else Future.failed(UnknownTenantOrigin(selfcareId))
 
-  private def getTenantOr(selfcareId: String)(
-    alternative: => Future[(UUID, ExternalId)]
-  )(implicit contexts: Seq[(String, String)]): Future[(UUID, ExternalId)] = {
+  private def getTenantOr(
+    selfcareId: String
+  )(alternative: => Future[UUID])(implicit contexts: Seq[(String, String)]): Future[UUID] = {
     for {
-      selfcareUuid     <- selfcareId.toFutureUUID
-      (id, externalId) <- tenantProcessService
+      selfcareUuid <- selfcareId.toFutureUUID
+      id           <- tenantProcessService
         .getBySelfcareId(selfcareUuid)
-        .map(t => (t.id, t.externalId.toApi))
+        .map(_.id)
         .recoverWith { case _: SelfcareNotFound => alternative }
-      _                <- assertTenantAllowed(selfcareId, externalId.origin)
-    } yield (id, externalId)
+    } yield id
   }
 
-  private def upsertTenantBySelfcareId(
-    selfcareId: String
-  )(implicit contexts: Seq[(String, String)]): Future[(UUID, ExternalId)] =
+  private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] =
     for {
       selfcareUuid      <- selfcareId.toFutureUUID
       institution       <- selfcareV2ClientService.getInstitution(selfcareUuid)
@@ -121,7 +117,7 @@ final case class AuthorizationApiServiceImpl(
       subUnitType       <- TenantUnitType.fromValue(institutionApi.subUnitType).toFuture
       onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
       onboardingDataApi <- onboardingData.toApi.toFuture
-      resourceId     <- tenantProcessService
+      resourceId        <- tenantProcessService
         .selfcareUpsertTenant(
           institutionApi.origin,
           institutionApi.originId,

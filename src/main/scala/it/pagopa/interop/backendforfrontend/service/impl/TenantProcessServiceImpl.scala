@@ -63,9 +63,9 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
     mailSeed: Option[MailSeed],
     onboardedAt: OffsetDateTime,
     subUnitType: TenantUnitType
-  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[CompactTenant] = withHeaders[CompactTenant] {
+  )(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[ResourceId] = withHeaders[ResourceId] {
     (bearerToken, correlationId) =>
-      val request: ApiRequest[CompactTenant] = api.selfcareUpsertTenant(
+      val request: ApiRequest[ResourceId] = api.selfcareUpsertTenant(
         xCorrelationId = correlationId,
         selfcareTenantSeed =
           SelfcareTenantSeed(ExternalId(origin, externalId), selfcareId, name, mailSeed, onboardedAt, subUnitType)
