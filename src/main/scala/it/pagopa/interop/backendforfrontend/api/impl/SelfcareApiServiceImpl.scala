@@ -79,13 +79,13 @@ final case class SelfcareApiServiceImpl(
 
   override def getUser(userId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerUserInfo: ToEntityMarshaller[TenantUser],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerUser: ToEntityMarshaller[User]
   ): Route = {
     logger.info(s"Retrieving user $userId")
     val headers: List[HttpHeader] = headersFromContext()
 
-    val result: Future[TenantUser] = for {
+    val result: Future[User] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
       personId       <- getUidFutureUUID(contexts)
       userUuid       <- userId.toFutureUUID
@@ -123,12 +123,12 @@ final case class SelfcareApiServiceImpl(
     implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerUserInfoarray: ToEntityMarshaller[Seq[TenantUser]]
+    toEntityMarshallerUserInfoarray: ToEntityMarshaller[Seq[User]]
   ): Route = {
     logger.info(s"Retrieving users for institutions $tenantId")
     val headers: List[HttpHeader] = headersFromContext()
 
-    def filterByUserName(users: Seq[TenantUser], query: Option[String]): Seq[TenantUser] = {
+    def filterByUserName(users: Seq[User], query: Option[String]): Seq[User] = {
       query.fold(users)(q =>
         users.filter(user =>
           user.name.toLowerCase.contains(q.toLowerCase) || user.familyName.toLowerCase.contains(q.toLowerCase)
@@ -136,7 +136,7 @@ final case class SelfcareApiServiceImpl(
       )
     }
 
-    val result: Future[Seq[TenantUser]] = for {
+    val result: Future[Seq[User]] = for {
       userUuid <- personId.traverse(_.toFutureUUID)
       rolesParams = parseArrayParameters(roles)
       tenantUuid      <- tenantId.toFutureUUID
