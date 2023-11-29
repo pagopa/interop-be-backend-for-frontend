@@ -1918,6 +1918,11 @@ paths:
             default: []
           explode: false
         - in: query
+          name: mode
+          description: EService Mode filter
+          schema:
+            $ref: '#/components/schemas/EServiceMode'
+        - in: query
           name: offset
           required: true
           schema:

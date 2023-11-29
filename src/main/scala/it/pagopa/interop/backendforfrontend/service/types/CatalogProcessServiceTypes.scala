@@ -137,6 +137,13 @@ object CatalogProcessServiceTypes {
     }
   }
 
+  implicit class EServiceModeObjectConverter(private val d: CatalogProcess.EServiceMode.type) extends AnyVal {
+    def fromApi(m: EServiceMode): CatalogProcess.EServiceMode = m match {
+      case EServiceMode.RECEIVE => CatalogProcess.EServiceMode.RECEIVE
+      case EServiceMode.DELIVER => CatalogProcess.EServiceMode.DELIVER
+    }
+  }
+
   implicit class EServiceDescriptorStateObjectConverter(private val d: CatalogProcess.EServiceDescriptorState.type)
       extends AnyVal {
     def fromApi(s: EServiceDescriptorState): CatalogProcess.EServiceDescriptorState = s match {
