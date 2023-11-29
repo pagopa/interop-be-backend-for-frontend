@@ -29,7 +29,7 @@ import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
 import it.pagopa.interop.commons.utils.AkkaUtils._
-import it.pagopa.interop.commons.utils.Digester
+import it.pagopa.interop.commons.utils.Digester.toSha256
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.{UUIDSupplier, OffsetDateTimeSupplier}
@@ -618,7 +618,7 @@ final case class EServicesApiServiceImpl(
             filePath = filePath,
             kind = kind.toProcess,
             contentType = doc._1.getContentType.toString(),
-            checksum = Digester.toMD5(doc._2),
+            checksum = toSha256(doc._2),
             serverUrls = serverUrls
           )
         )(contexts)
