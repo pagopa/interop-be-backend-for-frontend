@@ -26,9 +26,6 @@ object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSuppo
   override implicit def toEntityMarshallerDeclaredAttributesResponse: ToEntityMarshaller[DeclaredAttributesResponse] =
     sprayJsonMarshaller[DeclaredAttributesResponse]
 
-  override implicit def fromEntityUnmarshallerTenantDelta: FromEntityUnmarshaller[TenantDelta] =
-    sprayJsonUnmarshaller[TenantDelta]
-
   override implicit def toEntityMarshallerCompactOrganizations: ToEntityMarshaller[CompactOrganizations] =
     sprayJsonMarshaller[CompactOrganizations]
 
@@ -40,4 +37,7 @@ object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSuppo
     sprayJsonUnmarshaller[UpdateVerifiedTenantAttributeSeed]
 
   override implicit def toEntityMarshallerTenants: ToEntityMarshaller[Tenants] = sprayJsonMarshaller[Tenants]
+
+  override implicit def fromEntityUnmarshallerMailSeed: FromEntityUnmarshaller[MailSeed] =
+    sprayJsonUnmarshaller[MailSeed]
 }

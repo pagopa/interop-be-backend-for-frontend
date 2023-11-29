@@ -22,13 +22,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
-  implicit val tenantDelta: RootJsonFormat[TenantDelta] = jsonFormat2(TenantDelta)
-
   implicit val tenantFormat: RootJsonFormat[CompactTenant] = jsonFormat4(CompactTenant)
 
   implicit val paginationFormat: RootJsonFormat[Pagination] = jsonFormat3(Pagination)
   implicit val tenantsFormat: RootJsonFormat[Tenants]       = jsonFormat2(Tenants)
   implicit val mailFormat: RootJsonFormat[Mail]             = jsonFormat2(Mail)
+  implicit val mailSeedFormat: RootJsonFormat[MailSeed]     = jsonFormat3(MailSeed)
 
   implicit val compactOrganizationFormat: RootJsonFormat[CompactOrganization]       = jsonFormat4(CompactOrganization)
   implicit val compactDescriptorFormat: RootJsonFormat[CompactDescriptor]           = jsonFormat4(CompactDescriptor)
@@ -91,7 +90,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val externalIdFormat: RootJsonFormat[ExternalId]                 = jsonFormat2(ExternalId)
   implicit val certifierFormat: RootJsonFormat[Certifier]                   = jsonFormat1(Certifier)
   implicit val tenantFeatureFormat: RootJsonFormat[TenantFeature]           = jsonFormat1(TenantFeature)
-  implicit val institutionFormat: RootJsonFormat[Tenant]                    = jsonFormat9(Tenant)
+  implicit val institutionFormat: RootJsonFormat[Tenant]                    = jsonFormat11(Tenant)
   implicit val agreementFormat: RootJsonFormat[Agreement]                   = jsonFormat19(Agreement)
   implicit val agreementListEntryFormat: RootJsonFormat[AgreementListEntry] = jsonFormat9(AgreementListEntry)
   implicit val agreementsFormat: RootJsonFormat[Agreements]                 = jsonFormat2(Agreements)
