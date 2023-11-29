@@ -11,7 +11,8 @@ import it.pagopa.interop.selfcare.v2.client.model.{
   UserResource,
   InstitutionResource,
   UserResponse,
-  ProductResource
+  ProductResource,
+  OnboardingsResponse
 }
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{InstitutionNotFound, UserNotFound}
 
@@ -64,6 +65,14 @@ class SelfcareV2ClientServiceImpl(selfcareClientServiceURL: String, selfcareClie
     val request =
       institutionsApi.getInstitutionsUsingGET(userIdForAuth = userId.toString)
     invoker.invoke(request, s"Retrieving Institutions for User $userId")
+  }
+
+  override def getOnboardingsInstitution(institutionId: UUID, productId: Option[String])(implicit
+    contexts: Seq[(String, String)]
+  ): Future[OnboardingsResponse] = {
+    val request =
+      institutionsApi.getOnboardingsInstitutionUsingGET(institutionId.toString, productId)
+    invoker.invoke(request, s"Retrieving Institution $institutionId onboarding data")
   }
 
   override def getInstitution(

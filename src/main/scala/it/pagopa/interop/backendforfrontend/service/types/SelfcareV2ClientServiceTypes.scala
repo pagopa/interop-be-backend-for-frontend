@@ -1,6 +1,6 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
-import it.pagopa.interop.backendforfrontend.service.model.Institution
+import it.pagopa.interop.backendforfrontend.service.model.{OnboardingData, Institution}
 import it.pagopa.interop.backendforfrontend.model.{TenantUser, SelfcareProduct, SelfcareInstitution, User}
 import it.pagopa.interop.selfcare.v2.client.{model => SelfcareClient}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareEntityNotFilled
@@ -55,10 +55,29 @@ object SelfcareV2ClientServiceTypes {
 
   implicit class InstitutionConverter(private val inst: SelfcareClient.Institution) extends AnyVal {
     def toApi: Either[Throwable, Institution] = for {
-      id          <- inst.id.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "id"))
-      origin      <- inst.origin.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "origin"))
-      originId    <- inst.originId.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "originId"))
-      description <- inst.description.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "description"))
-    } yield Institution(id = id, origin = origin, originId = originId, description = description)
+      id             <- inst.id.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "id"))
+      origin         <- inst.origin.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "origin"))
+      originId       <- inst.originId.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "originId"))
+      description    <- inst.description.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "description"))
+      digitalAddress <- inst.digitalAddress.toRight(
+        SelfcareEntityNotFilled(inst.getClass().getName(), "digitalAddress")
+      )
+      subUnitType    <- inst.subunitType.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "subunitType"))
+    } yield Institution(
+      id = id,
+      origin = origin,
+      originId = originId,
+      description = description,
+      digitalAddress = digitalAddress,
+      subUnitType = subUnitType
+    )
+  }
+
+  implicit class OnboardingsResponseConverter(private val onb: SelfcareClient.OnboardingsResponse) extends AnyVal {
+    def toApi: Either[Throwable, OnboardingData] = for {
+      data        <- onb.onboardings.toRight(SelfcareEntityNotFilled(onb.getClass().getName(), "OnboardingsResponse"))
+      onboarding  <- data.headOption.toRight(SelfcareEntityNotFilled(data.getClass().getName(), "OnboardingResponse"))
+      onboardedAt <- onboarding.createdAt.toRight(SelfcareEntityNotFilled(onboarding.getClass().getName(), "createdAt"))
+    } yield OnboardingData(onboardedAt = onboardedAt)
   }
 }

@@ -26,10 +26,10 @@ import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
-import it.pagopa.interop.tenantprocess.client.model.Tenant
-
+import it.pagopa.interop.tenantprocess.client.model.TenantUnitType
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
+import java.util.UUID
 import scala.util.{Failure, Success, Try}
 
 final case class AuthorizationApiServiceImpl(
@@ -60,11 +60,13 @@ final case class AuthorizationApiServiceImpl(
     val result: Future[(SessionToken, RateLimitStatus)] = for {
       (sessionClaims, roles, selfcareId) <- readJwt(identityToken).toFuture
       internalContexts                   <- generateInternalTokenContexts(interopTokenGenerator, sessionClaims)
-      tenant <- getTenantOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
-      rateLimitStatus <- rateLimiter.rateLimiting(tenant.id)
+      tenantId <- getTenantOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
+      tenant   <- tenantProcessService.getTenant(tenantId)
+      _        <- assertTenantAllowed(selfcareId, tenant.externalId.origin)
+      rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, AnyRef] = Map(
         USER_ROLES                     -> roles,
-        ORGANIZATION_ID_CLAIM          -> tenant.id.toString,
+        ORGANIZATION_ID_CLAIM          -> tenantId.toString,
         SELFCARE_ID_CLAIM              -> selfcareId,
         ORGANIZATION_EXTERNAL_ID_CLAIM -> Map(
           ORGANIZATION_EXTERNAL_ID_ORIGIN_CLAIM -> tenant.externalId.origin,
@@ -96,27 +98,35 @@ final case class AuthorizationApiServiceImpl(
 
   private def getTenantOr(
     selfcareId: String
-  )(alternative: => Future[Tenant])(implicit contexts: Seq[(String, String)]): Future[Tenant] = {
+  )(alternative: => Future[UUID])(implicit contexts: Seq[(String, String)]): Future[UUID] = {
     for {
       selfcareUuid <- selfcareId.toFutureUUID
-      tenant       <- tenantProcessService
+      id           <- tenantProcessService
         .getBySelfcareId(selfcareUuid)
+        .map(_.id)
         .recoverWith { case _: SelfcareNotFound => alternative }
-      _            <- assertTenantAllowed(selfcareId, tenant.externalId.origin)
-    } yield tenant
+    } yield id
   }
 
-  private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
+  private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] =
     for {
-      selfcareUuid   <- selfcareId.toFutureUUID
-      institution    <- selfcareV2ClientService.getInstitution(selfcareUuid)
-      institutionApi <- institution.toApi.toFuture
-      _              <- assertTenantAllowed(selfcareId, institutionApi.origin)
-      tenant         <- tenantProcessService
-        .selfcareUpsertTenant(institutionApi.origin, institutionApi.originId, institutionApi.description)(
-          institutionApi.id.toString
-        )
-    } yield tenant
+      selfcareUuid      <- selfcareId.toFutureUUID
+      institution       <- selfcareV2ClientService.getInstitution(selfcareUuid)
+      institutionApi    <- institution.toApi.toFuture
+      _                 <- assertTenantAllowed(selfcareId, institutionApi.origin)
+      subUnitType       <- TenantUnitType.fromValue(institutionApi.subUnitType).toFuture
+      onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
+      onboardingDataApi <- onboardingData.toApi.toFuture
+      resourceId        <- tenantProcessService
+        .selfcareUpsertTenant(
+          institutionApi.origin,
+          institutionApi.originId,
+          institutionApi.description,
+          None,
+          onboardingDataApi.onboardedAt,
+          subUnitType
+        )(institutionApi.id.toString)
+    } yield resourceId.id
 
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
     claims        <- jwtReader.getClaims(identityToken.identity_token)
