@@ -11278,8 +11278,6 @@ components:
           type: string
         familyName:
           type: string
-        taxCode:
-          type: string
         roles:
           type: array
           items:
@@ -11289,7 +11287,6 @@ components:
         - tenantId
         - name
         - familyName
-        - taxCode
         - roles
     TenantUsers:
       type: array

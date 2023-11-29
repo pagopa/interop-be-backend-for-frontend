@@ -38,19 +38,11 @@ object SelfcareV2ClientServiceTypes {
 
   implicit class UserResourceConverter(private val ur: SelfcareClient.UserResource) extends AnyVal {
     def toApi(tenantId: UUID): Either[Throwable, User] = for {
-      id         <- ur.id.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "id"))
-      name       <- ur.name.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "name"))
-      surname    <- ur.surname.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "surname"))
-      fiscalCode <- ur.fiscalCode.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "fiscalCode"))
-      roles      <- ur.roles.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "roles"))
-    } yield User(
-      userId = id,
-      tenantId = tenantId,
-      name = name,
-      familyName = surname,
-      taxCode = fiscalCode,
-      roles = roles
-    )
+      id      <- ur.id.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "id"))
+      name    <- ur.name.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "name"))
+      surname <- ur.surname.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "surname"))
+      roles   <- ur.roles.toRight(SelfcareEntityNotFilled(ur.getClass().getName(), "roles"))
+    } yield User(userId = id, tenantId = tenantId, name = name, familyName = surname, roles = roles)
   }
 
   implicit class InstitutionConverter(private val inst: SelfcareClient.Institution) extends AnyVal {
