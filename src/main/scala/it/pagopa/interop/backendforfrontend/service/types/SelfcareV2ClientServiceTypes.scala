@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.backendforfrontend.service.model.{OnboardingData, Institution}
-import it.pagopa.interop.backendforfrontend.model.{TenantUser, SelfcareProduct, SelfcareInstitution, User}
+import it.pagopa.interop.backendforfrontend.model.{CompactUser, SelfcareProduct, SelfcareInstitution, User}
 import it.pagopa.interop.selfcare.v2.client.{model => SelfcareClient}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareEntityNotFilled
 
