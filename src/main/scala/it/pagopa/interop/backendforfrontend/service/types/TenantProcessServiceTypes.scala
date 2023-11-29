@@ -111,14 +111,16 @@ object TenantProcessServiceTypes {
 
   }
 
-  implicit class TenantDeltaConverter(private val delta: TenantDelta) extends AnyVal {
-    def toExternalModel: TenantProcess.TenantDelta = TenantProcess.TenantDelta(mails =
-      TenantProcess.MailSeed(
-        kind = TenantProcess.MailKind.CONTACT_EMAIL,
-        address = delta.contactEmail,
-        description = delta.description
-      ) :: Nil
-    )
+  implicit class MailSeedConverter(private val seed: MailSeed) extends AnyVal {
+    def toExternalModel: TenantProcess.MailSeed =
+      TenantProcess.MailSeed(kind = seed.kind.toExternalModel, address = seed.address, description = seed.description)
+  }
+
+  implicit class MailKindConverter(private val kind: MailKind) extends AnyVal {
+    def toExternalModel: TenantProcess.MailKind = kind match {
+      case MailKind.CONTACT_EMAIL   => TenantProcess.MailKind.CONTACT_EMAIL
+      case MailKind.DIGITAL_ADDRESS => TenantProcess.MailKind.DIGITAL_ADDRESS
+    }
   }
 
   implicit class TenantVerifierConverter(private val v: TenantProcess.TenantVerifier) extends AnyVal {
@@ -171,7 +173,9 @@ object TenantProcessServiceTypes {
       name = t.name,
       attributes = t.attributes.toApi(attributes),
       contactMail = t.mails.find(_.kind == TenantProcess.MailKind.CONTACT_EMAIL).map(_.toApi),
-      features = t.features.map(_.toApi)
+      features = t.features.map(_.toApi),
+      onboardedAt = t.onboardedAt,
+      subUnitType = t.subUnitType.map(_.toApi)
     )
   }
 
@@ -186,6 +190,13 @@ object TenantProcessServiceTypes {
       case TenantProcess.TenantKind.PA      => TenantKind.PA
       case TenantProcess.TenantKind.PRIVATE => TenantKind.PRIVATE
       case TenantProcess.TenantKind.GSP     => TenantKind.GSP
+    }
+  }
+
+  implicit class TenantUnitTypeConverter(private val tut: TenantProcess.TenantUnitType) extends AnyVal {
+    def toApi: TenantUnitType = tut match {
+      case TenantProcess.TenantUnitType.AOO => TenantUnitType.AOO
+      case TenantProcess.TenantUnitType.UO  => TenantUnitType.UO
     }
   }
 }

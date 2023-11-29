@@ -7315,30 +7315,30 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  /tenants/{tenantId}/mails:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - name: tenantId
+        in: path
+        description: the tenant id
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
         - tenants
-      summary: Updates the content of the tenant
-      description: Updates the content of the tenant
-      operationId: updateTenant
-      parameters:
-        - name: tenantId
-          in: path
-          description: The internal identifier of the tenant
-          required: true
-          schema:
-            type: string
-            format: uuid
+      summary: Add a tenant mail
+      operationId: addTenantMail
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TenantDelta'
-        description: payload for tenant update
-        required: true
+              $ref: '#/components/schemas/MailSeed'
       responses:
         '204':
-          description: Tenant updated
+          description: Tenant Mail Added
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -7352,12 +7352,46 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Invalid input
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Tenant not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -7371,12 +7405,34 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-        '429':
-          description: Too Many Requests
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  /tenants/{tenantId}/mails/{mailId}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - name: tenantId
+        in: path
+        description: the tenant id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: mailId
+        in: path
+        description: the mail id
+        required: true
+        schema:
+          type: string
+    delete:
+      tags:
+        - tenants
+      summary: Delete a tenant mail
+      operationId: deleteTenantMail
+      responses:
+        '204':
+          description: Tenant Mail Deleted
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -7390,6 +7446,44 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'  
+        '404':
+          description: Tenant not found
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'                 
   '/tenants':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -10461,16 +10555,6 @@ components:
           type: string
       required:
         - consumerNotes
-    TenantDelta:
-      description: Tenant Delta model
-      type: object
-      properties:
-        contactEmail:
-          type: string
-        description:
-          type: string
-      required:
-        - contactEmail
     AgreementSubmissionPayload:
       type: object
       description: contains the information for agreement creation.
@@ -11566,6 +11650,24 @@ components:
       required:
         - origin
         - value
+    MailKind:
+      type: string
+      enum:
+        - CONTACT_EMAIL
+        - DIGITAL_ADDRESS
+    MailSeed:
+      description: A specific kind of mail
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/MailKind'
+        address:
+          type: string
+        description:
+          type: string
+      required:
+        - kind
+        - address    
     Tenants:
       title: Tenants
       type: object
@@ -11632,6 +11734,11 @@ components:
           $ref: '#/components/schemas/TenantAttributes'
         contactMail:
           $ref: '#/components/schemas/Mail'
+        onboardedAt:
+          type: string
+          format: date-time
+        subUnitType:
+          $ref: '#/components/schemas/TenantUnitType'      
       required:
         - id
         - externalId
@@ -11639,6 +11746,11 @@ components:
         - name
         - attributes
         - createdAt
+    TenantUnitType:
+      type: string
+      enum:
+        - AOO
+        - UO
     TenantAttributes:
       type: object
       properties:

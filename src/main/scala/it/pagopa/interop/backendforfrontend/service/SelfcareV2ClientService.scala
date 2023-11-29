@@ -24,4 +24,8 @@ trait SelfcareV2ClientService {
     contexts: Seq[(String, String)],
     ec: ExecutionContext
   ): Future[UserResponse]
+
+  def getOnboardingsInstitution(institutionId: UUID, productId: Option[String])(implicit
+    contexts: Seq[(String, String)]
+  ): Future[OnboardingsResponse]
 }
