@@ -505,7 +505,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           _: String,
           _: Option[TenantProcessModel.MailSeed],
           _: OffsetDateTime,
-          _: TenantProcessModel.TenantUnitType
+          _: Option[TenantProcessModel.TenantUnitType]
         )(_: String)(_: Seq[(String, String)]))
         .expects("IPA", "IPACode", "foo", *, *, *, selfcareId, *)
         .once()
@@ -642,7 +642,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           _: String,
           _: Option[TenantProcessModel.MailSeed],
           _: OffsetDateTime,
-          _: TenantProcessModel.TenantUnitType
+          _: Option[TenantProcessModel.TenantUnitType]
         )(_: String)(_: Seq[(String, String)]))
         .expects("ANAC", "ANACCode", "foo", *, *, *, selfcareId, *)
         .once()
@@ -779,7 +779,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           _: String,
           _: Option[TenantProcessModel.MailSeed],
           _: OffsetDateTime,
-          _: TenantProcessModel.TenantUnitType
+          _: Option[TenantProcessModel.TenantUnitType]
         )(_: String)(_: Seq[(String, String)]))
         .expects("non-IPA", "non-IPACode", "foo", *, *, *, selfcareId, *)
         .once()

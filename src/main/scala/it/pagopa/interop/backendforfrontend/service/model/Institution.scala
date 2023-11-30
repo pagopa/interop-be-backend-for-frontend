@@ -8,5 +8,5 @@ final case class Institution(
   origin: String,
   description: String,
   digitalAddress: String,
-  subUnitType: String
+  subUnitType: Option[String]
 )

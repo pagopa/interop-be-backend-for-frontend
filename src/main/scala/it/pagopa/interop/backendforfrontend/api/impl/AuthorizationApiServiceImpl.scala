@@ -114,7 +114,7 @@ final case class AuthorizationApiServiceImpl(
       institution       <- selfcareV2ClientService.getInstitution(selfcareUuid)
       institutionApi    <- institution.toApi.toFuture
       _                 <- assertTenantAllowed(selfcareId, institutionApi.origin)
-      subUnitType       <- TenantUnitType.fromValue(institutionApi.subUnitType).toFuture
+      subUnitType       <- institutionApi.subUnitType.traverse(TenantUnitType.fromValue(_).toFuture)
       onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
       onboardingDataApi <- onboardingData.toApi.toFuture
       resourceId        <- tenantProcessService
