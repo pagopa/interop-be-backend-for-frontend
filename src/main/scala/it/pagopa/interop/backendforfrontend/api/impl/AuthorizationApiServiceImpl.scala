@@ -61,7 +61,7 @@ final case class AuthorizationApiServiceImpl(
       (sessionClaims, roles, selfcareId) <- readJwt(identityToken).toFuture
       internalContexts                   <- generateInternalTokenContexts(interopTokenGenerator, sessionClaims)
       tenantId <- getTenantOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
-      tenant   <- tenantProcessService.getTenant(tenantId)
+      tenant   <- tenantProcessService.getTenant(tenantId)(internalContexts)
       _        <- assertTenantAllowed(selfcareId, tenant.externalId.origin)
       rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
       customClaims: Map[String, AnyRef] = Map(
@@ -114,7 +114,7 @@ final case class AuthorizationApiServiceImpl(
       institution       <- selfcareV2ClientService.getInstitution(selfcareUuid)
       institutionApi    <- institution.toApi.toFuture
       _                 <- assertTenantAllowed(selfcareId, institutionApi.origin)
-      subUnitType       <- TenantUnitType.fromValue(institutionApi.subUnitType).toFuture
+      subUnitType       <- institutionApi.subUnitType.traverse(TenantUnitType.fromValue(_).toFuture)
       onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
       onboardingDataApi <- onboardingData.toApi.toFuture
       resourceId        <- tenantProcessService
