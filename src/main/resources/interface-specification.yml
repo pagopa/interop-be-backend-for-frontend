@@ -4569,7 +4569,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TenantUsers'
+                $ref: '#/components/schemas/Users'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -11288,7 +11288,7 @@ components:
         - name
         - familyName
         - roles
-    TenantUsers:
+    Users:
       type: array
       items:
         $ref: '#/components/schemas/User'
