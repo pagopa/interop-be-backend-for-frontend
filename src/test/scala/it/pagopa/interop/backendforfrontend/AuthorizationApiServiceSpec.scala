@@ -480,10 +480,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             Institution(
               id = UUID.fromString(selfcareId).some,
               originId = "IPACode".some,
+              taxCode = "taxCode".some,
               description = "foo".some,
               origin = "IPA".some,
-              digitalAddress = "foo@bar.it".some,
-              subunitType = "AOO".some
+              digitalAddress = "foo@bar.it".some
             )
           )
         )
@@ -575,6 +575,145 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
       }
     }
 
+    "succeed if the tenant needs to be upserted and is an AOO and its origin is IPA" in {
+
+      val uid: String        = UUID.randomUUID().toString
+      val selfcareId: String = UUID.randomUUID().toString
+      val tenantId: UUID     = UUID.randomUUID()
+
+      val jwtClaimsSet: JWTClaimsSet = Map[String, Object](
+        "organization" -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ),
+        "uid"          -> uid
+      ).asClaimSet
+
+      (mockJwtReader
+        .getClaims(_: String))
+        .expects(*)
+        .once()
+        .returns(Success(jwtClaimsSet))
+
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(internalToken))
+
+      (mockTenantProcess
+        .getBySelfcareId(_: UUID)(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), *)
+        .once()
+        .returns(Future.failed(SelfcareNotFound(UUID.fromString(selfcareId))))
+
+      (mockSelfcareV2ClientService
+        .getInstitution(_: UUID)(_: Seq[(String, String)], _: ExecutionContext))
+        .expects(UUID.fromString(selfcareId), *, *)
+        .once()
+        .returns(
+          Future.successful(
+            Institution(
+              id = UUID.fromString(selfcareId).some,
+              originId = "IPACode".some,
+              taxCode = "taxCode".some,
+              description = "foo".some,
+              origin = "IPA".some,
+              digitalAddress = "foo@bar.it".some,
+              subunitType = "AOO".some,
+              subunitCode = "subUnitCode".some
+            )
+          )
+        )
+
+      (mockSelfcareV2ClientService
+        .getOnboardingsInstitution(_: UUID, _: Option[String])(_: Seq[(String, String)]))
+        .expects(UUID.fromString(selfcareId), None, *)
+        .once()
+        .returns(
+          Future.successful(
+            OnboardingsResponse(Seq(OnboardingResponse(createdAt = OffsetDateTimeSupplier.get().some)).some)
+          )
+        )
+
+      (mockTenantProcess
+        .selfcareUpsertTenant(
+          _: String,
+          _: String,
+          _: String,
+          _: Option[TenantProcessModel.MailSeed],
+          _: OffsetDateTime,
+          _: Option[TenantProcessModel.TenantUnitType]
+        )(_: String)(_: Seq[(String, String)]))
+        .expects("IPA", "subUnitCode", "foo", *, *, *, selfcareId, *)
+        .once()
+        .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
+        .once()
+        .returns(
+          Future.successful(
+            TenantProcessModel.Tenant(
+              id = tenantId,
+              selfcareId = selfcareId.some,
+              externalId = TenantProcessModel.ExternalId("IPA", "subUnitCode"),
+              features = Nil,
+              attributes = Nil,
+              createdAt = OffsetDateTimeSupplier.get(),
+              updatedAt = None,
+              mails = Nil,
+              name = "name"
+            )
+          )
+        )
+
+      val desiredClaimSet: Map[String, AnyRef] = Map(
+        "uid"            -> uid,
+        "user-roles"     -> "admin,anotherRole",
+        "organizationId" -> tenantId.toString,
+        "selfcareId"     -> selfcareId,
+        "externalId"     -> Map("origin" -> "IPA", "value" -> "subUnitCode").asJava,
+        "organization"   -> Map(
+          "id"         -> selfcareId,
+          "fiscalCode" -> "fiscalCode",
+          "roles"      -> List(Map("role" -> "admin"), Map("role" -> "anotherRole"))
+        ).toJSONObject
+      )
+
+      (mockRateLimiter
+        .rateLimiting(_: UUID)(
+          _: ExecutionContext,
+          _: LoggerTakingImplicit[ContextFieldsToLog],
+          _: Seq[(String, String)]
+        ))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(RateLimitStatus(10, 10, 1.second)))
+
+      (mockSessionTokenGenerator
+        .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
+        .expects(
+          SignatureAlgorithm.RSAPkcs1Sha256,
+          desiredClaimSet,
+          ApplicationConfiguration.generatedJwtAudience,
+          ApplicationConfiguration.generatedJwtIssuer,
+          ApplicationConfiguration.generatedJwtDuration
+        )
+        .once()
+        .returns(Future.successful("sessionToken"))
+
+      Post() ~> authorizationService.getSessionToken(IdentityToken(bearerToken))(
+        Seq.empty,
+        toEntityMarshallerSessionToken
+      ) ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[SessionToken] shouldEqual SessionToken("sessionToken")
+      }
+    }
+
     "succeed if the tenant needs to be upserted and its origin is ANAC" in {
 
       val uid: String        = UUID.randomUUID().toString
@@ -617,10 +756,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             Institution(
               id = UUID.fromString(selfcareId).some,
               originId = "ANACCode".some,
+              taxCode = "taxCode".some,
               description = "foo".some,
               origin = "ANAC".some,
-              digitalAddress = "foo@bar.it".some,
-              subunitType = "AOO".some
+              digitalAddress = "foo@bar.it".some
             )
           )
         )
@@ -644,7 +783,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           _: OffsetDateTime,
           _: Option[TenantProcessModel.TenantUnitType]
         )(_: String)(_: Seq[(String, String)]))
-        .expects("ANAC", "ANACCode", "foo", *, *, *, selfcareId, *)
+        .expects("ANAC", "taxCode", "foo", *, *, *, selfcareId, *)
         .once()
         .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
 
@@ -657,7 +796,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             TenantProcessModel.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = TenantProcessModel.ExternalId("ANAC", "ANACCode"),
+              externalId = TenantProcessModel.ExternalId("ANAC", "taxCode"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -673,7 +812,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         "user-roles"     -> "admin,anotherRole",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId,
-        "externalId"     -> Map("origin" -> "ANAC", "value" -> "ANACCode").asJava,
+        "externalId"     -> Map("origin" -> "ANAC", "value" -> "taxCode").asJava,
         "organization"   -> Map(
           "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
@@ -754,10 +893,10 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             Institution(
               id = UUID.fromString(selfcareId).some,
               originId = "non-IPACode".some,
+              taxCode = "taxCode".some,
               description = "foo".some,
               origin = "non-IPA".some,
-              digitalAddress = "foo@bar.it".some,
-              subunitType = "AOO".some
+              digitalAddress = "foo@bar.it".some
             )
           )
         )
@@ -781,7 +920,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
           _: OffsetDateTime,
           _: Option[TenantProcessModel.TenantUnitType]
         )(_: String)(_: Seq[(String, String)]))
-        .expects("non-IPA", "non-IPACode", "foo", *, *, *, selfcareId, *)
+        .expects("non-IPA", "taxCode", "foo", *, *, *, selfcareId, *)
         .once()
         .returns(Future.successful(TenantProcessModel.ResourceId(id = tenantId)))
 
@@ -794,7 +933,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
             TenantProcessModel.Tenant(
               id = tenantId,
               selfcareId = selfcareId.some,
-              externalId = TenantProcessModel.ExternalId("other-origin", "externalId"),
+              externalId = TenantProcessModel.ExternalId("other-origin", "taxCode"),
               features = Nil,
               attributes = Nil,
               createdAt = OffsetDateTimeSupplier.get(),
@@ -810,7 +949,7 @@ class AuthorizationApiServiceSpec extends AnyWordSpecLike with SpecHelper with S
         "user-roles"     -> "admin,anotherRole",
         "organizationId" -> tenantId.toString,
         "selfcareId"     -> selfcareId,
-        "externalId"     -> Map("origin" -> "other-origin", "value" -> "externalId").asJava,
+        "externalId"     -> Map("origin" -> "other-origin", "value" -> "taxCode").asJava,
         "organization"   -> Map(
           "id"         -> selfcareId,
           "fiscalCode" -> "fiscalCode",
