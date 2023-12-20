@@ -50,6 +50,7 @@ object SelfcareV2ClientServiceTypes {
       id             <- inst.id.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "id"))
       origin         <- inst.origin.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "origin"))
       originId       <- inst.originId.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "originId"))
+      taxCode        <- inst.taxCode.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "taxCode"))
       description    <- inst.description.toRight(SelfcareEntityNotFilled(inst.getClass().getName(), "description"))
       digitalAddress <- inst.digitalAddress.toRight(
         SelfcareEntityNotFilled(inst.getClass().getName(), "digitalAddress")
@@ -58,6 +59,8 @@ object SelfcareV2ClientServiceTypes {
       id = id,
       origin = origin,
       originId = originId,
+      taxCode = taxCode,
+      subunitCode = inst.subunitCode,
       description = description,
       digitalAddress = digitalAddress,
       subUnitType = inst.subunitType

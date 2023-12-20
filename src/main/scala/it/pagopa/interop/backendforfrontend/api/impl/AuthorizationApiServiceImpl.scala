@@ -117,10 +117,13 @@ final case class AuthorizationApiServiceImpl(
       subUnitType       <- institutionApi.subUnitType.traverse(TenantUnitType.fromValue(_).toFuture)
       onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
       onboardingDataApi <- onboardingData.toApi.toFuture
-      resourceId        <- tenantProcessService
+      externalId =
+        if (institutionApi.origin == "IPA") institutionApi.subunitCode.getOrElse(institutionApi.originId)
+        else institutionApi.taxCode
+      resourceId <- tenantProcessService
         .selfcareUpsertTenant(
           institutionApi.origin,
-          institutionApi.originId,
+          externalId,
           institutionApi.description,
           None,
           onboardingDataApi.onboardedAt,
