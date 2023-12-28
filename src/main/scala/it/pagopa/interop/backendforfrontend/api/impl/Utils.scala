@@ -31,8 +31,6 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 object Utils {
 
-  val PAGOPA = "PagoPA S.p.A."
-
   def tenantAttributesToApi[DepAttribute, ApiAttribute](
     tenantAttributes: Seq[DepAttribute],
     registryAttributes: Seq[Attribute]
@@ -182,25 +180,24 @@ object Utils {
       )
     } yield response
 
-  def buildClaims(tenantId: UUID): Map[String, AnyRef] = {
-
-    val role: util.Map[String, AnyRef] = new util.HashMap()
-    role.put("role", SUPPORT_ROLE)
-
-    val organization: util.Map[String, AnyRef] = new util.HashMap()
-    organization.put("id", tenantId.toString)
-    organization.put("name", PAGOPA)
-    organization.put("roles", List(role).asJava)
-
+  def buildJwtCustomClaims(
+    roles: String,
+    tenantId: UUID,
+    selfcareId: String,
+    tenantOrigin: String,
+    tenantExternalId: String
+  ): Map[String, AnyRef] =
     Map(
-      USER_ROLES            -> SUPPORT_ROLE,
-      ORGANIZATION_ID_CLAIM -> tenantId.toString,
-      ORGANIZATION          -> organization,
-      UID                   -> SUPPORT_USER_ID
+      USER_ROLES                     -> roles,
+      ORGANIZATION_ID_CLAIM          -> tenantId.toString,
+      SELFCARE_ID_CLAIM              -> selfcareId,
+      ORGANIZATION_EXTERNAL_ID_CLAIM -> Map(
+        ORGANIZATION_EXTERNAL_ID_ORIGIN_CLAIM -> tenantOrigin,
+        ORGANIZATION_EXTERNAL_ID_VALUE_CLAIM  -> tenantExternalId
+      ).asJava
     )
-  }
 
-  def buildClaimsByTenant(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] = {
+  def buildSupportClaims(selfcareId: String, tenant: TenantProcess.Tenant): Map[String, AnyRef] = {
 
     val role: util.Map[String, AnyRef] = new util.HashMap()
     role.put("role", SUPPORT_ROLE)
@@ -210,12 +207,14 @@ object Utils {
     organization.put("name", tenant.name)
     organization.put("roles", List(role).asJava)
 
-    Map(
-      USER_ROLES            -> SUPPORT_ROLE,
-      ORGANIZATION_ID_CLAIM -> tenant.id.toString,
-      SELFCARE_ID_CLAIM     -> selfcareId,
-      ORGANIZATION          -> organization,
-      UID                   -> SUPPORT_USER_ID
-    )
+    val selfcareClaims: Map[String, AnyRef] = Map(ORGANIZATION -> organization, UID -> SUPPORT_USER_ID)
+
+    buildJwtCustomClaims(
+      SUPPORT_ROLE,
+      tenant.id,
+      selfcareId,
+      tenant.externalId.origin,
+      tenant.externalId.value
+    ) ++ selfcareClaims
   }
 }
