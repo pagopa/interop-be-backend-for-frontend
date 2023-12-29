@@ -2,6 +2,7 @@ package it.pagopa.interop.backendforfrontend
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import it.pagopa.interop.backendforfrontend.SpecHelper.internalToken
 import it.pagopa.interop.backendforfrontend.api.impl.Utils._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.model.{Problem, SAMLTokenRequest}
@@ -51,6 +52,12 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         name = "name"
       )
 
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
+        .once()
+        .returns(Future.successful(internalToken))
+
       (mockTenantProcess
         .getTenant(_: UUID)(_: Seq[(String, String)]))
         .expects(tenantId, *)
@@ -86,9 +93,9 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      (mockTenantProcess
-        .getTenant(_: UUID)(_: Seq[(String, String)]))
-        .expects(*, *)
+      (mockInteropTokenGenerator
+        .generateInternalToken(_: String, _: List[String], _: String, _: Long))
+        .expects(*, *, *, *)
         .once()
         .returns(Future.failed(new RuntimeException("Error")))
 

@@ -10,6 +10,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
+  SUPPORT_USER_ID,
   buildJwtCustomClaims,
   buildSupportClaims,
   parseResponse,
@@ -161,12 +162,13 @@ final case class AuthorizationApiServiceImpl(
     logger.info(s"Calling Support SAML")
 
     val result: Future[(String, String)] = for {
-      responseDecoded <- sAMLResponse.decodeBase64.toFuture
-      responseXml     <- parseResponse(responseDecoded).toFuture
-      _               <- validate(responseXml)(offsetDateTimeSupplier).toFuture
-      tenant          <- tenantProcessService.getTenant(ApplicationConfiguration.pagoPaTenantId)
-      selfcareId      <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
-      sessionToken    <- sessionTokenGenerator.generate(
+      responseDecoded  <- sAMLResponse.decodeBase64.toFuture
+      responseXml      <- parseResponse(responseDecoded).toFuture
+      _                <- validate(responseXml)(offsetDateTimeSupplier).toFuture
+      internalContexts <- generateInternalTokenContexts(interopTokenGenerator, Map(UID -> SUPPORT_USER_ID))
+      tenant           <- tenantProcessService.getTenant(ApplicationConfiguration.pagoPaTenantId)(internalContexts)
+      selfcareId       <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
+      sessionToken     <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
         claimsSet = buildSupportClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
