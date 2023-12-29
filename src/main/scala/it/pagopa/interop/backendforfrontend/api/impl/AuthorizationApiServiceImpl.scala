@@ -9,9 +9,14 @@ import cats.implicits._
 import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.AuthorizationApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaims, parseResponse, validate}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
+  buildJwtCustomClaims,
+  buildSupportClaims,
+  parseResponse,
+  validate
+}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{SelfcareNotFound, UnknownTenantOrigin}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{MissingSelfcareId, SelfcareNotFound, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{SelfcareV2ClientService, TenantProcessService}
@@ -27,6 +32,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClai
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
 import it.pagopa.interop.tenantprocess.client.model.TenantUnitType
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import java.util.UUID
@@ -64,14 +70,12 @@ final case class AuthorizationApiServiceImpl(
       tenant   <- tenantProcessService.getTenant(tenantId)(internalContexts)
       _        <- assertTenantAllowed(selfcareId, tenant.externalId.origin)
       rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
-      customClaims: Map[String, AnyRef] = Map(
-        USER_ROLES                     -> roles,
-        ORGANIZATION_ID_CLAIM          -> tenantId.toString,
-        SELFCARE_ID_CLAIM              -> selfcareId,
-        ORGANIZATION_EXTERNAL_ID_CLAIM -> Map(
-          ORGANIZATION_EXTERNAL_ID_ORIGIN_CLAIM -> tenant.externalId.origin,
-          ORGANIZATION_EXTERNAL_ID_VALUE_CLAIM  -> tenant.externalId.value
-        ).asJava
+      customClaims = buildJwtCustomClaims(
+        roles,
+        tenantId,
+        selfcareId,
+        tenant.externalId.origin,
+        tenant.externalId.value
       )
       token <- sessionTokenGenerator.generate(
         SignatureAlgorithm.RSAPkcs1Sha256,
@@ -160,9 +164,11 @@ final case class AuthorizationApiServiceImpl(
       responseDecoded <- sAMLResponse.decodeBase64.toFuture
       responseXml     <- parseResponse(responseDecoded).toFuture
       _               <- validate(responseXml)(offsetDateTimeSupplier).toFuture
+      tenant          <- tenantProcessService.getTenant(ApplicationConfiguration.pagoPaTenantId)
+      selfcareId      <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken    <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
-        claimsSet = buildClaims(ApplicationConfiguration.pagoPaTenantId),
+        claimsSet = buildSupportClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = ApplicationConfiguration.supportLandingJwtDuration

@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.HttpHeader
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.api.SupportApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildClaimsByTenant, parseResponse, validate}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{buildSupportClaims, parseResponse, validate}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -48,7 +48,7 @@ final case class SupportApiServiceImpl(
       selfcareId     <- tenant.selfcareId.toFuture(MissingSelfcareId(tenant.id))
       sessionToken   <- sessionTokenGenerator.generate(
         signatureAlgorithm = SignatureAlgorithm.RSAPkcs1Sha256,
-        claimsSet = buildClaimsByTenant(selfcareId, tenant),
+        claimsSet = buildSupportClaims(selfcareId, tenant),
         audience = ApplicationConfiguration.generatedJwtAudience,
         tokenIssuer = ApplicationConfiguration.generatedJwtIssuer,
         validityDurationInSeconds = ApplicationConfiguration.supportJwtDuration

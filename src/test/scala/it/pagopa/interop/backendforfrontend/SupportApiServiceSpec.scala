@@ -18,6 +18,7 @@ import java.util.UUID
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcessModel}
 
 class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with ScalatestRouteTest {
 
@@ -35,13 +36,32 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
 
-      val tenantId: UUID = ApplicationConfiguration.pagoPaTenantId
+      val tenantId: UUID     = ApplicationConfiguration.pagoPaTenantId
+      val selfcareId: String = "selfcare-id"
+
+      val pagoPaTenant = TenantProcessModel.Tenant(
+        id = tenantId,
+        selfcareId = Some(selfcareId),
+        externalId = TenantProcessModel.ExternalId("IPA", "externalId"),
+        features = Nil,
+        attributes = Nil,
+        createdAt = OffsetDateTimeSupplier.get(),
+        updatedAt = None,
+        mails = Nil,
+        name = "name"
+      )
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(tenantId, *)
+        .once()
+        .returns(Future.successful(pagoPaTenant))
 
       (mockSessionTokenGenerator
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          buildClaims(tenantId),
+          buildSupportClaims(selfcareId, pagoPaTenant),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportLandingJwtDuration
@@ -54,7 +74,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
       }
     }
 
-    "fail when selfcareId is missing (redirect)" in {
+    "invoke callback also in case of error" in {
 
       val response: String = Using(Source.fromFile(Paths.get("src/test/resources/saml2.xml").toFile()))(source =>
         source.getLines().mkString.encodeBase64
@@ -65,6 +85,12 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
 
       val timestamp = OffsetDateTime.of(2023, 5, 31, 9, 5, 40, 44, ZoneOffset.UTC)
       (() => mockDateTimeSupplier.get()).expects().returning(timestamp).once()
+
+      (mockTenantProcess
+        .getTenant(_: UUID)(_: Seq[(String, String)]))
+        .expects(*, *)
+        .once()
+        .returns(Future.failed(new RuntimeException("Error")))
 
       Post() ~> authorizationService.samlLoginCallback(response, emptyRelayState) ~> check {
         status shouldEqual StatusCodes.Found
@@ -107,7 +133,7 @@ class SupportApiServiceSpec extends AnyWordSpecLike with SpecHelper with Scalate
         .generate(_: SignatureAlgorithm, _: Map[String, AnyRef], _: Set[String], _: String, _: Long))
         .expects(
           SignatureAlgorithm.RSAPkcs1Sha256,
-          buildClaimsByTenant(selfcareId.toString, tenant),
+          buildSupportClaims(selfcareId.toString, tenant),
           ApplicationConfiguration.generatedJwtAudience,
           ApplicationConfiguration.generatedJwtIssuer,
           ApplicationConfiguration.supportJwtDuration
