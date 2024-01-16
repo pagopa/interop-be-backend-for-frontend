@@ -10,7 +10,9 @@ trait TenantProcessService {
 
   def addTenantMail(tenantId: UUID, seed: MailSeed)(implicit contexts: Seq[(String, String)]): Future[Unit]
   def deleteTenantMail(tenantId: UUID, mailId: String)(implicit contexts: Seq[(String, String)]): Future[Unit]
-
+  def revokeCertifiedAttribute(tenantId: UUID, attributeId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit]
   def addCertifiedAttribute(tenantId: UUID, seed: CertifiedTenantAttributeSeed)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenant]
