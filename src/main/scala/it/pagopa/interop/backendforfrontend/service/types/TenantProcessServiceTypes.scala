@@ -95,6 +95,10 @@ object TenantProcessServiceTypes {
     def toSeed: TenantProcess.DeclaredTenantAttributeSeed = TenantProcess.DeclaredTenantAttributeSeed(id = seed.id)
   }
 
+  implicit class CertifiedTenantAttributeSeedConverter(private val seed: CertifiedTenantAttributeSeed) extends AnyVal {
+    def toSeed: TenantProcess.CertifiedTenantAttributeSeed = TenantProcess.CertifiedTenantAttributeSeed(id = seed.id)
+  }
+
   implicit class VerifiedTenantAttributeSeedConverter(private val seed: VerifiedTenantAttributeSeed) extends AnyVal {
     def toSeed: TenantProcess.VerifiedTenantAttributeSeed =
       TenantProcess.VerifiedTenantAttributeSeed(id = seed.id, expirationDate = seed.expirationDate)

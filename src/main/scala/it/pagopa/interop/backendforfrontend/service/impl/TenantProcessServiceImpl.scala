@@ -10,6 +10,7 @@ import it.pagopa.interop.tenantprocess.client.api.{EnumsSerializers, TenantApi}
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.tenantprocess.client.model.{
   DeclaredTenantAttributeSeed,
+  CertifiedTenantAttributeSeed,
   ExternalId,
   SelfcareTenantSeed,
   Tenant,
@@ -37,6 +38,19 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
 
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+
+  override def addCertifiedAttribute(tenantId: UUID, seed: CertifiedTenantAttributeSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenant] =
+    withHeaders[Tenant] { (bearerToken, correlationId) =>
+      val request =
+        api.addCertifiedAttribute(
+          xCorrelationId = correlationId,
+          tenantId = tenantId,
+          certifiedTenantAttributeSeed = seed
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Adding certified attribute ${seed.id} to requester Tenant")
+    }
 
   override def addDeclaredAttribute(
     seed: DeclaredTenantAttributeSeed
