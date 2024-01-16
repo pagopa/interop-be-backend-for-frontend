@@ -49,7 +49,7 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
           tenantId = tenantId,
           certifiedTenantAttributeSeed = seed
         )(BearerToken(bearerToken))
-      invoker.invoke(request, s"Adding certified attribute ${seed.id} to requester Tenant")
+      invoker.invoke(request, s"Adding certified attribute ${seed.id} to Tenant $tenantId")
     }
 
   override def addDeclaredAttribute(
