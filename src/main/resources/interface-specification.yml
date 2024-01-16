@@ -11483,14 +11483,9 @@ components:
           type: string
         name:
           type: string
-        code:
-          type: string
-        origin:
-          type: string
       required:
         - description
         - name
-        - code
     AttributeSeed:
       title: AttributeSeed
       type: object

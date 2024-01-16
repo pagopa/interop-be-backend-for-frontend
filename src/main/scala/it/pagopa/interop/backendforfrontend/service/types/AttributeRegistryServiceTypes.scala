@@ -61,7 +61,7 @@ object AttributeRegistryServiceTypes {
 
   implicit class CertifiedAttributeSeedConverter(private val seed: CertifiedAttributeSeed) extends AnyVal {
     def toSeed: AttributeProcess.CertifiedAttributeSeed =
-      AttributeProcess.CertifiedAttributeSeed(description = seed.description, name = seed.name, code = seed.code)
+      AttributeProcess.CertifiedAttributeSeed(description = seed.description, name = seed.name)
   }
 
 }
