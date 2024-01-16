@@ -1,6 +1,7 @@
 package it.pagopa.interop.backendforfrontend.service.types
 
 import it.pagopa.interop.backendforfrontend.model.AttributeKind.{CERTIFIED, DECLARED, VERIFIED}
+import it.pagopa.interop.commons.utils.Digester.toSha256
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeProcess}
 import it.pagopa.interop.backendforfrontend.model.{
   Attribute,
@@ -61,7 +62,11 @@ object AttributeRegistryServiceTypes {
 
   implicit class CertifiedAttributeSeedConverter(private val seed: CertifiedAttributeSeed) extends AnyVal {
     def toSeed: AttributeProcess.CertifiedAttributeSeed =
-      AttributeProcess.CertifiedAttributeSeed(description = seed.description, name = seed.name)
+      AttributeProcess.CertifiedAttributeSeed(
+        description = seed.description,
+        name = seed.name,
+        code = toSha256(seed.name.getBytes())
+      )
   }
 
 }
