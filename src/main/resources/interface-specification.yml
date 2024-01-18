@@ -4773,6 +4773,88 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/tenants/attributes/certified':
+    get:
+      tags:
+        - tenants
+      summary: Gets the certified attributes of the requester
+      description: Retrieve the certified attributes      
+      operationId: getRequesterCertifiedAttributes
+      parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+        - in: query
+          name: offset
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 50
+      responses:
+        '200':
+          description: Requester Certified Attributes retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequesterCertifiedAttributes'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/tenants/{tenantId}/attributes/certified':
     get:
       tags:
@@ -11576,6 +11658,36 @@ components:
         - description
         - name
         - creationTime
+    RequesterCertifiedAttribute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        attributeId:
+          type: string
+          format: uuid
+        attributeName:
+          type: string
+      required:
+        - id
+        - name
+        - attributeId
+        - attributeName
+    RequesterCertifiedAttributes:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequesterCertifiedAttribute'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - results
+        - pagination        
     CertifiedAttribute:
       title: CertifiedAttribute
       type: object

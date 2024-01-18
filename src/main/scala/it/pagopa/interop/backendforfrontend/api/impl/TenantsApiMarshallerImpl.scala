@@ -11,6 +11,9 @@ object TenantsApiMarshallerImpl extends TenantsApiMarshaller with SprayJsonSuppo
 
   override implicit def toEntityMarshallerProblem: ToEntityMarshaller[Problem] = entityMarshallerProblem
 
+  override implicit def toEntityMarshallerRequesterCertifiedAttributes
+    : ToEntityMarshaller[RequesterCertifiedAttributes] = sprayJsonMarshaller[RequesterCertifiedAttributes]
+
   override implicit def toEntityMarshallerCertifiedAttributesResponse: ToEntityMarshaller[CertifiedAttributesResponse] =
     sprayJsonMarshaller[CertifiedAttributesResponse]
 

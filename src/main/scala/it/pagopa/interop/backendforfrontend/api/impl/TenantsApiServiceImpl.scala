@@ -109,6 +109,35 @@ final case class TenantsApiServiceImpl(
     }
   }
 
+  override def getRequesterCertifiedAttributes(offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerRequesterCertifiedAttributes: ToEntityMarshaller[RequesterCertifiedAttributes]
+  ): Route = {
+    val result: Future[RequesterCertifiedAttributes] =
+      for {
+        pagedResults <- tenantProcessService.getCertifiedAttributes(offset = offset, limit = limit)
+      } yield RequesterCertifiedAttributes(
+        results = pagedResults.results.map(t =>
+          RequesterCertifiedAttribute(
+            id = t.id,
+            name = t.name,
+            attributeId = t.attributeId,
+            attributeName = t.attributeName
+          )
+        ),
+        pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+      )
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error retrieving certified attributes offset $offset, limit $limit", headers) orElse {
+        case Success(r) =>
+          getRequesterCertifiedAttributes200(headers)(r)
+      }
+    }
+  }
+
   override def getCertifiedAttributes(tenantId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
