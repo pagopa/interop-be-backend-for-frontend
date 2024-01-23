@@ -155,7 +155,7 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
         api.getCertifiedAttributes(xCorrelationId = correlationId, limit = limit, offset = offset)(
           BearerToken(bearerToken)
         )
-      invoker.invoke(request, s"Getting certified attributes limit $limit, offset $offset")
+      invoker.invoke(request, s"Getting tenant certified attributes limit $limit, offset $offset")
     }
 
   override def updateVerifiedAttribute(tenantId: UUID, attributeId: UUID, seed: UpdateVerifiedTenantAttributeSeed)(

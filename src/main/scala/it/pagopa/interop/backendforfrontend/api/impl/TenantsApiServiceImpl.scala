@@ -131,7 +131,7 @@ final case class TenantsApiServiceImpl(
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error retrieving certified attributes offset $offset, limit $limit", headers) orElse {
+      handleError(s"Error retrieving tenant certified attributes offset $offset, limit $limit", headers) orElse {
         case Success(r) =>
           getRequesterCertifiedAttributes200(headers)(r)
       }
