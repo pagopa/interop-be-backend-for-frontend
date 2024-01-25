@@ -327,4 +327,22 @@ final case class TenantsApiServiceImpl(
       }
     }
   }
+  override def revokeCertifiedAttribute(tenantId: String, attributeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] = for {
+      tenantUuid    <- tenantId.toFutureUUID
+      attributeUuid <- attributeId.toFutureUUID
+      _             <- tenantProcessService.revokeCertifiedAttribute(tenantUuid, attributeUuid).void
+    } yield ()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error revoking certified attribute ${attributeId} to tenant $tenantId", headers) orElse {
+        case Success(_) =>
+          revokeCertifiedAttribute204(headers)
+      }
+    }
+  }
 }
