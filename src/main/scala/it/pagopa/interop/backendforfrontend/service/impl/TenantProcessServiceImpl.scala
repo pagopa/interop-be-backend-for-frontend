@@ -19,7 +19,8 @@ import it.pagopa.interop.tenantprocess.client.model.{
   UpdateVerifiedTenantAttributeSeed,
   MailSeed,
   ResourceId,
-  TenantUnitType
+  TenantUnitType,
+  CertifiedAttributes
 }
 import it.pagopa.interop.tenantprocess.client.invoker.ApiRequest
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.SelfcareNotFound
@@ -171,6 +172,17 @@ class TenantProcessServiceImpl(tenantprocessUrl: String, blockingEc: ExecutionCo
           BearerToken(bearerToken)
         )
       invoker.invoke(request, s"Getting consumers with name $name, limit $limit, offset $offset")
+    }
+
+  override def getCertifiedAttributes(offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[CertifiedAttributes] =
+    withHeaders[CertifiedAttributes] { (bearerToken, correlationId) =>
+      val request: ApiRequest[CertifiedAttributes] =
+        api.getCertifiedAttributes(xCorrelationId = correlationId, limit = limit, offset = offset)(
+          BearerToken(bearerToken)
+        )
+      invoker.invoke(request, s"Getting tenant certified attributes limit $limit, offset $offset")
     }
 
   override def updateVerifiedAttribute(tenantId: UUID, attributeId: UUID, seed: UpdateVerifiedTenantAttributeSeed)(
