@@ -309,4 +309,40 @@ final case class TenantsApiServiceImpl(
       }
     }
   }
+
+  override def addCertifiedAttribute(tenantId: String, seed: CertifiedTenantAttributeSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] = for {
+      tenantUuid <- tenantId.toFutureUUID
+      _          <- tenantProcessService.addCertifiedAttribute(tenantUuid, seed.toSeed).void
+    } yield ()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error adding certified attribute ${seed.id} to tenant $tenantId", headers) orElse {
+        case Success(_) =>
+          addCertifiedAttribute204(headers)
+      }
+    }
+  }
+  override def revokeCertifiedAttribute(tenantId: String, attributeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Unit] = for {
+      tenantUuid    <- tenantId.toFutureUUID
+      attributeUuid <- attributeId.toFutureUUID
+      _             <- tenantProcessService.revokeCertifiedAttribute(tenantUuid, attributeUuid).void
+    } yield ()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error revoking certified attribute ${attributeId} to tenant $tenantId", headers) orElse {
+        case Success(_) =>
+          revokeCertifiedAttribute204(headers)
+      }
+    }
+  }
 }
