@@ -11861,10 +11861,10 @@ components:
     RequesterCertifiedAttribute:
       type: object
       properties:
-        id:
+        tenantId:
           type: string
           format: uuid
-        name:
+        tenantName:
           type: string
         attributeId:
           type: string
@@ -11872,8 +11872,8 @@ components:
         attributeName:
           type: string
       required:
-        - id
-        - name
+        - tenantId
+        - tenantName
         - attributeId
         - attributeName
     RequesterCertifiedAttributes:

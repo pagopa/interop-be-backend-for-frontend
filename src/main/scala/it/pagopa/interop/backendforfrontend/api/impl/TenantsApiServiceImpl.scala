@@ -120,8 +120,8 @@ final case class TenantsApiServiceImpl(
       } yield RequesterCertifiedAttributes(
         results = pagedResults.results.map(t =>
           RequesterCertifiedAttribute(
-            id = t.id,
-            name = t.name,
+            tenantId = t.id,
+            tenantName = t.name,
             attributeId = t.attributeId,
             attributeName = t.attributeName
           )
