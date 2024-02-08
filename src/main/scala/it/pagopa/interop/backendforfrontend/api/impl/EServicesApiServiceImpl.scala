@@ -619,10 +619,10 @@ final case class EServicesApiServiceImpl(
           )
         )
         .recoverWith {
-          case ex: UploadDocumentClientError =>
+          case ex: CreateDocumentBadRequest      =>
             fileManager.delete(ApplicationConfiguration.eServiceDocumentsContainer)(filePath)
             Future.failed(ex)
-          case ex: UploadDocumentServerError =>
+          case ex: CreateDocumentUnexpectedError =>
             Future.failed(ex)
         }
     } yield ()

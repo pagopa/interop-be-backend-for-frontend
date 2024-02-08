@@ -8,7 +8,7 @@ import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, 
 import it.pagopa.interop.catalogprocess.client.model._
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{UploadDocumentClientError, UploadDocumentServerError}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{CreateDocumentBadRequest, CreateDocumentUnexpectedError}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
@@ -198,9 +198,9 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
           s"Creating eService document ${documentSeed.documentId.toString} of kind ${documentSeed.kind}, name ${documentSeed.fileName}, path ${documentSeed.filePath} for eService $eServiceId and descriptor $descriptorId"
         )
         .recoverWith {
-          case err: ApiError[_] if err.code < 500  => Future.failed(UploadDocumentClientError(eServiceId, descriptorId))
+          case err: ApiError[_] if err.code < 500  => Future.failed(CreateDocumentBadRequest(eServiceId, descriptorId))
           case err: ApiError[_] if err.code >= 500 =>
-            Future.failed(UploadDocumentServerError(eServiceId, descriptorId, documentSeed.filePath))
+            Future.failed(CreateDocumentUnexpectedError(eServiceId, descriptorId, documentSeed.filePath))
         }
   }
   override def updateEServiceById(eServiceId: UUID, updateEServiceSeed: UpdateEServiceSeed)(implicit
