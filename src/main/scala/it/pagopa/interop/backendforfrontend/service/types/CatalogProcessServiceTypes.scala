@@ -242,6 +242,16 @@ object CatalogProcessServiceTypes {
         )
   }
 
+  implicit class UpdateEServicePublishedDescriptorSeedConverter(private val usds: UpdateEServicePublishedDescriptorSeed)
+      extends AnyVal {
+    def toProcess: CatalogProcess.UpdateEServicePublishedDescriptorSeed =
+      CatalogProcess.UpdateEServicePublishedDescriptorSeed(
+        voucherLifespan = usds.voucherLifespan,
+        dailyCallsPerConsumer = usds.dailyCallsPerConsumer,
+        dailyCallsTotal = usds.dailyCallsTotal
+      )
+  }
+
   implicit class UpdateEServiceDescriptorSeedConverter(private val usds: UpdateEServiceDescriptorSeed) extends AnyVal {
     def toProcess: CatalogProcess.UpdateEServiceDescriptorSeed = CatalogProcess.UpdateEServiceDescriptorSeed(
       description = usds.description,

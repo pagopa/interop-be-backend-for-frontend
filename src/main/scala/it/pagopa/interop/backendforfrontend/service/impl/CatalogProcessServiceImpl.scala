@@ -159,6 +159,25 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     )
   }
 
+  override def updatePublishedDescriptor(
+    eServiceId: UUID,
+    descriptorId: UUID,
+    updateEServicePublishedDescriptorSeed: UpdateEServicePublishedDescriptorSeed
+  )(implicit contexts: Seq[(String, String)]): Future[EService] =
+    withHeaders { (bearerToken, correlationId) =>
+      val request: ApiRequest[EService] =
+        api.updatePublishedDescriptor(
+          xCorrelationId = correlationId,
+          eServiceId = eServiceId,
+          descriptorId = descriptorId,
+          updateEServicePublishedDescriptorSeed = updateEServicePublishedDescriptorSeed
+        )(BearerToken(bearerToken))
+      invoker.invoke(
+        request,
+        s"Update published descriptor ${descriptorId.toString} for EService ${eServiceId.toString} with seed $updateEServicePublishedDescriptorSeed"
+      )
+    }
+
   override def updateDraftDescriptor(
     eServiceId: UUID,
     descriptorId: UUID,
