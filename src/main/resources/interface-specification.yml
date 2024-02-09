@@ -7360,6 +7360,7 @@ paths:
             items:
               $ref: '#/components/schemas/AttributeKind'
           required: true
+          explode: false
       responses:
         '200':
           description: A List of Attributes
