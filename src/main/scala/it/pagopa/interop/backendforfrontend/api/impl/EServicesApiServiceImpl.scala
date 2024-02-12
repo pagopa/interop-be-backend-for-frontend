@@ -146,11 +146,7 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  override def updatePublishedDescriptor(
-    eServiceId: String,
-    descriptorId: String,
-    seed: UpdateEServicePublishedDescriptorSeed
-  )(implicit
+  override def updateDescriptor(eServiceId: String, descriptorId: String, seed: UpdateEServiceDescriptorQuotas)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
@@ -158,18 +154,14 @@ final case class EServicesApiServiceImpl(
     val result = for {
       eServiceUuid   <- eServiceId.toFutureUUID
       descriptorUuid <- descriptorId.toFutureUUID
-      descriptor     <- catalogProcessService.updatePublishedDescriptor(eServiceUuid, descriptorUuid, seed.toProcess)(
-        contexts
-      )
+      descriptor     <- catalogProcessService.updateDescriptor(eServiceUuid, descriptorUuid, seed.toProcess)(contexts)
     } yield descriptor.toApi
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(
-        s"Error updating published descriptor $descriptorId on service $eServiceId with seed: $seed",
-        headers
-      ) orElse { case Success(resource) =>
-        updatePublishedDescriptor200(headers)(resource)
+      handleError(s"Error updating descriptor $descriptorId on service $eServiceId with seed: $seed", headers) orElse {
+        case Success(resource) =>
+          updateDescriptor200(headers)(resource)
       }
     }
   }

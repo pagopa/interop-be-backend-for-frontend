@@ -2570,7 +2570,7 @@ paths:
       tags:
         - eservices
       summary: Publish the selected descriptor.
-      operationId: updatePublishedDescriptor
+      operationId: updateDescriptor
       parameters:
         - name: eServiceId
           in: path
@@ -2592,10 +2592,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateEServicePublishedDescriptorSeed'
+              $ref: '#/components/schemas/UpdateEServiceDescriptorQuotas'
       responses:
         '200':
-          description: EService with published descriptor updated.
+          description: EService descriptor updated.
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -10434,7 +10434,7 @@ components:
           $ref: '#/components/schemas/EServiceTechnology'
         mode:
           $ref: '#/components/schemas/EServiceMode'
-    UpdateEServicePublishedDescriptorSeed:
+    UpdateEServiceDescriptorQuotas:
       required:
         - voucherLifespan
         - dailyCallsPerConsumer
