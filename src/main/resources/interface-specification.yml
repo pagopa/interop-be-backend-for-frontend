@@ -7464,7 +7464,9 @@ paths:
             type: array
             items:
               $ref: '#/components/schemas/AttributeKind'
+            default: []   
           required: true
+          explode: false
       responses:
         '200':
           description: A List of Attributes
