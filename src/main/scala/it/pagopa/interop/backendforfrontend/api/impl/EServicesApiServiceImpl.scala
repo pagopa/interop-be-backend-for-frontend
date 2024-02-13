@@ -146,6 +146,26 @@ final case class EServicesApiServiceImpl(
     }
   }
 
+  override def updateDescriptor(eServiceId: String, descriptorId: String, seed: UpdateEServiceDescriptorQuotas)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result = for {
+      eServiceUuid   <- eServiceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      descriptor     <- catalogProcessService.updateDescriptor(eServiceUuid, descriptorUuid, seed.toProcess)(contexts)
+    } yield descriptor.toApi
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error updating descriptor $descriptorId on service $eServiceId with seed: $seed", headers) orElse {
+        case Success(resource) =>
+          updateDescriptor200(headers)(resource)
+      }
+    }
+  }
+
   override def updateDraftDescriptor(
     eServiceId: String,
     descriptorId: String,
