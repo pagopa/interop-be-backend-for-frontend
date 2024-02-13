@@ -6595,20 +6595,19 @@ paths:
   '/tenants/{tenantId}/attributes/verified':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
+      - name: tenantId
+        in: path
+        description: The internal identifier of the tenant
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
         - tenants
       summary: Gets the verified attributes of an institution using internal institution id
       description: Gets verified attributes for institution using internal institution id
       operationId: getVerifiedAttributes
-      parameters:
-        - name: tenantId
-          in: path
-          description: The internal identifier of the tenant
-          required: true
-          schema:
-            type: string
-            format: uuid
       responses:
         '200':
           description: successful operation
