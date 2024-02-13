@@ -134,4 +134,16 @@ object BFFErrors {
 
   final case class InstitutionNotFound(selfcareId: UUID)
       extends ComponentError("0033", s"Institution $selfcareId not found")
+
+  final case class CreateDocumentBadRequest(eServiceId: UUID, descriptorId: UUID)
+      extends ComponentError(
+        "0034",
+        s"Bad request creating document metadata for Eservice $eServiceId and descriptor $descriptorId"
+      )
+
+  final case class CreateDocumentUnexpectedError(eServiceId: UUID, descriptorId: UUID, filePath: String)
+      extends ComponentError(
+        "0035",
+        s"Unexpected error creating document metadata for Eservice $eServiceId and descriptor $descriptorId with path $filePath"
+      )
 }
