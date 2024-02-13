@@ -582,7 +582,11 @@ final case class EServicesApiServiceImpl(
     doc: (FileInfo, File),
     eServiceId: String,
     descriptorId: String
-  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
 
     val isInterface: Boolean = kind match {
       case INTERFACE => true
@@ -611,7 +615,7 @@ final case class EServicesApiServiceImpl(
 
     val documentIdUuid: UUID = uuidSupplier.get()
 
-    val result: Future[Unit] = for {
+    val result: Future[CreatedResource] = for {
       (eserviceUUID, descriptorUUID) <- eServiceId.toFutureUUID.zip(descriptorId.toFutureUUID)
       eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
       _                              <- eService.descriptors
@@ -645,15 +649,15 @@ final case class EServicesApiServiceImpl(
           case ex: CreateDocumentUnexpectedError =>
             Future.failed(ex)
         }
-    } yield ()
+    } yield CreatedResource(documentIdUuid)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
       handleError(
         s"Error creating eService document of kind $kind and name $prettyName for eService $eServiceId and descriptor $descriptorId",
         headers
-      ) orElse { case Success(_) =>
-        createEServiceDocument204(headers)
+      ) orElse { case Success(resource) =>
+        createEServiceDocument200(headers)(resource)
       }
     }
   }
