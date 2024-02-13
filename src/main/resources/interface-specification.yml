@@ -4133,13 +4133,6 @@ paths:
   '/producers/eservices/{eserviceId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - name: eserviceId
-        in: path
-        description: the eservice id
-        required: true
-        schema:
-          type: string
-          format: uuid
     get:
       tags:
         - eservices
@@ -4234,20 +4227,6 @@ paths:
   '/producers/eservices/{eserviceId}/descriptors/{descriptorId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - name: eserviceId
-        in: path
-        description: the eservice id
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: descriptorId
-        in: path
-        description: the descriptor id
-        required: true
-        schema:
-          type: string
-          format: uuid
     get:
       tags:
         - eservices
@@ -4503,20 +4482,6 @@ paths:
   '/catalog/eservices/{eserviceId}/descriptor/{descriptorId}':
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - name: eserviceId
-        in: path
-        description: the eservice id
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: descriptorId
-        in: path
-        description: the descriptor id
-        required: true
-        schema:
-          type: string
-          format: uuid
     get:
       tags:
         - eservices
@@ -6554,13 +6519,7 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/tenants/{tenantId}/attributes/declared':
     parameters:
-      - name: tenantId
-        in: path
-        description: Tenant id
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       tags:
         - tenants
@@ -6635,13 +6594,7 @@ paths:
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   '/tenants/{tenantId}/attributes/verified':
     parameters:
-      - name: tenantId
-        in: path
-        description: Tenant id
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       tags:
         - tenants
