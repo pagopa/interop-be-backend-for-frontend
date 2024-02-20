@@ -96,7 +96,8 @@ final case class AuthorizationApiServiceImpl(
   }
 
   private def assertTenantAllowed(selfcareId: String, origin: String): Future[Unit] =
-    if (TENANT_ALLOWED_ORIGINS.contains(origin) || allowList.contains(selfcareId)) Future.successful(())
+    if (ApplicationConfiguration.tenantAllowedOrigins.contains(origin) || allowList.contains(selfcareId))
+      Future.successful(())
     else Future.failed(UnknownTenantOrigin(selfcareId))
 
   private def getTenantOr(
@@ -121,7 +122,7 @@ final case class AuthorizationApiServiceImpl(
       onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
       onboardingDataApi <- onboardingData.toApi.toFuture
       externalId =
-        if (institutionApi.origin == IPA) institutionApi.subunitCode.getOrElse(institutionApi.originId)
+        if (institutionApi.origin == "IPA") institutionApi.subunitCode.getOrElse(institutionApi.originId)
         else institutionApi.taxCode
       resourceId <- tenantProcessService
         .selfcareUpsertTenant(
