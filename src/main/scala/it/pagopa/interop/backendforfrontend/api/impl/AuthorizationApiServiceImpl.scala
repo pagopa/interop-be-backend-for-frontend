@@ -95,10 +95,9 @@ final case class AuthorizationApiServiceImpl(
     }
   }
 
-  private final val allowedOrigins: Set[String] = Set("IPA", "ANAC", "IVASS")
-
   private def assertTenantAllowed(selfcareId: String, origin: String): Future[Unit] =
-    if (allowedOrigins.contains(origin) || allowList.contains(selfcareId)) Future.successful(())
+    if (ApplicationConfiguration.tenantAllowedOrigins.contains(origin) || allowList.contains(selfcareId))
+      Future.successful(())
     else Future.failed(UnknownTenantOrigin(selfcareId))
 
   private def getTenantOr(

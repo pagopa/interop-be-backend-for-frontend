@@ -34,8 +34,9 @@ object ApplicationConfiguration {
   val ecKeysIdentifiers: Set[String] =
     config.getString("backend-for-frontend.ec-keys-identifiers").split(",").toSet.filter(_.nonEmpty)
 
-  val signerMaxConnections: Int = config.getInt("backend-for-frontend.signer-max-connections")
-
+  val signerMaxConnections: Int         = config.getInt("backend-for-frontend.signer-max-connections")
+  val tenantAllowedOrigins: Set[String] =
+    config.getString("backend-for-frontend.tenant-allowed-origins").split(",").toSet.filter(_.nonEmpty)
   val rateLimiterConfigs: LimiterConfig = {
     val rateInterval = config.getDuration("backend-for-frontend.rate-limiter.rate-interval")
     val timeout      = config.getDuration("backend-for-frontend.rate-limiter.timeout")
