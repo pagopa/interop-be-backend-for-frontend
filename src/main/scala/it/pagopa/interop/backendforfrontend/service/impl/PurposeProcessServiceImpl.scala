@@ -48,6 +48,23 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
       invoker.invoke(request, s"Retrieving Purposes")
     }
 
+  override def rejectPurposeVersion(purposeId: UUID, versionId: UUID, payload: RejectPurposeVersionPayload)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] =
+    withHeaders[Unit] { (bearerToken, correlationId) =>
+      val request: ApiRequest[Unit] =
+        api.rejectPurposeVersion(
+          purposeId = purposeId,
+          versionId = versionId,
+          rejectPurposeVersionPayload = payload,
+          xCorrelationId = correlationId
+        )(BearerToken(bearerToken))
+      invoker.invoke(
+        request,
+        s"Reject Purpose $purposeId with version $versionId and reason ${payload.rejectionReason}"
+      )
+    }
+
   override def archivePurposeVersion(purposeId: UUID, versionId: UUID)(implicit
     contexts: Seq[(String, String)]
   ): Future[PurposeVersion] =

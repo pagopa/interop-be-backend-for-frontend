@@ -18,6 +18,7 @@ object PurposeProcessServiceTypes {
       case PurposeProcess.PurposeVersionState.ACTIVE               => PurposeVersionState.ACTIVE
       case PurposeProcess.PurposeVersionState.DRAFT                => PurposeVersionState.DRAFT
       case PurposeProcess.PurposeVersionState.SUSPENDED            => PurposeVersionState.SUSPENDED
+      case PurposeProcess.PurposeVersionState.REJECTED             => PurposeVersionState.REJECTED
       case PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL => PurposeVersionState.WAITING_FOR_APPROVAL
       case PurposeProcess.PurposeVersionState.ARCHIVED             => PurposeVersionState.ARCHIVED
     }

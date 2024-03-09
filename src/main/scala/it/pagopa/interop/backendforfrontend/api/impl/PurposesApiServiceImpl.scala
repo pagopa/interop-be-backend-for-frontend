@@ -133,6 +133,31 @@ final case class PurposesApiServiceImpl(
     pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
   )
 
+  override def rejectPurposeVersion(purposeId: String, versionId: String, payload: RejectPurposeVersionPayload)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): akka.http.scaladsl.server.Route = {
+    logger.info(s"Rejecting purpose $purposeId with version $versionId")
+
+    val result: Future[Unit] = for {
+      purposeUuid <- purposeId.toFutureUUID
+      versionUuid <- versionId.toFutureUUID
+      _           <- purposeProcessService.rejectPurposeVersion(
+        purposeUuid,
+        versionUuid,
+        PurposeProcess.RejectPurposeVersionPayload(payload.rejectionReason)
+      )
+      _           <- authorizationProcessService.removePurposeFromClients(purposeUuid)
+    } yield ()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error rejecting purpose $purposeId with version $versionId", headers) orElse { case Success(_) =>
+        rejectPurposeVersion204(headers)
+      }
+    }
+  }
+
   override def archivePurposeVersion(purposeId: String, versionId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
