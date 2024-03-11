@@ -180,6 +180,7 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
     eServiceName: Option[String],
     producersIds: Seq[UUID],
     consumersIds: Seq[UUID],
+    states: Seq[AgreementState],
     limit: Int,
     offset: Int
   )(implicit contexts: Seq[(String, String)]): Future[CompactEServices] =
@@ -189,6 +190,7 @@ class AgreementProcessServiceImpl(agreementProcessURL: String, blockingEc: Execu
         eServiceName = eServiceName,
         producersIds = producersIds,
         consumersIds = consumersIds,
+        states = states,
         offset = offset,
         limit = limit
       )(BearerToken(bearerToken))

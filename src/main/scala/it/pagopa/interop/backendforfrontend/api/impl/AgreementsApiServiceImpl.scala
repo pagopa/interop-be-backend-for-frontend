@@ -520,7 +520,7 @@ final case class AgreementsApiServiceImpl(
     }
   }
 
-  override def getAgreementEServiceProducers(q: Option[String], offset: Int, limit: Int)(implicit
+  override def getAgreementEServiceProducers(q: Option[String], states: String, offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerCompactAgreementEServices: ToEntityMarshaller[CompactEServicesLight],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -535,10 +535,12 @@ final case class AgreementsApiServiceImpl(
 
     def validResponse: Future[CompactEServicesLight] = for {
       requesterId  <- getOrganizationIdFutureUUID(contexts)
+      states       <- parseArrayParameters(states).traverse(AgreementProcess.AgreementState.fromValue).toFuture
       pagedResults <- agreementProcessService.getAgreementEServices(
         eServiceName = q,
         producersIds = Seq(requesterId),
         consumersIds = Seq.empty,
+        states = states,
         limit = limit,
         offset = offset
       )
@@ -582,6 +584,7 @@ final case class AgreementsApiServiceImpl(
         eServiceName = q,
         producersIds = Seq.empty,
         consumersIds = Seq(requesterId),
+        states = Seq.empty,
         limit = limit,
         offset = offset
       )
