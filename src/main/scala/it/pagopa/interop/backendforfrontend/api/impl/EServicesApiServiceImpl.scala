@@ -825,18 +825,10 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
-    def deleteEServiceIfEmpty(eService: CatalogProcess.EService): Future[Unit] =
-      if (eService.descriptors.exists(_.id.toString != descriptorId))
-        Future.unit
-      else
-        catalogProcessService.deleteEService(eService.id)
-
     val result: Future[Unit] = for {
       eServiceUuid   <- eServiceId.toFutureUUID
       descriptorUuid <- descriptorId.toFutureUUID
-      eService       <- catalogProcessService.getEServiceById(eServiceUuid)
       _              <- catalogProcessService.deleteDraft(eServiceUuid, descriptorUuid)
-      _              <- deleteEServiceIfEmpty(eService)
     } yield ()
 
     onComplete(result) {
