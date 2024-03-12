@@ -146,4 +146,7 @@ object BFFErrors {
         "0035",
         s"Unexpected error creating document metadata for Eservice $eServiceId and descriptor $descriptorId with path $filePath"
       )
+
+  final case class ContractException(agreementId: String)
+      extends ComponentError("0036", s"Contract exception for agreement $agreementId")
 }

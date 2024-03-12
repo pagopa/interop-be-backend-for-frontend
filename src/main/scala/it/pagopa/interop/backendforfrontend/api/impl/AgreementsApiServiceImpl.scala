@@ -16,6 +16,7 @@ import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfigurati
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
   AgreementDescriptorNotFound,
   ContractNotFound,
+  ContractException,
   InvalidContentType
 }
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
@@ -26,6 +27,7 @@ import it.pagopa.interop.backendforfrontend.service.types.AttributeRegistryServi
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.agreementprocess.client.model.AgreementState._
 
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
@@ -467,7 +469,10 @@ final case class AgreementsApiServiceImpl(
       for {
         uuid       <- agreementId.toFutureUUID
         agreement  <- agreementProcessService.getAgreementById(uuid)
-        contract   <- agreement.contract.toFuture(ContractNotFound(agreementId))
+        contract   <- agreement.contract.toFuture(agreement.state match {
+          case ACTIVE | SUSPENDED | ARCHIVED => ContractException(agreementId)
+          case _                             => ContractNotFound(agreementId)
+        })
         byteStream <- fileManager.get(ApplicationConfiguration.consumerDocumentsContainer)(contract.path)
       } yield HttpEntity(ContentType(MediaTypes.`application/pdf`), byteStream.toByteArray())
 
