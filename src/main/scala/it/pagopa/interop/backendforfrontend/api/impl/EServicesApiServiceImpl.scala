@@ -852,8 +852,8 @@ final case class EServicesApiServiceImpl(
     eServiceId: String
   )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route = {
     val result = for {
-      eServiceUUID <- eServiceId.toFutureUUID
-      _            <- catalogProcessService.deleteEService(eServiceUUID)
+      eServiceUuid <- eServiceId.toFutureUUID
+      _            <- catalogProcessService.deleteEService(eServiceUuid)
     } yield ()
 
     onComplete(result) {
