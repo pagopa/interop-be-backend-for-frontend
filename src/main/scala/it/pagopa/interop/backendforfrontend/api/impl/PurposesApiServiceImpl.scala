@@ -147,7 +147,6 @@ final case class PurposesApiServiceImpl(
         versionUuid,
         PurposeProcess.RejectPurposeVersionPayload(payload.rejectionReason)
       )
-      _           <- authorizationProcessService.removePurposeFromClients(purposeUuid)
     } yield ()
 
     onComplete(result) {
