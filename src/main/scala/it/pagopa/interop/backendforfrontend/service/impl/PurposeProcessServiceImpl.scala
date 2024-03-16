@@ -59,10 +59,7 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
           rejectPurposeVersionPayload = payload,
           xCorrelationId = correlationId
         )(BearerToken(bearerToken))
-      invoker.invoke(
-        request,
-        s"Reject Purpose $purposeId with version $versionId and reason ${payload.rejectionReason}"
-      )
+      invoker.invoke(request, s"Reject version $versionId of purpose $purposeId")
     }
 
   override def archivePurposeVersion(purposeId: UUID, versionId: UUID)(implicit

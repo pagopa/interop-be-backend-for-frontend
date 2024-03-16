@@ -10292,8 +10292,6 @@ components:
       properties:
         rejectionReason:
           type: string
-          minimum: 10
-          maximum: 250
       required:
         - rejectionReason
     GoogleSAMLPayload:

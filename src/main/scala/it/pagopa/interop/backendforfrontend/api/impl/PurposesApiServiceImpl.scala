@@ -137,7 +137,7 @@ final case class PurposesApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): akka.http.scaladsl.server.Route = {
-    logger.info(s"Rejecting purpose $purposeId with version $versionId")
+    logger.info(s"Rejecting version $versionId of purpose $purposeId")
 
     val result: Future[Unit] = for {
       purposeUuid <- purposeId.toFutureUUID
@@ -151,7 +151,7 @@ final case class PurposesApiServiceImpl(
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error rejecting purpose $purposeId with version $versionId", headers) orElse { case Success(_) =>
+      handleError(s"Error rejecting version $versionId of purpose $purposeId", headers) orElse { case Success(_) =>
         rejectPurposeVersion204(headers)
       }
     }
