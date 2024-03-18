@@ -56,6 +56,7 @@ object Handlers {
     case Failure(err: EServiceDescriptorNotFound)          => notFound(err, logMessage, headers)
     case Failure(err: EServiceRiskAnalysisNotFound)        => notFound(err, logMessage, headers)
     case Failure(err: PrivacyNoticeNotFound)               => notFound(err, logMessage, headers)
+    case Failure(err: ContractNotFound)                    => notFound(err, logMessage, headers)
     case Failure(err)                                      => internalServerError(err, logMessage, headers)
   }
 
