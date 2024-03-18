@@ -52,6 +52,7 @@ trait AgreementProcessService {
     eServiceName: Option[String],
     producersIds: Seq[UUID] = Seq.empty,
     consumersIds: Seq[UUID] = Seq.empty,
+    states: Seq[AgreementState],
     limit: Int,
     offset: Int
   )(implicit contexts: Seq[(String, String)]): Future[CompactEServices]
