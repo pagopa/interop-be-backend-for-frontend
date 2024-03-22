@@ -17,7 +17,7 @@ import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
   validate
 }
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{MissingSelfcareId, SelfcareNotFound, UnknownTenantOrigin}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{MissingSelfcareId, UnknownTenantOrigin}
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model.{IdentityToken, Problem, SessionToken}
 import it.pagopa.interop.backendforfrontend.service.{SelfcareV2ClientService, TenantProcessService}
@@ -31,8 +31,6 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
-import it.pagopa.interop.backendforfrontend.service.types.SelfcareV2ClientServiceTypes._
-import it.pagopa.interop.tenantprocess.client.model.TenantUnitType
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
@@ -67,10 +65,10 @@ final case class AuthorizationApiServiceImpl(
     val result: Future[(SessionToken, RateLimitStatus)] = for {
       (sessionClaims, roles, selfcareId) <- readJwt(identityToken).toFuture
       internalContexts                   <- generateInternalTokenContexts(interopTokenGenerator, sessionClaims)
-      tenantId <- getTenantOr(selfcareId)(upsertTenantBySelfcareId(selfcareId)(internalContexts))(internalContexts)
-      tenant   <- tenantProcessService.getTenant(tenantId)(internalContexts)
-      _        <- assertTenantAllowed(selfcareId, tenant.externalId.origin)
-      rateLimitStatus <- rateLimiter.rateLimiting(tenantId)
+      tenantId                           <- getTenant(selfcareId)(internalContexts)
+      tenant                             <- tenantProcessService.getTenant(tenantId)(internalContexts)
+      _                                  <- assertTenantAllowed(selfcareId, tenant.externalId.origin)
+      rateLimitStatus                    <- rateLimiter.rateLimiting(tenantId)
       customClaims = buildJwtCustomClaims(
         roles,
         tenantId,
@@ -100,40 +98,14 @@ final case class AuthorizationApiServiceImpl(
       Future.successful(())
     else Future.failed(UnknownTenantOrigin(selfcareId))
 
-  private def getTenantOr(
-    selfcareId: String
-  )(alternative: => Future[UUID])(implicit contexts: Seq[(String, String)]): Future[UUID] = {
+  private def getTenant(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] = {
     for {
       selfcareUuid <- selfcareId.toFutureUUID
       id           <- tenantProcessService
         .getBySelfcareId(selfcareUuid)
         .map(_.id)
-        .recoverWith { case _: SelfcareNotFound => alternative }
     } yield id
   }
-
-  private def upsertTenantBySelfcareId(selfcareId: String)(implicit contexts: Seq[(String, String)]): Future[UUID] =
-    for {
-      selfcareUuid      <- selfcareId.toFutureUUID
-      institution       <- selfcareV2ClientService.getInstitution(selfcareUuid)
-      institutionApi    <- institution.toApi.toFuture
-      _                 <- assertTenantAllowed(selfcareId, institutionApi.origin)
-      subUnitType       <- institutionApi.subUnitType.traverse(TenantUnitType.fromValue(_).toFuture)
-      onboardingData    <- selfcareV2ClientService.getOnboardingsInstitution(institutionApi.id, None)
-      onboardingDataApi <- onboardingData.toApi.toFuture
-      externalId =
-        if (institutionApi.origin == "IPA") institutionApi.subunitCode.getOrElse(institutionApi.originId)
-        else institutionApi.taxCode
-      resourceId <- tenantProcessService
-        .selfcareUpsertTenant(
-          institutionApi.origin,
-          externalId,
-          institutionApi.description,
-          None,
-          onboardingDataApi.onboardedAt,
-          subUnitType
-        )(institutionApi.id.toString)
-    } yield resourceId.id
 
   def readJwt(identityToken: IdentityToken): Try[(Map[String, AnyRef], String, String)] = for {
     claims        <- jwtReader.getClaims(identityToken.identity_token)
