@@ -317,9 +317,7 @@ final case class PurposesApiServiceImpl(
   def getRejectedVersion(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] =
     purpose.versions
       .maxByOption(_.createdAt)
-      .collect {
-        case x if x.state == PurposeProcess.PurposeVersionState.REJECTED => x
-      }
+      .filter(_.state == PurposeProcess.PurposeVersionState.REJECTED)
 
   def getCurrentVersion(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] = {
 
