@@ -11534,6 +11534,8 @@ components:
             $ref: '#/components/schemas/CompactClient'
         waitingForApprovalVersion:
           $ref: '#/components/schemas/PurposeVersion'
+        rejectedVersion:
+          $ref: '#/components/schemas/PurposeVersion'
         suspendedByConsumer:
           type: boolean
         suspendedByProducer:
@@ -11729,6 +11731,8 @@ components:
           format: int32
         riskAnalysisDocument:
           $ref: '#/components/schemas/PurposeVersionDocument'
+        rejectionReason:
+          type: string
       required:
         - id
         - state
