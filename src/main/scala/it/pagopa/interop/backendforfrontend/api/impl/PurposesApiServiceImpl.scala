@@ -314,11 +314,21 @@ final case class PurposesApiServiceImpl(
     }
   }
 
-  def getCurrentVersion(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] =
+  def getRejectedVersion(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] =
     purpose.versions
-      .filter(v => v.state != PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
+      .maxByOption(_.createdAt)
+      .filter(_.state == PurposeProcess.PurposeVersionState.REJECTED)
+
+  def getCurrentVersion(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] = {
+
+    val statesToExclude: Set[PurposeProcess.PurposeVersionState] =
+      Set(PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL, PurposeProcess.PurposeVersionState.REJECTED)
+
+    purpose.versions
+      .filterNot(v => statesToExclude(v.state))
       .sortBy(_.createdAt)
       .lastOption
+  }
 
   def getWaitingForApproval(purpose: PurposeProcess.Purpose): Option[PurposeProcess.PurposeVersion] =
     purpose.versions.find(_.state == PurposeProcess.PurposeVersionState.WAITING_FOR_APPROVAL)
@@ -344,6 +354,7 @@ final case class PurposesApiServiceImpl(
       else Future.successful(Nil)
     currentVersion            = getCurrentVersion(purpose)
     waitingForApprovalVersion = getWaitingForApproval(purpose)
+    rejectedVersion           = getRejectedVersion(purpose)
   } yield purpose.toApi(
     eService,
     agreement,
@@ -352,7 +363,8 @@ final case class PurposesApiServiceImpl(
     producer,
     consumer,
     clients,
-    waitingForApprovalVersion
+    waitingForApprovalVersion,
+    rejectedVersion
   )
 
   private def getAllClients(consumerId: UUID, purposeId: Option[UUID])(implicit

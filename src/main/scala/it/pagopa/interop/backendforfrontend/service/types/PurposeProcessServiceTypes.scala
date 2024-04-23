@@ -71,7 +71,8 @@ object PurposeProcessServiceTypes {
       firstActivationAt = pv.firstActivationAt,
       dailyCalls = pv.dailyCalls,
       riskAnalysisDocument = pv.riskAnalysis.map(_.toApi),
-      suspendedAt = pv.suspendedAt
+      suspendedAt = pv.suspendedAt,
+      rejectionReason = pv.rejectionReason
     )
   }
 
@@ -107,7 +108,8 @@ object PurposeProcessServiceTypes {
       producer: TenantProcess.Tenant,
       consumer: TenantProcess.Tenant,
       clients: Seq[AuthorizationProcess.ClientWithKeys],
-      waitingForApprovalVersion: Option[PurposeProcess.PurposeVersion]
+      waitingForApprovalVersion: Option[PurposeProcess.PurposeVersion],
+      rejectedVersion: Option[PurposeProcess.PurposeVersion]
     ): Purpose = Purpose(
       id = p.id,
       title = p.title,
@@ -141,7 +143,8 @@ object PurposeProcessServiceTypes {
       isFreeOfCharge = p.isFreeOfCharge,
       freeOfChargeReason = p.freeOfChargeReason,
       dailyCallsPerConsumer = currentDescriptor.dailyCallsPerConsumer,
-      dailyCallsTotal = currentDescriptor.dailyCallsTotal
+      dailyCallsTotal = currentDescriptor.dailyCallsTotal,
+      rejectedVersion = rejectedVersion.map(_.toApi)
     )
 
     def toApiResource: CreatedResource = CreatedResource(id = p.id)
