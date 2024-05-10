@@ -11716,9 +11716,6 @@ components:
         suspendedAt:
           type: string
           format: date-time
-        expectedApprovalDate:
-          type: string
-          format: date-time
         updatedAt:
           type: string
           format: date-time

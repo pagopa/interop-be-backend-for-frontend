@@ -66,7 +66,6 @@ object PurposeProcessServiceTypes {
       id = pv.id,
       state = pv.state.toApi,
       createdAt = pv.createdAt,
-      expectedApprovalDate = pv.expectedApprovalDate,
       updatedAt = pv.updatedAt,
       firstActivationAt = pv.firstActivationAt,
       dailyCalls = pv.dailyCalls,
