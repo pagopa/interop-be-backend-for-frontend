@@ -180,38 +180,6 @@ final case class PurposesApiServiceImpl(
     }
   }
 
-  override def updateWaitingForApprovalPurposeVersion(
-    purposeId: String,
-    versionId: String,
-    seed: WaitingForApprovalPurposeVersionUpdateContentSeed
-  )(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerPurposeVersionResource: ToEntityMarshaller[PurposeVersionResource],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
-    logger.info(s"Updating purpose $purposeId with version $versionId in waiting for approval state")
-
-    val result: Future[PurposeVersionResource] = for {
-      purposeUuid    <- purposeId.toFutureUUID
-      versionUuid    <- versionId.toFutureUUID
-      purposeVersion <- purposeProcessService.updateWaitingForApprovalPurposeVersion(
-        purposeUuid,
-        versionUuid,
-        seed.toSeed
-      )
-    } yield PurposeVersionResource(purposeId = purposeUuid, versionId = purposeVersion.id)
-
-    onComplete(result) {
-      val headers: List[HttpHeader] = headersFromContext()
-      handleError(
-        s"Error updating purpose $purposeId with version $versionId in waiting for approval state",
-        headers
-      ) orElse { case Success(resource) =>
-        updateWaitingForApprovalPurposeVersion200(headers)(resource)
-      }
-    }
-  }
-
   override def getRiskAnalysisDocument(purposeId: String, versionId: String, documentId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],

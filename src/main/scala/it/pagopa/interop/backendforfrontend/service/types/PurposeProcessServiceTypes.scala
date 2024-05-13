@@ -55,12 +55,6 @@ object PurposeProcessServiceTypes {
       PurposeProcess.RiskAnalysisFormSeed(version = raf.version, answers = raf.answers)
   }
 
-  implicit class PurposeVersionUpdateSeedConverter(private val seed: WaitingForApprovalPurposeVersionUpdateContentSeed)
-      extends AnyVal {
-    def toSeed: PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent =
-      PurposeProcess.WaitingForApprovalPurposeVersionUpdateContent(expectedApprovalDate = seed.expectedApprovalDate)
-  }
-
   implicit class PurposeVersionsConverter(private val pv: PurposeProcess.PurposeVersion) extends AnyVal {
     def toApi: PurposeVersion = PurposeVersion(
       id = pv.id,
