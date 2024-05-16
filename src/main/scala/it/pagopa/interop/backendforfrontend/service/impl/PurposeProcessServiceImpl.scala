@@ -116,25 +116,6 @@ class PurposeProcessServiceImpl(purposeProcessUrl: String, blockingEc: Execution
     invoker.invoke(request, s"Suspending Version ${versionId.toString} of Purpose ${purposeId.toString}")
   }
 
-  override def updateWaitingForApprovalPurposeVersion(
-    purposeId: UUID,
-    versionId: UUID,
-    updateContent: WaitingForApprovalPurposeVersionUpdateContent
-  )(implicit contexts: Seq[(String, String)]): Future[PurposeVersion] = withHeaders[PurposeVersion] {
-    (bearerToken, correlationId) =>
-      val request: ApiRequest[PurposeVersion] =
-        api.updateWaitingForApprovalPurposeVersion(
-          purposeId = purposeId,
-          versionId = versionId,
-          waitingForApprovalPurposeVersionUpdateContent = updateContent,
-          xCorrelationId = correlationId
-        )(BearerToken(bearerToken))
-      invoker.invoke(
-        request,
-        s"Updating purpose ${purposeId.toString} version ${versionId.toString} with waiting for approval state"
-      )
-  }
-
   override def deletePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =
     withHeaders[Unit] { (bearerToken, correlationId) =>
       val request: ApiRequest[Unit] =
