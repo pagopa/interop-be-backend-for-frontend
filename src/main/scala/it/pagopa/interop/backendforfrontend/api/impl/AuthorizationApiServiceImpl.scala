@@ -153,7 +153,7 @@ final case class AuthorizationApiServiceImpl(
     organizationId <- orgClaimsMap.get("id").toTry(MissingClaim("id in organization in selfcare token"))
   } yield organizationId.toString
 
-  override def samlLoginCallback(sAMLResponse: String, relayState: String)(implicit
+  override def samlLoginCallback(sAMLResponse: String, relayState: Option[String])(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
