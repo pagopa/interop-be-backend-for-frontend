@@ -86,7 +86,6 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   implicit def contexts: Seq[(String, String)] =
     Seq("bearer" -> bearerToken, USER_ROLES -> "admin", ORGANIZATION_ID_CLAIM -> UUID.randomUUID.toString)
 
-  final val emptyRelayState: String = ""
 }
 
 object SpecHelper {

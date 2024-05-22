@@ -10263,7 +10263,6 @@ components:
           nullable: true
       required:
         - SAMLResponse
-        - RelayState
     SAMLTokenRequest:
       type: object
       properties:
