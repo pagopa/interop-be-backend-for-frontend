@@ -38,12 +38,6 @@ trait PurposeProcessService {
     contexts: Seq[(String, String)]
   ): Future[PurposeVersion]
 
-  def updateWaitingForApprovalPurposeVersion(
-    purposeId: UUID,
-    versionId: UUID,
-    waitingForApprovalPurposeVersionUpdateContent: WaitingForApprovalPurposeVersionUpdateContent
-  )(implicit contexts: Seq[(String, String)]): Future[PurposeVersion]
-
   def deletePurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
   def getRiskAnalysisDocument(purposeId: UUID, versionId: UUID, documentId: UUID)(implicit
