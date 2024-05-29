@@ -51,7 +51,7 @@ object Handlers {
     case Failure(err: InvalidInterfaceContentTypeDetected) => badRequest(err, logMessage, headers)
     case Failure(err: InvalidInterfaceFileDetected)        => badRequest(err, logMessage, headers)
     case Failure(err: CreateDocumentBadRequest)            => badRequest(err, logMessage, headers)
-    case Failure(err: MissinInterface)                 => badRequest(err, logMessage, headers)
+    case Failure(err: MissinInterface)                     => badRequest(err, logMessage, headers)
     case Failure(err: InvalidEServiceRequester)            => forbidden(err, logMessage, headers)
     case Failure(err: AgreementDescriptorNotFound)         => notFound(err, logMessage, headers)
     case Failure(err: EServiceDescriptorNotFound)          => notFound(err, logMessage, headers)
