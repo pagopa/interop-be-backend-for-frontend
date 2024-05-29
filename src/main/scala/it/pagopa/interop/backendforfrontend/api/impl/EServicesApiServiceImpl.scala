@@ -1,30 +1,30 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, HttpHeader}
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import io.circe.Json
+import io.circe.syntax._
+import io.circe.{Json, JsonObject}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.canBeUpgraded
+import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
-import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
+import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
-import it.pagopa.interop.catalogprocess.client.model.EServices
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
-import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
@@ -32,13 +32,15 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.Digester.toSha256
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.service.{UUIDSupplier, OffsetDateTimeSupplier}
-import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
-import java.time.format.DateTimeFormatter
+import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
+import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
-import java.io.File
+import java.io.{ByteArrayOutputStream, File}
 import java.nio.file.Files
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.util.zip.{ZipEntry, ZipOutputStream}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.xml.Elem
@@ -412,17 +414,18 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
-    def getResults(producerId: UUID, eServicesIds: List[UUID]): Future[EServices] = catalogProcessService.getEServices(
-      name = q,
-      eServicesIds = eServicesIds,
-      producersIds = List(producerId),
-      attributesIds = Nil,
-      agreementStates = Nil,
-      states = Nil,
-      mode = None,
-      offset = offset,
-      limit = limit
-    )
+    def getResults(producerId: UUID, eServicesIds: List[UUID]): Future[CatalogProcess.EServices] =
+      catalogProcessService.getEServices(
+        name = q,
+        eServicesIds = eServicesIds,
+        producersIds = List(producerId),
+        attributesIds = Nil,
+        agreementStates = Nil,
+        states = Nil,
+        mode = None,
+        offset = offset,
+        limit = limit
+      )
 
     val result: Future[ProducerEServices] = for {
       producerId    <- getOrganizationIdFutureUUID(contexts)
@@ -431,7 +434,7 @@ final case class EServicesApiServiceImpl(
         if (consumerUUIDs.isEmpty) getResults(producerId, Nil)
         else
           getProducerEServicesIds(producerId, consumerUUIDs).flatMap {
-            case Nil => Future.successful(EServices(Nil, 0))
+            case Nil => Future.successful(CatalogProcess.EServices(Nil, 0))
             case xs  => getResults(producerId, xs)
           }
     } yield ProducerEServices(
@@ -862,8 +865,6 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerFile: ToEntityMarshaller[File]
   ): Route = {
 
-    import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
-
     val dtf: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss")
 
     def getLines(consumers: Seq[EServiceConsumer]): Array[Byte] = {
@@ -900,5 +901,125 @@ final case class EServicesApiServiceImpl(
           )
       }
     }
+  }
+
+  override def exportEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerFile: ToEntityMarshaller[File]
+  ): Route = {
+
+    def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
+      val latestRiskAnalysis =
+        eService.riskAnalysis.sortBy(_.createdAt)(Ordering[OffsetDateTime].reverse).map(_.riskAnalysisForm).headOption
+
+      JsonObject(
+        "name"         -> Json.fromString(eService.name),
+        "description"  -> Json.fromString(eService.description),
+        "technology"   -> Json.fromString(eService.technology.toString),
+        "mode"         -> Json.fromString(eService.mode.toString),
+        "descriptor"   -> Json.obj(
+          "interface"               -> descriptor.interface
+            .map(interface =>
+              Json.obj("prettyName" -> Json.fromString(interface.prettyName), "path" -> Json.fromString(interface.path))
+            )
+            .getOrElse(Json.obj()),
+          "docs"                    -> Json.arr(
+            descriptor.docs.map(doc =>
+              Json.obj("prettyName" -> Json.fromString(doc.prettyName), "path" -> Json.fromString(doc.path))
+            ): _* // `: _*` is used to convert Seq to varargs for Json.arr
+          ),
+          "audience"                -> Json.arr(descriptor.audience.map(Json.fromString): _*),
+          "voucherLifespan"         -> Json.fromInt(descriptor.voucherLifespan),
+          "dailyCallsPerConsumer"   -> Json.fromInt(descriptor.dailyCallsPerConsumer),
+          "dailyCallsTotal"         -> Json.fromInt(descriptor.dailyCallsTotal),
+          "description"             -> descriptor.description.map(Json.fromString).getOrElse(Json.obj()),
+          "agreementApprovalPolicy" -> Json.fromString(descriptor.agreementApprovalPolicy.toString)
+        ),
+        "riskAnalysis" -> latestRiskAnalysis
+          .map(ra =>
+            Json.obj(
+              "version"       -> Json.fromString(ra.version),
+              "singleAnswers" -> Json.arr(
+                ra.singleAnswers.map(sa =>
+                  Json.obj(
+                    "key"   -> Json.fromString(sa.key),
+                    "value" -> sa.value.map(Json.fromString).getOrElse(Json.obj())
+                  )
+                ): _*
+              ),
+              "multiAnswers"  -> Json.arr(
+                ra.multiAnswers.map(ma =>
+                  Json.obj("key" -> Json.fromString(ma.key), "values" -> Json.arr(ma.values.map(Json.fromString): _*))
+                ): _*
+              )
+            )
+          )
+          .getOrElse(Json.obj())
+      ).asJson
+    }
+
+    def createZip(
+      folderName: String,
+      docs: Seq[(ByteArrayOutputStream, String)],
+      interfaceFile: (ByteArrayOutputStream, String),
+      config: Json
+    ): Array[Byte] = {
+
+      val bos    = new ByteArrayOutputStream()
+      val zipOut = new ZipOutputStream(bos)
+
+      docs.foreach { case (data, entryName) =>
+        zipOut.putNextEntry(new ZipEntry(s"$folderName/documents/$entryName"))
+        zipOut.write(data.toByteArray)
+        zipOut.closeEntry()
+      }
+
+      val interfaceFileName = interfaceFile._2
+      val interfaceData     = interfaceFile._1.toByteArray
+
+      zipOut.putNextEntry(new ZipEntry(s"$folderName/$interfaceFileName"))
+      zipOut.write(interfaceData)
+      zipOut.closeEntry()
+
+      zipOut.putNextEntry(new ZipEntry(s"$folderName/configuration.json"))
+      zipOut.write(config.toString.getBytes("UTF-8"))
+      zipOut.closeEntry()
+
+      zipOut.close()
+      bos.toByteArray
+    }
+
+    val result: Future[(String, HttpEntity.Strict)] = for {
+      eServiceUuid   <- eserviceId.toFutureUUID
+      descriptorUuid <- descriptorId.toFutureUUID
+      eService       <- catalogProcessService.getEServiceById(eServiceUuid)
+      descriptor     <- eService.descriptors
+        .find(_.id === descriptorUuid)
+        .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
+      interface      <- descriptor.interface.toFuture(MissinInterface(eServiceUuid, descriptorUuid))
+      interfaceFile  <- fileManager
+        .get(ApplicationConfiguration.eServiceDocumentsContainer)(interface.path)
+        .map(bytes => (bytes, interface.name))
+      docFiles       <- descriptor.docs.traverse(doc =>
+        fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(doc.path).map(bytes => (bytes, doc.name))
+      )
+      config   = extractConfig(eService, descriptor)
+      folderName = s"${eService.name}_V${}${descriptor.version}"
+      zipFile  = createZip(folderName, docFiles, interfaceFile, config)
+    } yield (s"$folderName.zip", HttpEntity(ContentType(MediaTypes.`application/octet-stream`), zipFile))
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error exporting eservice $eserviceId with descriptor $descriptorId", headers) orElse {
+        case Success((filename, resource)) =>
+          complete(
+            StatusCodes.OK,
+            headers ++ Seq(`Content-Disposition`(attachment, Map("filename" -> filename))),
+            resource
+          )
+      }
+    }
+
   }
 }

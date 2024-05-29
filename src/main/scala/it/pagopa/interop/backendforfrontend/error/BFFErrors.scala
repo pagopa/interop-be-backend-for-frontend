@@ -149,4 +149,7 @@ object BFFErrors {
 
   final case class ContractException(agreementId: String)
       extends ComponentError("0036", s"Contract exception for agreement $agreementId")
+
+  final case class MissinInterface(eServiceId: UUID, descriptorId: UUID)
+      extends ComponentError("0037", s"Missing interface for Eservice $eServiceId and descriptor $descriptorId")
 }
