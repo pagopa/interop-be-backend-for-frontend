@@ -980,11 +980,9 @@ final case class EServicesApiServiceImpl(
         zipOut.closeEntry()
       }
 
-      val interfaceFileName = interfaceFile._2
-      val interfaceData     = interfaceFile._1.toByteArray
-
+      val (interfaceData, interfaceFileName) = interfaceFile
       zipOut.putNextEntry(new ZipEntry(s"$folderName/$interfaceFileName"))
-      zipOut.write(interfaceData)
+      zipOut.write(interfaceData.toByteArray)
       zipOut.closeEntry()
 
       zipOut.putNextEntry(new ZipEntry(s"$folderName/configuration.json"))
