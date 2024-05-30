@@ -15,7 +15,7 @@ import it.pagopa.interop.commons.logging.ContextFieldsToLog
 import it.pagopa.interop.commons.ratelimiter
 import it.pagopa.interop.commons.ratelimiter.model.Headers
 import it.pagopa.interop.commons.utils.errors.AkkaResponses._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, TooManyRequests}
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, OperationForbidden, TooManyRequests}
 import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors, ServiceCode}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareV2Error}
@@ -52,7 +52,9 @@ object Handlers {
     case Failure(err: InvalidInterfaceFileDetected)        => badRequest(err, logMessage, headers)
     case Failure(err: CreateDocumentBadRequest)            => badRequest(err, logMessage, headers)
     case Failure(err: MissinInterface)                     => badRequest(err, logMessage, headers)
+    case Failure(ex: NotValidDescriptor)                   => badRequest(ex, logMessage)
     case Failure(err: InvalidEServiceRequester)            => forbidden(err, logMessage, headers)
+    case Failure(ex: OperationForbidden.type)              => forbidden(ex, logMessage)
     case Failure(err: AgreementDescriptorNotFound)         => notFound(err, logMessage, headers)
     case Failure(err: EServiceDescriptorNotFound)          => notFound(err, logMessage, headers)
     case Failure(err: EServiceRiskAnalysisNotFound)        => notFound(err, logMessage, headers)

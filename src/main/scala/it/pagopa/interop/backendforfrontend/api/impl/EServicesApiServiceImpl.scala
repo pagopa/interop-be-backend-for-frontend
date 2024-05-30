@@ -14,7 +14,11 @@ import io.circe.{Json, JsonObject}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.canBeUpgraded
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
+  assertRequesterAllowed,
+  canBeUpgraded,
+  verifyExportEligibility
+}
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
@@ -32,6 +36,7 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.Digester.toSha256
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
@@ -991,12 +996,15 @@ final case class EServicesApiServiceImpl(
     }
 
     val result: Future[(String, HttpEntity.Strict)] = for {
+      organizationId <- getOrganizationIdFutureUUID(contexts)
       eServiceUuid   <- eserviceId.toFutureUUID
       descriptorUuid <- descriptorId.toFutureUUID
       eService       <- catalogProcessService.getEServiceById(eServiceUuid)
+      _              <- assertRequesterAllowed(eService.producerId)(organizationId)
       descriptor     <- eService.descriptors
         .find(_.id === descriptorUuid)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
+      _              <- verifyExportEligibility(descriptor)
       interface      <- descriptor.interface.toFuture(MissinInterface(eServiceUuid, descriptorUuid))
       interfaceFile  <- fileManager
         .get(ApplicationConfiguration.eServiceDocumentsContainer)(interface.path)
@@ -1004,9 +1012,9 @@ final case class EServicesApiServiceImpl(
       docFiles       <- descriptor.docs.traverse(doc =>
         fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(doc.path).map(bytes => (bytes, doc.name))
       )
-      config   = extractConfig(eService, descriptor)
+      config     = extractConfig(eService, descriptor)
       folderName = s"${eService.name}_V${}${descriptor.version}"
-      zipFile  = createZip(folderName, docFiles, interfaceFile, config)
+      zipFile    = createZip(folderName, docFiles, interfaceFile, config)
     } yield (s"$folderName.zip", HttpEntity(ContentType(MediaTypes.`application/octet-stream`), zipFile))
 
     onComplete(result) {

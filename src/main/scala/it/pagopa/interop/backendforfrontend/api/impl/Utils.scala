@@ -5,13 +5,14 @@ import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistryprocess.client.model.Attribute
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.SamlNotValid
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{NotValidDescriptor, SamlNotValid}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.jwt.SUPPORT_ROLE
 import it.pagopa.interop.commons.utils._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import org.opensaml.DefaultBootstrap
@@ -27,6 +28,7 @@ import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util
 import java.util.UUID
 import javax.xml.parsers.DocumentBuilderFactory
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 object Utils {
@@ -217,4 +219,15 @@ object Utils {
       tenant.externalId.value
     ) ++ selfcareClaims
   }
+
+  def assertRequesterAllowed(resourceId: UUID)(requesterId: UUID)(implicit ec: ExecutionContext): Future[Unit] =
+    Future.failed(GenericComponentErrors.OperationForbidden).unlessA(resourceId == requesterId)
+
+  def verifyExportEligibility(descriptor: CatalogProcess.EServiceDescriptor): Future[Unit] =
+    descriptor.state match {
+      case CatalogProcess.EServiceDescriptorState.DRAFT =>
+        Future.failed(NotValidDescriptor(descriptor.id.toString, descriptor.state.toString))
+      case _                                            => Future.unit
+    }
+
 }
