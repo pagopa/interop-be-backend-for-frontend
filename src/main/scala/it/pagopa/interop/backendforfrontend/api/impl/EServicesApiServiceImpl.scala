@@ -1002,7 +1002,7 @@ final case class EServicesApiServiceImpl(
         .find(_.id === descriptorUuid)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
       _              <- verifyExportEligibility(descriptor)
-      interface      <- descriptor.interface.toFuture(MissinInterface(eServiceUuid, descriptorUuid))
+      interface      <- descriptor.interface.toFuture(MissingInterface(eServiceUuid, descriptorUuid))
       interfaceFile  <- fileManager
         .get(ApplicationConfiguration.eServiceDocumentsContainer)(interface.path)
         .map(bytes => (bytes, interface.name))
