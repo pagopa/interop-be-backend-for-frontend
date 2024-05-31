@@ -628,13 +628,13 @@ final case class EServicesApiServiceImpl(
       _                              <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      _                              <- FileManagerUtils.verify(doc, eService, isInterface).toFuture
-      serverUrls                     <- extractServerUrls(Files.readAllBytes(doc._2.toPath), isInterface).toFuture
-      filePath                       <- fileManager.store(
+      _          <- FileManagerUtils.verify(Files.readAllBytes(doc._2.toPath), eService, isInterface).toFuture
+      serverUrls <- extractServerUrls(Files.readAllBytes(doc._2.toPath), isInterface).toFuture
+      filePath   <- fileManager.store(
         ApplicationConfiguration.eServiceDocumentsContainer,
         ApplicationConfiguration.eServiceDocumentsPath
       )(documentIdUuid.toString, doc)
-      _                              <- catalogProcessService
+      _          <- catalogProcessService
         .createEServiceDocument(
           eServiceId = eserviceUUID,
           descriptorId = descriptorUUID,
@@ -965,23 +965,22 @@ final case class EServicesApiServiceImpl(
 
     def createZip(
       folderName: String,
-      docs: Seq[(ByteArrayOutputStream, String)],
-      interfaceFile: (ByteArrayOutputStream, String),
+      docs: Seq[(Array[Byte], String)],
+      interfaceFile: (Array[Byte], String),
       config: Json
     ): Array[Byte] = {
-
       val bos    = new ByteArrayOutputStream()
       val zipOut = new ZipOutputStream(bos)
 
       docs.foreach { case (data, entryName) =>
         zipOut.putNextEntry(new ZipEntry(s"$folderName/documents/$entryName"))
-        zipOut.write(data.toByteArray)
+        zipOut.write(data)
         zipOut.closeEntry()
       }
 
       val (interfaceData, interfaceFileName) = interfaceFile
       zipOut.putNextEntry(new ZipEntry(s"$folderName/$interfaceFileName"))
-      zipOut.write(interfaceData.toByteArray)
+      zipOut.write(interfaceData)
       zipOut.closeEntry()
 
       zipOut.putNextEntry(new ZipEntry(s"$folderName/configuration.json"))
@@ -1005,13 +1004,18 @@ final case class EServicesApiServiceImpl(
       interface      <- descriptor.interface.toFuture(MissingInterface(eServiceUuid, descriptorUuid))
       interfaceFile  <- fileManager
         .get(ApplicationConfiguration.eServiceDocumentsContainer)(interface.path)
-        .map(bytes => (bytes, interface.name))
+        .map(_.toByteArray)
+      _              <- FileManagerUtils
+        .verify(interfaceFile, eService, isInterface = true)
+        .toFuture
       docFiles       <- descriptor.docs.traverse(doc =>
-        fileManager.get(ApplicationConfiguration.eServiceDocumentsContainer)(doc.path).map(bytes => (bytes, doc.name))
+        fileManager
+          .get(ApplicationConfiguration.eServiceDocumentsContainer)(doc.path)
+          .map(filestream => (filestream.toByteArray, doc.name))
       )
       config     = extractConfig(eService, descriptor)
       folderName = s"${eService.name}_V${}${descriptor.version}"
-      zipFile    = createZip(folderName, docFiles, interfaceFile, config)
+      zipFile    = createZip(folderName, docFiles, (interfaceFile, interface.name), config)
     } yield (s"$folderName.zip", HttpEntity(ContentType(MediaTypes.`application/octet-stream`), zipFile))
 
     onComplete(result) {
