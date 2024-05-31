@@ -16,19 +16,19 @@ object FileManagerUtils {
 
   private final val tika: Tika = new Tika()
 
-  def verify(file: Array[Byte], eService: EService, isInterface: Boolean)(implicit
+  def verify(file: Array[Byte], filename: String, eService: EService, isInterface: Boolean)(implicit
     contexts: Seq[(String, String)]
   ): Either[Throwable, Unit] =
-    verifyTechnology(file, eService).whenA(isInterface)
+    verifyTechnology(file, filename, eService).whenA(isInterface)
 
-  private def verifyTechnology(file: Array[Byte], eService: EService)(implicit
+  private def verifyTechnology(file: Array[Byte], filename: String, eService: EService)(implicit
     contexts: Seq[(String, String)]
   ): Either[Throwable, Unit] = {
     val restContentTypes: Set[String] = Set("text/x-yaml", "application/x-yaml", "application/json")
     val soapContentTypes: Set[String] = Set("application/xml", "application/soap+xml", "application/wsdl+xml")
 
     for {
-      detectedContentTypes <- Try(tika.detect(file)).toEither
+      detectedContentTypes <- Try(tika.detect(file, filename)).toEither
       _ = logger.debug(s"Detected $detectedContentTypes interface content type for eservice: ${eService.id}")
       isValidTechnology = eService.technology match {
         case EServiceTechnology.REST => restContentTypes.contains(detectedContentTypes)

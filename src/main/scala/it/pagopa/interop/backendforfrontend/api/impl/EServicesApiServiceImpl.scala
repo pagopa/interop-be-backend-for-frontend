@@ -628,7 +628,7 @@ final case class EServicesApiServiceImpl(
       _                              <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      _          <- FileManagerUtils.verify(Files.readAllBytes(doc._2.toPath), eService, isInterface).toFuture
+      _ <- FileManagerUtils.verify(Files.readAllBytes(doc._2.toPath), doc._1.fileName, eService, isInterface).toFuture
       serverUrls <- extractServerUrls(Files.readAllBytes(doc._2.toPath), isInterface).toFuture
       filePath   <- fileManager.store(
         ApplicationConfiguration.eServiceDocumentsContainer,
@@ -1006,7 +1006,7 @@ final case class EServicesApiServiceImpl(
         .get(ApplicationConfiguration.eServiceDocumentsContainer)(interface.path)
         .map(_.toByteArray)
       _              <- FileManagerUtils
-        .verify(interfaceFile, eService, isInterface = true)
+        .verify(interfaceFile, interface.name, eService, isInterface = true)
         .toFuture
       docFiles       <- descriptor.docs.traverse(doc =>
         fileManager
