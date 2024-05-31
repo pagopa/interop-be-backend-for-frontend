@@ -14,11 +14,7 @@ import io.circe.{Json, JsonObject}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
-  assertRequesterAllowed,
-  canBeUpgraded,
-  verifyExportEligibility
-}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{assertRequesterAllowed, canBeUpgraded}
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
@@ -963,6 +959,20 @@ final case class EServicesApiServiceImpl(
       ).asJson
     }
 
+    def checkRiskAnalysisForExport(eService: CatalogProcess.EService): Future[Unit] =
+      eService.mode match {
+        case CatalogProcess.EServiceMode.RECEIVE if eService.riskAnalysis.isEmpty =>
+          Future.failed(EServiceRiskAnalysisIsRequired(eService.id))
+        case _                                                                    => Future.unit
+      }
+
+    def verifyExportEligibility(descriptor: CatalogProcess.EServiceDescriptor): Future[Unit] =
+      descriptor.state match {
+        case CatalogProcess.EServiceDescriptorState.DRAFT =>
+          Future.failed(NotValidDescriptor(descriptor.id.toString, descriptor.state.toString))
+        case _                                            => Future.unit
+      }
+
     def createZip(
       folderName: String,
       docs: Seq[(Array[Byte], String)],
@@ -997,6 +1007,7 @@ final case class EServicesApiServiceImpl(
       descriptorUuid <- descriptorId.toFutureUUID
       eService       <- catalogProcessService.getEServiceById(eServiceUuid)
       _              <- assertRequesterAllowed(eService.producerId)(organizationId)
+      _              <- checkRiskAnalysisForExport(eService)
       descriptor     <- eService.descriptors
         .find(_.id === descriptorUuid)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))

@@ -5,7 +5,7 @@ import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistryprocess.client.model.Attribute
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{NotValidDescriptor, SamlNotValid}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.SamlNotValid
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute._
@@ -222,12 +222,4 @@ object Utils {
 
   def assertRequesterAllowed(resourceId: UUID)(requesterId: UUID)(implicit ec: ExecutionContext): Future[Unit] =
     Future.failed(GenericComponentErrors.OperationForbidden).unlessA(resourceId == requesterId)
-
-  def verifyExportEligibility(descriptor: CatalogProcess.EServiceDescriptor): Future[Unit] =
-    descriptor.state match {
-      case CatalogProcess.EServiceDescriptorState.DRAFT =>
-        Future.failed(NotValidDescriptor(descriptor.id.toString, descriptor.state.toString))
-      case _                                            => Future.unit
-    }
-
 }
