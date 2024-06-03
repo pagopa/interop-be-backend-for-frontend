@@ -1040,6 +1040,25 @@ final case class EServicesApiServiceImpl(
           )
       }
     }
+  }
 
+  override def getPresignedUrl()(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPresignedUrl: ToEntityMarshaller[PresignedUrl],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PresignedUrl] = for {
+      presignedUrl <- fileManager.getPresignedUrl(
+        ApplicationConfiguration.importEServiceContainer,
+        ApplicationConfiguration.importEServicePath
+      )
+    } yield presignedUrl
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError("Error getting presigned url", headers) orElse { case Success(resource) =>
+        getPresignedUrl200(headers)(resource)
+      }
+    }
   }
 }
