@@ -3883,7 +3883,7 @@ paths:
       tags:
         - eservices
       summary: Get presigned URL
-      operationId: getPresignedUrl
+      operationId: getImportEservicePresignedUrl
       responses:
         '200':
           description: Presigned URL retrieved

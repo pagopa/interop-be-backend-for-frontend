@@ -1056,7 +1056,7 @@ final case class EServicesApiServiceImpl(
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError("Error getting presigned url", headers) orElse { case Success(resource) =>
+      handleError("Error getting eservice import presigned url", headers) orElse { case Success(resource) =>
         getPresignedUrl200(headers)(resource)
       }
     }
