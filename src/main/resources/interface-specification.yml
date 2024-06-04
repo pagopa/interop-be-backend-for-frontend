@@ -11514,11 +11514,11 @@ components:
     PresignedUrl:
       type: object
       properties:
-        presignedUrl:
+        url:
           type: string
           format: uri
       required:
-        - presignedUrl
+        - url
     ProducerEService:
       type: object
       required:

@@ -1048,11 +1048,11 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[PresignedUrl] = for {
-      presignedUrl <- fileManager.getPresignedUrl(
+      url <- fileManager.getPresignedUrl(
         ApplicationConfiguration.importEServiceContainer,
         ApplicationConfiguration.importEServicePath
       )
-    } yield presignedUrl
+    } yield PresignedUrl(url)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
