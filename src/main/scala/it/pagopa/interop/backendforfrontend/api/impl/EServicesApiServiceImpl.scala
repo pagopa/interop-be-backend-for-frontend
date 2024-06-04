@@ -1048,7 +1048,7 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[PresignedUrl] = for {
-      url <- fileManager.getPresignedUrl(
+      url <- fileManager.generatePutPresignedUrl(
         ApplicationConfiguration.importEServiceContainer,
         ApplicationConfiguration.importEServicePath
       )
