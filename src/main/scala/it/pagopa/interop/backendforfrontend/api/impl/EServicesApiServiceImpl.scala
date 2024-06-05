@@ -906,7 +906,7 @@ final case class EServicesApiServiceImpl(
   override def exportEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerFile: ToEntityMarshaller[File]
+    toEntityMarshallerFile: ToEntityMarshaller[PresignedUrl]
   ): Route = {
 
     def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
@@ -921,12 +921,13 @@ final case class EServicesApiServiceImpl(
         "descriptor"   -> Json.obj(
           "interface"               -> descriptor.interface
             .map(interface =>
-              Json.obj("prettyName" -> Json.fromString(interface.prettyName), "path" -> Json.fromString(interface.path))
+              Json.obj("prettyName" -> Json.fromString(interface.prettyName), "path" -> Json.fromString(interface.name))
             )
             .getOrElse(Json.obj()),
           "docs"                    -> Json.arr(
             descriptor.docs.map(doc =>
-              Json.obj("prettyName" -> Json.fromString(doc.prettyName), "path" -> Json.fromString(doc.path))
+              Json
+                .obj("prettyName" -> Json.fromString(doc.prettyName), "path" -> Json.fromString(s"documents/$doc.name"))
             ): _* // `: _*` is used to convert Seq to varargs for Json.arr
           ),
           "audience"                -> Json.arr(descriptor.audience.map(Json.fromString): _*),
@@ -1001,7 +1002,7 @@ final case class EServicesApiServiceImpl(
       bos.toByteArray
     }
 
-    val result: Future[(String, HttpEntity.Strict)] = for {
+    val result: Future[PresignedUrl] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
       eServiceUuid   <- eserviceId.toFutureUUID
       descriptorUuid <- descriptorId.toFutureUUID
@@ -1026,20 +1027,25 @@ final case class EServicesApiServiceImpl(
       )
       config     = extractConfig(eService, descriptor)
       folderName = s"${eService.id}_${descriptor.id}"
+      zipName    = s"$folderName.zip"
       zipFile    = createZip(folderName, docFiles, (interfaceFile, interface.name), config)
-    } yield (s"$folderName.zip", HttpEntity(ContentType(MediaTypes.`application/octet-stream`), zipFile))
+      _          = fileManager.storeBytes(
+        ApplicationConfiguration.exportEserviceContainer,
+        ApplicationConfiguration.exportEservicePath,
+        zipName
+      )(zipFile)
+      presignedUrl <- fileManager.generateGetPresignedUrl(
+        ApplicationConfiguration.exportEserviceContainer,
+        ApplicationConfiguration.exportEservicePath,
+        zipName
+      )
+    } yield presignedUrl
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error exporting eservice $eserviceId with descriptor $descriptorId", headers) orElse {
-        case Success((filename, resource)) =>
-          complete(
-            StatusCodes.OK,
-            headers ++ Seq(`Content-Disposition`(attachment, Map("filename" -> filename))),
-            resource
-          )
+      handleError(s"Error exporting eservice $eserviceId with descriptor $descriptorId", headers) orElse { case Success(resource) =>
+        exportEServiceDescriptor200(headers)(resource)
       }
     }
-
   }
 }
