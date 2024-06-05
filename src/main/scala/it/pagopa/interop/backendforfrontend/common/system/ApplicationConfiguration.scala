@@ -79,6 +79,8 @@ object ApplicationConfiguration {
   val consumerDocumentsPath: String      = config.getString("backend-for-frontend.storage.consumer-documents.path")
   val eServiceDocumentsContainer: String = config.getString("backend-for-frontend.storage.eservice-documents.container")
   val eServiceDocumentsPath: String      = config.getString("backend-for-frontend.storage.eservice-documents.path")
+  val exportEserviceContainer: String    = config.getString("backend-for-frontend.storage.export-eservice.container")
+  val exportEservicePath: String         = config.getString("backend-for-frontend.storage.export-eservice.path")
   val importEServiceContainer: String    = config.getString("backend-for-frontend.storage.import-eservice.container")
   val importEServicePath: String         = config.getString("backend-for-frontend.storage.import-eservice.path")
   val allowListContainer: String         = config.getString("backend-for-frontend.storage.allow-list.container")

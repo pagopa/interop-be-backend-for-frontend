@@ -3815,10 +3815,9 @@ paths:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
           content:
-            application/octet-stream:
+            application/json:
               schema:
-                type: string
-                format: binary
+                $ref: '#/components/schemas/FileResource'
         '400':
           description: Invalid input
           headers:
@@ -12291,6 +12290,17 @@ components:
       required:
         - origin
         - value
+    FileResource:
+      type: object
+      properties:
+        filename:
+          type: string
+        url:
+          type: string
+          format: uri
+      required:
+        - url
+        - filename
     MailKind:
       type: string
       enum:
