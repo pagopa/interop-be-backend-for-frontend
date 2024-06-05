@@ -1025,7 +1025,7 @@ final case class EServicesApiServiceImpl(
           .map(filestream => (filestream.toByteArray, doc.name))
       )
       config     = extractConfig(eService, descriptor)
-      folderName = s"${eService.name}_V${}${descriptor.version}"
+      folderName = s"${eService.id}_${descriptor.id}"
       zipFile    = createZip(folderName, docFiles, (interfaceFile, interface.name), config)
     } yield (s"$folderName.zip", HttpEntity(ContentType(MediaTypes.`application/octet-stream`), zipFile))
 
