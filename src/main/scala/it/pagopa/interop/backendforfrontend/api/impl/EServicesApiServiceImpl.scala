@@ -905,8 +905,8 @@ final case class EServicesApiServiceImpl(
 
   override def exportEServiceDescriptor(eserviceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerFile: ToEntityMarshaller[PresignedUrl]
+    toEntityMarshallerFileResource: ToEntityMarshaller[FileResource],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
     def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
@@ -1002,7 +1002,7 @@ final case class EServicesApiServiceImpl(
       bos.toByteArray
     }
 
-    val result: Future[PresignedUrl] = for {
+    val result: Future[FileResource] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
       eServiceUuid   <- eserviceId.toFutureUUID
       descriptorUuid <- descriptorId.toFutureUUID
@@ -1039,12 +1039,13 @@ final case class EServicesApiServiceImpl(
         ApplicationConfiguration.exportEservicePath,
         zipName
       )
-    } yield presignedUrl
+    } yield FileResource(zipName, presignedUrl)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error exporting eservice $eserviceId with descriptor $descriptorId", headers) orElse { case Success(resource) =>
-        exportEServiceDescriptor200(headers)(resource)
+      handleError(s"Error exporting eservice $eserviceId with descriptor $descriptorId", headers) orElse {
+        case Success(resource) =>
+          exportEServiceDescriptor200(headers)(resource)
       }
     }
   }

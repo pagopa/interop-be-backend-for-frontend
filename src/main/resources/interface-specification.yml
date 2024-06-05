@@ -3817,7 +3817,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PresignedUrl'
+                $ref: '#/components/schemas/FileResource'
         '400':
           description: Invalid input
           headers:
@@ -10390,14 +10390,6 @@ components:
           type: string
         grant_type:
           type: string
-    PresignedUrl:
-      type: object
-      properties:
-        url:
-          type: string
-          format: uri
-      required:
-        - url
     PrivacyNotice:
       type: object
       properties:
@@ -12232,6 +12224,17 @@ components:
       required:
         - origin
         - value
+    FileResource:
+      type: object
+      properties:
+        filename:
+          type: string
+        url:
+          type: string
+          format: uri
+      required:
+        - url
+        - filename
     MailKind:
       type: string
       enum:
