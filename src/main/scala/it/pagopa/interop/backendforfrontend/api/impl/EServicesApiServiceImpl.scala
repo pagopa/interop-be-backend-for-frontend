@@ -11,6 +11,7 @@ import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import io.circe.syntax._
 import io.circe.{Json, JsonObject}
+import io.circe.parser.decode
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
@@ -21,6 +22,7 @@ import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
+import it.pagopa.interop.backendforfrontend.service.model.ImportedEservice
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
@@ -35,14 +37,16 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
-import java.io.{ByteArrayOutputStream, File}
-import java.nio.file.Files
+import java.io.{BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream, File}
+import java.nio.file.{Files, Path, Paths}
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-import java.util.zip.{ZipEntry, ZipOutputStream}
+import java.util.zip.{ZipEntry, ZipInputStream, ZipOutputStream}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.jdk.CollectionConverters.IteratorHasAsScala
+import scala.jdk.StreamConverters.StreamHasToScala
+import scala.util.{Success, Try, Using}
 import scala.xml.Elem
 
 final case class EServicesApiServiceImpl(
@@ -624,13 +628,14 @@ final case class EServicesApiServiceImpl(
       _                              <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      _                              <- FileManagerUtils.verify(doc, eService, isInterface).toFuture
-      serverUrls                     <- extractServerUrls(Files.readAllBytes(doc._2.toPath), isInterface).toFuture
-      filePath                       <- fileManager.store(
+      docFile = Files.readAllBytes(doc._2.toPath)
+      _          <- FileManagerUtils.verify(docFile, doc._1.fileName, eService, isInterface).toFuture
+      serverUrls <- extractServerUrls(docFile, isInterface).toFuture
+      filePath   <- fileManager.store(
         ApplicationConfiguration.eServiceDocumentsContainer,
         ApplicationConfiguration.eServiceDocumentsPath
       )(documentIdUuid.toString, doc)
-      _                              <- catalogProcessService
+      _          <- catalogProcessService
         .createEServiceDocument(
           eServiceId = eserviceUUID,
           descriptorId = descriptorUUID,
@@ -1056,6 +1061,97 @@ final case class EServicesApiServiceImpl(
       val headers: List[HttpHeader] = headersFromContext()
       handleError("Error getting eservice import presigned url", headers) orElse { case Success(resource) =>
         getImportEservicePresignedUrl200(headers)(resource)
+      }
+    }
+  }
+
+  override def importEService(fileResource: FileResource)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+
+    def extractZipToTempDirectory(zipBytes: Array[Byte], tenantId: String): Either[Throwable, Path] = {
+      Try {
+        val tempDir = Files.createTempDirectory(s"$tenantId/extractedZip") // Let me know if you have better suggestions
+        Using.resource(new ZipInputStream(new ByteArrayInputStream(zipBytes))) { zipIn =>
+          LazyList
+            .continually(zipIn.getNextEntry)
+            .takeWhile(_ != null)
+            .foreach { entry =>
+              val filePath = tempDir.resolve(entry.getName)
+              if (entry.isDirectory) {
+                Files.createDirectories(filePath)
+              } else {
+                Files.createDirectories(filePath.getParent)
+                Using.resource(new BufferedOutputStream(Files.newOutputStream(filePath))) { out =>
+                  val buffer = new Array[Byte](1024)
+                  Iterator
+                    .continually(zipIn.read(buffer))
+                    .takeWhile(_ != -1)
+                    .foreach(out.write(buffer, 0, _))
+                }
+              }
+            }
+        }
+        tempDir
+      }.toEither
+    }
+
+    def checkZipStructure(path: Path): Either[InvalidZipStructure, ImportedEservice] = {
+      val directoryName = path.getFileName.toString
+
+      def fileExists(fileName: String, fileNames: Set[String]): Either[InvalidZipStructure, Unit] = {
+        Either.cond(fileNames.contains(fileName), (), InvalidZipStructure(directoryName, s"$fileName not found"))
+      }
+
+      for {
+        jsonContent <- Either.catchNonFatal(Files.readString(path.resolve("configuration.json")))
+          .left.map(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.getMessage))
+        importedEservice <- decode[ImportedEservice](jsonContent)
+          .left.map(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.getMessage))
+        files = Files.list(path).iterator().asScala.toSet
+        fileNames = files.map(_.getFileName.toString)
+        _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) {
+          (acc, doc) => acc.flatMap(_ => fileExists(doc.name, fileNames))
+        }
+        _ <- importedEservice.descriptor.interface match {
+          case Some(interfaceValue) => fileExists(interfaceValue.name, fileNames)
+          case None => Right(())
+        }
+        files = Files.list(path).iterator().asScala.toSet
+        fileNames = files.map(_.getFileName.toString)
+        _ <- {
+          val allowedFiles = Set("configuration.json") ++ importedEservice.descriptor.docs.map(_.name) ++ importedEservice.descriptor.interface.map(_.name)
+          val extraFiles = fileNames -- allowedFiles
+          Either.cond(extraFiles.isEmpty, (), InvalidZipStructure(directoryName, s"Extra files found: ${extraFiles.mkString(", ")}"))
+        }
+      } yield importedEservice
+    }
+
+    def deleteDirectory(path: Path): Unit = {
+      if (Files.isDirectory(path)) {
+        Files.list(path).toScala(Seq).foreach(deleteDirectory)
+      }
+      Files.delete(path)
+    }
+
+    val result = for {
+      tenantId <- getOrganizationIdFuture(contexts)
+      zipFile  <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
+        s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
+      )
+      zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
+      importedEservice        <- checkZipStructure(zipPath).toFuture.recoverWith { case ex: Throwable =>
+        deleteDirectory(zipPath)
+        throw ex
+      }
+    } yield CreatedResource()
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError("Error importing eService", headers) orElse { case Success(resource) =>
+        importEService200(headers)(resource)
       }
     }
   }
