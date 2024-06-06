@@ -37,7 +37,6 @@ import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
 import java.io.{ByteArrayOutputStream, File}
 import java.nio.file.Files
-import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.zip.{ZipEntry, ZipOutputStream}
@@ -910,9 +909,6 @@ final case class EServicesApiServiceImpl(
   ): Route = {
 
     def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
-      val latestRiskAnalysis =
-        eService.riskAnalysis.sortBy(_.createdAt)(Ordering[OffsetDateTime].reverse).map(_.riskAnalysisForm).headOption
-
       JsonObject(
         "name"         -> Json.fromString(eService.name),
         "description"  -> Json.fromString(eService.description),
@@ -937,12 +933,12 @@ final case class EServicesApiServiceImpl(
           "description"             -> descriptor.description.map(Json.fromString).getOrElse(Json.obj()),
           "agreementApprovalPolicy" -> Json.fromString(descriptor.agreementApprovalPolicy.toString)
         ),
-        "riskAnalysis" -> latestRiskAnalysis
-          .map(ra =>
+        "riskAnalysis" -> Json.arr(
+          eService.riskAnalysis.map(ra =>
             Json.obj(
-              "version"       -> Json.fromString(ra.version),
+              "version"       -> Json.fromString(ra.riskAnalysisForm.version),
               "singleAnswers" -> Json.arr(
-                ra.singleAnswers.map(sa =>
+                ra.riskAnalysisForm.singleAnswers.map(sa =>
                   Json.obj(
                     "key"   -> Json.fromString(sa.key),
                     "value" -> sa.value.map(Json.fromString).getOrElse(Json.obj())
@@ -950,13 +946,13 @@ final case class EServicesApiServiceImpl(
                 ): _*
               ),
               "multiAnswers"  -> Json.arr(
-                ra.multiAnswers.map(ma =>
+                ra.riskAnalysisForm.multiAnswers.map(ma =>
                   Json.obj("key" -> Json.fromString(ma.key), "values" -> Json.arr(ma.values.map(Json.fromString): _*))
                 ): _*
               )
             )
-          )
-          .getOrElse(Json.obj())
+          ): _*
+        )
       ).asJson
     }
 
