@@ -118,6 +118,13 @@ object Dependencies {
     lazy val testkit = "org.scanamo" %% "scanamo-testkit" % scanamoVersion
   }
 
+  private[this] object circe {
+    lazy val namespace = "io.circe"
+    lazy val core      = namespace %% "circe-core"    % circeVersion
+    lazy val generic   = namespace %% "circe-generic" % circeVersion
+    lazy val parser    = namespace %% "circe-parser"  % circeVersion
+  }
+
   object Jars {
     lazy val overrides: Seq[ModuleID] =
       Seq(jackson.annotations % Compile, jackson.core % Compile, jackson.databind % Compile)
@@ -157,6 +164,9 @@ object Dependencies {
       tika.core                                % Compile,
       scanamo.scanamo                          % Compile,
       opensaml.core                            % Compile,
+      circe.core                               % Compile,
+      circe.generic                            % Compile,
+      circe.parser                             % Compile,
       akka.httpTestkit                         % Test,
       akka.testkit                             % Test,
       akka.untypedTestkit                      % Test,

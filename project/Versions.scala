@@ -14,6 +14,7 @@ object Versions {
   lazy val tikaVersion           = "2.5.0"
   lazy val scanamoVersion        = "1.0.0-M25"
   lazy val samlVersion           = "2.6.4"
+  lazy val circeVersion          = "0.14.3"
 }
 
 object PagopaVersions {
