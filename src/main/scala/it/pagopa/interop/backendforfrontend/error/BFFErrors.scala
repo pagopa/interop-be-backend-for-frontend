@@ -158,7 +158,4 @@ object BFFErrors {
         "0038",
         s"Descriptor $descriptorId has a not valid status for this operation $descriptorStatus"
       )
-
-  final case class InvalidZipStructure(directoryName: String, description: String)
-      extends ComponentError("0039", s"Invalid zip structure in $directoryName: $description")
 }
