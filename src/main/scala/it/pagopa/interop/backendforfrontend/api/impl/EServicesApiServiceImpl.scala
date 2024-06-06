@@ -960,13 +960,6 @@ final case class EServicesApiServiceImpl(
       ).asJson
     }
 
-    def checkRiskAnalysisForExport(eService: CatalogProcess.EService): Future[Unit] =
-      eService.mode match {
-        case CatalogProcess.EServiceMode.RECEIVE if eService.riskAnalysis.isEmpty =>
-          Future.failed(EServiceRiskAnalysisIsRequired(eService.id))
-        case _                                                                    => Future.unit
-      }
-
     def verifyExportEligibility(descriptor: CatalogProcess.EServiceDescriptor): Future[Unit] =
       descriptor.state match {
         case CatalogProcess.EServiceDescriptorState.DRAFT =>
@@ -1008,7 +1001,6 @@ final case class EServicesApiServiceImpl(
       descriptorUuid <- descriptorId.toFutureUUID
       eService       <- catalogProcessService.getEServiceById(eServiceUuid)
       _              <- assertRequesterAllowed(eService.producerId)(organizationId)
-      _              <- checkRiskAnalysisForExport(eService)
       descriptor     <- eService.descriptors
         .find(_.id === descriptorUuid)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))

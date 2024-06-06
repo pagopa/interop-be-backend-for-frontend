@@ -158,7 +158,4 @@ object BFFErrors {
         "0038",
         s"Descriptor $descriptorId has a not valid status for this operation $descriptorStatus"
       )
-
-  final case class EServiceRiskAnalysisIsRequired(eServiceId: UUID)
-      extends ComponentError("0039", s"At least one Risk Analysis is required for EService $eServiceId")
 }

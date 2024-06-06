@@ -52,7 +52,6 @@ object Handlers {
     case Failure(err: InvalidInterfaceFileDetected)        => badRequest(err, logMessage, headers)
     case Failure(err: CreateDocumentBadRequest)            => badRequest(err, logMessage, headers)
     case Failure(err: MissingInterface)                    => badRequest(err, logMessage, headers)
-    case Failure(err: EServiceRiskAnalysisIsRequired)      => badRequest(err, logMessage, headers)
     case Failure(err: NotValidDescriptor)                  => badRequest(err, logMessage)
     case Failure(err: InvalidEServiceRequester)            => forbidden(err, logMessage, headers)
     case Failure(err: OperationForbidden.type)             => forbidden(err, logMessage)
