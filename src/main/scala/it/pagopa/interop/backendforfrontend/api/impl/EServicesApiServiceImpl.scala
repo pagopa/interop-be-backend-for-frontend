@@ -624,13 +624,13 @@ final case class EServicesApiServiceImpl(
       _                              <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      _ <- FileManagerUtils.verify(Files.readAllBytes(doc._2.toPath), doc._1.fileName, eService, isInterface).toFuture
-      serverUrls <- extractServerUrls(Files.readAllBytes(doc._2.toPath), isInterface).toFuture
-      filePath   <- fileManager.store(
+      _                              <- FileManagerUtils.verify(doc, eService, isInterface).toFuture
+      serverUrls                     <- extractServerUrls(Files.readAllBytes(doc._2.toPath), isInterface).toFuture
+      filePath                       <- fileManager.store(
         ApplicationConfiguration.eServiceDocumentsContainer,
         ApplicationConfiguration.eServiceDocumentsPath
       )(documentIdUuid.toString, doc)
-      _          <- catalogProcessService
+      _                              <- catalogProcessService
         .createEServiceDocument(
           eServiceId = eserviceUUID,
           descriptorId = descriptorUUID,
@@ -960,13 +960,6 @@ final case class EServicesApiServiceImpl(
       ).asJson
     }
 
-    def checkRiskAnalysisForExport(eService: CatalogProcess.EService): Future[Unit] =
-      eService.mode match {
-        case CatalogProcess.EServiceMode.RECEIVE if eService.riskAnalysis.isEmpty =>
-          Future.failed(EServiceRiskAnalysisIsRequired(eService.id))
-        case _                                                                    => Future.unit
-      }
-
     def verifyExportEligibility(descriptor: CatalogProcess.EServiceDescriptor): Future[Unit] =
       descriptor.state match {
         case CatalogProcess.EServiceDescriptorState.DRAFT =>
@@ -1008,7 +1001,6 @@ final case class EServicesApiServiceImpl(
       descriptorUuid <- descriptorId.toFutureUUID
       eService       <- catalogProcessService.getEServiceById(eServiceUuid)
       _              <- assertRequesterAllowed(eService.producerId)(organizationId)
-      _              <- checkRiskAnalysisForExport(eService)
       descriptor     <- eService.descriptors
         .find(_.id === descriptorUuid)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
@@ -1017,9 +1009,6 @@ final case class EServicesApiServiceImpl(
       interfaceFile  <- fileManager
         .get(ApplicationConfiguration.eServiceDocumentsContainer)(interface.path)
         .map(_.toByteArray)
-      _              <- FileManagerUtils
-        .verify(interfaceFile, interface.name, eService, isInterface = true)
-        .toFuture
       docFiles       <- descriptor.docs.traverse(doc =>
         fileManager
           .get(ApplicationConfiguration.eServiceDocumentsContainer)(doc.path)
