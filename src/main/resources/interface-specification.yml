@@ -3875,15 +3875,9 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  /import/eservices/{tenantId}/presignedUrl:
+  /import/eservices/presignedUrl:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
-      - in: path
-        name: tenantId
-        required: true
-        schema:
-          type: string
-          format: uuid
       - in: query
         name: fileName
         required: true
