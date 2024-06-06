@@ -1119,8 +1119,6 @@ final case class EServicesApiServiceImpl(
           case Some(interfaceValue) => fileExists(interfaceValue.name, fileNames)
           case None => Right(())
         }
-        files = Files.list(path).iterator().asScala.toSet
-        fileNames = files.map(_.getFileName.toString)
         _ <- {
           val allowedFiles = Set("configuration.json") ++ importedEservice.descriptor.docs.map(_.name) ++ importedEservice.descriptor.interface.map(_.name)
           val extraFiles = fileNames -- allowedFiles
@@ -1129,9 +1127,9 @@ final case class EServicesApiServiceImpl(
       } yield importedEservice
     }
 
-    def deleteDirectory(path: Path): Unit = {
+    def deleteTempDirectory(path: Path): Unit = {
       if (Files.isDirectory(path)) {
-        Files.list(path).toScala(Seq).foreach(deleteDirectory)
+        Files.list(path).toScala(Seq).foreach(deleteTempDirectory)
       }
       Files.delete(path)
     }
@@ -1143,7 +1141,7 @@ final case class EServicesApiServiceImpl(
       )
       zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
       importedEservice        <- checkZipStructure(zipPath).toFuture.recoverWith { case ex: Throwable =>
-        deleteDirectory(zipPath)
+        deleteTempDirectory(zipPath)
         throw ex
       }
     } yield CreatedResource()
