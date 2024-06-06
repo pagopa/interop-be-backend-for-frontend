@@ -1110,8 +1110,7 @@ final case class EServicesApiServiceImpl(
           .left.map(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.getMessage))
         importedEservice <- decode[ImportedEservice](jsonContent)
           .left.map(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.getMessage))
-        files = Files.list(path).iterator().asScala.toSet
-        fileNames = files.map(_.getFileName.toString)
+        fileNames = Files.list(path).iterator().asScala.toSet.map(_.getFileName.toString)
         _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) {
           (acc, doc) => acc.flatMap(_ => fileExists(doc.name, fileNames))
         }
