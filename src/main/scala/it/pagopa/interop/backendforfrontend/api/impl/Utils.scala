@@ -1,19 +1,32 @@
 package it.pagopa.interop.backendforfrontend.api.impl
 
+import akka.http.scaladsl.server.directives.FileInfo
 import cats.syntax.all._
+import io.circe.Json
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistryprocess.client.model.Attribute
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegistry}
-import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.SamlNotValid
+import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
+  CreateDocumentBadRequest,
+  CreateDocumentUnexpectedError,
+  InvalidInterfaceFileDetected,
+  SamlNotValid
+}
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
+import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.DocumentKindWrapper
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes.AdaptableTenantAttribute._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.jwt.SUPPORT_ROLE
+import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
+import it.pagopa.interop.commons.utils.Digester.toSha256
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
+import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import org.opensaml.DefaultBootstrap
 import org.opensaml.saml2.core.Response
@@ -23,7 +36,8 @@ import org.opensaml.xml.validation.ValidationException
 import org.opensaml.xml.{Configuration, XMLObject}
 import org.w3c.dom
 
-import java.io.ByteArrayInputStream
+import java.io.{ByteArrayInputStream, File}
+import java.nio.file.Files
 import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util
 import java.util.UUID
@@ -31,6 +45,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
+import scala.xml.Elem
 object Utils {
 
   def tenantAttributesToApi[DepAttribute, ApiAttribute](
@@ -222,4 +237,75 @@ object Utils {
 
   def assertRequesterAllowed(resourceId: UUID)(requesterId: UUID)(implicit ec: ExecutionContext): Future[Unit] =
     Future.failed(GenericComponentErrors.OperationForbidden).unlessA(resourceId == requesterId)
+
+  def verifyAndCreateEServiceDocument(
+    catalogProcessService: CatalogProcessService,
+    fileManager: FileManager,
+    eService: CatalogProcess.EService,
+    doc: (FileInfo, File),
+    prettyName: String,
+    kind: String,
+    descriptorUUID: UUID,
+    uuidSupplier: UUIDSupplier
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Unit] = {
+
+    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (
+      isInterface
+    ) {
+      def getUrlsAndValidateEndpointsForOpenApi: Either[Throwable, List[String]] = for {
+        doc  <- InterfaceParser.parseOpenApi(bytes)
+        urls <- InterfaceParserUtils.getUrls[Json](doc)
+        _    <- InterfaceParserUtils.getEndpoints[Json](doc)
+      } yield urls
+
+      def getUrlsAndValidateEndpointsForWSDL: Either[Throwable, List[String]] = for {
+        doc  <- InterfaceParser.parseWSDL(bytes)
+        urls <- InterfaceParserUtils.getUrls[Elem](doc)
+        _    <- InterfaceParserUtils.getEndpoints[Elem](doc)
+      } yield urls
+
+      (getUrlsAndValidateEndpointsForOpenApi orElse getUrlsAndValidateEndpointsForWSDL)
+        .leftMap(_ => InvalidInterfaceFileDetected(eService.id.toString))
+    } else Right(List.empty)
+
+    val isInterface: Boolean = kind match {
+      case "INTERFACE" => true
+      case "DOCUMENT"  => false
+      case _           => false
+    }
+
+    val documentIdUuid: UUID = uuidSupplier.get()
+    val docFile              = Files.readAllBytes(doc._2.toPath)
+
+    for {
+      _          <- FileManagerUtils.verify(docFile, doc._1.fileName, eService, isInterface).toFuture
+      serverUrls <- extractServerUrls(docFile, isInterface).toFuture
+      filePath   <- fileManager.store(
+        ApplicationConfiguration.eServiceDocumentsContainer,
+        ApplicationConfiguration.eServiceDocumentsPath
+      )(documentIdUuid.toString, doc)
+      _          <- catalogProcessService
+        .createEServiceDocument(
+          eServiceId = eService.id,
+          descriptorId = descriptorUUID,
+          documentSeed = CatalogProcess.CreateEServiceDescriptorDocumentSeed(
+            documentId = documentIdUuid,
+            prettyName = prettyName,
+            fileName = doc._1.getFileName,
+            filePath = filePath,
+            kind = kind.toProcess,
+            contentType = doc._1.getContentType.toString(),
+            checksum = toSha256(doc._2),
+            serverUrls = serverUrls
+          )
+        )
+        .recoverWith {
+          case ex: CreateDocumentBadRequest      =>
+            fileManager.delete(ApplicationConfiguration.eServiceDocumentsContainer)(filePath)
+            Future.failed(ex)
+          case ex: CreateDocumentUnexpectedError =>
+            Future.failed(ex)
+        }
+    } yield ()
+  }
 }

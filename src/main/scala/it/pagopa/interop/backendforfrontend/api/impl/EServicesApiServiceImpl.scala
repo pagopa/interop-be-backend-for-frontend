@@ -9,13 +9,17 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import spray.json._
 import io.circe.syntax._
 import io.circe.{Json, JsonObject}
-import io.circe.parser.decode
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{assertRequesterAllowed, canBeUpgraded}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
+  assertRequesterAllowed,
+  canBeUpgraded,
+  verifyAndCreateEServiceDocument
+}
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
@@ -37,8 +41,8 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
-import java.io.{BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream, File}
-import java.nio.file.{Files, Path, Paths}
+import java.io.{BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
+import java.nio.file.{Files, Path}
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -46,7 +50,7 @@ import java.util.zip.{ZipEntry, ZipInputStream, ZipOutputStream}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.jdk.StreamConverters.StreamHasToScala
-import scala.util.{Success, Try, Using}
+import scala.util.{Failure, Success, Try, Using}
 import scala.xml.Elem
 
 final case class EServicesApiServiceImpl(
@@ -595,31 +599,6 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
 
-    val isInterface: Boolean = kind match {
-      case INTERFACE => true
-      case DOCUMENT  => false
-      case _         => false
-    }
-
-    def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (
-      isInterface
-    ) {
-      def getUrlsAndValidateEndpointsForOpenApi: Either[Throwable, List[String]] = for {
-        doc  <- InterfaceParser.parseOpenApi(bytes)
-        urls <- InterfaceParserUtils.getUrls[Json](doc)
-        _    <- InterfaceParserUtils.getEndpoints[Json](doc)
-      } yield urls
-
-      def getUrlsAndValidateEndpointsForWSDL: Either[Throwable, List[String]] = for {
-        doc  <- InterfaceParser.parseWSDL(bytes)
-        urls <- InterfaceParserUtils.getUrls[Elem](doc)
-        _    <- InterfaceParserUtils.getEndpoints[Elem](doc)
-      } yield urls
-
-      (getUrlsAndValidateEndpointsForOpenApi orElse getUrlsAndValidateEndpointsForWSDL)
-        .leftMap(_ => InvalidInterfaceFileDetected(eServiceId))
-    } else Right(List.empty)
-
     val documentIdUuid: UUID = uuidSupplier.get()
 
     val result: Future[CreatedResource] = for {
@@ -628,35 +607,16 @@ final case class EServicesApiServiceImpl(
       _                              <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      docFile = Files.readAllBytes(doc._2.toPath)
-      _          <- FileManagerUtils.verify(docFile, doc._1.fileName, eService, isInterface).toFuture
-      serverUrls <- extractServerUrls(docFile, isInterface).toFuture
-      filePath   <- fileManager.store(
-        ApplicationConfiguration.eServiceDocumentsContainer,
-        ApplicationConfiguration.eServiceDocumentsPath
-      )(documentIdUuid.toString, doc)
-      _          <- catalogProcessService
-        .createEServiceDocument(
-          eServiceId = eserviceUUID,
-          descriptorId = descriptorUUID,
-          documentSeed = CatalogProcess.CreateEServiceDescriptorDocumentSeed(
-            documentId = documentIdUuid,
-            prettyName = prettyName,
-            fileName = doc._1.getFileName,
-            filePath = filePath,
-            kind = kind.toProcess,
-            contentType = doc._1.getContentType.toString(),
-            checksum = toSha256(doc._2),
-            serverUrls = serverUrls
-          )
-        )
-        .recoverWith {
-          case ex: CreateDocumentBadRequest      =>
-            fileManager.delete(ApplicationConfiguration.eServiceDocumentsContainer)(filePath)
-            Future.failed(ex)
-          case ex: CreateDocumentUnexpectedError =>
-            Future.failed(ex)
-        }
+      _                              <- verifyAndCreateEServiceDocument(
+        catalogProcessService,
+        fileManager,
+        eService,
+        doc,
+        prettyName,
+        kind,
+        descriptorUUID,
+        uuidSupplier
+      )
     } yield CreatedResource(documentIdUuid)
 
     onComplete(result) {
@@ -1101,47 +1061,95 @@ final case class EServicesApiServiceImpl(
     def checkZipStructure(path: Path): Either[InvalidZipStructure, ImportedEservice] = {
       val directoryName = path.getFileName.toString
 
-      def fileExists(fileName: String, fileNames: Set[String]): Either[InvalidZipStructure, Unit] = {
-        Either.cond(fileNames.contains(fileName), (), InvalidZipStructure(directoryName, s"$fileName not found"))
+      def fileExists(filePath: Path): Either[InvalidZipStructure, Unit] = {
+        Either.cond(Files.exists(filePath), (), InvalidZipStructure(directoryName, s"File in '$filePath' not found"))
       }
 
       for {
-        jsonContent <- Either.catchNonFatal(Files.readString(path.resolve("configuration.json")))
-          .left.map(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.getMessage))
-        importedEservice <- decode[ImportedEservice](jsonContent)
-          .left.map(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.getMessage))
-        fileNames = Files.list(path).iterator().asScala.toSet.map(_.getFileName.toString)
-        _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) {
-          (acc, doc) => acc.flatMap(_ => fileExists(doc.name, fileNames))
+        jsonContent      <- Either
+          .catchNonFatal(Files.readString(path.resolve("configuration.json")))
+          .left
+          .map(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.getMessage))
+        importedEservice <- Try(jsonContent.parseJson.convertTo[ImportedEservice]) match {
+          case Success(eservice) => Right(eservice)
+          case Failure(ex)       =>
+            Left(InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.getMessage))
+        }
+        _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) { (acc, doc) =>
+          acc.flatMap(_ => fileExists(path.resolve(doc.path)))
         }
         _ <- importedEservice.descriptor.interface match {
-          case Some(interfaceValue) => fileExists(interfaceValue.name, fileNames)
-          case None => Right(())
+          case Some(interfaceValue) => fileExists(path.resolve(interfaceValue.path))
+          case None                 => Right(())
         }
         _ <- {
-          val allowedFiles = Set("configuration.json") ++ importedEservice.descriptor.docs.map(_.name) ++ importedEservice.descriptor.interface.map(_.name)
-          val extraFiles = fileNames -- allowedFiles
-          Either.cond(extraFiles.isEmpty, (), InvalidZipStructure(directoryName, s"Extra files found: ${extraFiles.mkString(", ")}"))
+          val filePaths    = Files.list(path).iterator().asScala.toSet.map(_.toString)
+          val allowedFiles = Set("configuration.json") ++
+            importedEservice.descriptor.docs.map(_.path) ++
+            importedEservice.descriptor.interface.map(_.path)
+
+          val extraFiles = filePaths -- allowedFiles
+          Either.cond(
+            extraFiles.isEmpty,
+            (),
+            InvalidZipStructure(directoryName, s"Extra files found: ${extraFiles.mkString(", ")}")
+          )
         }
       } yield importedEservice
     }
 
     def deleteTempDirectory(path: Path): Unit = {
-      if (Files.isDirectory(path)) {
+      if (Files.isDirectory(path))
         Files.list(path).toScala(Seq).foreach(deleteTempDirectory)
-      }
       Files.delete(path)
     }
 
+    def readFileAsBytes(filePath: String): Array[Byte] = {
+      Using.resource(new FileInputStream(new File(filePath))) { fileInputStream =>
+        val bytes = new Array[Byte](new File(filePath).length.toInt)
+        fileInputStream.read(bytes)
+        bytes
+      }
+    }
+
     val result = for {
-      tenantId <- getOrganizationIdFuture(contexts)
-      zipFile  <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
+      tenantId         <- getOrganizationIdFuture(contexts)
+      zipFile          <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
-      zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
-      importedEservice        <- checkZipStructure(zipPath).toFuture.recoverWith { case ex: Throwable =>
+      zipPath          <- extractZipToTempDirectory(zipFile, tenantId).toFuture
+      importedEservice <- checkZipStructure(zipPath).toFuture.recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
         throw ex
+      }
+      eserviceSeed = CatalogProcess.EServiceSeed(
+        name = importedEservice.name,
+        description = importedEservice.description,
+        technology = importedEservice.technology,
+        mode = importedEservice.mode
+      )
+      eService         <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
+        deleteTempDirectory(zipPath)
+        throw ex
+      }
+      descriptorSeed = CatalogProcess.EServiceDescriptorSeed(
+        audience = importedEservice.descriptor.audience,
+        voucherLifespan = importedEservice.descriptor.voucherLifespan,
+        dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
+        dailyCallsTotal = importedEservice.descriptor.dailyCallsTotal,
+        agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy,
+        attributes = CatalogProcess.AttributesSeed(certified = Seq.empty, declared = Seq.empty, verified = Seq.empty)
+      )
+      descriptor <- catalogProcessService.createDescriptor(eService.id, descriptorSeed).recoverWith {
+        case ex: Throwable =>
+          deleteTempDirectory(zipPath)
+          throw ex
+      }
+      _                <- importedEservice.descriptor.docs.traverse { doc =>
+        val filePath = zipPath.resolve(doc.path).toString
+        verifyAndCreateEServiceDocument(
+          catalogProcessService, fileManager, eService, doc, doc.prettyName, "DOCUMENT", descriptor.id, uuidSupplier
+        )
       }
     } yield CreatedResource()
 
