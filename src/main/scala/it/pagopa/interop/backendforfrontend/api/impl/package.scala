@@ -1,7 +1,7 @@
 package it.pagopa.interop.backendforfrontend.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.{ToEntityMarshaller, Marshaller}
+import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.EServiceConsumer
@@ -14,10 +14,18 @@ import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
 import akka.http.scaladsl.model.ContentTypes
+import it.pagopa.interop.backendforfrontend.service.model.{
+  ImportedDescriptor,
+  ImportedDoc,
+  ImportedEservice,
+  ImportedMultiAnswer,
+  ImportedRiskAnalysis,
+  ImportedSingleAnswer
+}
+
 import java.nio.charset.StandardCharsets
 import scala.io.{BufferedSource, Codec}
 import java.io.File
-
 import scala.concurrent.{ExecutionContext, Future}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
@@ -47,6 +55,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]         = jsonFormat2(CatalogEServices)
   implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]         = jsonFormat5(ProducerEService)
   implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices]       = jsonFormat2(ProducerEServices)
+
+  implicit val importedDocFormat: RootJsonFormat[ImportedDoc]                   = jsonFormat2(ImportedDoc)
+  implicit val importedDescriptorFormat: RootJsonFormat[ImportedDescriptor]     = jsonFormat8(ImportedDescriptor)
+  implicit val importedSingleAnswerFormat: RootJsonFormat[ImportedSingleAnswer] = jsonFormat2(ImportedSingleAnswer)
+  implicit val importedMultiAnswerFormat: RootJsonFormat[ImportedMultiAnswer]   = jsonFormat2(ImportedMultiAnswer)
+  implicit val importedRiskAnalysisFormat: RootJsonFormat[ImportedRiskAnalysis] = jsonFormat3(ImportedRiskAnalysis)
+  implicit val importedEserviceFormat: RootJsonFormat[ImportedEservice]         = jsonFormat6(ImportedEservice)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
