@@ -270,7 +270,6 @@ object Utils {
 
     val isInterface: Boolean = kind match {
       case "INTERFACE" => true
-      case "DOCUMENT"  => false
       case _           => false
     }
 

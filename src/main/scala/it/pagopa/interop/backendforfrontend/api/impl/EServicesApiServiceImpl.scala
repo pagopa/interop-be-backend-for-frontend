@@ -25,7 +25,7 @@ import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service._
-import it.pagopa.interop.backendforfrontend.service.model.ImportedEservice
+import it.pagopa.interop.backendforfrontend.service.model.{ImportedDoc, ImportedEservice}
 import it.pagopa.interop.backendforfrontend.service.types.AgreementProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes._
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
@@ -1063,8 +1063,7 @@ final case class EServicesApiServiceImpl(
       for {
         jsonContent      <- Either
           .catchNonFatal(Files.readString(path.resolve("configuration.json")))
-          .left
-          .map(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.getMessage))
+          .leftMap(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.getMessage))
         importedEservice <- Try(jsonContent.parseJson.convertTo[ImportedEservice]) match {
           case Success(eservice) => Right(eservice)
           case Failure(ex)       =>
@@ -1107,7 +1106,48 @@ final case class EServicesApiServiceImpl(
       }
     }
 
-    val result = for {
+    def verifyAndCreateImportedDoc(
+      eService: CatalogProcess.EService,
+      descriptor: CatalogProcess.EServiceDescriptor,
+      zipPath: Path,
+      file: ImportedDoc,
+      fileType: String
+    ): Future[Unit] = {
+      val filePath = zipPath.resolve(file.path).toString
+      val fileName = Paths.get(file.path).getFileName.toString
+
+      val result = for {
+        mimeType    <- Try(new Tika().detect(readFileAsBytes(filePath), fileName)).toEither.toFuture
+        contentType <- ContentType
+          .parse(mimeType)
+          .leftMap(errors => ContentTypeParsingError(mimeType, file.path, errors.map(_.toString())))
+          .toFuture
+        fileParts = (FileInfo("", fileName, contentType), new File(filePath))
+        _ <- verifyAndCreateEServiceDocument(
+          catalogProcessService,
+          fileManager,
+          eService,
+          fileParts,
+          file.prettyName,
+          fileType,
+          descriptor.id,
+          uuidSupplier
+        )
+      } yield ()
+
+      result.recoverWith { case ex: Throwable =>
+        deleteTempDirectory(zipPath)
+        for {
+          _ <- descriptor.docs.traverse { doc =>
+            catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, doc.id)
+          }
+          _ <- catalogProcessService.deleteEService(eService.id)
+          _ <- catalogProcessService.deleteDraft(eService.id, descriptor.id)
+        } yield throw ex
+      }
+    }
+
+    val result: Future[CreatedResource] = for {
       tenantId         <- getOrganizationIdFuture(contexts)
       zipFile          <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
@@ -1142,39 +1182,13 @@ final case class EServicesApiServiceImpl(
             _ <- catalogProcessService.deleteEService(eService.id)
           } yield throw ex
       }
+      _          <- importedEservice.descriptor.interface match {
+        case Some(interface) =>
+          verifyAndCreateImportedDoc(eService, descriptor, zipPath, interface, "INTERFACE")
+        case None            => Future.unit
+      }
       _          <- importedEservice.descriptor.docs
-        .traverse { doc =>
-          val filePath = zipPath.resolve(doc.path).toString
-          val fileName = Paths.get(doc.path).getFileName.toString
-
-          for {
-            mimeType    <- Try(new Tika().detect(readFileAsBytes(filePath), fileName)).toEither.toFuture
-            contentType <- ContentType
-              .parse(mimeType)
-              .leftMap(errors => ContentTypeParsingError(mimeType, doc.path, errors.map(_.toString())))
-              .toFuture
-            fileParts = (FileInfo("", fileName, contentType), new File(filePath))
-          } yield verifyAndCreateEServiceDocument(
-            catalogProcessService,
-            fileManager,
-            eService,
-            fileParts,
-            doc.prettyName,
-            "DOCUMENT",
-            descriptor.id,
-            uuidSupplier
-          )
-        }
-        .recoverWith { case ex: Throwable =>
-          deleteTempDirectory(zipPath)
-          for {
-            _ <- descriptor.docs.traverse { doc =>
-              catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, doc.id)
-            }
-            _ <- catalogProcessService.deleteEService(eService.id)
-            _ <- catalogProcessService.deleteDraft(eService.id, descriptor.id)
-          } yield throw ex
-        }
+        .traverse(verifyAndCreateImportedDoc(eService, descriptor, zipPath, _, "DOCUMENT"))
       _ = deleteTempDirectory(zipPath)
     } yield CreatedResource(eService.id)
 
