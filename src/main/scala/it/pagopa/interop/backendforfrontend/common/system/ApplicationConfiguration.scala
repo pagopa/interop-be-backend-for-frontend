@@ -86,7 +86,7 @@ object ApplicationConfiguration {
   val importEServiceContainer: String    = config.getString("backend-for-frontend.storage.import-eservice.container")
   val importEServicePath: String         = config.getString("backend-for-frontend.storage.import-eservice.path")
   val putUrlDurationMinutes: Int         =
-    config.getInt("backend-for-frontend.storage.export-eservice.storage.put-url-duration-minutes")
+    config.getInt("backend-for-frontend.storage.export-eservice.put-url-duration-minutes")
   val allowListContainer: String         = config.getString("backend-for-frontend.storage.allow-list.container")
   val allowListPath: String              = config.getString("backend-for-frontend.storage.allow-list.path")
   val allowListFilename: String          = config.getString("backend-for-frontend.storage.allow-list.filename")
