@@ -239,14 +239,14 @@ object Utils {
     Future.failed(GenericComponentErrors.OperationForbidden).unlessA(resourceId == requesterId)
 
   def verifyAndCreateEServiceDocument(
-    catalogProcessService: CatalogProcessService,
-    fileManager: FileManager,
-    eService: CatalogProcess.EService,
-    doc: (FileInfo, File),
-    prettyName: String,
-    kind: String,
-    descriptorUUID: UUID,
-    uuidSupplier: UUIDSupplier
+                                       catalogProcessService: CatalogProcessService,
+                                       fileManager: FileManager,
+                                       eService: CatalogProcess.EService,
+                                       fileParts: (FileInfo, File),
+                                       prettyName: String,
+                                       kind: String,
+                                       descriptorUUID: UUID,
+                                       uuidSupplier: UUIDSupplier
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Unit] = {
 
     def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (
@@ -275,15 +275,15 @@ object Utils {
     }
 
     val documentIdUuid: UUID = uuidSupplier.get()
-    val docFile              = Files.readAllBytes(doc._2.toPath)
+    val docFile              = Files.readAllBytes(fileParts._2.toPath)
 
     for {
-      _          <- FileManagerUtils.verify(docFile, doc._1.fileName, eService, isInterface).toFuture
+      _          <- FileManagerUtils.verify(docFile, fileParts._1.fileName, eService, isInterface).toFuture
       serverUrls <- extractServerUrls(docFile, isInterface).toFuture
       filePath   <- fileManager.store(
         ApplicationConfiguration.eServiceDocumentsContainer,
         ApplicationConfiguration.eServiceDocumentsPath
-      )(documentIdUuid.toString, doc)
+      )(documentIdUuid.toString, fileParts)
       _          <- catalogProcessService
         .createEServiceDocument(
           eServiceId = eService.id,
@@ -291,11 +291,11 @@ object Utils {
           documentSeed = CatalogProcess.CreateEServiceDescriptorDocumentSeed(
             documentId = documentIdUuid,
             prettyName = prettyName,
-            fileName = doc._1.getFileName,
+            fileName = fileParts._1.getFileName,
             filePath = filePath,
             kind = kind.toProcess,
-            contentType = doc._1.getContentType.toString(),
-            checksum = toSha256(doc._2),
+            contentType = fileParts._1.getContentType.toString(),
+            checksum = toSha256(fileParts._2),
             serverUrls = serverUrls
           )
         )

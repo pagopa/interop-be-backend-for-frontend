@@ -9,7 +9,6 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import spray.json._
 import io.circe.syntax._
 import io.circe.{Json, JsonObject}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
@@ -21,7 +20,7 @@ import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
   verifyAndCreateEServiceDocument
 }
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
-import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
+import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
 import it.pagopa.interop.backendforfrontend.error.Handlers.handleError
 import it.pagopa.interop.backendforfrontend.model._
@@ -33,16 +32,16 @@ import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTy
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.parser.{InterfaceParser, InterfaceParserUtils}
 import it.pagopa.interop.commons.utils.AkkaUtils._
-import it.pagopa.interop.commons.utils.Digester.toSha256
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
+import org.apache.tika.Tika
+import spray.json._
 
-import java.io.{BufferedOutputStream, ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
-import java.nio.file.{Files, Path}
+import java.io._
+import java.nio.file.{Files, Path, Paths}
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -51,7 +50,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.jdk.StreamConverters.StreamHasToScala
 import scala.util.{Failure, Success, Try, Using}
-import scala.xml.Elem
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -1128,7 +1126,7 @@ final case class EServicesApiServiceImpl(
         technology = importedEservice.technology,
         mode = importedEservice.mode
       )
-      eService         <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
+      eService <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
         throw ex
       }
@@ -1143,15 +1141,45 @@ final case class EServicesApiServiceImpl(
       descriptor <- catalogProcessService.createDescriptor(eService.id, descriptorSeed).recoverWith {
         case ex: Throwable =>
           deleteTempDirectory(zipPath)
-          throw ex
+          for {
+            _ <- catalogProcessService.deleteEService(eService.id)
+          } yield throw ex
       }
-      _                <- importedEservice.descriptor.docs.traverse { doc =>
-        val filePath = zipPath.resolve(doc.path).toString
-        verifyAndCreateEServiceDocument(
-          catalogProcessService, fileManager, eService, doc, doc.prettyName, "DOCUMENT", descriptor.id, uuidSupplier
-        )
-      }
-    } yield CreatedResource()
+      _          <- importedEservice.descriptor.docs
+        .traverse { doc =>
+          val filePath = zipPath.resolve(doc.path).toString
+          val fileName = Paths.get(doc.path).getFileName.toString
+
+          for {
+            mimeType    <- Try(new Tika().detect(readFileAsBytes(filePath), fileName)).toEither.toFuture
+            contentType <- ContentType
+              .parse(mimeType)
+              .leftMap(errors => ContentTypeParsingError(mimeType, doc.path, errors.map(_.toString())))
+              .toFuture
+            fileParts = (FileInfo("", fileName, contentType), new File(filePath))
+          } yield verifyAndCreateEServiceDocument(
+            catalogProcessService,
+            fileManager,
+            eService,
+            fileParts,
+            doc.prettyName,
+            "DOCUMENT",
+            descriptor.id,
+            uuidSupplier
+          )
+        }
+        .recoverWith { case ex: Throwable =>
+          deleteTempDirectory(zipPath)
+          for {
+            _ <- descriptor.docs.traverse { doc =>
+              catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, doc.id)
+            }
+            _ <- catalogProcessService.deleteEService(eService.id)
+            _ <- catalogProcessService.deleteDraft(eService.id, descriptor.id)
+          } yield throw ex
+        }
+      _ = deleteTempDirectory(zipPath)
+    } yield CreatedResource(eService.id)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
