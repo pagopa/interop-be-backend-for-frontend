@@ -870,9 +870,6 @@ final case class EServicesApiServiceImpl(
   ): Route = {
 
     def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
-      val latestRiskAnalysis =
-        eService.riskAnalysis.sortBy(_.createdAt)(Ordering[OffsetDateTime].reverse).map(_.riskAnalysisForm).headOption
-
       JsonObject(
         "name"         -> Json.fromString(eService.name),
         "description"  -> Json.fromString(eService.description),
@@ -897,12 +894,12 @@ final case class EServicesApiServiceImpl(
           "description"             -> descriptor.description.map(Json.fromString).getOrElse(Json.obj()),
           "agreementApprovalPolicy" -> Json.fromString(descriptor.agreementApprovalPolicy.toString)
         ),
-        "riskAnalysis" -> latestRiskAnalysis
-          .map(ra =>
+        "riskAnalysis" -> Json.arr(
+          eService.riskAnalysis.map(ra =>
             Json.obj(
-              "version"       -> Json.fromString(ra.version),
+              "version"       -> Json.fromString(ra.riskAnalysisForm.version),
               "singleAnswers" -> Json.arr(
-                ra.singleAnswers.map(sa =>
+                ra.riskAnalysisForm.singleAnswers.map(sa =>
                   Json.obj(
                     "key"   -> Json.fromString(sa.key),
                     "value" -> sa.value.map(Json.fromString).getOrElse(Json.obj())
@@ -910,13 +907,13 @@ final case class EServicesApiServiceImpl(
                 ): _*
               ),
               "multiAnswers"  -> Json.arr(
-                ra.multiAnswers.map(ma =>
+                ra.riskAnalysisForm.multiAnswers.map(ma =>
                   Json.obj("key" -> Json.fromString(ma.key), "values" -> Json.arr(ma.values.map(Json.fromString): _*))
                 ): _*
               )
             )
-          )
-          .getOrElse(Json.obj())
+          ): _*
+        )
       ).asJson
     }
 
@@ -983,12 +980,17 @@ final case class EServicesApiServiceImpl(
         ApplicationConfiguration.exportEservicePath,
         zipName
       )(zipFile)
-      presignedUrl <- fileManager.generateGetPresignedUrl(
-        ApplicationConfiguration.exportEserviceContainer,
-        ApplicationConfiguration.exportEservicePath,
-        zipName
-      )
-    } yield FileResource(zipName, presignedUrl)
+      presignedUrl <- fileManager
+        .generateGetPresignedUrl(
+          ApplicationConfiguration.exportEserviceContainer,
+          ApplicationConfiguration.exportEservicePath,
+          zipName,
+          FiniteDuration(ApplicationConfiguration.getUrlDurationMinutes, TimeUnit.MINUTES)
+        )
+        .toEither
+        .toFuture
+      presignedURI <- Try(new URI(presignedUrl)).toEither.toFuture
+    } yield FileResource(zipName, presignedURI)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
@@ -1006,11 +1008,17 @@ final case class EServicesApiServiceImpl(
   ): Route = {
     val result: Future[PresignedUrl] = for {
       organizationId <- getOrganizationIdFuture(contexts)
-      url            <- fileManager.generatePutPresignedUrl(
-        ApplicationConfiguration.importEServiceContainer,
-        s"${ApplicationConfiguration.importEServicePath}/$organizationId/$fileName"
-      )
-    } yield PresignedUrl(url)
+      presignedUrl   <- fileManager
+        .generatePutPresignedUrl(
+          ApplicationConfiguration.importEServiceContainer,
+          s"${ApplicationConfiguration.importEServicePath}/$organizationId",
+          fileName,
+          FiniteDuration(ApplicationConfiguration.putUrlDurationMinutes, TimeUnit.MINUTES)
+        )
+        .toEither
+        .toFuture
+      presignedURI   <- Try(new URI(presignedUrl)).toEither.toFuture
+    } yield PresignedUrl(presignedURI)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()

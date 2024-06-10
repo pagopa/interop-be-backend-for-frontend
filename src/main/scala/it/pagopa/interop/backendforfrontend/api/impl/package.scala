@@ -7,7 +7,7 @@ import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.EServiceConsumer
 import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
-import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
+import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uriFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
@@ -55,6 +55,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]         = jsonFormat2(CatalogEServices)
   implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]         = jsonFormat5(ProducerEService)
   implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices]       = jsonFormat2(ProducerEServices)
+
+  implicit val fileResourceFormat: RootJsonFormat[FileResource] = jsonFormat2(FileResource)
+  implicit val presignedUrlFormat: RootJsonFormat[PresignedUrl] = jsonFormat1(PresignedUrl)
 
   implicit val importedDocFormat: RootJsonFormat[ImportedDoc]                   = jsonFormat2(ImportedDoc)
   implicit val importedDescriptorFormat: RootJsonFormat[ImportedDescriptor]     = jsonFormat8(ImportedDescriptor)
