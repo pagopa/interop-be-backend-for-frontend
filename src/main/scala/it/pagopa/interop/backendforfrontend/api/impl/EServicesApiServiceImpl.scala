@@ -1050,11 +1050,17 @@ final case class EServicesApiServiceImpl(
   ): Route = {
     val result: Future[PresignedUrl] = for {
       organizationId <- getOrganizationIdFuture(contexts)
-      url            <- fileManager.generatePutPresignedUrl(
-        ApplicationConfiguration.importEServiceContainer,
-        s"${ApplicationConfiguration.importEServicePath}/$organizationId/$fileName"
-      )
-    } yield PresignedUrl(url)
+      presignedUrl   <- fileManager
+        .generatePutPresignedUrl(
+          ApplicationConfiguration.importEServiceContainer,
+          s"${ApplicationConfiguration.importEServicePath}/$organizationId",
+          fileName,
+          FiniteDuration(ApplicationConfiguration.putUrlDurationMinutes, TimeUnit.MINUTES)
+        )
+        .toEither
+        .toFuture
+      presignedURI   <- Try(new URI(presignedUrl)).toEither.toFuture
+    } yield PresignedUrl(presignedURI)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()

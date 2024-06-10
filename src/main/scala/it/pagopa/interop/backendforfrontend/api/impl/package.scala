@@ -49,6 +49,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices]       = jsonFormat2(ProducerEServices)
 
   implicit val fileResourceFormat: RootJsonFormat[FileResource] = jsonFormat2(FileResource)
+  implicit val presignedUrlFormat: RootJsonFormat[PresignedUrl] = jsonFormat1(PresignedUrl)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
