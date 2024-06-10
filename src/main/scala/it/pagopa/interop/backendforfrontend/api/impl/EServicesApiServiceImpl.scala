@@ -36,12 +36,15 @@ import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupp
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
 import java.io.{ByteArrayOutputStream, File}
+import java.net.URI
 import java.nio.file.Files
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import java.util.zip.{ZipEntry, ZipOutputStream}
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.util.{Success, Try}
 import scala.xml.Elem
 
 final case class EServicesApiServiceImpl(
@@ -1022,9 +1025,11 @@ final case class EServicesApiServiceImpl(
       presignedUrl <- fileManager.generateGetPresignedUrl(
         ApplicationConfiguration.exportEserviceContainer,
         ApplicationConfiguration.exportEservicePath,
-        zipName
-      )
-    } yield FileResource(zipName, presignedUrl)
+        zipName,
+        FiniteDuration(ApplicationConfiguration.getUrlDurationMinutes, TimeUnit.MINUTES)
+      ).toEither.toFuture
+      presignedURI <- Try(new URI(presignedUrl)).toEither.toFuture
+    } yield FileResource(zipName, presignedURI)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
