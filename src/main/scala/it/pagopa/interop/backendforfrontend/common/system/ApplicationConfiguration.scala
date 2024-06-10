@@ -82,7 +82,7 @@ object ApplicationConfiguration {
   val exportEserviceContainer: String    = config.getString("backend-for-frontend.storage.export-eservice.container")
   val exportEservicePath: String         = config.getString("backend-for-frontend.storage.export-eservice.path")
   val getUrlDurationMinutes: Int         =
-    config.getInt("backend-for-frontend.storage.export-eservice.storage.get-url-duration-minutes")
+    config.getInt("backend-for-frontend.storage.export-eservice.get-url-duration-minutes")
   val importEServiceContainer: String    = config.getString("backend-for-frontend.storage.import-eservice.container")
   val importEServicePath: String         = config.getString("backend-for-frontend.storage.import-eservice.path")
   val putUrlDurationMinutes: Int         =
