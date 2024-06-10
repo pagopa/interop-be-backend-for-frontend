@@ -1,23 +1,23 @@
 package it.pagopa.interop.backendforfrontend.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.{ToEntityMarshaller, Marshaller}
+import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.EServiceConsumer
 import it.pagopa.interop.commons.jwt.JWTConfiguration
 import it.pagopa.interop.commons.jwt.service.InteropTokenGenerator
-import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uuidFormat}
+import it.pagopa.interop.commons.utils.SprayCommonFormats.{offsetDateTimeFormat, uriFormat, uuidFormat}
 import it.pagopa.interop.commons.utils.TypeConversions.OptionOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.MissingClaim
 import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
 import akka.http.scaladsl.model.ContentTypes
+
 import java.nio.charset.StandardCharsets
 import scala.io.{BufferedSource, Codec}
 import java.io.File
-
 import scala.concurrent.{ExecutionContext, Future}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
@@ -47,6 +47,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val catalogEServicesFormat: RootJsonFormat[CatalogEServices]         = jsonFormat2(CatalogEServices)
   implicit val producerEServiceFormat: RootJsonFormat[ProducerEService]         = jsonFormat5(ProducerEService)
   implicit val producerEServicesFormat: RootJsonFormat[ProducerEServices]       = jsonFormat2(ProducerEServices)
+
+  implicit val fileResourceFormat: RootJsonFormat[FileResource] = jsonFormat2(FileResource)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)

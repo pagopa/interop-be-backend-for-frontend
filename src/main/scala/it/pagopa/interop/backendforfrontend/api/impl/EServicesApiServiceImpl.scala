@@ -36,13 +36,15 @@ import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupp
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 
 import java.io.{ByteArrayOutputStream, File}
+import java.net.URI
 import java.nio.file.Files
-import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import java.util.zip.{ZipEntry, ZipOutputStream}
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.util.{Success, Try}
 import scala.xml.Elem
 
 final case class EServicesApiServiceImpl(
@@ -910,9 +912,6 @@ final case class EServicesApiServiceImpl(
   ): Route = {
 
     def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
-      val latestRiskAnalysis =
-        eService.riskAnalysis.sortBy(_.createdAt)(Ordering[OffsetDateTime].reverse).map(_.riskAnalysisForm).headOption
-
       JsonObject(
         "name"         -> Json.fromString(eService.name),
         "description"  -> Json.fromString(eService.description),
@@ -937,12 +936,12 @@ final case class EServicesApiServiceImpl(
           "description"             -> descriptor.description.map(Json.fromString).getOrElse(Json.obj()),
           "agreementApprovalPolicy" -> Json.fromString(descriptor.agreementApprovalPolicy.toString)
         ),
-        "riskAnalysis" -> latestRiskAnalysis
-          .map(ra =>
+        "riskAnalysis" -> Json.arr(
+          eService.riskAnalysis.map(ra =>
             Json.obj(
-              "version"       -> Json.fromString(ra.version),
+              "version"       -> Json.fromString(ra.riskAnalysisForm.version),
               "singleAnswers" -> Json.arr(
-                ra.singleAnswers.map(sa =>
+                ra.riskAnalysisForm.singleAnswers.map(sa =>
                   Json.obj(
                     "key"   -> Json.fromString(sa.key),
                     "value" -> sa.value.map(Json.fromString).getOrElse(Json.obj())
@@ -950,13 +949,13 @@ final case class EServicesApiServiceImpl(
                 ): _*
               ),
               "multiAnswers"  -> Json.arr(
-                ra.multiAnswers.map(ma =>
+                ra.riskAnalysisForm.multiAnswers.map(ma =>
                   Json.obj("key" -> Json.fromString(ma.key), "values" -> Json.arr(ma.values.map(Json.fromString): _*))
                 ): _*
               )
             )
-          )
-          .getOrElse(Json.obj())
+          ): _*
+        )
       ).asJson
     }
 
@@ -1023,12 +1022,17 @@ final case class EServicesApiServiceImpl(
         ApplicationConfiguration.exportEservicePath,
         zipName
       )(zipFile)
-      presignedUrl <- fileManager.generateGetPresignedUrl(
-        ApplicationConfiguration.exportEserviceContainer,
-        ApplicationConfiguration.exportEservicePath,
-        zipName
-      )
-    } yield FileResource(zipName, presignedUrl)
+      presignedUrl <- fileManager
+        .generateGetPresignedUrl(
+          ApplicationConfiguration.exportEserviceContainer,
+          ApplicationConfiguration.exportEservicePath,
+          zipName,
+          FiniteDuration(ApplicationConfiguration.getUrlDurationMinutes, TimeUnit.MINUTES)
+        )
+        .toEither
+        .toFuture
+      presignedURI <- Try(new URI(presignedUrl)).toEither.toFuture
+    } yield FileResource(zipName, presignedURI)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
