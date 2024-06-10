@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.File
-import java.nio.file.{Files, Paths}
+import java.nio.file.Paths
 import java.util.UUID
 
 class FileManagerUtilsSpec() extends AnyWordSpec with Matchers with ScalaFutures {
