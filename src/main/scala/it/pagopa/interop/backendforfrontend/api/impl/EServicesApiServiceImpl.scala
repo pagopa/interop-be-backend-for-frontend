@@ -1022,12 +1022,15 @@ final case class EServicesApiServiceImpl(
         ApplicationConfiguration.exportEservicePath,
         zipName
       )(zipFile)
-      presignedUrl <- fileManager.generateGetPresignedUrl(
-        ApplicationConfiguration.exportEserviceContainer,
-        ApplicationConfiguration.exportEservicePath,
-        zipName,
-        FiniteDuration(ApplicationConfiguration.getUrlDurationMinutes, TimeUnit.MINUTES)
-      ).toEither.toFuture
+      presignedUrl <- fileManager
+        .generateGetPresignedUrl(
+          ApplicationConfiguration.exportEserviceContainer,
+          ApplicationConfiguration.exportEservicePath,
+          zipName,
+          FiniteDuration(ApplicationConfiguration.getUrlDurationMinutes, TimeUnit.MINUTES)
+        )
+        .toEither
+        .toFuture
       presignedURI <- Try(new URI(presignedUrl)).toEither.toFuture
     } yield FileResource(zipName, presignedURI)
 
