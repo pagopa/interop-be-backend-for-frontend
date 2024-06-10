@@ -66,9 +66,6 @@ final case class EServicesApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  private lazy val INTERFACE = "INTERFACE"
-  private lazy val DOCUMENT  = "DOCUMENT"
-
   private val ACTIVE_DESCRIPTOR_STATES_FILTER: List[CatalogProcess.EServiceDescriptorState] = List(
     CatalogProcess.EServiceDescriptorState.PUBLISHED,
     CatalogProcess.EServiceDescriptorState.SUSPENDED,
@@ -1123,8 +1120,8 @@ final case class EServicesApiServiceImpl(
       eserviceSeed = CatalogProcess.EServiceSeed(
         name = importedEservice.name,
         description = importedEservice.description,
-        technology = importedEservice.technology,
-        mode = importedEservice.mode
+        technology = importedEservice.technology.toProcess,
+        mode = importedEservice.mode.toProcess
       )
       eService <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
@@ -1135,7 +1132,7 @@ final case class EServicesApiServiceImpl(
         voucherLifespan = importedEservice.descriptor.voucherLifespan,
         dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
         dailyCallsTotal = importedEservice.descriptor.dailyCallsTotal,
-        agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy,
+        agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy.toProcess,
         attributes = CatalogProcess.AttributesSeed(certified = Seq.empty, declared = Seq.empty, verified = Seq.empty)
       )
       descriptor <- catalogProcessService.createDescriptor(eService.id, descriptorSeed).recoverWith {

@@ -1,9 +1,8 @@
 package it.pagopa.interop.backendforfrontend.service.model
 
-import it.pagopa.interop.catalogprocess.client.model.{AgreementApprovalPolicy, EServiceMode, EServiceTechnology}
+import it.pagopa.interop.backendforfrontend.model.{AgreementApprovalPolicy, EServiceMode, EServiceTechnology}
 
-
-final case class ImportedDoc(prettyName: String, path: String, contentType: String)
+final case class ImportedDoc(prettyName: String, path: String)
 final case class ImportedDescriptor(
   interface: Option[ImportedDoc],
   docs: Seq[ImportedDoc],
