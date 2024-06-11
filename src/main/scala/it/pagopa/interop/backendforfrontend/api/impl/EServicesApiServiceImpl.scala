@@ -1087,7 +1087,7 @@ final case class EServicesApiServiceImpl(
           case None                 => Right(())
         }
         _ <- {
-          val filePaths    = Files.list(path).iterator().asScala.toSet.map(_.toString)
+          val filePaths    = Files.list(path).iterator().asScala.map(_.toString).toSet
           val allowedFiles = Set("configuration.json") ++
             importedEservice.descriptor.docs.map(_.path) ++
             importedEservice.descriptor.interface.map(_.path)
