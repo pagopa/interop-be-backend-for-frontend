@@ -4,11 +4,16 @@ import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
-import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken, ApiError}
+import it.pagopa.interop.catalogprocess.client.invoker.{ApiError, ApiInvoker, ApiRequest, BearerToken}
 import it.pagopa.interop.catalogprocess.client.model._
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{CreateDocumentBadRequest, CreateDocumentUnexpectedError}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
+  CreateDocumentBadRequest,
+  CreateDocumentUnexpectedError,
+  CreateEserviceBadRequest,
+  CreateEserviceUnexpectedError
+}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
@@ -23,11 +28,19 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService] =
+  override def createEService(
+    eServiceSeed: EServiceSeed
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[EService] =
     withHeaders { (bearerToken, correlationId) =>
       val request: ApiRequest[EService] =
         api.createEService(xCorrelationId = correlationId, eServiceSeed = eServiceSeed)(BearerToken(bearerToken))
-      invoker.invoke(request, s"Eservice created")
+      invoker
+        .invoke(request, s"Eservice created")
+        .recoverWith {
+          case err: ApiError[_] if err.code < 500  => Future.failed(CreateEserviceBadRequest(eServiceSeed.name))
+          case err: ApiError[_] if err.code >= 500 =>
+            Future.failed(CreateEserviceUnexpectedError(eServiceSeed.toString))
+        }
     }
 
   def activateDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =

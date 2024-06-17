@@ -239,14 +239,14 @@ object Utils {
     Future.failed(GenericComponentErrors.OperationForbidden).unlessA(resourceId == requesterId)
 
   def verifyAndCreateEServiceDocument(
-                                       catalogProcessService: CatalogProcessService,
-                                       fileManager: FileManager,
-                                       eService: CatalogProcess.EService,
-                                       fileParts: (FileInfo, File),
-                                       prettyName: String,
-                                       kind: String,
-                                       descriptorUUID: UUID,
-                                       uuidSupplier: UUIDSupplier
+    catalogProcessService: CatalogProcessService,
+    fileManager: FileManager,
+    eService: CatalogProcess.EService,
+    fileParts: (FileInfo, File),
+    prettyName: String,
+    kind: String,
+    descriptorUUID: UUID,
+    uuidSupplier: UUIDSupplier
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Unit] = {
 
     def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (

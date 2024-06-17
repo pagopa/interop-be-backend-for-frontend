@@ -161,4 +161,10 @@ object BFFErrors {
 
   final case class InvalidZipStructure(directoryName: String, description: String)
       extends ComponentError("0039", s"Invalid zip structure in $directoryName: $description")
+
+  final case class CreateEserviceBadRequest(eServiceName: String)
+      extends ComponentError("0040", s"Bad request creating Eservice $eServiceName")
+
+  final case class CreateEserviceUnexpectedError(eServiceSeed: String)
+      extends ComponentError("0041", s"Unexpected error creating Eservice $eServiceSeed")
 }

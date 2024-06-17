@@ -51,7 +51,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.jdk.StreamConverters.StreamHasToScala
-import scala.util.{Failure, Success, Try, Using}
+import scala.util.{Success, Try, Using}
 
 final case class EServicesApiServiceImpl(
   agreementProcessService: AgreementProcessService,
@@ -86,7 +86,7 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
     val result: Future[CreatedResource] =
-      catalogProcessService.createEService(eServiceSeed.toProcess)(contexts).map(_.toApi)
+      catalogProcessService.createEService(eServiceSeed.toProcess)(contexts, ec).map(_.toApi)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
@@ -1074,11 +1074,9 @@ final case class EServicesApiServiceImpl(
         jsonContent      <- Either
           .catchNonFatal(Files.readString(path.resolve("configuration.json")))
           .leftMap(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.getMessage))
-        importedEservice <- Try(jsonContent.parseJson.convertTo[ImportedEservice]) match {
-          case Success(eservice) => Right(eservice)
-          case Failure(ex)       =>
-            Left(InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.getMessage))
-        }
+        importedEservice <- Try(jsonContent.parseJson.convertTo[ImportedEservice]).toEither.leftMap(ex =>
+          InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.getMessage)
+        )
         _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) { (acc, doc) =>
           acc.flatMap(_ => fileExists(path.resolve(doc.path)))
         }
@@ -1127,7 +1125,7 @@ final case class EServicesApiServiceImpl(
       val fileName = Paths.get(file.path).getFileName.toString
 
       val result = for {
-        mimeType    <- Try(new Tika().detect(readFileAsBytes(filePath), fileName)).toEither.toFuture
+        mimeType    <- Try(new Tika().detect(readFileAsBytes(filePath), fileName)).toFuture
         contentType <- ContentType
           .parse(mimeType)
           .leftMap(errors => ContentTypeParsingError(mimeType, file.path, errors.map(_.toString())))
@@ -1151,8 +1149,10 @@ final case class EServicesApiServiceImpl(
           _ <- descriptor.docs.traverse { doc =>
             catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, doc.id)
           }
+          _ <- descriptor.interface.traverse(interface =>
+            catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, interface.id)
+          )
           _ <- catalogProcessService.deleteEService(eService.id)
-          _ <- catalogProcessService.deleteDraft(eService.id, descriptor.id)
         } yield throw ex
       }
     }
@@ -1165,7 +1165,7 @@ final case class EServicesApiServiceImpl(
       zipPath          <- extractZipToTempDirectory(zipFile, tenantId).toFuture
       importedEservice <- checkZipStructure(zipPath).toFuture.recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
-        throw ex
+        Future.failed(ex)
       }
       eserviceSeed = CatalogProcess.EServiceSeed(
         name = importedEservice.name,
@@ -1175,7 +1175,7 @@ final case class EServicesApiServiceImpl(
       )
       eService <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
-        throw ex
+        Future.failed(ex)
       }
       descriptorSeed = CatalogProcess.EServiceDescriptorSeed(
         audience = importedEservice.descriptor.audience,
@@ -1188,9 +1188,7 @@ final case class EServicesApiServiceImpl(
       descriptor <- catalogProcessService.createDescriptor(eService.id, descriptorSeed).recoverWith {
         case ex: Throwable =>
           deleteTempDirectory(zipPath)
-          for {
-            _ <- catalogProcessService.deleteEService(eService.id)
-          } yield throw ex
+          catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
       }
       _          <- importedEservice.descriptor.interface match {
         case Some(interface) =>
