@@ -1153,7 +1153,7 @@ final case class EServicesApiServiceImpl(
             catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, interface.id)
           )
           _ <- catalogProcessService.deleteEService(eService.id)
-        } yield throw ex
+        } yield Future.failed(ex)
       }
     }
 
