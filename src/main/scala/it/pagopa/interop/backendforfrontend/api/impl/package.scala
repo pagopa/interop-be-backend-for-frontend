@@ -14,6 +14,14 @@ import it.pagopa.interop.commons.utils.errors.{ComponentError, ServiceCode}
 import it.pagopa.interop.commons.utils.{BEARER, UID}
 import spray.json._
 import akka.http.scaladsl.model.ContentTypes
+import it.pagopa.interop.backendforfrontend.service.model.{
+  ImportedDescriptor,
+  ImportedDoc,
+  ImportedEservice,
+  ImportedMultiAnswer,
+  ImportedRiskAnalysis,
+  ImportedSingleAnswer
+}
 
 import java.nio.charset.StandardCharsets
 import scala.io.{BufferedSource, Codec}
@@ -50,6 +58,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val fileResourceFormat: RootJsonFormat[FileResource] = jsonFormat2(FileResource)
   implicit val presignedUrlFormat: RootJsonFormat[PresignedUrl] = jsonFormat1(PresignedUrl)
+
+  implicit val importedDocFormat: RootJsonFormat[ImportedDoc]                   = jsonFormat2(ImportedDoc)
+  implicit val importedDescriptorFormat: RootJsonFormat[ImportedDescriptor]     = jsonFormat8(ImportedDescriptor)
+  implicit val importedSingleAnswerFormat: RootJsonFormat[ImportedSingleAnswer] = jsonFormat2(ImportedSingleAnswer)
+  implicit val importedMultiAnswerFormat: RootJsonFormat[ImportedMultiAnswer]   = jsonFormat2(ImportedMultiAnswer)
+  implicit val importedRiskAnalysisFormat: RootJsonFormat[ImportedRiskAnalysis] = jsonFormat3(ImportedRiskAnalysis)
+  implicit val importedEserviceFormat: RootJsonFormat[ImportedEservice]         = jsonFormat6(ImportedEservice)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
     jsonFormat1(DeclaredTenantAttributeSeed)
