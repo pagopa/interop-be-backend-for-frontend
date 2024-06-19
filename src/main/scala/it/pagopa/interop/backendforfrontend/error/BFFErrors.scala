@@ -149,4 +149,13 @@ object BFFErrors {
 
   final case class ContractException(agreementId: String)
       extends ComponentError("0036", s"Contract exception for agreement $agreementId")
+
+  final case class MissingInterface(eServiceId: UUID, descriptorId: UUID)
+      extends ComponentError("0037", s"Missing interface for Eservice $eServiceId and descriptor $descriptorId")
+
+  final case class NotValidDescriptor(descriptorId: String, descriptorStatus: String)
+      extends ComponentError(
+        "0038",
+        s"Descriptor $descriptorId has a not valid status for this operation $descriptorStatus"
+      )
 }

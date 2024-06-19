@@ -15,7 +15,7 @@ import it.pagopa.interop.commons.logging.ContextFieldsToLog
 import it.pagopa.interop.commons.ratelimiter
 import it.pagopa.interop.commons.ratelimiter.model.Headers
 import it.pagopa.interop.commons.utils.errors.AkkaResponses._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, TooManyRequests}
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.{GenericError, OperationForbidden, TooManyRequests}
 import it.pagopa.interop.commons.utils.errors.{ComponentError, GenericComponentErrors, ServiceCode}
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiError => PurposeProcessError}
 import it.pagopa.interop.selfcare.v2.client.invoker.{ApiError => SelfcareV2Error}
@@ -51,13 +51,16 @@ object Handlers {
     case Failure(err: InvalidInterfaceContentTypeDetected) => badRequest(err, logMessage, headers)
     case Failure(err: InvalidInterfaceFileDetected)        => badRequest(err, logMessage, headers)
     case Failure(err: CreateDocumentBadRequest)            => badRequest(err, logMessage, headers)
+    case Failure(err: NotValidDescriptor)                  => badRequest(err, logMessage)
     case Failure(err: InvalidEServiceRequester)            => forbidden(err, logMessage, headers)
+    case Failure(err: OperationForbidden.type)             => forbidden(err, logMessage)
     case Failure(err: AgreementDescriptorNotFound)         => notFound(err, logMessage, headers)
     case Failure(err: EServiceDescriptorNotFound)          => notFound(err, logMessage, headers)
     case Failure(err: EServiceRiskAnalysisNotFound)        => notFound(err, logMessage, headers)
     case Failure(err: PrivacyNoticeNotFound)               => notFound(err, logMessage, headers)
     case Failure(err: ContractNotFound)                    => notFound(err, logMessage, headers)
     case Failure(err)                                      => internalServerError(err, logMessage, headers)
+
   }
 
   def handleTokenValidationError(logMessage: String, headers: List[HttpHeader])(

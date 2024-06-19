@@ -1,11 +1,11 @@
 import akka.http.scaladsl.model.{ContentTypes, HttpCharsets, MediaType}
 import akka.http.scaladsl.server.directives.FileInfo
+import it.pagopa.interop.backendforfrontend.common.system.FileManagerUtils
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.InvalidInterfaceContentTypeDetected
+import it.pagopa.interop.catalogprocess.client.model._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import it.pagopa.interop.backendforfrontend.common.system.FileManagerUtils
-import it.pagopa.interop.catalogprocess.client.model._
 
 import java.io.File
 import java.nio.file.Paths
