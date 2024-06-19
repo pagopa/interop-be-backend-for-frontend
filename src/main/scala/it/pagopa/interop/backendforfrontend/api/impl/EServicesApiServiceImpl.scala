@@ -1042,4 +1042,31 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+
+  override def getImportEservicePresignedUrl(fileName: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPresignedUrl: ToEntityMarshaller[PresignedUrl],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[PresignedUrl] = for {
+      organizationId <- getOrganizationIdFuture(contexts)
+      presignedUrl   <- fileManager
+        .generatePutPresignedUrl(
+          ApplicationConfiguration.importEServiceContainer,
+          s"${ApplicationConfiguration.importEServicePath}/$organizationId",
+          fileName,
+          FiniteDuration(ApplicationConfiguration.putUrlDurationMinutes, TimeUnit.MINUTES)
+        )
+        .toEither
+        .toFuture
+      presignedURI   <- Try(new URI(presignedUrl)).toEither.toFuture
+    } yield PresignedUrl(presignedURI)
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError("Error getting eservice import presigned url", headers) orElse { case Success(resource) =>
+        getImportEservicePresignedUrl200(headers)(resource)
+      }
+    }
+  }
 }

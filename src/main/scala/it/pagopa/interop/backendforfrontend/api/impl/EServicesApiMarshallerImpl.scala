@@ -68,4 +68,7 @@ object EServicesApiMarshallerImpl extends EservicesApiMarshaller with SprayJsonS
 
   override implicit def toEntityMarshallerFileResource: ToEntityMarshaller[FileResource] =
     sprayJsonMarshaller[FileResource]
+
+  override implicit def toEntityMarshallerPresignedUrl: ToEntityMarshaller[PresignedUrl] =
+    sprayJsonMarshaller[PresignedUrl]
 }
