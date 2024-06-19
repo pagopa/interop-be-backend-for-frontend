@@ -975,7 +975,7 @@ final case class EServicesApiServiceImpl(
       )
       config     = extractConfig(eService, descriptor)
       folderName = s"${eService.id}_${descriptor.id}"
-      zipName    = s"$folderName.zip"
+      zipName    = s"$organizationId/$folderName.zip"
       zipFile    = createZip(folderName, docFiles, (interfaceFile, interface.name), config)
       _          = fileManager.storeBytes(
         ApplicationConfiguration.exportEserviceContainer,

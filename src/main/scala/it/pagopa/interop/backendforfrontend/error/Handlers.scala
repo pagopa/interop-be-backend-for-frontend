@@ -51,7 +51,6 @@ object Handlers {
     case Failure(err: InvalidInterfaceContentTypeDetected) => badRequest(err, logMessage, headers)
     case Failure(err: InvalidInterfaceFileDetected)        => badRequest(err, logMessage, headers)
     case Failure(err: CreateDocumentBadRequest)            => badRequest(err, logMessage, headers)
-    case Failure(err: MissingInterface)                    => badRequest(err, logMessage, headers)
     case Failure(err: NotValidDescriptor)                  => badRequest(err, logMessage)
     case Failure(err: InvalidZipStructure)                 => badRequest(err, logMessage, headers)
     case Failure(err: InvalidEServiceRequester)            => forbidden(err, logMessage, headers)
