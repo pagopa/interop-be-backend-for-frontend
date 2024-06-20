@@ -392,25 +392,4 @@ final case class ClientsApiServiceImpl(
       CompactOrganization(producer.id, producer.name, producer.kind.map(_.toApi))
     )
   )
-
-  override def getClientUserKeys(clientId: String, userId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerPublicKeys: ToEntityMarshaller[PublicKeys]
-  ): Route = {
-
-    val result: Future[PublicKeys] = for {
-      clientUuid     <- clientId.toFutureUUID
-      userUuid       <- userId.toFutureUUID
-      readClientKeys <- authorizationProcessService.getClientKeys(clientUuid, Seq(userUuid))
-      keys           <- Future.traverse(readClientKeys.keys)(decorateKey)
-    } yield PublicKeys(keys)
-
-    onComplete(result) {
-      val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error retrieving keys to client $clientId and user $userId", headers) orElse { case Success(keys) =>
-        getClientUserKeys200(headers)(keys)
-      }
-    }
-  }
 }
