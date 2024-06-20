@@ -149,4 +149,22 @@ object BFFErrors {
 
   final case class ContractException(agreementId: String)
       extends ComponentError("0036", s"Contract exception for agreement $agreementId")
+
+  final case class MissingInterface(eServiceId: UUID, descriptorId: UUID)
+      extends ComponentError("0037", s"Missing interface for Eservice $eServiceId and descriptor $descriptorId")
+
+  final case class NotValidDescriptor(descriptorId: String, descriptorStatus: String)
+      extends ComponentError(
+        "0038",
+        s"Descriptor $descriptorId has a not valid status for this operation $descriptorStatus"
+      )
+
+  final case class InvalidZipStructure(directoryName: String, description: String)
+      extends ComponentError("0039", s"Invalid zip structure in $directoryName: $description")
+
+  final case class CreateEserviceBadRequest(eServiceName: String)
+      extends ComponentError("0040", s"Bad request creating Eservice $eServiceName")
+
+  final case class CreateEserviceUnexpectedError(eServiceSeed: String)
+      extends ComponentError("0041", s"Unexpected error creating Eservice $eServiceSeed")
 }
