@@ -950,6 +950,9 @@ final case class EServicesApiServiceImpl(
       zipOut.write(config.toString.getBytes("UTF-8"))
       zipOut.closeEntry()
 
+      zipOut.finish()
+      zipOut.flush()
+      bos.flush()
       zipOut.close()
       bos.toByteArray
     }
@@ -975,24 +978,24 @@ final case class EServicesApiServiceImpl(
       )
       config     = extractConfig(eService, descriptor)
       folderName = s"${eService.id}_${descriptor.id}"
-      zipName    = s"$organizationId/$folderName.zip"
+      zipPath    = s"$organizationId/$folderName.zip"
       zipFile    = createZip(folderName, docFiles, (interfaceFile, interface.name), config)
       _          = fileManager.storeBytes(
         ApplicationConfiguration.exportEserviceContainer,
         ApplicationConfiguration.exportEservicePath,
-        zipName
+        zipPath
       )(zipFile)
       presignedUrl <- fileManager
         .generateGetPresignedUrl(
           ApplicationConfiguration.exportEserviceContainer,
           ApplicationConfiguration.exportEservicePath,
-          zipName,
+          zipPath,
           FiniteDuration(ApplicationConfiguration.getUrlDurationMinutes, TimeUnit.MINUTES)
         )
         .toEither
         .toFuture
       presignedURI <- Try(new URI(presignedUrl)).toEither.toFuture
-    } yield FileResource(zipName, presignedURI)
+    } yield FileResource(s"$folderName.zip", presignedURI)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
