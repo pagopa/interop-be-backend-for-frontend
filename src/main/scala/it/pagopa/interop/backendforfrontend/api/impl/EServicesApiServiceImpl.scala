@@ -1036,7 +1036,7 @@ final case class EServicesApiServiceImpl(
   override def importEService(fileResource: FileResource)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedEServiceDescriptor]
   ): Route = {
 
     def extractZipToTempDirectory(zipBytes: Array[Byte], tenantId: String): Either[Throwable, Path] = {
@@ -1161,7 +1161,7 @@ final case class EServicesApiServiceImpl(
       }
     }
 
-    val result: Future[CreatedResource] = for {
+    val result: Future[CreatedEServiceDescriptor] = for {
       tenantId         <- getOrganizationIdFuture(contexts)
       zipFile          <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
@@ -1202,7 +1202,7 @@ final case class EServicesApiServiceImpl(
       _          <- importedEservice.descriptor.docs
         .traverse(verifyAndCreateImportedDoc(eService, descriptor, zipPath, _, "DOCUMENT"))
       _ = deleteTempDirectory(zipPath)
-    } yield CreatedResource(eService.id)
+    } yield CreatedEServiceDescriptor(id = eService.id, descriptorId = descriptor.id)
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
