@@ -31,7 +31,6 @@ import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceT
 import it.pagopa.interop.backendforfrontend.service.types.TenantProcessServiceTypes._
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.commons.files.service.FileManager
-import it.pagopa.interop.commons.jwt.{ADMIN_ROLE, API_ROLE, authorize}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
@@ -870,7 +869,7 @@ final case class EServicesApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerFileResource: ToEntityMarshaller[FileResource],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = authorize(ADMIN_ROLE, API_ROLE) {
+  ): Route = {
 
     def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
       JsonObject(
