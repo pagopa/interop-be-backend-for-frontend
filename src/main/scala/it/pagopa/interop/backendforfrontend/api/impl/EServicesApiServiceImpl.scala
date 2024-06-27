@@ -1062,7 +1062,7 @@ final case class EServicesApiServiceImpl(
               }
             }
         }
-        tempDir.resolve(fileResource.filename.stripSuffix(".zip"))
+        tempDir
       }.toEither
     }
 
@@ -1167,7 +1167,8 @@ final case class EServicesApiServiceImpl(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
       zipPath          <- extractZipToTempDirectory(zipFile, tenantId).toFuture
-      importedEservice <- checkZipStructure(zipPath).toFuture.recoverWith { case ex: Throwable =>
+      folderPath       = zipPath.resolve(fileResource.filename.stripSuffix(".zip"))
+      importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
         Future.failed(ex)
       }
@@ -1196,11 +1197,11 @@ final case class EServicesApiServiceImpl(
       }
       _          <- importedEservice.descriptor.interface match {
         case Some(interface) =>
-          verifyAndCreateImportedDoc(eService, descriptor, zipPath, interface, "INTERFACE")
+          verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
         case None            => Future.unit
       }
       _          <- importedEservice.descriptor.docs
-        .traverse(verifyAndCreateImportedDoc(eService, descriptor, zipPath, _, "DOCUMENT"))
+        .traverse(verifyAndCreateImportedDoc(eService, descriptor, folderPath, _, "DOCUMENT"))
       _ = deleteTempDirectory(zipPath)
     } yield CreatedEServiceDescriptor(id = eService.id, descriptorId = descriptor.id)
 
