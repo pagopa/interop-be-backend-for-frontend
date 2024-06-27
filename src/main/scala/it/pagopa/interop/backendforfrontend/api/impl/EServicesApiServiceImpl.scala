@@ -1062,7 +1062,7 @@ final case class EServicesApiServiceImpl(
               }
             }
         }
-        tempDir.resolve(fileResource.filename)
+        tempDir.resolve(fileResource.filename.stripSuffix(".zip"))
       }.toEither
     }
 
