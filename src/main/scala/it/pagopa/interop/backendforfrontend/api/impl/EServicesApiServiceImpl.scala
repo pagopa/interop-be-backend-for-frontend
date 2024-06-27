@@ -1041,7 +1041,7 @@ final case class EServicesApiServiceImpl(
 
     def extractZipToTempDirectory(zipBytes: Array[Byte], tenantId: String): Either[Throwable, Path] = {
       Try {
-        val tempDir = Files.createTempDirectory(s"$tenantId/extractedZip")
+        val tempDir = Files.createTempDirectory(s"${tenantId}_extractedZip")
         Using.resource(new ZipInputStream(new ByteArrayInputStream(zipBytes))) { zipIn =>
           LazyList
             .continually(zipIn.getNextEntry)
