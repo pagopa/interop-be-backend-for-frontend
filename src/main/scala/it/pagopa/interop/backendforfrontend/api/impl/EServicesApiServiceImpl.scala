@@ -1076,9 +1076,10 @@ final case class EServicesApiServiceImpl(
       for {
         jsonContent      <- Either
           .catchNonFatal(Files.readString(path.resolve("configuration.json")))
-          .leftMap(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.getMessage))
-        importedEservice <- Try(jsonContent.parseJson.convertTo[ImportedEservice]).toEither.leftMap(ex =>
-          InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.getMessage)
+          .leftMap(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.toString))
+        importedEservice <- Either
+          .catchNonFatal(jsonContent.parseJson.convertTo[ImportedEservice])
+          .leftMap(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.toString)
         )
         _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) { (acc, doc) =>
           acc.flatMap(_ => fileExists(path.resolve(doc.path)))
