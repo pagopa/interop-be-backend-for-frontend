@@ -1062,7 +1062,7 @@ final case class EServicesApiServiceImpl(
               }
             }
         }
-        tempDir
+        tempDir.resolve(fileResource.filename)
       }.toEither
     }
 
