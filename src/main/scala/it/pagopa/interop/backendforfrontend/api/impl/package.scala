@@ -20,6 +20,7 @@ import it.pagopa.interop.backendforfrontend.service.model.{
   ImportedEservice,
   ImportedMultiAnswer,
   ImportedRiskAnalysis,
+  ImportedRiskAnalysisForm,
   ImportedSingleAnswer
 }
 
@@ -63,7 +64,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val importedDescriptorFormat: RootJsonFormat[ImportedDescriptor]     = jsonFormat8(ImportedDescriptor)
   implicit val importedSingleAnswerFormat: RootJsonFormat[ImportedSingleAnswer] = jsonFormat2(ImportedSingleAnswer)
   implicit val importedMultiAnswerFormat: RootJsonFormat[ImportedMultiAnswer]   = jsonFormat2(ImportedMultiAnswer)
-  implicit val importedRiskAnalysisFormat: RootJsonFormat[ImportedRiskAnalysis] = jsonFormat3(ImportedRiskAnalysis)
+  implicit val importedRiskAnalysisFormFormat: RootJsonFormat[ImportedRiskAnalysisForm] = jsonFormat3(
+    ImportedRiskAnalysisForm
+  )
+  implicit val importedRiskAnalysisFormat: RootJsonFormat[ImportedRiskAnalysis] = jsonFormat2(ImportedRiskAnalysis)
   implicit val importedEserviceFormat: RootJsonFormat[ImportedEservice]         = jsonFormat6(ImportedEservice)
 
   implicit val declaredTenantAttributeSeedFormat: RootJsonFormat[DeclaredTenantAttributeSeed] =
