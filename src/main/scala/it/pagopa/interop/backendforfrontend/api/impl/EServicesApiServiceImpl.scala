@@ -1178,6 +1178,9 @@ final case class EServicesApiServiceImpl(
       zipFile  <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
+      _        <- fileManager.delete(ApplicationConfiguration.importEServiceContainer)(
+        s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
+      )
       zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
       folderPath = zipPath.resolve(fileResource.filename.stripSuffix(".zip"))
       importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
