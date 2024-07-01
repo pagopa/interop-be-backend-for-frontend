@@ -4,6 +4,7 @@ import cats.syntax.all._
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeProcess}
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.AttributeNotExists
 import it.pagopa.interop.backendforfrontend.model._
+import it.pagopa.interop.backendforfrontend.service.model.{ImportedRiskAnalysis, ImportedRiskAnalysisForm}
 import it.pagopa.interop.catalogmanagement.{model => CatalogManagement}
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
@@ -58,6 +59,15 @@ object CatalogProcessServiceTypes {
   implicit class RiskAnalysisFormSeedConverter(private val ra: RiskAnalysisFormSeed) extends AnyVal {
     def toProcess: CatalogProcess.EServiceRiskAnalysisFormSeed =
       CatalogProcess.EServiceRiskAnalysisFormSeed(version = ra.version, answers = ra.answers)
+  }
+
+  implicit class ImportedRiskAnalysisFormSeedConverter(private val ira: ImportedRiskAnalysisForm) extends AnyVal {
+    def toProcess: CatalogProcess.EServiceRiskAnalysisFormSeed =
+      CatalogProcess.EServiceRiskAnalysisFormSeed(
+        version = ira.version,
+        answers =
+          (ira.singleAnswers.map(a => a.key -> a.value.toSeq) ++ ira.multiAnswers.map(a => a.key -> a.values)).toMap
+      )
   }
 
   implicit class EServiceTechnologyConverter(private val est: EServiceTechnology) extends AnyVal {
@@ -267,6 +277,11 @@ object CatalogProcessServiceTypes {
   implicit class EServiceRiskAnalysisSeedConverter(private val eras: EServiceRiskAnalysisSeed) extends AnyVal {
     def toProcess: CatalogProcess.EServiceRiskAnalysisSeed =
       CatalogProcess.EServiceRiskAnalysisSeed(name = eras.name, riskAnalysisForm = eras.riskAnalysisForm.toProcess)
+  }
+
+  implicit class ImportedEserviceRiskAnalysisConverter(private val ieras: ImportedRiskAnalysis) extends AnyVal {
+    def toProcess: CatalogProcess.EServiceRiskAnalysisSeed =
+      CatalogProcess.EServiceRiskAnalysisSeed(name = ieras.name, riskAnalysisForm = ieras.riskAnalysisForm.toProcess)
   }
 
   implicit class DocumentKindWrapper(private val str: String) extends AnyVal {
