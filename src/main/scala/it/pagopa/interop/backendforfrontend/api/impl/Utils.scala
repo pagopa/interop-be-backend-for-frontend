@@ -312,7 +312,7 @@ object Utils {
   def pollEServiceById(
     fetchFunc: => Future[CatalogProcess.EService],
     condition: CatalogProcess.EService => Boolean,
-    maxRetries: Int = 10,
+    maxRetries: Int = 30,
     delay: FiniteDuration = 200.millis
   )(implicit ec: ExecutionContext): Future[Unit] = {
 
@@ -320,13 +320,16 @@ object Utils {
       if (attempt > maxRetries) {
         Future.failed(new RuntimeException("Max retries reached"))
       } else {
-        fetchFunc.flatMap { result =>
-          if (condition(result)) {
-            Future.successful(())
-          } else {
-            Future { Thread.sleep(delay.millis) }.flatMap(_ => poll(attempt + 1))
+        fetchFunc
+          .flatMap { result =>
+            if (condition(result)) {
+              Future.successful(())
+            } else {
+              Future { Thread.sleep(delay.toMillis) }.flatMap(_ => poll(attempt + 1))
+            }
           }
-        }
+          .recoverWith { case _ => Future { Thread.sleep(delay.toMillis) }.flatMap(_ => poll(attempt + 1)) }
+
       }
     }
 
