@@ -596,15 +596,14 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
 
-    val documentIdUuid: UUID = uuidSupplier.get()
-
     val result: Future[CreatedResource] = for {
       (eserviceUUID, descriptorUUID) <- eServiceId.toFutureUUID.zip(descriptorId.toFutureUUID)
       eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
       _                              <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      _                              <- verifyAndCreateEServiceDocument(
+      documentIdUuid = uuidSupplier.get()
+      _ <- verifyAndCreateEServiceDocument(
         catalogProcessService,
         fileManager,
         eService,
@@ -612,7 +611,7 @@ final case class EServicesApiServiceImpl(
         prettyName,
         kind,
         descriptorUUID,
-        uuidSupplier
+        documentIdUuid
       )
     } yield CreatedResource(documentIdUuid)
 
@@ -1079,8 +1078,7 @@ final case class EServicesApiServiceImpl(
           .leftMap(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.toString))
         importedEservice <- Either
           .catchNonFatal(jsonContent.parseJson.convertTo[ImportedEservice])
-          .leftMap(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.toString)
-        )
+          .leftMap(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.toString))
         _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) { (acc, doc) =>
           acc.flatMap(_ => fileExists(path.resolve(doc.path)))
         }
@@ -1134,7 +1132,8 @@ final case class EServicesApiServiceImpl(
           .parse(mimeType)
           .leftMap(errors => ContentTypeParsingError(mimeType, file.path, errors.map(_.toString())))
           .toFuture
-        fileParts = (FileInfo("", fileName, contentType), new File(filePath))
+        fileParts      = (FileInfo("", fileName, contentType), new File(filePath))
+        documentIdUuid = uuidSupplier.get()
         _ <- verifyAndCreateEServiceDocument(
           catalogProcessService,
           fileManager,
@@ -1143,7 +1142,7 @@ final case class EServicesApiServiceImpl(
           file.prettyName,
           fileType,
           descriptor.id,
-          uuidSupplier
+          documentIdUuid
         )
       } yield ()
 
@@ -1163,12 +1162,12 @@ final case class EServicesApiServiceImpl(
     }
 
     val result: Future[CreatedEServiceDescriptor] = for {
-      tenantId         <- getOrganizationIdFuture(contexts)
-      zipFile          <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
+      tenantId <- getOrganizationIdFuture(contexts)
+      zipFile  <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
-      zipPath          <- extractZipToTempDirectory(zipFile, tenantId).toFuture
-      folderPath       = zipPath.resolve(fileResource.filename.stripSuffix(".zip"))
+      zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
+      folderPath = zipPath.resolve(fileResource.filename.stripSuffix(".zip"))
       importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
         Future.failed(ex)
