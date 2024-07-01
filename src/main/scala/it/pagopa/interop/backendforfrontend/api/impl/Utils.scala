@@ -309,7 +309,7 @@ object Utils {
     } yield ()
   }
 
-  def pollEServiceById[T](
+  def pollEServiceById(
     fetchFunc: => Future[CatalogProcess.EService],
     condition: CatalogProcess.EService => Boolean,
     maxRetries: Int = 10,
