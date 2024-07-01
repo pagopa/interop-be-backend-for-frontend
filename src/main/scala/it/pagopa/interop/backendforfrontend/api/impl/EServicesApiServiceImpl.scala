@@ -1133,7 +1133,6 @@ final case class EServicesApiServiceImpl(
           .leftMap(errors => ContentTypeParsingError(mimeType, file.path, errors.map(_.toString())))
           .toFuture
         fileParts      = (FileInfo("", fileName, contentType), new File(filePath))
-        documentIdUuid = uuidSupplier.get()
         _ <- verifyAndCreateEServiceDocument(
           catalogProcessService,
           fileManager,
@@ -1142,7 +1141,7 @@ final case class EServicesApiServiceImpl(
           file.prettyName,
           fileType,
           descriptor.id,
-          documentIdUuid
+          uuidSupplier.get()
         )
       } yield ()
 
