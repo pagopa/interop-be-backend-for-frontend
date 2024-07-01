@@ -887,7 +887,10 @@ final case class EServicesApiServiceImpl(
           "docs"                    -> Json.arr(
             descriptor.docs.map(doc =>
               Json
-                .obj("prettyName" -> Json.fromString(doc.prettyName), "path" -> Json.fromString(s"documents/${doc.name}"))
+                .obj(
+                  "prettyName" -> Json.fromString(doc.prettyName),
+                  "path"       -> Json.fromString(s"documents/${doc.name}")
+                )
             ): _* // `: _*` is used to convert Seq to varargs for Json.arr
           ),
           "audience"                -> Json.arr(descriptor.audience.map(Json.fromString): _*),
@@ -1070,27 +1073,27 @@ final case class EServicesApiServiceImpl(
       }.toEither
     }
 
-    def checkZipStructure(path: Path): Either[InvalidZipStructure, ImportedEservice] = {
+    def checkZipStructure(folderPath: Path): Either[InvalidZipStructure, ImportedEservice] = {
       def fileExists(filePath: Path): Either[InvalidZipStructure, Unit] = {
         Either.cond(Files.exists(filePath), (), InvalidZipStructure(s"File in '$filePath' not found"))
       }
 
       for {
         jsonContent      <- Either
-          .catchNonFatal(Files.readString(path.resolve("configuration.json")))
+          .catchNonFatal(Files.readString(folderPath.resolve("configuration.json")))
           .leftMap(ex => InvalidZipStructure("Error reading configuration.json: " + ex.toString))
         importedEservice <- Either
           .catchNonFatal(jsonContent.parseJson.convertTo[ImportedEservice])
           .leftMap(ex => InvalidZipStructure("Error decoding configuration.json: " + ex.toString))
         _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) { (acc, doc) =>
-          acc.flatMap(_ => fileExists(path.resolve(doc.path)))
+          acc.flatMap(_ => fileExists(folderPath.resolve(doc.path)))
         }
         _ <- importedEservice.descriptor.interface match {
-          case Some(interfaceValue) => fileExists(path.resolve(interfaceValue.path))
+          case Some(interfaceValue) => fileExists(folderPath.resolve(interfaceValue.path))
           case None                 => Right(())
         }
         _ <- {
-          val filePaths    = Files.list(path).iterator().asScala.map(_.getFileName.toString).toSet
+          val filePaths    = Files.walk(folderPath).skip(1).iterator().asScala.map(_.getFileName.toString).toSet
           val allowedFiles = Set("configuration.json", "documents") ++
             importedEservice.descriptor.docs.map(_.path.split("/").last) ++
             importedEservice.descriptor.interface.map(_.path.split("/").last)
@@ -1165,8 +1168,9 @@ final case class EServicesApiServiceImpl(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
       zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
-      folderPath = zipPath.resolve(fileResource.filename.stripSuffix(".zip"))
-      importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
+      maybeFolder = Files.list(zipPath).iterator().asScala.filter(Files.isDirectory(_)).toList.headOption
+      folderPath       <- maybeFolder.toFuture(InvalidZipStructure("No subdirectory found"))
+      importedEservice <- checkZipStructure(zipPath).toFuture.recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
         Future.failed(ex)
       }
