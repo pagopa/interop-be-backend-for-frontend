@@ -1091,10 +1091,10 @@ final case class EServicesApiServiceImpl(
           case None                 => Right(())
         }
         _ <- {
-          val filePaths    = Files.list(path).iterator().asScala.map(_.toString).toSet
-          val allowedFiles = Set("configuration.json") ++
-            importedEservice.descriptor.docs.map(_.path) ++
-            importedEservice.descriptor.interface.map(_.path)
+          val filePaths    = Files.list(path).iterator().asScala.map(_.getFileName.toString).toSet
+          val allowedFiles = Set("configuration.json", "documents") ++
+            importedEservice.descriptor.docs.map(_.path.split("/").last) ++
+            importedEservice.descriptor.interface.map(_.path.split("/").last)
 
           val extraFiles = filePaths -- allowedFiles
           Either.cond(
