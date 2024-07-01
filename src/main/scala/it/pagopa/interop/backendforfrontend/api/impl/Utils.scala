@@ -313,7 +313,7 @@ object Utils {
     fetchFunc: => Future[CatalogProcess.EService],
     condition: CatalogProcess.EService => Boolean,
     maxRetries: Int = 10,
-    delay: FiniteDuration = 1.second
+    delay: FiniteDuration = 200.millis
   )(implicit ec: ExecutionContext): Future[Unit] = {
 
     def poll(attempt: Int): Future[Unit] = {
@@ -324,9 +324,7 @@ object Utils {
           if (condition(result)) {
             Future.successful(())
           } else {
-            akka.pattern.after(delay, using = akka.actor.ActorSystem("system").scheduler) {
-              poll(attempt + 1)
-            }
+            Future { Thread.sleep(delay.millis) }.flatMap(_ => poll(attempt + 1))
           }
         }
       }
