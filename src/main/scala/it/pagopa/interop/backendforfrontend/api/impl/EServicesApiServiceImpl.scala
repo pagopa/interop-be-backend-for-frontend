@@ -887,10 +887,7 @@ final case class EServicesApiServiceImpl(
           "docs"                    -> Json.arr(
             descriptor.docs.map(doc =>
               Json
-                .obj(
-                  "prettyName" -> Json.fromString(doc.prettyName),
-                  "path"       -> Json.fromString(s"documents/${doc.name}")
-                )
+                .obj("prettyName" -> Json.fromString(doc.prettyName), "path" -> Json.fromString(s"documents/${doc.name}"))
             ): _* // `: _*` is used to convert Seq to varargs for Json.arr
           ),
           "audience"                -> Json.arr(descriptor.audience.map(Json.fromString): _*),
