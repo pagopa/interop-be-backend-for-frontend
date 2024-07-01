@@ -17,6 +17,7 @@ import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
   assertRequesterAllowed,
   canBeUpgraded,
+  pollEServiceById,
   verifyAndCreateEServiceDocument
 }
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
@@ -1070,19 +1071,17 @@ final case class EServicesApiServiceImpl(
     }
 
     def checkZipStructure(path: Path): Either[InvalidZipStructure, ImportedEservice] = {
-      val directoryName = path.getFileName.toString
-
       def fileExists(filePath: Path): Either[InvalidZipStructure, Unit] = {
-        Either.cond(Files.exists(filePath), (), InvalidZipStructure(directoryName, s"File in '$filePath' not found"))
+        Either.cond(Files.exists(filePath), (), InvalidZipStructure(s"File in '$filePath' not found"))
       }
 
       for {
         jsonContent      <- Either
           .catchNonFatal(Files.readString(path.resolve("configuration.json")))
-          .leftMap(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.toString))
+          .leftMap(ex => InvalidZipStructure("Error reading configuration.json: " + ex.toString))
         importedEservice <- Either
           .catchNonFatal(jsonContent.parseJson.convertTo[ImportedEservice])
-          .leftMap(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.toString))
+          .leftMap(ex => InvalidZipStructure("Error decoding configuration.json: " + ex.toString))
         _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) { (acc, doc) =>
           acc.flatMap(_ => fileExists(path.resolve(doc.path)))
         }
@@ -1097,11 +1096,7 @@ final case class EServicesApiServiceImpl(
             importedEservice.descriptor.interface.map(_.path.split("/").last)
 
           val extraFiles = filePaths -- allowedFiles
-          Either.cond(
-            extraFiles.isEmpty,
-            (),
-            InvalidZipStructure(directoryName, s"Extra files found: ${extraFiles.mkString(", ")}")
-          )
+          Either.cond(extraFiles.isEmpty, (), InvalidZipStructure(s"Extra files found: ${extraFiles.mkString(", ")}"))
         }
       } yield importedEservice
     }
@@ -1185,6 +1180,7 @@ final case class EServicesApiServiceImpl(
         deleteTempDirectory(zipPath)
         Future.failed(ex)
       }
+      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
       _          <- Future.traverse(importedEservice.riskAnalysis) { ra =>
         catalogProcessService
           .createRiskAnalysis(
@@ -1209,6 +1205,10 @@ final case class EServicesApiServiceImpl(
           deleteTempDirectory(zipPath)
           catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
       }
+      _          <- pollEServiceById(
+        catalogProcessService.getEServiceById(eService.id),
+        eService => eService.descriptors.nonEmpty
+      )
       _          <- importedEservice.descriptor.interface match {
         case Some(interface) =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")

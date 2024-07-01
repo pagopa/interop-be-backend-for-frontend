@@ -42,6 +42,7 @@ import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util
 import java.util.UUID
 import javax.xml.parsers.DocumentBuilderFactory
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -306,5 +307,32 @@ object Utils {
             Future.failed(ex)
         }
     } yield ()
+  }
+
+  def pollEServiceById(
+    fetchFunc: => Future[CatalogProcess.EService],
+    condition: CatalogProcess.EService => Boolean,
+    maxRetries: Int = 30,
+    delay: FiniteDuration = 200.millis
+  )(implicit ec: ExecutionContext): Future[Unit] = {
+
+    def poll(attempt: Int): Future[Unit] = {
+      if (attempt > maxRetries) {
+        Future.failed(new RuntimeException("Max retries reached"))
+      } else {
+        fetchFunc
+          .flatMap { result =>
+            if (condition(result)) {
+              Future.successful(())
+            } else {
+              Future { Thread.sleep(delay.toMillis) }.flatMap(_ => poll(attempt + 1))
+            }
+          }
+          .recoverWith { case _ => Future { Thread.sleep(delay.toMillis) }.flatMap(_ => poll(attempt + 1)) }
+
+      }
+    }
+
+    poll(1)
   }
 }
