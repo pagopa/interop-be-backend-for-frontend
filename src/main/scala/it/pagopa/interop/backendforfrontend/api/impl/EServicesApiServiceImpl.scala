@@ -1083,15 +1083,6 @@ final case class EServicesApiServiceImpl(
         importedEservice <- Either
           .catchNonFatal(jsonContent.parseJson.convertTo[ImportedEservice])
           .leftMap(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.toString))
-        _                <- {
-          importedEservice.mode match {
-            case EServiceMode.DELIVER if importedEservice.riskAnalysis.nonEmpty =>
-              Left(InvalidZipStructure(directoryName, "riskAnalysis is not allowed in DELIVER mode"))
-            case EServiceMode.RECEIVE if importedEservice.riskAnalysis.isEmpty  =>
-              Left(InvalidZipStructure(directoryName, "riskAnalysis is required in RECEIVE mode"))
-            case _                                                              => Right(())
-          }
-        }
         _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) { (acc, doc) =>
           acc.flatMap(_ => fileExists(path.resolve(doc.path)))
         }
