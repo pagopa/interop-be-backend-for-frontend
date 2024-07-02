@@ -1167,11 +1167,16 @@ final case class EServicesApiServiceImpl(
     }
 
     val result: Future[CreatedEServiceDescriptor] = for {
-      tenantId         <- getOrganizationIdFuture(contexts)
-      zipFile          <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
+      tenantId <- getOrganizationIdFuture(contexts)
+      zipFile  <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
-      folderPath       <- extractZipToTempDirectory(zipFile, tenantId).toFuture
+      zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
+      listFiles    = Files.list(zipPath).iterator().asScala.toList
+      folderPath   = listFiles match {
+        case path :: Nil if path.toFile.isDirectory => path
+        case _                                      => zipPath
+      }
       importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
         deleteTempDirectory(folderPath)
         Future.failed(ex)
