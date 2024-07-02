@@ -17,16 +17,16 @@ object Versions {
 }
 
 object PagopaVersions {
-  lazy val commonsVersion                     = "1.0.x-SNAPSHOT"
-  lazy val agreementProcessVersion            = "1.0.x-SNAPSHOT"
-  lazy val catalogProcessVersion              = "1.0.x-SNAPSHOT"
-  lazy val catalogManagementVersion           = "1.0.x-SNAPSHOT"
-  lazy val tenantManagementVersion            = "1.0.x-SNAPSHOT"
-  lazy val tenantProcessVersion               = "1.0.x-SNAPSHOT"
-  lazy val purposeProcessVersion              = "1.0.x-SNAPSHOT"
-  lazy val attributeRegistryProcessVersion    = "1.0.x-SNAPSHOT"
-  lazy val authorizationManagementVersion     = "1.0.x-SNAPSHOT"
-  lazy val authorizationServerVersion         = "1.0.x-SNAPSHOT"
-  lazy val authorizationProcessVersion        = "1.0.x-SNAPSHOT"
-  lazy val selfcareV2ClientVersion            = "1.0.x-SNAPSHOT"
+  lazy val commonsVersion                  = "1.0.25"
+  lazy val agreementProcessVersion         = "1.0.19"
+  lazy val catalogProcessVersion           = "1.0.15"
+  lazy val catalogManagementVersion        = "1.0.19"
+  lazy val tenantManagementVersion         = "1.0.11"
+  lazy val tenantProcessVersion            = "1.0.16"
+  lazy val purposeProcessVersion           = "1.0.22"
+  lazy val attributeRegistryProcessVersion = "1.0.8"
+  lazy val authorizationManagementVersion  = "1.0.16"
+  lazy val authorizationServerVersion      = "1.0.14"
+  lazy val authorizationProcessVersion     = "1.0.19"
+  lazy val selfcareV2ClientVersion         = "1.0.13"
 }
