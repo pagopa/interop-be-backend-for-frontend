@@ -1229,7 +1229,15 @@ final case class EServicesApiServiceImpl(
         _.descriptors.exists(d => d.id == descriptor.id && d.interface.isDefined)
       )
       _          <- importedEservice.descriptor.docs
-        .traverse(verifyAndCreateImportedDoc(eService, descriptor, folderPath, _, "DOCUMENT"))
+        .traverse(doc =>
+          verifyAndCreateImportedDoc(eService, descriptor, folderPath, doc, "DOCUMENT")
+            .flatMap(_ =>
+              pollEServiceById(
+                catalogProcessService.getEServiceById(eService.id),
+                _.descriptors.exists(d => d.id == descriptor.id && d.docs.exists(_.prettyName == doc.prettyName))
+              )
+            )
+        )
       _ = deleteTempDirectory(folderPath)
     } yield CreatedEServiceDescriptor(id = eService.id, descriptorId = descriptor.id)
 
