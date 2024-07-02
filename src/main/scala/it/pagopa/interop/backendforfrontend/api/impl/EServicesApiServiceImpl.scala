@@ -1182,12 +1182,12 @@ final case class EServicesApiServiceImpl(
         technology = importedEservice.technology.toProcess,
         mode = importedEservice.mode.toProcess
       )
-      eService <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
+      eService   <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
-      _        <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
-      _        <- Future.traverse(importedEservice.riskAnalysis) { ra =>
+      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
+      _          <- Future.traverse(importedEservice.riskAnalysis) { ra =>
         catalogProcessService
           .createRiskAnalysis(
             eServiceId = eService.id,
@@ -1197,8 +1197,8 @@ final case class EServicesApiServiceImpl(
             deleteTempDirectory(folderPath)
             catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
           }
+          .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty))
       }
-      _        <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty)
       descriptorSeed = CatalogProcess.EServiceDescriptorSeed(
         description = importedEservice.descriptor.description,
         audience = importedEservice.descriptor.audience,
