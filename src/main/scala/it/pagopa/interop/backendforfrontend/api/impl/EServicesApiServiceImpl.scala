@@ -1075,7 +1075,7 @@ final case class EServicesApiServiceImpl(
 
     def checkZipStructure(folderPath: Path): Either[InvalidZipStructure, ImportedEservice] = {
       def fileExists(filePath: Path): Either[InvalidZipStructure, Unit] = {
-        Either.cond(Files.exists(filePath), (), InvalidZipStructure(s"File in '$filePath' not found"))
+        Either.cond(Files.exists(filePath), (), InvalidZipStructure(s"File in $filePath not found"))
       }
 
       for {
@@ -1099,7 +1099,11 @@ final case class EServicesApiServiceImpl(
             importedEservice.descriptor.interface.map(_.path.split("/").last)
 
           val extraFiles = filePaths -- allowedFiles
-          Either.cond(extraFiles.isEmpty, (), InvalidZipStructure(s"Extra files found: ${extraFiles.mkString(", ")}"))
+          Either.cond(
+            extraFiles.isEmpty,
+            (),
+            InvalidZipStructure(s"Not allowed files found: ${extraFiles.mkString(", ")}")
+          )
         }
       } yield importedEservice
     }
