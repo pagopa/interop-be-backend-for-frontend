@@ -872,7 +872,11 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
-    def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
+    def extractConfig(
+      eService: CatalogProcess.EService,
+      descriptor: CatalogProcess.EServiceDescriptor,
+      interfaceName: String
+    ): Json = {
       JsonObject(
         "name"         -> Json.fromString(eService.name),
         "description"  -> Json.fromString(eService.description),
@@ -881,7 +885,7 @@ final case class EServicesApiServiceImpl(
         "descriptor"   -> Json.obj(
           "interface"               -> descriptor.interface
             .map(interface =>
-              Json.obj("prettyName" -> Json.fromString(interface.prettyName), "path" -> Json.fromString(interface.name))
+              Json.obj("prettyName" -> Json.fromString(interface.prettyName), "path" -> Json.fromString(interfaceName))
             )
             .getOrElse(Json.Null),
           "docs"                    -> Json.arr(
@@ -983,11 +987,12 @@ final case class EServicesApiServiceImpl(
           .get(ApplicationConfiguration.eServiceDocumentsContainer)(doc.path)
           .map(filestream => (filestream.toByteArray, doc.name))
       )
-      config     = extractConfig(eService, descriptor)
-      folderName = s"${eService.id}_${descriptor.id}"
-      zipPath    = s"$organizationId/$folderName.zip"
-      zipFile    = createZip(folderName, docFiles, (interfaceFile, interface.name), config)
-      _          = fileManager.storeBytes(
+      interfaceName = s"interface.${interface.name.split('.').last}"
+      config        = extractConfig(eService, descriptor, interfaceName)
+      folderName    = s"${eService.id}_${descriptor.id}"
+      zipPath       = s"$organizationId/$folderName.zip"
+      zipFile       = createZip(folderName, docFiles, (interfaceFile, interfaceName), config)
+      _             = fileManager.storeBytes(
         ApplicationConfiguration.exportEserviceContainer,
         ApplicationConfiguration.exportEservicePath,
         zipPath
@@ -1182,12 +1187,12 @@ final case class EServicesApiServiceImpl(
         technology = importedEservice.technology.toProcess,
         mode = importedEservice.mode.toProcess
       )
-      eService   <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
+      eService <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
-      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
-      _          <- Future.traverse(importedEservice.riskAnalysis) { ra =>
+      _        <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
+      _        <- Future.traverse(importedEservice.riskAnalysis) { ra =>
         catalogProcessService
           .createRiskAnalysis(
             eServiceId = eService.id,
@@ -1198,7 +1203,12 @@ final case class EServicesApiServiceImpl(
             catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
           }
       }
+      _        <- pollEServiceById(
+        catalogProcessService.getEServiceById(eService.id),
+        eService => eService.riskAnalysis.nonEmpty
+      )
       descriptorSeed = CatalogProcess.EServiceDescriptorSeed(
+        description = importedEservice.descriptor.description,
         audience = importedEservice.descriptor.audience,
         voucherLifespan = importedEservice.descriptor.voucherLifespan,
         dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
@@ -1220,6 +1230,10 @@ final case class EServicesApiServiceImpl(
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
         case None            => Future.unit
       }
+      _          <- pollEServiceById(
+        catalogProcessService.getEServiceById(eService.id),
+        eService => eService.descriptors.exists(d => d.id == descriptor.id && d.interface.isDefined)
+      )
       _          <- importedEservice.descriptor.docs
         .traverse(verifyAndCreateImportedDoc(eService, descriptor, folderPath, _, "DOCUMENT"))
       _ = deleteTempDirectory(folderPath)
