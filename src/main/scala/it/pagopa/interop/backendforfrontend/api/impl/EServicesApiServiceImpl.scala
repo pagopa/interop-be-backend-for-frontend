@@ -1171,17 +1171,9 @@ final case class EServicesApiServiceImpl(
       zipFile          <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
-      zipPath          <- extractZipToTempDirectory(zipFile, tenantId).toFuture
-      folderPath       <- Files
-        .list(zipPath)
-        .iterator()
-        .asScala
-        .filter(Files.isDirectory(_))
-        .toList
-        .headOption
-        .toFuture(InvalidZipStructure("No subdirectory found"))
+      folderPath       <- extractZipToTempDirectory(zipFile, tenantId).toFuture
       importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
-        deleteTempDirectory(zipPath)
+        deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
       eserviceSeed = CatalogProcess.EServiceSeed(
@@ -1191,7 +1183,7 @@ final case class EServicesApiServiceImpl(
         mode = importedEservice.mode.toProcess
       )
       eService   <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
-        deleteTempDirectory(zipPath)
+        deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
       _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
@@ -1202,7 +1194,7 @@ final case class EServicesApiServiceImpl(
             CatalogProcess.EServiceRiskAnalysisSeed(name = ra.name, riskAnalysisForm = ra.riskAnalysisForm.toProcess)
           )
           .recoverWith { case ex: Throwable =>
-            deleteTempDirectory(zipPath)
+            deleteTempDirectory(folderPath)
             catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
           }
       }
@@ -1216,7 +1208,7 @@ final case class EServicesApiServiceImpl(
       )
       descriptor <- catalogProcessService.createDescriptor(eService.id, descriptorSeed).recoverWith {
         case ex: Throwable =>
-          deleteTempDirectory(zipPath)
+          deleteTempDirectory(folderPath)
           catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
       }
       _          <- pollEServiceById(
@@ -1230,7 +1222,7 @@ final case class EServicesApiServiceImpl(
       }
       _          <- importedEservice.descriptor.docs
         .traverse(verifyAndCreateImportedDoc(eService, descriptor, folderPath, _, "DOCUMENT"))
-      _ = deleteTempDirectory(zipPath)
+      _ = deleteTempDirectory(folderPath)
     } yield CreatedEServiceDescriptor(id = eService.id, descriptorId = descriptor.id)
 
     onComplete(result) {
