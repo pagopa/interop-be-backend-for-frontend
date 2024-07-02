@@ -1167,13 +1167,19 @@ final case class EServicesApiServiceImpl(
     }
 
     val result: Future[CreatedEServiceDescriptor] = for {
-      tenantId <- getOrganizationIdFuture(contexts)
-      zipFile  <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
+      tenantId         <- getOrganizationIdFuture(contexts)
+      zipFile          <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
-      zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
-      maybeFolder = Files.list(zipPath).iterator().asScala.filter(Files.isDirectory(_)).toList.headOption
-      folderPath       <- maybeFolder.toFuture(InvalidZipStructure("No subdirectory found"))
+      zipPath          <- extractZipToTempDirectory(zipFile, tenantId).toFuture
+      folderPath       <- Files
+        .list(zipPath)
+        .iterator()
+        .asScala
+        .filter(Files.isDirectory(_))
+        .toList
+        .headOption
+        .toFuture(InvalidZipStructure("No subdirectory found"))
       importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
         Future.failed(ex)
