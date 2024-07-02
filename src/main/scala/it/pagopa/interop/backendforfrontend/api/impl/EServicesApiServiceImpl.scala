@@ -1174,7 +1174,7 @@ final case class EServicesApiServiceImpl(
       zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
       maybeFolder = Files.list(zipPath).iterator().asScala.filter(Files.isDirectory(_)).toList.headOption
       folderPath       <- maybeFolder.toFuture(InvalidZipStructure("No subdirectory found"))
-      importedEservice <- checkZipStructure(zipPath).toFuture.recoverWith { case ex: Throwable =>
+      importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
         deleteTempDirectory(zipPath)
         Future.failed(ex)
       }
