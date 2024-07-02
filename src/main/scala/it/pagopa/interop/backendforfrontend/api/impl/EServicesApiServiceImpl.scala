@@ -1197,8 +1197,10 @@ final case class EServicesApiServiceImpl(
             deleteTempDirectory(folderPath)
             catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
           }
+          .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty))
       }
       descriptorSeed = CatalogProcess.EServiceDescriptorSeed(
+        description = importedEservice.descriptor.description,
         audience = importedEservice.descriptor.audience,
         voucherLifespan = importedEservice.descriptor.voucherLifespan,
         dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
@@ -1211,15 +1213,16 @@ final case class EServicesApiServiceImpl(
           deleteTempDirectory(folderPath)
           catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
       }
-      _          <- pollEServiceById(
-        catalogProcessService.getEServiceById(eService.id),
-        eService => eService.descriptors.nonEmpty
-      )
+      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.descriptors.nonEmpty)
       _          <- importedEservice.descriptor.interface match {
         case Some(interface) =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
         case None            => Future.unit
       }
+      _          <- pollEServiceById(
+        catalogProcessService.getEServiceById(eService.id),
+        _.descriptors.exists(d => d.id == descriptor.id && d.interface.isDefined)
+      )
       _          <- importedEservice.descriptor.docs
         .traverse(verifyAndCreateImportedDoc(eService, descriptor, folderPath, _, "DOCUMENT"))
       _ = deleteTempDirectory(folderPath)
