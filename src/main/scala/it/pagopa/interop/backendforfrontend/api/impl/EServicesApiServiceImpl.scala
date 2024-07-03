@@ -885,13 +885,16 @@ final case class EServicesApiServiceImpl(
             )
             .getOrElse(Json.Null),
           "docs"                    -> Json.arr(
-            descriptor.docs.map(doc =>
+            descriptor.docs.zipWithIndex.map { case (doc, index) =>
+              val extensionIndex = doc.name.lastIndexOf('.')
+              val newName        = if (index > 0) {
+                s"${doc.name.substring(0, extensionIndex)}-$index${doc.name.substring(extensionIndex)}"
+              } else {
+                doc.name
+              }
               Json
-                .obj(
-                  "prettyName" -> Json.fromString(doc.prettyName),
-                  "path"       -> Json.fromString(s"documents/${doc.name}")
-                )
-            ): _* // `: _*` is used to convert Seq to varargs for Json.arr
+                .obj("prettyName" -> Json.fromString(doc.prettyName), "path" -> Json.fromString(s"documents/$newName"))
+            }: _* // `: _*` is used to convert Seq to varargs for Json.arr
           ),
           "audience"                -> Json.arr(descriptor.audience.map(Json.fromString): _*),
           "voucherLifespan"         -> Json.fromInt(descriptor.voucherLifespan),
@@ -942,8 +945,14 @@ final case class EServicesApiServiceImpl(
       val bos    = new ByteArrayOutputStream()
       val zipOut = new ZipOutputStream(bos)
 
-      docs.foreach { case (data, entryName) =>
-        zipOut.putNextEntry(new ZipEntry(s"$folderName/documents/$entryName"))
+      docs.zipWithIndex.foreach { case ((data, entryName), index) =>
+        val extensionIndex = entryName.lastIndexOf('.')
+        val newName        = if (index > 0) {
+          s"${entryName.substring(0, extensionIndex)}-$index${entryName.substring(extensionIndex)}"
+        } else {
+          entryName
+        }
+        zipOut.putNextEntry(new ZipEntry(s"$folderName/documents/$newName"))
         zipOut.write(data)
         zipOut.closeEntry()
       }
