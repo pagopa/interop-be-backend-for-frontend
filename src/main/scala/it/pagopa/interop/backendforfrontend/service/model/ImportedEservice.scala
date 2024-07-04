@@ -15,11 +15,12 @@ final case class ImportedDescriptor(
 )
 final case class ImportedSingleAnswer(key: String, value: Option[String])
 final case class ImportedMultiAnswer(key: String, values: Seq[String])
-final case class ImportedRiskAnalysis(
+final case class ImportedRiskAnalysisForm(
   version: String,
   singleAnswers: Seq[ImportedSingleAnswer],
   multiAnswers: Seq[ImportedMultiAnswer]
 )
+final case class ImportedRiskAnalysis(name: String, riskAnalysisForm: ImportedRiskAnalysisForm)
 
 final case class ImportedEservice(
   name: String,
@@ -27,5 +28,5 @@ final case class ImportedEservice(
   technology: EServiceTechnology,
   mode: EServiceMode,
   descriptor: ImportedDescriptor,
-  riskAnalysis: Option[ImportedRiskAnalysis]
+  riskAnalysis: Seq[ImportedRiskAnalysis]
 )

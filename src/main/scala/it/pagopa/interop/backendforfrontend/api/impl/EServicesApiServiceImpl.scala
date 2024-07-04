@@ -17,6 +17,7 @@ import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
   assertRequesterAllowed,
   canBeUpgraded,
+  pollEServiceById,
   verifyAndCreateEServiceDocument
 }
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
@@ -874,43 +875,49 @@ final case class EServicesApiServiceImpl(
       JsonObject(
         "name"         -> Json.fromString(eService.name),
         "description"  -> Json.fromString(eService.description),
-        "technology"   -> Json.fromString(eService.technology.toString),
-        "mode"         -> Json.fromString(eService.mode.toString),
+        "technology"   -> Json.fromString(eService.technology.toApi.toString),
+        "mode"         -> Json.fromString(eService.mode.toApi.toString),
         "descriptor"   -> Json.obj(
           "interface"               -> descriptor.interface
             .map(interface =>
               Json.obj("prettyName" -> Json.fromString(interface.prettyName), "path" -> Json.fromString(interface.name))
             )
-            .getOrElse(Json.obj()),
+            .getOrElse(Json.Null),
           "docs"                    -> Json.arr(
             descriptor.docs.map(doc =>
               Json
-                .obj("prettyName" -> Json.fromString(doc.prettyName), "path" -> Json.fromString(s"documents/$doc.name"))
+                .obj(
+                  "prettyName" -> Json.fromString(doc.prettyName),
+                  "path"       -> Json.fromString(s"documents/${doc.name}")
+                )
             ): _* // `: _*` is used to convert Seq to varargs for Json.arr
           ),
           "audience"                -> Json.arr(descriptor.audience.map(Json.fromString): _*),
           "voucherLifespan"         -> Json.fromInt(descriptor.voucherLifespan),
           "dailyCallsPerConsumer"   -> Json.fromInt(descriptor.dailyCallsPerConsumer),
           "dailyCallsTotal"         -> Json.fromInt(descriptor.dailyCallsTotal),
-          "description"             -> descriptor.description.map(Json.fromString).getOrElse(Json.obj()),
-          "agreementApprovalPolicy" -> Json.fromString(descriptor.agreementApprovalPolicy.toString)
+          "description"             -> descriptor.description.map(Json.fromString).getOrElse(Json.Null),
+          "agreementApprovalPolicy" -> Json.fromString(descriptor.agreementApprovalPolicy.toApi.toString)
         ),
         "riskAnalysis" -> Json.arr(
           eService.riskAnalysis.map(ra =>
             Json.obj(
-              "version"       -> Json.fromString(ra.riskAnalysisForm.version),
-              "singleAnswers" -> Json.arr(
-                ra.riskAnalysisForm.singleAnswers.map(sa =>
-                  Json.obj(
-                    "key"   -> Json.fromString(sa.key),
-                    "value" -> sa.value.map(Json.fromString).getOrElse(Json.obj())
-                  )
-                ): _*
-              ),
-              "multiAnswers"  -> Json.arr(
-                ra.riskAnalysisForm.multiAnswers.map(ma =>
-                  Json.obj("key" -> Json.fromString(ma.key), "values" -> Json.arr(ma.values.map(Json.fromString): _*))
-                ): _*
+              "name"             -> Json.fromString(ra.name),
+              "riskAnalysisForm" -> Json.obj(
+                "version"       -> Json.fromString(ra.riskAnalysisForm.version),
+                "singleAnswers" -> Json.arr(
+                  ra.riskAnalysisForm.singleAnswers.map(sa =>
+                    Json.obj(
+                      "key"   -> Json.fromString(sa.key),
+                      "value" -> sa.value.map(Json.fromString).getOrElse(Json.Null)
+                    )
+                  ): _*
+                ),
+                "multiAnswers"  -> Json.arr(
+                  ra.riskAnalysisForm.multiAnswers.map(ma =>
+                    Json.obj("key" -> Json.fromString(ma.key), "values" -> Json.arr(ma.values.map(Json.fromString): _*))
+                  ): _*
+                )
               )
             )
           ): _*
@@ -1065,39 +1072,36 @@ final case class EServicesApiServiceImpl(
       }.toEither
     }
 
-    def checkZipStructure(path: Path): Either[InvalidZipStructure, ImportedEservice] = {
-      val directoryName = path.getFileName.toString
-
+    def checkZipStructure(folderPath: Path): Either[InvalidZipStructure, ImportedEservice] = {
       def fileExists(filePath: Path): Either[InvalidZipStructure, Unit] = {
-        Either.cond(Files.exists(filePath), (), InvalidZipStructure(directoryName, s"File in '$filePath' not found"))
+        Either.cond(Files.exists(filePath), (), InvalidZipStructure(s"File in $filePath not found"))
       }
 
       for {
         jsonContent      <- Either
-          .catchNonFatal(Files.readString(path.resolve("configuration.json")))
-          .leftMap(ex => InvalidZipStructure(directoryName, "Error reading configuration.json: " + ex.toString))
+          .catchNonFatal(Files.readString(folderPath.resolve("configuration.json")))
+          .leftMap(ex => InvalidZipStructure("Error reading configuration.json: " + ex.toString))
         importedEservice <- Either
           .catchNonFatal(jsonContent.parseJson.convertTo[ImportedEservice])
-          .leftMap(ex => InvalidZipStructure(directoryName, "Error decoding configuration.json: " + ex.toString)
-          )
+          .leftMap(ex => InvalidZipStructure("Error decoding configuration.json: " + ex.toString))
         _ <- importedEservice.descriptor.docs.foldLeft[Either[InvalidZipStructure, Unit]](Right(())) { (acc, doc) =>
-          acc.flatMap(_ => fileExists(path.resolve(doc.path)))
+          acc.flatMap(_ => fileExists(folderPath.resolve(doc.path)))
         }
         _ <- importedEservice.descriptor.interface match {
-          case Some(interfaceValue) => fileExists(path.resolve(interfaceValue.path))
+          case Some(interfaceValue) => fileExists(folderPath.resolve(interfaceValue.path))
           case None                 => Right(())
         }
         _ <- {
-          val filePaths    = Files.list(path).iterator().asScala.map(_.toString).toSet
-          val allowedFiles = Set("configuration.json") ++
-            importedEservice.descriptor.docs.map(_.path) ++
-            importedEservice.descriptor.interface.map(_.path)
+          val filePaths    = Files.walk(folderPath).skip(1).iterator().asScala.map(_.getFileName.toString).toSet
+          val allowedFiles = Set("configuration.json", "documents") ++
+            importedEservice.descriptor.docs.map(_.path.split("/").last) ++
+            importedEservice.descriptor.interface.map(_.path.split("/").last)
 
           val extraFiles = filePaths -- allowedFiles
           Either.cond(
             extraFiles.isEmpty,
             (),
-            InvalidZipStructure(directoryName, s"Extra files found: ${extraFiles.mkString(", ")}")
+            InvalidZipStructure(s"Not allowed files found: ${extraFiles.mkString(", ")}")
           )
         }
       } yield importedEservice
@@ -1162,14 +1166,18 @@ final case class EServicesApiServiceImpl(
     }
 
     val result: Future[CreatedEServiceDescriptor] = for {
-      tenantId         <- getOrganizationIdFuture(contexts)
-      zipFile          <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
+      tenantId <- getOrganizationIdFuture(contexts)
+      zipFile  <- fileManager.getFile(ApplicationConfiguration.importEServiceContainer)(
         s"${ApplicationConfiguration.importEServicePath}/$tenantId/${fileResource.filename}"
       )
-      zipPath          <- extractZipToTempDirectory(zipFile, tenantId).toFuture
-      folderPath       = zipPath.resolve(fileResource.filename.stripSuffix(".zip"))
+      zipPath  <- extractZipToTempDirectory(zipFile, tenantId).toFuture
+      listFiles    = Files.list(zipPath).iterator().asScala.toList
+      folderPath   = listFiles match {
+        case path :: Nil if path.toFile.isDirectory => path
+        case _                                      => zipPath
+      }
       importedEservice <- checkZipStructure(folderPath).toFuture.recoverWith { case ex: Throwable =>
-        deleteTempDirectory(zipPath)
+        deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
       eserviceSeed = CatalogProcess.EServiceSeed(
@@ -1178,11 +1186,25 @@ final case class EServicesApiServiceImpl(
         technology = importedEservice.technology.toProcess,
         mode = importedEservice.mode.toProcess
       )
-      eService <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
-        deleteTempDirectory(zipPath)
+      eService   <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
+        deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
+      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
+      _          <- Future.traverse(importedEservice.riskAnalysis) { ra =>
+        catalogProcessService
+          .createRiskAnalysis(
+            eServiceId = eService.id,
+            CatalogProcess.EServiceRiskAnalysisSeed(name = ra.name, riskAnalysisForm = ra.riskAnalysisForm.toProcess)
+          )
+          .recoverWith { case ex: Throwable =>
+            deleteTempDirectory(folderPath)
+            catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
+          }
+          .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty))
+      }
       descriptorSeed = CatalogProcess.EServiceDescriptorSeed(
+        description = importedEservice.descriptor.description,
         audience = importedEservice.descriptor.audience,
         voucherLifespan = importedEservice.descriptor.voucherLifespan,
         dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
@@ -1192,17 +1214,30 @@ final case class EServicesApiServiceImpl(
       )
       descriptor <- catalogProcessService.createDescriptor(eService.id, descriptorSeed).recoverWith {
         case ex: Throwable =>
-          deleteTempDirectory(zipPath)
+          deleteTempDirectory(folderPath)
           catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
       }
+      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.descriptors.nonEmpty)
       _          <- importedEservice.descriptor.interface match {
         case Some(interface) =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
         case None            => Future.unit
       }
+      _          <- pollEServiceById(
+        catalogProcessService.getEServiceById(eService.id),
+        _.descriptors.exists(d => d.id == descriptor.id && d.interface.isDefined)
+      )
       _          <- importedEservice.descriptor.docs
-        .traverse(verifyAndCreateImportedDoc(eService, descriptor, folderPath, _, "DOCUMENT"))
-      _ = deleteTempDirectory(zipPath)
+        .traverse(doc =>
+          verifyAndCreateImportedDoc(eService, descriptor, folderPath, doc, "DOCUMENT")
+            .flatMap(_ =>
+              pollEServiceById(
+                catalogProcessService.getEServiceById(eService.id),
+                _.descriptors.exists(d => d.id == descriptor.id && d.docs.exists(_.prettyName == doc.prettyName))
+              )
+            )
+        )
+      _ = deleteTempDirectory(folderPath)
     } yield CreatedEServiceDescriptor(id = eService.id, descriptorId = descriptor.id)
 
     onComplete(result) {
