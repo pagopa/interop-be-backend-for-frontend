@@ -14,7 +14,13 @@ import io.circe.{Json, JsonObject}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{assertRequesterAllowed, canBeUpgraded, generateUniqueFileName, pollEServiceById, verifyAndCreateEServiceDocument}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
+  assertRequesterAllowed,
+  canBeUpgraded,
+  generateUniqueFileName,
+  pollEServiceById,
+  verifyAndCreateEServiceDocument
+}
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
