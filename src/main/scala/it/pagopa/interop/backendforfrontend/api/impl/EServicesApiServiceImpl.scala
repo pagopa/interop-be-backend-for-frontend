@@ -14,13 +14,7 @@ import io.circe.{Json, JsonObject}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.agreementprocess.lifecycle.AttributesRules.certifiedAttributesSatisfied
 import it.pagopa.interop.backendforfrontend.api.EservicesApiService
-import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
-  assertRequesterAllowed,
-  canBeUpgraded,
-  generateUniqueFileName,
-  pollEServiceById,
-  verifyAndCreateEServiceDocument
-}
+import it.pagopa.interop.backendforfrontend.api.impl.Utils.{assertRequesterAllowed, canBeUpgraded, generateUniqueFileName, pollEServiceById, verifyAndCreateEServiceDocument}
 import it.pagopa.interop.backendforfrontend.common.HeaderUtils._
 import it.pagopa.interop.backendforfrontend.common.system.ApplicationConfiguration
 import it.pagopa.interop.backendforfrontend.error.BFFErrors._
@@ -49,6 +43,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.zip.{ZipEntry, ZipInputStream, ZipOutputStream}
+import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
@@ -874,7 +869,7 @@ final case class EServicesApiServiceImpl(
   ): Route = {
 
     def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
-      val nameCounts = descriptor.docs.groupMapReduce(_.name)(_ => 1)(_ + _)
+      val nameCounts = mutable.Map[String, Int]()
 
       JsonObject(
         "name"         -> Json.fromString(eService.name),
@@ -942,7 +937,7 @@ final case class EServicesApiServiceImpl(
     ): Array[Byte] = {
       val bos        = new ByteArrayOutputStream()
       val zipOut     = new ZipOutputStream(bos)
-      val nameCounts = docs.groupMapReduce(_._2)(_ => 1)(_ + _)
+      val nameCounts = mutable.Map[String, Int]()
 
       docs.foreach { case (data, entryName) =>
         val newName = generateUniqueFileName(nameCounts, entryName)

@@ -7,12 +7,7 @@ import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistryprocess.client.model.Attribute
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  CreateDocumentBadRequest,
-  CreateDocumentUnexpectedError,
-  InvalidInterfaceFileDetected,
-  SamlNotValid
-}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{CreateDocumentBadRequest, CreateDocumentUnexpectedError, InvalidInterfaceFileDetected, SamlNotValid}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.DocumentKindWrapper
@@ -42,6 +37,7 @@ import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util
 import java.util.UUID
 import javax.xml.parsers.DocumentBuilderFactory
+import scala.collection.mutable
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
@@ -336,7 +332,7 @@ object Utils {
     poll(1)
   }
 
-  def generateUniqueFileName(nameCounts: Map[String, Int], originalName: String): String = {
+  def generateUniqueFileName(nameCounts: mutable.Map[String, Int], originalName: String): String = {
     val extensionIndex = originalName.lastIndexOf('.')
     val baseName       = if (extensionIndex != -1) originalName.substring(0, extensionIndex) else originalName
     val extension      = if (extensionIndex != -1) originalName.substring(extensionIndex) else ""
@@ -344,6 +340,7 @@ object Utils {
     val count   = nameCounts.getOrElse(baseName, 0)
     val newName = if (count > 0) s"$baseName-$count$extension" else originalName
 
+    nameCounts(baseName) = count + 1
     newName
   }
 }
