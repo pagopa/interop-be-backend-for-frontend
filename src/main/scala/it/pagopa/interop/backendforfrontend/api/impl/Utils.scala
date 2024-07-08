@@ -342,10 +342,10 @@ object Utils {
     val baseName       = if (extensionIndex != -1) originalName.substring(0, extensionIndex) else originalName
     val extension      = if (extensionIndex != -1) originalName.substring(extensionIndex) else ""
 
-    val count   = nameCounts.getOrElse(baseName, 0)
+    val count   = nameCounts.getOrElse(originalName, 0)
     val newName = if (count > 0) s"$baseName-$count$extension" else originalName
 
-    nameCounts(baseName) = count + 1
+    nameCounts(originalName) = count + 1
     newName
   }
 }
