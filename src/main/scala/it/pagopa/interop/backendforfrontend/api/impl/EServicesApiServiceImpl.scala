@@ -17,6 +17,7 @@ import it.pagopa.interop.backendforfrontend.api.EservicesApiService
 import it.pagopa.interop.backendforfrontend.api.impl.Utils.{
   assertRequesterAllowed,
   canBeUpgraded,
+  generateUniqueFileName,
   pollEServiceById,
   verifyAndCreateEServiceDocument
 }
@@ -873,6 +874,8 @@ final case class EServicesApiServiceImpl(
   ): Route = {
 
     def extractConfig(eService: CatalogProcess.EService, descriptor: CatalogProcess.EServiceDescriptor): Json = {
+      val nameCounts = descriptor.docs.groupMapReduce(_.name)(_ => 1)(_ + _)
+
       JsonObject(
         "name"         -> Json.fromString(eService.name),
         "description"  -> Json.fromString(eService.description),
@@ -885,16 +888,11 @@ final case class EServicesApiServiceImpl(
             )
             .getOrElse(Json.Null),
           "docs"                    -> Json.arr(
-            descriptor.docs.zipWithIndex.map { case (doc, index) =>
-              val extensionIndex = doc.name.lastIndexOf('.')
-              val newName        = if (index > 0) {
-                s"${doc.name.substring(0, extensionIndex)}-$index${doc.name.substring(extensionIndex)}"
-              } else {
-                doc.name
-              }
+            descriptor.docs.map(doc => {
+              val newName = generateUniqueFileName(nameCounts, doc.name)
               Json
                 .obj("prettyName" -> Json.fromString(doc.prettyName), "path" -> Json.fromString(s"documents/$newName"))
-            }: _* // `: _*` is used to convert Seq to varargs for Json.arr
+            }): _* // `: _*` is used to convert Seq to varargs for Json.arr
           ),
           "audience"                -> Json.arr(descriptor.audience.map(Json.fromString): _*),
           "voucherLifespan"         -> Json.fromInt(descriptor.voucherLifespan),
@@ -942,16 +940,12 @@ final case class EServicesApiServiceImpl(
       interfaceFile: (Array[Byte], String),
       config: Json
     ): Array[Byte] = {
-      val bos    = new ByteArrayOutputStream()
-      val zipOut = new ZipOutputStream(bos)
+      val bos        = new ByteArrayOutputStream()
+      val zipOut     = new ZipOutputStream(bos)
+      val nameCounts = docs.groupMapReduce(_._2)(_ => 1)(_ + _)
 
-      docs.zipWithIndex.foreach { case ((data, entryName), index) =>
-        val extensionIndex = entryName.lastIndexOf('.')
-        val newName        = if (index > 0) {
-          s"${entryName.substring(0, extensionIndex)}-$index${entryName.substring(extensionIndex)}"
-        } else {
-          entryName
-        }
+      docs.foreach { case (data, entryName) =>
+        val newName = generateUniqueFileName(nameCounts, entryName)
         zipOut.putNextEntry(new ZipEntry(s"$folderName/documents/$newName"))
         zipOut.write(data)
         zipOut.closeEntry()

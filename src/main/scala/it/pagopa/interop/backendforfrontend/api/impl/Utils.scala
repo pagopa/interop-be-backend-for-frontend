@@ -335,4 +335,15 @@ object Utils {
 
     poll(1)
   }
+
+  def generateUniqueFileName(nameCounts: Map[String, Int], originalName: String): String = {
+    val extensionIndex = originalName.lastIndexOf('.')
+    val baseName       = if (extensionIndex != -1) originalName.substring(0, extensionIndex) else originalName
+    val extension      = if (extensionIndex != -1) originalName.substring(extensionIndex) else ""
+
+    val count   = nameCounts.getOrElse(baseName, 0)
+    val newName = if (count > 0) s"$baseName-$count$extension" else originalName
+
+    newName
+  }
 }
