@@ -26,7 +26,7 @@ import it.pagopa.interop.commons.utils.Digester.toSha256
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
+import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.tenantprocess.client.{model => TenantProcess}
 import org.opensaml.DefaultBootstrap
 import org.opensaml.saml2.core.Response
@@ -248,7 +248,7 @@ object Utils {
     prettyName: String,
     kind: String,
     descriptorUUID: UUID,
-    uuidSupplier: UUIDSupplier
+    documentIdUuid: UUID
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Unit] = {
 
     def extractServerUrls(bytes: Array[Byte], isInterface: Boolean): Either[Throwable, List[String]] = if (
@@ -275,8 +275,7 @@ object Utils {
       case _           => false
     }
 
-    val documentIdUuid: UUID = uuidSupplier.get()
-    val docFile              = Files.readAllBytes(fileParts._2.toPath)
+    val docFile = Files.readAllBytes(fileParts._2.toPath)
 
     for {
       _          <- FileManagerUtils.verify(docFile, fileParts._1.fileName, eService, isInterface).toFuture
