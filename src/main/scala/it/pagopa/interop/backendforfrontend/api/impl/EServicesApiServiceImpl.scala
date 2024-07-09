@@ -597,15 +597,14 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
 
-    val documentIdUuid: UUID = uuidSupplier.get()
-
     val result: Future[CreatedResource] = for {
       (eserviceUUID, descriptorUUID) <- eServiceId.toFutureUUID.zip(descriptorId.toFutureUUID)
       eService                       <- catalogProcessService.getEServiceById(eserviceUUID)
       _                              <- eService.descriptors
         .find(_.id === descriptorUUID)
         .toFuture(EServiceDescriptorNotFound(eService.id.toString, descriptorId))
-      _                              <- verifyAndCreateEServiceDocument(
+      documentIdUuid = uuidSupplier.get()
+      _ <- verifyAndCreateEServiceDocument(
         catalogProcessService,
         fileManager,
         eService,
@@ -613,7 +612,7 @@ final case class EServicesApiServiceImpl(
         prettyName,
         kind,
         descriptorUUID,
-        uuidSupplier
+        documentIdUuid
       )
     } yield CreatedResource(documentIdUuid)
 
@@ -1147,7 +1146,7 @@ final case class EServicesApiServiceImpl(
           file.prettyName,
           fileType,
           descriptor.id,
-          uuidSupplier
+          uuidSupplier.get()
         )
       } yield ()
 
