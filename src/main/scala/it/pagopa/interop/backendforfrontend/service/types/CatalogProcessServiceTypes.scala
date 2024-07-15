@@ -100,18 +100,6 @@ object CatalogProcessServiceTypes {
       )
   }
 
-  implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed) extends AnyVal {
-    def toProcess: CatalogProcess.EServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
-      description = seed.description,
-      audience = seed.audience,
-      voucherLifespan = seed.voucherLifespan,
-      dailyCallsPerConsumer = seed.dailyCallsPerConsumer,
-      dailyCallsTotal = seed.dailyCallsTotal,
-      agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess,
-      attributes = seed.attributes.toProcess
-    )
-  }
-
   implicit class EServiceConverter(private val coes: CatalogProcess.EService) extends AnyVal {
     def toApi: CreatedResource                                               = CreatedResource(id = coes.id)
     def toApiWithDescriptorId(descriptorId: UUID): CreatedEServiceDescriptor =
