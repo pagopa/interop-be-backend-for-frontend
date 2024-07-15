@@ -96,7 +96,15 @@ object CatalogProcessServiceTypes {
         name = es.name,
         description = es.description,
         technology = es.technology.toProcess,
-        mode = es.mode.toProcess
+        mode = es.mode.toProcess,
+        descriptor = CatalogProcess.DescriptorSeedForEServiceCreation(
+          description = None,
+          audience = Seq(),
+          voucherLifespan = 1,
+          dailyCallsPerConsumer = 1,
+          dailyCallsTotal = 1,
+          agreementApprovalPolicy = AgreementApprovalPolicy.AUTOMATIC
+        )
       )
   }
 
