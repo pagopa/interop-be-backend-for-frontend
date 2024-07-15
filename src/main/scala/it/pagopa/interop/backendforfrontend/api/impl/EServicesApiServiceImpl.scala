@@ -137,21 +137,59 @@ final case class EServicesApiServiceImpl(
     }
   }
 
-  override def createDescriptor(eServiceId: String, eServiceDescriptorSeed: EServiceDescriptorSeed)(implicit
+  override def createDescriptor(eServiceId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
   ): Route = {
+
+    def cloneDocument(
+      clonedDocumentId: UUID,
+      doc: CatalogProcess.EServiceDoc
+    ): Future[CatalogProcess.CreateEServiceDescriptorDocumentSeed] =
+      fileManager
+        .copy(ApplicationConfiguration.eServiceDocumentsContainer, ApplicationConfiguration.eServiceDocumentsPath)(
+          doc.path,
+          clonedDocumentId.toString,
+          doc.name
+        )
+        .map(clonedPath =>
+          CatalogProcess.CreateEServiceDescriptorDocumentSeed(
+            documentId = clonedDocumentId,
+            kind = CatalogProcess.EServiceDocumentKind.DOCUMENT,
+            contentType = doc.contentType,
+            prettyName = doc.prettyName,
+            fileName = doc.name,
+            filePath = clonedPath,
+            checksum = doc.checksum,
+            serverUrls = Seq()
+          )
+        )
+
     val result: Future[CreatedResource] = for {
-      eServiceUuid <- eServiceId.toFutureUUID
-      descriptor   <- catalogProcessService.createDescriptor(eServiceUuid, eServiceDescriptorSeed.toProcess)(contexts)
+      eServiceUuid       <- eServiceId.toFutureUUID
+      eService           <- catalogProcessService.getEServiceById(eServiceUuid)
+      previousDescriptor <- Either
+        .cond(eService.descriptors.nonEmpty, eService.descriptors.maxBy(_.version), NoDescriptorsFound(eServiceUuid))
+        .toFuture
+      clonedDocuments    <- Future.traverse(previousDescriptor.docs)(cloneDocument(UUIDSupplier.get(), _))
+      eServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
+        description = previousDescriptor.description,
+        audience = Seq(),
+        voucherLifespan = previousDescriptor.voucherLifespan,
+        dailyCallsPerConsumer = previousDescriptor.dailyCallsPerConsumer,
+        dailyCallsTotal = previousDescriptor.dailyCallsTotal,
+        agreementApprovalPolicy = previousDescriptor.agreementApprovalPolicy,
+        attributes = previousDescriptor.attributes.toSeed,
+        docs = clonedDocuments
+      )
+      descriptor <- catalogProcessService.createDescriptor(eServiceUuid, eServiceDescriptorSeed)(contexts)
     } yield descriptor.toApi
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error creating descriptor with seed: $eServiceDescriptorSeed", headers) orElse {
-        case Success(descriptor) =>
-          createDescriptor200(headers)(descriptor)
+      handleError(s"Error creating descriptor in EService $eServiceId", headers) orElse { case Success(descriptor) =>
+        createDescriptor200(headers)(descriptor)
       }
     }
   }
