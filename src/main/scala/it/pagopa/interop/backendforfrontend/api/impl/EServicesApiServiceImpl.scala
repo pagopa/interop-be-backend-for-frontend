@@ -86,15 +86,16 @@ final case class EServicesApiServiceImpl(
   override def createEService(eServiceSeed: EServiceSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerCreatedEServiceDescriptor: ToEntityMarshaller[CreatedEServiceDescriptor]
   ): Route = {
-    val result: Future[CreatedResource] =
-      catalogProcessService.createEService(eServiceSeed.toProcess)(contexts, ec).map(_.toApi)
+    val result: Future[CreatedEServiceDescriptor] = catalogProcessService
+      .createEService(eServiceSeed.toProcess)(contexts, ec)
+      .map(eservice => eservice.toApiWithDescriptorId(eservice.descriptors.head.id))
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error creating eservice with seed: $eServiceSeed", headers) orElse { case Success(eservice) =>
-        createEService200(headers)(eservice)
+      handleError(s"Error creating eservice with seed: $eServiceSeed", headers) orElse { case Success(ids) =>
+        createEService200(headers)(ids)
       }
     }
   }
