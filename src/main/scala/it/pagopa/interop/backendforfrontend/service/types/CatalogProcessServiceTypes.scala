@@ -100,7 +100,7 @@ object CatalogProcessServiceTypes {
         descriptor = CatalogProcess.DescriptorSeedForEServiceCreation(
           description = None,
           audience = Seq(),
-          voucherLifespan = 1,
+          voucherLifespan = 60,
           dailyCallsPerConsumer = 1,
           dailyCallsTotal = 1,
           agreementApprovalPolicy = AgreementApprovalPolicy.AUTOMATIC
