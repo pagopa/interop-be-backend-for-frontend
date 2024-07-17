@@ -336,4 +336,17 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         s"Delete Risk Analysis ${riskAnalysisId.toString} for EService ${eServiceId.toString} from Catalog Process"
       )
     }
+
+  override def updateEServiceDescription(eServiceId: UUID, eServiceDescriptionSeed: EServiceDescriptionSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService] =
+    withHeaders { (bearerToken, correlationId) =>
+      val request: ApiRequest[EService] =
+        api.updateEServiceDescription(
+          xCorrelationId = correlationId,
+          eServiceId = eServiceId,
+          eServiceDescriptionSeed = eServiceDescriptionSeed
+        )(BearerToken(bearerToken))
+      invoker.invoke(request, s"Update E-Service ${eServiceId.toString} description from Catalog Process")
+    }
 }
