@@ -108,4 +108,8 @@ trait CatalogProcessService {
   ): Future[Unit]
 
   def deleteRiskAnalysis(eServiceId: UUID, riskAnalysisId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
+
+  def updateEServiceDescription(eServiceId: UUID, eServiceDescriptionSeed: EServiceDescriptionSeed)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EService]
 }

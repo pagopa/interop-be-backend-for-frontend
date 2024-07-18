@@ -1252,4 +1252,26 @@ final case class EServicesApiServiceImpl(
       }
     }
   }
+
+  override def updateEServiceDescription(eServiceId: String, eServiceDescriptionSeed: EServiceDescriptionSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+  ): Route = {
+    val result: Future[CreatedResource] = for {
+      eServiceUuid <- eServiceId.toFutureUUID
+      eService     <- catalogProcessService.updateEServiceDescription(
+        eServiceUuid,
+        CatalogProcess.EServiceDescriptionSeed(eServiceDescriptionSeed.description)
+      )(contexts)
+    } yield eService.toApi
+
+    onComplete(result) {
+      val headers: List[HttpHeader] = headersFromContext()
+      handleError(s"Error updating description of eservice with Id: $eServiceId", headers) orElse {
+        case Success(eservice) =>
+          updateEServiceDescription200(headers)(eservice)
+      }
+    }
+  }
 }
