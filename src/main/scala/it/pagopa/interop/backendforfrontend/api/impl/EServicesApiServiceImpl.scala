@@ -86,15 +86,16 @@ final case class EServicesApiServiceImpl(
   override def createEService(eServiceSeed: EServiceSeed)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerCreatedResource: ToEntityMarshaller[CreatedResource]
+    toEntityMarshallerCreatedEServiceDescriptor: ToEntityMarshaller[CreatedEServiceDescriptor]
   ): Route = {
-    val result: Future[CreatedResource] =
-      catalogProcessService.createEService(eServiceSeed.toProcess)(contexts, ec).map(_.toApi)
+    val result: Future[CreatedEServiceDescriptor] = catalogProcessService
+      .createEService(eServiceSeed.toProcess)(contexts, ec)
+      .map(eservice => eservice.toApiWithDescriptorId(eservice.descriptors.head.id))
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
-      handleError(s"Error creating eservice with seed: $eServiceSeed", headers) orElse { case Success(eservice) =>
-        createEService200(headers)(eservice)
+      handleError(s"Error creating eservice with seed: $eServiceSeed", headers) orElse { case Success(ids) =>
+        createEService200(headers)(ids)
       }
     }
   }
@@ -1222,18 +1223,26 @@ final case class EServicesApiServiceImpl(
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
-      eserviceSeed = CatalogProcess.EServiceSeed(
+      eServiceSeed = CatalogProcess.EServiceSeed(
         name = importedEservice.name,
         description = importedEservice.description,
         technology = importedEservice.technology.toProcess,
-        mode = importedEservice.mode.toProcess
+        mode = importedEservice.mode.toProcess,
+        descriptor = CatalogProcess.DescriptorSeedForEServiceCreation(
+          description = importedEservice.descriptor.description,
+          audience = importedEservice.descriptor.audience,
+          voucherLifespan = importedEservice.descriptor.voucherLifespan,
+          dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
+          dailyCallsTotal = importedEservice.descriptor.dailyCallsTotal,
+          agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy.toProcess
+        )
       )
-      eService   <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
+      eService <- catalogProcessService.createEService(eServiceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
-      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
-      _          <- Future.traverse(importedEservice.riskAnalysis) { ra =>
+      _        <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.descriptors.nonEmpty)
+      _        <- Future.traverse(importedEservice.riskAnalysis) { ra =>
         catalogProcessService
           .createRiskAnalysis(
             eServiceId = eService.id,
@@ -1245,31 +1254,18 @@ final case class EServicesApiServiceImpl(
           }
           .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty))
       }
-      descriptorSeed = CatalogProcess.EServiceDescriptorSeed(
-        description = importedEservice.descriptor.description,
-        audience = importedEservice.descriptor.audience,
-        voucherLifespan = importedEservice.descriptor.voucherLifespan,
-        dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
-        dailyCallsTotal = importedEservice.descriptor.dailyCallsTotal,
-        agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy.toProcess,
-        attributes = CatalogProcess.AttributesSeed(certified = Seq.empty, declared = Seq.empty, verified = Seq.empty)
-      )
-      descriptor <- catalogProcessService.createDescriptor(eService.id, descriptorSeed).recoverWith {
-        case ex: Throwable =>
-          deleteTempDirectory(folderPath)
-          catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
-      }
-      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.descriptors.nonEmpty)
-      _          <- importedEservice.descriptor.interface match {
+
+      descriptor = eService.descriptors.head
+      _ <- importedEservice.descriptor.interface match {
         case Some(interface) =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
         case None            => Future.unit
       }
-      _          <- pollEServiceById(
+      _ <- pollEServiceById(
         catalogProcessService.getEServiceById(eService.id),
         _.descriptors.exists(d => d.id == descriptor.id && d.interface.isDefined)
       )
-      _          <- importedEservice.descriptor.docs
+      _ <- importedEservice.descriptor.docs
         .traverse(doc =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, doc, "DOCUMENT")
             .flatMap(_ =>
