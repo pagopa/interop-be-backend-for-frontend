@@ -1196,40 +1196,38 @@ final case class EServicesApiServiceImpl(
           voucherLifespan = importedEservice.descriptor.voucherLifespan,
           dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
           dailyCallsTotal = importedEservice.descriptor.dailyCallsTotal,
-          agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy.toProcess,
+          agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy.toProcess
         )
       )
-      eServiceWithDescriptor   <- catalogProcessService.createEService(eServiceSeed).recoverWith { case ex: Throwable =>
+      eService <- catalogProcessService.createEService(eServiceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
-      _          <- pollEServiceById(catalogProcessService.getEServiceById(eServiceWithDescriptor.id), _.descriptors.nonEmpty)
-      _          <- Future.traverse(importedEservice.riskAnalysis) { ra =>
+      _        <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.descriptors.nonEmpty)
+      _        <- Future.traverse(importedEservice.riskAnalysis) { ra =>
         catalogProcessService
           .createRiskAnalysis(
-            eServiceId = eServiceWithDescriptor.id,
+            eServiceId = eService.id,
             CatalogProcess.EServiceRiskAnalysisSeed(name = ra.name, riskAnalysisForm = ra.riskAnalysisForm.toProcess)
           )
           .recoverWith { case ex: Throwable =>
             deleteTempDirectory(folderPath)
-            catalogProcessService.deleteEService(eServiceWithDescriptor.id).flatMap(_ => Future.failed(ex))
+            catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
           }
-          .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eServiceWithDescriptor.id), _.riskAnalysis.nonEmpty))
+          .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty))
       }
 
-
-      eService   <- catalogProcessService.getEServiceById(eServiceWithDescriptor.id)
       descriptor = eService.descriptors.head
-      _          <- importedEservice.descriptor.interface match {
+      _ <- importedEservice.descriptor.interface match {
         case Some(interface) =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
         case None            => Future.unit
       }
-      _          <- pollEServiceById(
+      _ <- pollEServiceById(
         catalogProcessService.getEServiceById(eService.id),
         _.descriptors.exists(d => d.id == descriptor.id && d.interface.isDefined)
       )
-      _          <- importedEservice.descriptor.docs
+      _ <- importedEservice.descriptor.docs
         .traverse(doc =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, doc, "DOCUMENT")
             .flatMap(_ =>

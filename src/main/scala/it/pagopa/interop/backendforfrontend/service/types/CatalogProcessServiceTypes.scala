@@ -103,7 +103,7 @@ object CatalogProcessServiceTypes {
           voucherLifespan = 60,
           dailyCallsPerConsumer = 1,
           dailyCallsTotal = 1,
-          agreementApprovalPolicy = AgreementApprovalPolicy.AUTOMATIC
+          agreementApprovalPolicy = AgreementApprovalPolicy.AUTOMATIC.toProcess
         )
       )
   }
@@ -116,7 +116,8 @@ object CatalogProcessServiceTypes {
       dailyCallsPerConsumer = seed.dailyCallsPerConsumer,
       dailyCallsTotal = seed.dailyCallsTotal,
       agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess,
-      attributes = seed.attributes.toProcess
+      attributes = seed.attributes.toProcess,
+      docs = Seq()
     )
   }
 

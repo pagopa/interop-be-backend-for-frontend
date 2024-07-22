@@ -1,6 +1,5 @@
 package it.pagopa.interop.backendforfrontend.service
 
-import it.pagopa.interop.backendforfrontend.model.CreatedEServiceDescriptor
 import it.pagopa.interop.catalogprocess.client.model._
 
 import java.util.UUID
@@ -13,7 +12,7 @@ trait CatalogProcessService {
 
   def createEService(
     eServiceSeed: EServiceSeed
-  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[CreatedEServiceDescriptor]
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[EService]
 
   def activateDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit]
 
