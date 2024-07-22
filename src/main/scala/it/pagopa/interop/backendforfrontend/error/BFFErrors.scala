@@ -167,4 +167,7 @@ object BFFErrors {
 
   final case class CreateEserviceUnexpectedError(eServiceSeed: String)
       extends ComponentError("0041", s"Unexpected error creating Eservice $eServiceSeed")
+
+  final case class NoDescriptorsFound(eServiceId: UUID)
+      extends ComponentError("0042", s"No descriptors found in Eservice $eServiceId")
 }

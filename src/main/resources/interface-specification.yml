@@ -2398,13 +2398,6 @@ paths:
           schema:
             type: string
             format: uuid
-      requestBody:
-        description: An E-Service Descriptor seed
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EServiceDescriptorSeed'
-        required: true
       responses:
         '200':
           description: EService Descriptor created.
@@ -10782,37 +10775,6 @@ components:
           type: string
       required:
         - description
-    EServiceDescriptorSeed:
-      required:
-        - audience
-        - voucherLifespan
-        - dailyCallsPerConsumer
-        - dailyCallsTotal
-        - agreementApprovalPolicy
-        - attributes
-      type: object
-      properties:
-        description:
-          type: string
-        audience:
-          type: array
-          items:
-            type: string
-        voucherLifespan:
-          type: integer
-          format: int32
-        dailyCallsPerConsumer:
-          description: 'maximum number of daily calls that this descriptor can afford.'
-          type: integer
-          format: int32
-        dailyCallsTotal:
-          description: 'total daily calls available for this e-service.'
-          type: integer
-          format: int32
-        agreementApprovalPolicy:
-          $ref: '#/components/schemas/AgreementApprovalPolicy'
-        attributes:
-          $ref: '#/components/schemas/DescriptorAttributesSeed'
     CatalogEServiceDescriptor:
       type: object
       required:
