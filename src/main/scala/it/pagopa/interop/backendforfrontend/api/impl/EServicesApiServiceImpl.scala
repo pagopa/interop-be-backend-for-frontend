@@ -1185,44 +1185,41 @@ final case class EServicesApiServiceImpl(
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
-      eserviceSeed = CatalogProcess.EServiceSeed(
+      eServiceSeed = CatalogProcess.EServiceSeed(
         name = importedEservice.name,
         description = importedEservice.description,
         technology = importedEservice.technology.toProcess,
-        mode = importedEservice.mode.toProcess
+        mode = importedEservice.mode.toProcess,
+        descriptor = CatalogProcess.DescriptorSeedForEServiceCreation(
+          description = importedEservice.descriptor.description,
+          audience = importedEservice.descriptor.audience,
+          voucherLifespan = importedEservice.descriptor.voucherLifespan,
+          dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
+          dailyCallsTotal = importedEservice.descriptor.dailyCallsTotal,
+          agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy.toProcess,
+        )
       )
-      eService   <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
+      eServiceWithDescriptor   <- catalogProcessService.createEService(eServiceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
-      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _ => true)
+      _          <- pollEServiceById(catalogProcessService.getEServiceById(eServiceWithDescriptor.id), _.descriptors.nonEmpty)
       _          <- Future.traverse(importedEservice.riskAnalysis) { ra =>
         catalogProcessService
           .createRiskAnalysis(
-            eServiceId = eService.id,
+            eServiceId = eServiceWithDescriptor.id,
             CatalogProcess.EServiceRiskAnalysisSeed(name = ra.name, riskAnalysisForm = ra.riskAnalysisForm.toProcess)
           )
           .recoverWith { case ex: Throwable =>
             deleteTempDirectory(folderPath)
-            catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
+            catalogProcessService.deleteEService(eServiceWithDescriptor.id).flatMap(_ => Future.failed(ex))
           }
-          .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty))
+          .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eServiceWithDescriptor.id), _.riskAnalysis.nonEmpty))
       }
-      descriptorSeed = CatalogProcess.EServiceDescriptorSeed(
-        description = importedEservice.descriptor.description,
-        audience = importedEservice.descriptor.audience,
-        voucherLifespan = importedEservice.descriptor.voucherLifespan,
-        dailyCallsPerConsumer = importedEservice.descriptor.dailyCallsPerConsumer,
-        dailyCallsTotal = importedEservice.descriptor.dailyCallsTotal,
-        agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy.toProcess,
-        attributes = CatalogProcess.AttributesSeed(certified = Seq.empty, declared = Seq.empty, verified = Seq.empty)
-      )
-      descriptor <- catalogProcessService.createDescriptor(eService.id, descriptorSeed).recoverWith {
-        case ex: Throwable =>
-          deleteTempDirectory(folderPath)
-          catalogProcessService.deleteEService(eService.id).flatMap(_ => Future.failed(ex))
-      }
-      _          <- pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.descriptors.nonEmpty)
+
+
+      eService   <- catalogProcessService.getEServiceById(eServiceWithDescriptor.id)
+      descriptor = eService.descriptors.head
       _          <- importedEservice.descriptor.interface match {
         case Some(interface) =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
