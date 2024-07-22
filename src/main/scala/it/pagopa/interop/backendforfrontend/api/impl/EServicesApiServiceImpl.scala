@@ -1223,7 +1223,7 @@ final case class EServicesApiServiceImpl(
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
-      eServiceSeed = CatalogProcess.EServiceSeed(
+      eserviceSeed = CatalogProcess.EServiceSeed(
         name = importedEservice.name,
         description = importedEservice.description,
         technology = importedEservice.technology.toProcess,
@@ -1237,7 +1237,7 @@ final case class EServicesApiServiceImpl(
           agreementApprovalPolicy = importedEservice.descriptor.agreementApprovalPolicy.toProcess
         )
       )
-      eService <- catalogProcessService.createEService(eServiceSeed).recoverWith { case ex: Throwable =>
+      eService <- catalogProcessService.createEService(eserviceSeed).recoverWith { case ex: Throwable =>
         deleteTempDirectory(folderPath)
         Future.failed(ex)
       }
