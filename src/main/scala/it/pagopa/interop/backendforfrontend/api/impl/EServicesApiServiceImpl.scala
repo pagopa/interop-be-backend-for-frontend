@@ -171,7 +171,11 @@ final case class EServicesApiServiceImpl(
       eServiceUuid       <- eServiceId.toFutureUUID
       eService           <- catalogProcessService.getEServiceById(eServiceUuid)
       previousDescriptor <- Either
-        .cond(eService.descriptors.nonEmpty, eService.descriptors.maxBy(_.version), NoDescriptorInEservice(eServiceUuid))
+        .cond(
+          eService.descriptors.nonEmpty,
+          eService.descriptors.maxBy(_.version),
+          NoDescriptorInEservice(eServiceUuid)
+        )
         .toFuture
       clonedDocuments    <- Future.traverse(previousDescriptor.docs)(cloneDocument(UUIDSupplier.get(), _))
       eServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
