@@ -11,8 +11,6 @@ import it.pagopa.interop.commons.utils.withHeaders
 import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
   CreateDocumentBadRequest,
   CreateDocumentUnexpectedError,
-  CreateEserviceBadRequest,
-  CreateEserviceUnexpectedError
 }
 
 import java.util.UUID
