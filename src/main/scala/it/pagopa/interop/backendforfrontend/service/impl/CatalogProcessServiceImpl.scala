@@ -36,11 +36,6 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
         api.createEService(xCorrelationId = correlationId, eServiceSeed = eServiceSeed)(BearerToken(bearerToken))
       invoker
         .invoke(request, s"Eservice created")
-        .recoverWith {
-          case err: ApiError[_] if err.code < 500  => Future.failed(CreateEserviceBadRequest(eServiceSeed.name))
-          case err: ApiError[_] if err.code >= 500 =>
-            Future.failed(CreateEserviceUnexpectedError(eServiceSeed.toString))
-        }
     }
 
   def activateDescriptor(eServiceId: UUID, descriptorId: UUID)(implicit contexts: Seq[(String, String)]): Future[Unit] =
