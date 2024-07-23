@@ -96,20 +96,16 @@ object CatalogProcessServiceTypes {
         name = es.name,
         description = es.description,
         technology = es.technology.toProcess,
-        mode = es.mode.toProcess
+        mode = es.mode.toProcess,
+        descriptor = CatalogProcess.DescriptorSeedForEServiceCreation(
+          description = None,
+          audience = Seq(),
+          voucherLifespan = 60,
+          dailyCallsPerConsumer = 1,
+          dailyCallsTotal = 1,
+          agreementApprovalPolicy = AgreementApprovalPolicy.AUTOMATIC.toProcess
+        )
       )
-  }
-
-  implicit class EServiceDescriptorSeedConverter(private val seed: EServiceDescriptorSeed) extends AnyVal {
-    def toProcess: CatalogProcess.EServiceDescriptorSeed = CatalogProcess.EServiceDescriptorSeed(
-      description = seed.description,
-      audience = seed.audience,
-      voucherLifespan = seed.voucherLifespan,
-      dailyCallsPerConsumer = seed.dailyCallsPerConsumer,
-      dailyCallsTotal = seed.dailyCallsTotal,
-      agreementApprovalPolicy = seed.agreementApprovalPolicy.toProcess,
-      attributes = seed.attributes.toProcess
-    )
   }
 
   implicit class EServiceConverter(private val coes: CatalogProcess.EService) extends AnyVal {
@@ -215,6 +211,9 @@ object CatalogProcessServiceTypes {
   implicit class AttributeValueWrapper(private val av: CatalogProcess.Attribute) extends AnyVal {
     def toPersistent: CatalogManagement.CatalogAttribute =
       CatalogManagement.CatalogAttribute(av.id, av.explicitAttributeVerification)
+
+    def toSeed: CatalogProcess.AttributeSeed =
+      CatalogProcess.AttributeSeed(av.id, av.explicitAttributeVerification)
   }
 
   implicit class AttributesWrapper(private val eServiceAttributes: CatalogProcess.Attributes) extends AnyVal {
@@ -223,6 +222,12 @@ object CatalogProcessServiceTypes {
       certified = eServiceAttributes.certified.map(_.map(_.toPersistent)),
       declared = eServiceAttributes.declared.map(_.map(_.toPersistent)),
       verified = eServiceAttributes.verified.map(_.map(_.toPersistent))
+    )
+
+    def toSeed: CatalogProcess.AttributesSeed = CatalogProcess.AttributesSeed(
+      certified = eServiceAttributes.certified.map(_.map(_.toSeed)),
+      declared = eServiceAttributes.declared.map(_.map(_.toSeed)),
+      verified = eServiceAttributes.verified.map(_.map(_.toSeed))
     )
 
     def toApi(attributes: Seq[AttributeProcess.Attribute]): Future[DescriptorAttributes] = {
