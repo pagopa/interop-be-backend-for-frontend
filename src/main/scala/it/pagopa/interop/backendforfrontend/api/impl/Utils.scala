@@ -7,12 +7,7 @@ import it.pagopa.interop.agreementprocess.client.{model => AgreementProcess}
 import it.pagopa.interop.attributeregistryprocess.client.model.Attribute
 import it.pagopa.interop.attributeregistryprocess.client.{model => AttributeRegistry}
 import it.pagopa.interop.backendforfrontend.common.system.{ApplicationConfiguration, FileManagerUtils}
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  CreateDocumentBadRequest,
-  CreateDocumentUnexpectedError,
-  InvalidInterfaceFileDetected,
-  SamlNotValid
-}
+import it.pagopa.interop.backendforfrontend.error.BFFErrors.{InvalidInterfaceFileDetected, SamlNotValid}
 import it.pagopa.interop.backendforfrontend.model._
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.backendforfrontend.service.types.CatalogProcessServiceTypes.DocumentKindWrapper
@@ -299,12 +294,9 @@ object Utils {
             serverUrls = serverUrls
           )
         )
-        .recoverWith {
-          case ex: CreateDocumentBadRequest      =>
-            fileManager.delete(ApplicationConfiguration.eServiceDocumentsContainer)(filePath)
-            Future.failed(ex)
-          case ex: CreateDocumentUnexpectedError =>
-            Future.failed(ex)
+        .recoverWith { case ex: Throwable =>
+          fileManager.delete(ApplicationConfiguration.eServiceDocumentsContainer)(filePath)
+          Future.failed(ex)
         }
     } yield ()
   }
