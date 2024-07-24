@@ -89,7 +89,7 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedEServiceDescriptor: ToEntityMarshaller[CreatedEServiceDescriptor]
   ): Route = {
     val result: Future[CreatedEServiceDescriptor] = catalogProcessService
-      .createEService(eServiceSeed.toProcess)(contexts)
+      .createEService(eServiceSeed.toProcess)(contexts, ec)
       .map(eservice => eservice.toApiWithDescriptorId(eservice.descriptors.head.id))
 
     onComplete(result) {
@@ -1170,7 +1170,7 @@ final case class EServicesApiServiceImpl(
 
     def verifyAndCreateImportedDoc(
       eService: CatalogProcess.EService,
-      descriptorId: UUID,
+      descriptor: CatalogProcess.EServiceDescriptor,
       zipPath: Path,
       file: ImportedDoc,
       fileType: String
@@ -1178,7 +1178,7 @@ final case class EServicesApiServiceImpl(
       val filePath = zipPath.resolve(file.path).toString
       val fileName = Paths.get(file.path).getFileName.toString
 
-      for {
+      val result = for {
         mimeType    <- Try(new Tika().detect(readFileAsBytes(filePath), fileName)).toFuture
         contentType <- ContentType
           .parse(mimeType)
@@ -1192,10 +1192,24 @@ final case class EServicesApiServiceImpl(
           fileParts,
           file.prettyName,
           fileType,
-          descriptorId,
+          descriptor.id,
           uuidSupplier.get()
         )
       } yield ()
+
+      result.recoverWith { case ex: Throwable =>
+        deleteTempDirectory(zipPath)
+        for {
+          _ <- descriptor.docs.traverse { doc =>
+            catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, doc.id)
+          }
+          _ <- descriptor.interface.traverse(interface =>
+            catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, interface.id)
+          )
+          _ <- catalogProcessService.deleteEService(eService.id)
+        } yield ()
+        Future.failed(ex)
+      }
     }
 
     val result: Future[CreatedEServiceDescriptor] = for {
@@ -1244,42 +1258,20 @@ final case class EServicesApiServiceImpl(
           }
           .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty))
       }
+
       descriptor = eService.descriptors.head
-      _        <- importedEservice.descriptor.interface match {
+      _ <- importedEservice.descriptor.interface match {
         case Some(interface) =>
-          verifyAndCreateImportedDoc(eService, descriptor.id, folderPath, interface, "INTERFACE")
-            .recoverWith { case ex: Throwable =>
-              deleteTempDirectory(zipPath)
-              for {
-                _ <- descriptor.interface.traverse(interface =>
-                  catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, interface.id)
-                )
-                _ <- catalogProcessService.deleteEService(eService.id)
-              } yield ()
-              Future.failed(ex)
-            }
+          verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
         case None            => Future.unit
       }
-      _        <- pollEServiceById(
+      _ <- pollEServiceById(
         catalogProcessService.getEServiceById(eService.id),
         _.descriptors.exists(d => d.id == descriptor.id && d.interface.isDefined)
       )
-      _        <- importedEservice.descriptor.docs
+      _ <- importedEservice.descriptor.docs
         .traverse(doc =>
-          verifyAndCreateImportedDoc(eService, descriptor.id, folderPath, doc, "DOCUMENT")
-            .recoverWith { case ex: Throwable =>
-              deleteTempDirectory(zipPath)
-              for {
-                _ <- descriptor.interface.traverse(interface =>
-                  catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, interface.id)
-                )
-                _ <- descriptor.docs.traverse(doc =>
-                  catalogProcessService.deleteEServiceDocumentById(eService.id, descriptor.id, doc.id)
-                )
-                _ <- catalogProcessService.deleteEService(eService.id)
-              } yield ()
-              Future.failed(ex)
-            }
+          verifyAndCreateImportedDoc(eService, descriptor, folderPath, doc, "DOCUMENT")
             .flatMap(_ =>
               pollEServiceById(
                 catalogProcessService.getEServiceById(eService.id),
