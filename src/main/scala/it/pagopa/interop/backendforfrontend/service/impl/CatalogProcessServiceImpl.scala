@@ -4,17 +4,13 @@ import akka.actor.typed.ActorSystem
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.backendforfrontend.service.CatalogProcessService
 import it.pagopa.interop.catalogprocess.client.api.{EnumsSerializers, ProcessApi}
-import it.pagopa.interop.catalogprocess.client.invoker.{ApiError, ApiInvoker, ApiRequest, BearerToken}
+import it.pagopa.interop.catalogprocess.client.invoker.{ApiInvoker, ApiRequest, BearerToken}
 import it.pagopa.interop.catalogprocess.client.model._
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.withHeaders
-import it.pagopa.interop.backendforfrontend.error.BFFErrors.{
-  CreateDocumentBadRequest,
-  CreateDocumentUnexpectedError,
-}
 
 import java.util.UUID
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: ExecutionContextExecutor)(implicit
   system: ActorSystem[_]
@@ -26,9 +22,7 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def createEService(
-    eServiceSeed: EServiceSeed
-  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[EService] =
+  override def createEService(eServiceSeed: EServiceSeed)(implicit contexts: Seq[(String, String)]): Future[EService] =
     withHeaders { (bearerToken, correlationId) =>
       val request: ApiRequest[EService] =
         api.createEService(xCorrelationId = correlationId, eServiceSeed = eServiceSeed)(BearerToken(bearerToken))
@@ -208,25 +202,19 @@ class CatalogProcessServiceImpl(catalogProcessUrl: String, blockingEc: Execution
     eServiceId: UUID,
     descriptorId: UUID,
     documentSeed: CreateEServiceDescriptorDocumentSeed
-  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[EService] = withHeaders {
-    (bearerToken, correlationId) =>
-      val request: ApiRequest[EService] =
-        api.createEServiceDocument(
-          xCorrelationId = correlationId,
-          eServiceId = eServiceId,
-          descriptorId = descriptorId,
-          createEServiceDescriptorDocumentSeed = documentSeed
-        )(BearerToken(bearerToken))
-      invoker
-        .invoke(
-          request,
-          s"Creating eService document ${documentSeed.documentId.toString} of kind ${documentSeed.kind}, name ${documentSeed.fileName}, path ${documentSeed.filePath} for eService $eServiceId and descriptor $descriptorId"
-        )
-        .recoverWith {
-          case err: ApiError[_] if err.code < 500  => Future.failed(CreateDocumentBadRequest(eServiceId, descriptorId))
-          case err: ApiError[_] if err.code >= 500 =>
-            Future.failed(CreateDocumentUnexpectedError(eServiceId, descriptorId, documentSeed.filePath))
-        }
+  )(implicit contexts: Seq[(String, String)]): Future[EService] = withHeaders { (bearerToken, correlationId) =>
+    val request: ApiRequest[EService] =
+      api.createEServiceDocument(
+        xCorrelationId = correlationId,
+        eServiceId = eServiceId,
+        descriptorId = descriptorId,
+        createEServiceDescriptorDocumentSeed = documentSeed
+      )(BearerToken(bearerToken))
+    invoker
+      .invoke(
+        request,
+        s"Creating eService document ${documentSeed.documentId.toString} of kind ${documentSeed.kind}, name ${documentSeed.fileName}, path ${documentSeed.filePath} for eService $eServiceId and descriptor $descriptorId"
+      )
   }
   override def updateEServiceById(eServiceId: UUID, updateEServiceSeed: UpdateEServiceSeed)(implicit
     contexts: Seq[(String, String)]

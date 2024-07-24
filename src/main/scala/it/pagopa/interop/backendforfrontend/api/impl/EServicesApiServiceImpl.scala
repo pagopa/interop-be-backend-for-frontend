@@ -89,7 +89,7 @@ final case class EServicesApiServiceImpl(
     toEntityMarshallerCreatedEServiceDescriptor: ToEntityMarshaller[CreatedEServiceDescriptor]
   ): Route = {
     val result: Future[CreatedEServiceDescriptor] = catalogProcessService
-      .createEService(eServiceSeed.toProcess)(contexts, ec)
+      .createEService(eServiceSeed.toProcess)(contexts)
       .map(eservice => eservice.toApiWithDescriptorId(eservice.descriptors.head.id))
 
     onComplete(result) {
@@ -1258,18 +1258,17 @@ final case class EServicesApiServiceImpl(
           }
           .flatMap(_ => pollEServiceById(catalogProcessService.getEServiceById(eService.id), _.riskAnalysis.nonEmpty))
       }
-
       descriptor = eService.descriptors.head
-      _ <- importedEservice.descriptor.interface match {
+      _        <- importedEservice.descriptor.interface match {
         case Some(interface) =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, interface, "INTERFACE")
         case None            => Future.unit
       }
-      _ <- pollEServiceById(
+      _        <- pollEServiceById(
         catalogProcessService.getEServiceById(eService.id),
         _.descriptors.exists(d => d.id == descriptor.id && d.interface.isDefined)
       )
-      _ <- importedEservice.descriptor.docs
+      _        <- importedEservice.descriptor.docs
         .traverse(doc =>
           verifyAndCreateImportedDoc(eService, descriptor, folderPath, doc, "DOCUMENT")
             .flatMap(_ =>
