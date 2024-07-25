@@ -124,7 +124,7 @@ final case class ClientsApiServiceImpl(
       clientUuid <- clientId.toFutureUUID
       userUuid   <- userId.toFutureUUID
       result     <- authorizationProcessService.addUser(clientUuid, userUuid)
-    } yield (result.toCreatedResource)
+    } yield result.toCreatedResource
 
     onComplete(result) {
       val headers: List[HttpHeader] = headersFromContext()
@@ -369,27 +369,25 @@ final case class ClientsApiServiceImpl(
     id = client.id,
     consumer = CompactOrganization(consumer.id, consumer.name),
     name = client.name,
-    purposes = purposes,
+    purposes = purposes.toSeq,
     description = client.description,
     kind = client.kind.toApi,
     createdAt = client.createdAt
   )
 
-  private def enhancePurpose(
-    clientPurpose: AuthorizationProcess.ClientPurpose
-  )(implicit contexts: Seq[(String, String)]): Future[ClientPurpose] = for {
-    (eService, purpose) <- catalogProcessService
-      .getEServiceById(clientPurpose.states.eservice.eserviceId)
-      .zip(purposeProcessService.getPurpose(clientPurpose.states.purpose.purposeId))
-    producer            <- tenantProcessService
-      .getTenant(eService.producerId)
-  } yield ClientPurpose(
-    purposeId = purpose.id,
-    title = purpose.title,
-    eservice = CompactEService(
-      id = eService.id,
-      name = eService.name,
-      CompactOrganization(producer.id, producer.name, producer.kind.map(_.toApi))
+  private def enhancePurpose(clientPurposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[ClientPurpose] =
+    for {
+      purpose  <- purposeProcessService.getPurpose(clientPurposeId)
+      eService <- catalogProcessService.getEServiceById(purpose.eserviceId)
+      producer <- tenantProcessService
+        .getTenant(eService.producerId)
+    } yield ClientPurpose(
+      purposeId = purpose.id,
+      title = purpose.title,
+      eservice = CompactEService(
+        id = eService.id,
+        name = eService.name,
+        CompactOrganization(producer.id, producer.name, producer.kind.map(_.toApi))
+      )
     )
-  )
 }
